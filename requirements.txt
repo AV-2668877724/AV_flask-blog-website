@@ -1,0 +1,5 @@
+// add Prettier extension (for formatting html code)
+
+flask
+flask-SQLAlchemy
+flask-login
