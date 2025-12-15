@@ -1,5 +1,5 @@
 // add Prettier extension (for formatting html code)
 
-flask
-flask-SQLAlchemy
-flask-login
+flask==3.1.2
+flask-SQLAlchemy==3.0.5
+flask-login==0.6.3
