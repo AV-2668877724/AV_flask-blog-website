@@ -1,0 +1,16 @@
+# .gitattributes
+*.py text eol=lf
+*.txt text eol=lf
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+
+# Binary files (should not be converted)
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.db binary
+*.pdf binary
+
