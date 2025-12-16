@@ -3,14 +3,15 @@ from flask_sqlalchemy import SQLAlchemy
 from os import path
 from flask_login import LoginManager
 
-db=SQLAlchemy()
-DB_NAME="database.db"
-
+db = SQLAlchemy()
+DB_NAME = "database.db"
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'CCAV@129'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{path.join("website", DB_NAME)}'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Add this to suppress warning
+    
     db.init_app(app)
     
     from .views import views
@@ -21,8 +22,8 @@ def create_app():
     from .models import User
     create_database(app)
     
-    login_manager=LoginManager()
-    login_manager.login_view='auth.login'
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
     
     @login_manager.user_loader
@@ -32,11 +33,9 @@ def create_app():
     return app
 
 def create_database(app):
-    if not path.exists('website/' + DB_NAME):
-        db.create_all(app=app)
-        print('Database Created Successfully!')
-    else:
-        print('Database already exists.')
-
-        
-        
+    with app.app_context():  # Use application context
+        if not path.exists(f'website/{DB_NAME}'):
+            db.create_all()  # No app parameter needed
+            print('Database Created Successfully!')
+        else:
+            print('Database already exists.')
