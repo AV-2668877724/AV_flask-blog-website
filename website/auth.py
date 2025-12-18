@@ -26,7 +26,7 @@ def login():
             flash('Email does not exist.', category='error')
         
         
-    return render_template("login.html")
+    return render_template("login.html", user =current_user)
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def signup():
@@ -71,7 +71,7 @@ def signup():
                 db.session.rollback()
 
         
-    return render_template("signup.html")
+    return render_template("signup.html", user =current_user)
 
 
 @auth.route('/logout')
