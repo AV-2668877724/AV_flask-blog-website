@@ -122,3 +122,9 @@ def like_post(post_id):
     likes_count = len(post.likes)
     liked = any(l.author == current_user.id for l in post.likes)
     return jsonify({'likes': likes_count, 'liked': liked}), 200
+
+@views.route('/about')
+def about():
+    # No login required; show public about page
+    return render_template("about.html", user=current_user)
+

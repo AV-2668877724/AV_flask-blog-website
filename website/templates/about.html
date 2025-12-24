@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}About — AV Postory{% endblock %}
+
+{% block content %}
+<div class="mx-auto" style="max-width:900px;">
+  <!-- Logo card + tagline -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body d-flex align-items-center gap-3">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AV Postory logo" style="height:72px; width:auto; border-radius:8px;">
+      <div>
+        <h1 class="mb-1">AV Postory</h1>
+        <p class="lead text-muted mb-0">Where Ideas Turn Into Stories</p>
+        <p class="muted-small mt-2 mb-0">A modern, interactive blogging platform for sharing thoughts, learning, and discussion.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main about content -->
+  <div class="py-2">
+    <h3>About Us</h3>
+    <p>
+      AV Postory is a modern and interactive blogging platform designed to facilitate the creation, sharing, and exchange of ideas in a structured and user-friendly digital environment. The platform serves as a space where individuals can express their thoughts, opinions, and experiences through well-organized written content.
+    </p>
+
+    <p>
+      Developed with a focus on simplicity, usability, and engagement, AV Postory enables users to publish blog posts, interact with content through comments, and show appreciation using likes. The platform encourages meaningful communication and knowledge sharing while maintaining a clean and distraction-free interface.
+    </p>
+
+    <p>
+      From an academic perspective, AV Postory demonstrates the practical implementation of web technologies such as user authentication, database management, and interactive frontend design. From a user standpoint, it provides an intuitive and engaging blogging experience that supports creativity, learning, and discussion.
+    </p>
+
+    <p>
+      AV Postory aims to bridge the gap between content creation and community interaction by offering a reliable platform where ideas are not only shared but also discussed and valued.
+    </p>
+
+    <h4 class="mt-4">Vision</h4>
+    <p>
+      To establish a simple, efficient, and interactive blogging platform that empowers users to communicate ideas confidently while fostering a culture of thoughtful discussion and digital expression.
+    </p>
+
+    <h4 class="mt-3">Mission</h4>
+    <ul>
+      <li>To provide a structured and user-friendly blogging platform</li>
+      <li>To encourage meaningful interaction through comments and engagement features</li>
+      <li>To support creativity, learning, and idea sharing</li>
+      <li>To ensure a smooth and accessible user experience across devices</li>
+    </ul>
+
+    <h4 class="mt-3">Why AV Postory</h4>
+    <ul>
+      <li>Clean and responsive user interface</li>
+      <li>Secure user authentication and data handling</li>
+      <li>Interactive features such as likes and comments</li>
+      <li>Designed for both academic demonstration and real-world usability</li>
+    </ul>
+  </div>
+
+  <!-- Team / Author section -->
+  <div class="mt-4">
+    <h3>Author & Team</h3>
+
+    <div class="row g-3 mt-2">
+      <!-- Primary author card -->
+      <div class="col-12 col-md-6">
+        <div class="card h-100">
+          <div class="card-body d-flex gap-3">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AV avatar" style="height:64px; width:64px; object-fit:cover; border-radius:8px;">
+            <div>
+              <h5 class="mb-1">AV</h5>
+              <p class="mb-1 muted-small">Founder & Author</p>
+              <p class="small text-muted mb-2">Building AV Postory to help people share ideas, learn, and connect.</p>
+
+              <div class="d-flex gap-2">
+                <a class="btn btn-outline-primary btn-sm" href="varshneyanurag888example.com" aria-label="Email AV">
+                  <i class="fas fa-envelope me-1"></i> Email
+                </a>
+                <a class="btn btn-outline-dark btn-sm" href="https://github.com/AV-2668877724" target="_blank" rel="noopener" aria-label="AV on GitHub">
+                  <i class="fab fa-github me-1"></i> GitHub
+                </a>
+                <a class="btn btn-outline-info btn-sm" href="https://x.com/av_indian007" target="_blank" rel="noopener" aria-label="AV on Twitter">
+                  <i class="fab fa-twitter me-1"></i> Twitter
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional team member example -->
+      <div class="col-12 col-md-6">
+        <div class="card h-100">
+          <div class="card-body d-flex gap-3">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Team avatar" style="height:64px; width:64px; object-fit:cover; border-radius:8px;">
+            <div>
+              <h5 class="mb-1">Team</h5>
+              <p class="mb-1 muted-small">Contributors</p>
+              <p class="small text-muted mb-2">Design, frontend, and backend contributors who helped build AV Postory.</p>
+
+              <div class="d-flex gap-2">
+                <a class="btn btn-outline-primary btn-sm" href="varshneyanurag888@gmail.com" aria-label="Email team">
+                  <i class="fas fa-envelope me-1"></i> Contact
+                </a>
+                <a class="btn btn-outline-secondary btn-sm" href="https://www.linkedin.com/in/anannay-varshney-765a32261" target="_blank" rel="noopener" aria-label="Team on LinkedIn">
+                  <i class="fab fa-linkedin me-1"></i> LinkedIn
+                </a>
+                
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="text-center mt-4">
+    <a href="/create-post" class="btn btn-primary me-2">Create a Post</a>
+    <a href="/home" class="btn btn-outline-secondary">Back to Home</a>
+  </div>
+</div>
+{% endblock %}
