@@ -33,9 +33,10 @@ def create_app():
     return app
 
 def create_database(app):
-    with app.app_context():  # Use application context
-        if not path.exists(f'website/{DB_NAME}'):
-            db.create_all()  # No app parameter needed
+    with app.app_context():
+        db_path = path.join(app.root_path, DB_NAME)
+        if not path.exists(db_path):
+            db.create_all()
             print('Database Created Successfully!')
         else:
             print('Database already exists.')
