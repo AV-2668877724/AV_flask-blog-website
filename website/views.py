@@ -43,7 +43,7 @@ def create_post():
             db.session.commit()
             flash('Post created!', category='success')
             return redirect(url_for('views.home'))
-    return render_template("create_post.html", user=current_user)
+    return render_template("create_posts.html", user=current_user)
 
 @views.route('/delete-post/<id>')
 @login_required
