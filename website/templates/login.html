@@ -1,32 +1,51 @@
-{% extends 'base.html'%} {% block title%} Login {% endblock %} {% block content
-%}
-<form method="POST">
-  <h3 align="center">Login</h3>
-  <div class="form-group">
-    <label for="email">Email Address</label>
-    <input
-      type="email"
-      class="form-control"
-      id="email"
-      name="email"
-      placeholder="Enter email"
-    />
-    
+{% extends 'base.html' %}
+{% block title %} Login {% endblock %}
+{% block content %}
+<div class="mx-auto" style="max-width:420px;">
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <h3 class="text-center mb-3">
+        <i class="fas fa-sign-in-alt text-primary me-2"></i> Login
+      </h3>
+      <p class="text-center text-muted mb-4">Welcome back to <strong>AV Postory</strong></p>
 
-    <label for="password">Password</label>
-    <input
-      type="password"
-      class="form-control"
-      id="password"
-      name="password"
-      placeholder="Enter password"
-    />
+      <form method="POST">
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required />
+          </div>
+        </div>
 
-    <br/>
-    <div align="center">
-      <button type="submit" class="btn btn-primary">Login</button>
+        <!-- Password -->
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required />
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fas fa-sign-in-alt me-1"></i> Login
+        </button>
+
+        <!-- Forgot password link -->
+        <div class="text-center mt-3">
+          <a href="/forgot-password" class="text-decoration-none">
+            <i class="fas fa-key me-1"></i> Forgot your password?
+          </a>
+        </div>
+
+        <!-- Sign up link -->
+        <div class="text-center mt-2">
+          <p class="small">Don’t have an account? <a href="/sign-up">Sign up here</a></p>
+        </div>
+      </form>
     </div>
   </div>
-</form>
-
+</div>
 {% endblock %}

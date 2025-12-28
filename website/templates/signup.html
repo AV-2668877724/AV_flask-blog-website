@@ -1,49 +1,169 @@
-{% extends 'base.html'%} {% block title%} Sign Up {% endblock %} {% block content
-%}
-<form method="POST">
-  <h3 align="center">Sign Up</h3>
-  <div class="form-group">
-    <label for="email">Email Address</label>
-    <input
-      type="email"
-      class="form-control"
-      id="email"
-      name="email"
-      placeholder="Enter email"
-    />
+{% extends 'base.html' %}
+{% block title %} Sign Up {% endblock %}
+{% block content %}
+<!-- Background wrapper with gradient + wave -->
+<div class="position-relative d-flex align-items-center justify-content-center" 
+     style="min-height:100vh; background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);">
 
-    <label for="email">Username</label>
-    <input
-      type="text"
-      class="form-control"
-      id="username"
-      name="username"
-      placeholder="Enter Username"
-    />
+  <!-- Decorative wave at top -->
+  <div style="position:absolute; top:0; left:0; width:100%; height:180px; z-index:0;">
+    <svg viewBox="0 0 1440 320" preserveAspectRatio="none" style="width:100%; height:100%;">
+      <path fill="#0d6efd" fill-opacity="0.15" 
+            d="M0,160L48,165.3C96,171,192,181,288,176C384,171,480,149,576,160C672,171,768,213,864,229.3C960,245,1056,235,1152,213.3C1248,192,1344,160,1392,144L1440,128V0H0Z"></path>
+    </svg>
+  </div>
 
-    <label for="password1">Password</label>
-    <input
-      type="password"
-      class="form-control"
-      id="password1"
-      name="password1"
-      placeholder="Enter password"
-    />
+  <!-- Card container -->
+  <div class="card shadow-lg border-0 mx-auto" style="max-width:540px; width:100%; z-index:1;">
+    <div class="card-body p-4">
 
-    <label for="password2">Password</label>
-    <input
-      type="password"
-      class="form-control"
-      id="password2"
-      name="password2"
-      placeholder="Enter Password Again"
-    />
+      <!-- Animated welcome banner -->
+      <div class="text-center mb-4">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="AV Postory logo" style="height:60px;">
+        <h4 class="mt-2 fw-bold text-primary animate__animated animate__fadeInDown">
+          Welcome to AV Postory!
+        </h4>
+        <p class="text-muted">Where ideas turn into stories ✨</p>
+      </div>
 
-    <br />
-    <div align="center">
-      <button type="submit" class="btn btn-primary">Sign UP</button>
+      <form method="POST">
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Email Address</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+            <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required />
+          </div>
+        </div>
+
+        <!-- Username -->
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-user"></i></span>
+            <input type="text" class="form-control" id="username" name="username"
+                   placeholder="Choose a username" required
+                   data-bs-toggle="tooltip" data-bs-placement="right"
+                   title="Pick something unique — it’s how others will know you.">
+          </div>
+        </div>
+
+        <!-- Password with strength bar -->
+        <div class="mb-3">
+          <label for="password1" class="form-label">Password</label>
+          <input type="password" class="form-control" id="password1" name="password1" placeholder="Enter password" required />
+          <div class="progress mt-2" style="height:5px;">
+            <div id="strengthBar" class="progress-bar"></div>
+          </div>
+          <small id="strengthText" class="text-muted"></small>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mb-3">
+          <label for="password2" class="form-label">Confirm Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+            <input type="password" class="form-control" id="password2" name="password2" placeholder="Confirm password" required />
+          </div>
+        </div>
+
+        <!-- Security Questions Info -->
+        <div class="alert alert-info small mb-3" role="alert">
+          <i class="fas fa-shield-alt me-2"></i>
+          For your security: we ask your Date of Birth and Favorite Person’s Name. 
+          If you ever forget your password, you’ll use these answers to reset it.
+        </div>
+
+        <!-- Date of Birth -->
+        <div class="mb-3">
+          <label for="dob" class="form-label">Date of Birth</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+            <input type="date" class="form-control" id="dob" name="dob" required />
+          </div>
+        </div>
+
+        <!-- Favorite Person -->
+        <div class="mb-3">
+          <label for="fav_person" class="form-label">Favorite Person's Name</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="fas fa-heart text-danger"></i></span>
+            <input type="text" class="form-control" id="fav_person" name="fav_person" placeholder="Favorite Person's Name" required />
+          </div>
+        </div>
+
+        <!-- Progress indicator -->
+        <div class="progress mb-3" style="height:8px;">
+          <div id="formProgress" class="progress-bar bg-info"></div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary w-100 signup-btn">
+          <i class="fas fa-paper-plane me-1"></i> Sign Up & Start Posting
+        </button>
+
+        <!-- Login link -->
+        <div class="text-center mt-3">
+          <p class="small">Already have an account? <a href="/login">Login here</a></p>
+        </div>
+      </form>
     </div>
   </div>
-</form>
+</div>
 
+<!-- Custom CSS for hover animations -->
+<style>
+.signup-btn {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.signup-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.input-group-text .fa-heart {
+  transition: transform 0.3s ease;
+}
+.input-group:hover .fa-heart {
+  transform: scale(1.3);
+}
+</style>
+
+<!-- Scripts -->
+<script>
+// Password strength feedback
+document.getElementById('password1').addEventListener('input', function() {
+  const val = this.value;
+  const bar = document.getElementById('strengthBar');
+  const text = document.getElementById('strengthText');
+  let strength = 0;
+  if(val.length > 5) strength += 25;
+  if(/[A-Z]/.test(val)) strength += 25;
+  if(/[0-9]/.test(val)) strength += 25;
+  if(/[^A-Za-z0-9]/.test(val)) strength += 25;
+  bar.style.width = strength + '%';
+  let label = '';
+  if(strength < 50) { bar.className = 'progress-bar bg-danger'; label = 'Weak'; }
+  else if(strength < 75) { bar.className = 'progress-bar bg-warning'; label = 'Medium'; }
+  else { bar.className = 'progress-bar bg-success'; label = 'Strong'; }
+  text.textContent = `Password strength: ${label}`;
+});
+
+// Form progress indicator
+const inputs = document.querySelectorAll('form input');
+const progress = document.getElementById('formProgress');
+inputs.forEach(i => i.addEventListener('input', () => {
+  let filled = [...inputs].filter(x => x.value.trim() !== '').length;
+  let percent = (filled / inputs.length) * 100;
+  progress.style.width = percent + '%';
+}));
+
+// Enable Bootstrap tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+});
+</script>
+
+<!-- Optional: Animate.css for banner animation -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 {% endblock %}
