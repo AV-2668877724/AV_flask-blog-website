@@ -128,3 +128,29 @@ def about():
     # No login required; show public about page
     return render_template("about.html", user=current_user)
 
+@views.route('/search', methods=['GET'])
+def search():
+    query = (request.args.get('q') or '').strip().lower()
+    filter_type = request.args.get('filter') or 'keywords'
+
+    if not query:
+        flash('Please type something to search.', category='error')
+        return redirect(url_for('views.home'))
+
+    posts = []
+    if filter_type == 'username':
+        posts = Post.query.join(User).filter(User.username.ilike(f"%{query}%")).all()
+    elif filter_type == 'keywords':
+        posts = Post.query.filter(Post.text.ilike(f"%{query}%")).all()
+
+    # Suggestions: latest 5 posts
+    suggestions = Post.query.order_by(Post.date_created.desc()).limit(5).all()
+
+    return render_template(
+        "search_results.html",
+        posts=posts,
+        query=query,
+        filter_type=filter_type,
+        suggestions=suggestions,
+        user=current_user
+    )
