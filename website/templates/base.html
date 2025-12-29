@@ -29,94 +29,11 @@
       href="{{ url_for('static', filename='images/logo.png') }}"
     />
 
-    <style>
-      body {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      .post-text {
-        white-space: pre-wrap;
-      }
-      .card {
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-      }
-      .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      }
-      .like-btn {
-        cursor: pointer;
-        font-size: 1.1rem;
-      }
-      .toast-container {
-        position: fixed;
-        top: 1rem;
-        right: 1rem;
-        z-index: 1080;
-      }
-
-      .navbar-brand img {
-        max-height: 40px;
-        width: auto;
-        display: block;
-      }
-      .navbar-brand .brand-text {
-        color: #fff;
-        font-size: 1rem;
-        font-weight: 600;
-      }
-      @media (max-width: 576px) {
-        .navbar-brand img {
-          max-height: 32px;
-        }
-      }
-
-      .dark-mode {
-        background: #0f1113;
-        color: #e6e6e6;
-      }
-      .dark-mode .card {
-        background: linear-gradient(180deg, #ffffff, #fbfbfb);
-        color: #111;
-        border-color: #e6e6e6;
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-      }
-      .dark-mode .card .bg-light,
-      .dark-mode .card .border,
-      .dark-mode .card .input-group,
-      .dark-mode .card .form-control {
-        background: #fafafa !important;
-        color: #111 !important;
-        border-color: #e6e6e6 !important;
-      }
-      .dark-mode .btn-primary {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-        color: #fff;
-      }
-      .dark-mode a.text-decoration-none {
-        color: #0d6efd;
-      }
-      .dark-mode .text-muted {
-        color: #6c757d !important;
-      }
-      .dark-mode img {
-        filter: brightness(0.95) contrast(1.02);
-      }
-
-      .form-control:focus {
-        box-shadow: none;
-        border-color: #86b7fe;
-      }
-      .input-group .btn {
-        white-space: nowrap;
-      }
-
-      .muted-small {
-        font-size: 0.85rem;
-        color: #6c757d;
-      }
-    </style>
+    <!-- Custom CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
   </head>
 
   <body>
@@ -163,27 +80,34 @@
             <form
               action="/search"
               method="get"
-              class="d-flex me-3"
+              class="d-flex me-3 align-items-center"
               style="min-width: 250px; max-width: 420px"
               onsubmit="return validateSearch();"
             >
-              <!-- First: filter dropdown -->
-              <select class="form-select form-select-sm me-2" name="filter">
+              <label
+                for="filter"
+                class="form-label mb-0 me-2 text-light small"
+                style="white-space: nowrap"
+              >
+                Search by:
+              </label>
+
+              <select
+                id="filter"
+                class="form-select form-select-sm me-2"
+                name="filter"
+              >
                 <option value="keywords">Post Content</option>
                 <option value="username">Username</option>
               </select>
-
-              <!-- Second: search text box -->
               <input
-                class="form-control form-control-sm me-2"
                 type="search"
+                class="form-control form-control-sm me-2"
                 id="searchBox"
                 name="q"
                 placeholder="Type to search..."
                 aria-label="Search"
               />
-
-              <!-- Third: search button -->
               <button class="btn btn-outline-light btn-sm" type="submit">
                 <i class="fas fa-search"></i>
               </button>
@@ -193,8 +117,8 @@
               function validateSearch() {
                 const searchInput = document.getElementById("searchBox");
                 if (!searchInput.value.trim()) {
-                  alert("Please type something to search."); // client-side alert
-                  return false; // prevent form submission
+                  alert("Please type something to search.");
+                  return false;
                 }
                 return true;
               }
@@ -267,6 +191,7 @@
       aria-atomic="true"
     ></div>
 
+    <!-- Scripts -->
     <script
       src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
       crossorigin="anonymous"

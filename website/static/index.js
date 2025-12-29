@@ -1,4 +1,4 @@
-// index.js - improved optimistic likes, toasts, search, dark mode
+// index.js - dark mode, live search with highlight, see more/less toggle, likes, toasts
 
 document.addEventListener('DOMContentLoaded', () => {
   // Dark mode toggle
@@ -11,19 +11,76 @@ document.addEventListener('DOMContentLoaded', () => {
     setDarkMode(enabled);
   });
 
-  // Live search (client-side)
-  const searchInput = document.getElementById('searchInput');
+  // Live search with highlight
+  const searchInput = document.getElementById('searchBox'); // FIXED ID
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
+
       document.querySelectorAll('.card .post-text').forEach(card => {
-        const text = card.innerText.toLowerCase();
-        card.closest('.card').style.display = text.includes(q) ? '' : 'none';
+        const original = card.dataset.original || card.innerText; // preserve original text
+        card.dataset.original = original; // store once
+
+        if (!q) {
+          // Reset to original text if query is empty
+          card.innerHTML = original;
+          card.closest('.card').style.display = '';
+          return;
+        }
+
+        const text = original.toLowerCase();
+        if (text.includes(q)) {
+          // Highlight matches
+          const regex = new RegExp(`(${q})`, 'gi');
+          card.innerHTML = original.replace(regex, '<mark>$1</mark>');
+          card.closest('.card').style.display = '';
+        } else {
+          card.closest('.card').style.display = 'none';
+        }
       });
     });
   }
+
+  // Show overlay initially for truncated posts
+  document.querySelectorAll('.post-text').forEach(el => {
+    const overlay = el.parentElement.querySelector('.fade-overlay');
+    if (el.scrollHeight > 150) {
+      if (overlay) overlay.style.display = 'block';
+      el.style.maxHeight = '150px';
+      el.style.overflow = 'hidden';
+    }
+  });
+
+  // See More / See Less toggle
+  document.querySelectorAll('.see-more-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const postId = btn.dataset.postId;
+      const postTextEl = document.getElementById(`post-text-${postId}`);
+      const fadeOverlayEl = document.getElementById(`fade-overlay-${postId}`);
+
+      if (!postTextEl) return;
+
+      if (btn.innerText === 'See More') {
+        postTextEl.style.maxHeight = 'none';
+        postTextEl.style.overflow = 'visible';
+        btn.innerText = 'See Less';
+        if (fadeOverlayEl) fadeOverlayEl.style.display = 'none';
+      } else {
+        postTextEl.style.maxHeight = '150px';
+        postTextEl.style.overflow = 'hidden';
+        btn.innerText = 'See More';
+        if (fadeOverlayEl) fadeOverlayEl.style.display = 'block';
+
+        // Scroll back to the button itself smoothly
+        const rect = btn.getBoundingClientRect();
+        const scrollTop = window.scrollY + rect.top;
+        window.scrollTo({ top: scrollTop - 100, behavior: 'smooth' });
+      }
+    });
+  });
 });
 
+// Dark mode helper
 function setDarkMode(enabled) {
   const icon = document.querySelector('#darkToggle i');
   if (enabled) {
@@ -35,6 +92,7 @@ function setDarkMode(enabled) {
   }
 }
 
+// Toast helper
 function showToast(message, isError=false) {
   const container = document.getElementById('toastContainer');
   const toastEl = document.createElement('div');
