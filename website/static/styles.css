@@ -157,7 +157,7 @@ body {
 
 /* Highlighted search matches */
 mark {
-  background-color: #ffeb3b;   /* bright yellow */
+  background-color: #FFE066;   /* bright yellow */
   color: #000;                 /* black text for contrast */
   font-weight: bold;           /* emphasize the match */
   padding: 0 2px;              /* small padding so highlight looks neat */

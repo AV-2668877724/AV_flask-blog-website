@@ -1,3 +1,6 @@
+import re
+from difflib import get_close_matches
+from markupsafe import Markup
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
 from .models import Like, Post, User, Comment
@@ -21,6 +24,26 @@ def enrich_posts(posts, current_user_id):
             'liked': liked
         })
     return enriched
+
+def highlight(text, query):
+    """Wrap matching query terms in <mark> tags for highlighting."""
+    if not query:
+        return text
+    try:
+        regex = re.compile(re.escape(query), re.IGNORECASE)
+        return Markup(regex.sub(lambda m: f"<mark>{m.group(0)}</mark>", text))
+    except Exception:
+        return text
+
+def highlight_username(username, query):
+    """Highlight query inside username if present."""
+    if not query:
+        return username
+    try:
+        regex = re.compile(re.escape(query), re.IGNORECASE)
+        return Markup(regex.sub(lambda m: f"<mark>{m.group(0)}</mark>", username))
+    except Exception:
+        return username
 
 @views.route('/')
 @views.route('/home')
@@ -125,12 +148,11 @@ def like_post(post_id):
 
 @views.route('/about')
 def about():
-    # No login required; show public about page
     return render_template("about.html", user=current_user)
 
 @views.route('/search', methods=['GET'])
 def search():
-    query = (request.args.get('q') or '').strip().lower()
+    query = (request.args.get('q') or '').strip()
     filter_type = request.args.get('filter') or 'keywords'
 
     if not query:
@@ -138,19 +160,52 @@ def search():
         return redirect(url_for('views.home'))
 
     posts = []
+    suggestions = []
+
     if filter_type == 'username':
+        # Exact/partial match search
         posts = Post.query.join(User).filter(User.username.ilike(f"%{query}%")).all()
+
+        # If no matches, suggest similar usernames
+        if not posts:
+            all_users = User.query.all()
+            usernames = [u.username for u in all_users]
+            close_matches = get_close_matches(query, usernames, n=5, cutoff=0.1)  # lower cutoff for short names
+            if close_matches:
+                suggestions = Post.query.join(User).filter(User.username.in_(close_matches)).all()
+
     elif filter_type == 'keywords':
+        # Exact match search
         posts = Post.query.filter(Post.text.ilike(f"%{query}%")).all()
 
-    # Suggestions: latest 5 posts
-    suggestions = Post.query.order_by(Post.date_created.desc()).limit(5).all()
+        # If no matches, suggest similar posts by fuzzy text
+        if not posts:
+            all_posts = Post.query.all()
+            texts = [p.text for p in all_posts]
+            close_matches = get_close_matches(query, texts, n=5, cutoff=0.3)
+            suggestions = [p for p in all_posts if p.text in close_matches]
+
+    # Fallback: if still no suggestions, show latest posts
+    if not posts and not suggestions:
+        suggestions = Post.query.order_by(Post.date_created.desc()).limit(5).all()
+
+    # Highlight matches in exact posts
+    for p in posts:
+        p.text = highlight(p.text, query)
+        p.user.username = highlight_username(p.user.username, query)
+
+    # Highlight suggestions too
+    for s in suggestions:
+        s.user.username = highlight_username(s.user.username, query)
+
+    enriched = enrich_posts(posts, current_user.id)
+    enriched_suggestions = enrich_posts(suggestions, current_user.id)
 
     return render_template(
         "search_results.html",
-        posts=posts,
+        posts=enriched,
         query=query,
         filter_type=filter_type,
-        suggestions=suggestions,
+        suggestions=enriched_suggestions,
         user=current_user
     )

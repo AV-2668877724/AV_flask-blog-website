@@ -1,3 +1,39 @@
-1. USER AUTHENTICATION
-2. CREATE POSTS
-3. LIKES, COMMENTS,ETC
+AV-Postory/
+│
+├── app.py                         # Application entry point
+│
+├── instance/
+│   └── database.db                # SQLite database
+│
+├── website/
+│   │
+│   ├── __init__.py                # App factory & DB initialization
+│   ├── models.py                  # Database models
+│   ├── views.py                   # Main routes
+│   ├── auth.py                    # Authentication routes
+│   │
+│   ├── static/                    # Static assets
+│   │   │
+│   │   ├── style.css              # ✅ MAIN GLOBAL CSS FILE
+│   │   ├── index.js               # JavaScript (likes, interactions)
+│   │   └── images/                # Images/icons
+│   │
+│   ├── templates/                 # HTML templates
+│   │   │
+│   │   ├── base.html
+│   │   │   ├── home.html
+│   │   │   ├── posts_div.html
+│   │   │   ├── posts.html
+│   │   │   ├── create_posts.html
+│   │   │   ├── login.html
+│   │   │   ├── signup.html
+│   │   │   ├── forgot_password.html
+│   │   │   └── search_result.html
+│   │
+│   └── __pycache__/
+│
+├── requirements.txt
+├── README.md
+└── .gitignore
+
+
