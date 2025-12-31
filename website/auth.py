@@ -1,29 +1,41 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
-from . import db
-from .models import User,Post,Comment,Like
+from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_user, login_required, logout_user, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+from . import db
+from werkzeug.security import check_password_hash, generate_password_hash
+from .models import User
 
 auth = Blueprint('auth', __name__)
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = (request.form.get('email') or '').strip().lower()
-        password = request.form.get('password') or ''
+        login_input = (request.form.get('login') or "").strip()
+        password = request.form.get('password')
 
-        user = User.query.filter_by(email=email).first()
-        if user:
-            if check_password_hash(user.password, password):
-                flash('Logged in successfully!', category='success')
-                login_user(user, remember=True)
-                return redirect(url_for('views.home'))
-            else:
-                flash('Incorrect password, try again.', category='error')
+        user = None
+        login_type = None
+
+        if "@" in login_input:
+            user = User.query.filter_by(email=login_input).first()
+            login_type = "email"
         else:
-            flash('Email does not exist.', category='error')
+            user = User.query.filter_by(username=login_input).first()
+            login_type = "username"
 
-    return render_template("login.html", user=current_user)
+        if not user:
+            flash(
+                "No account found with that email address." if login_type == "email"
+                else "No account found with that username.",
+                category="error"
+            )
+        elif not check_password_hash(user.password, password):
+            flash("Incorrect password. Please try again.", category="error")
+        else:
+            login_user(user, remember=True)
+            flash("Logged in successfully!", category="success")
+            return redirect(url_for("views.home"))
+
+    return render_template("login.html")
 
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
@@ -36,7 +48,6 @@ def signup():
         dob = (request.form.get('dob') or '').strip().lower()
         fav_person = (request.form.get('fav_person') or '').strip().lower()
 
-        # Validations
         email_exists = User.query.filter_by(email=email).first()
         username_exists = User.query.filter_by(username=username).first()
 
@@ -75,7 +86,7 @@ def signup():
                 print(f"[SIGNUP ERROR] {str(e)}")
                 flash('An error occurred while creating your account. Please try again.', category='error')
 
-    return render_template("signup.html", user=current_user)
+    return render_template("signup.html")
 
 
 @auth.route('/forgot-password', methods=['GET', 'POST'])
@@ -109,7 +120,7 @@ def forgot_password():
                 print(f"[FORGOT PASSWORD ERROR] {str(e)}")
                 flash('An error occurred while resetting your password. Please try again.', category='error')
 
-    return render_template("forgot_password.html", user=current_user)
+    return render_template("forgot_password.html")
 
 
 @auth.route('/logout')

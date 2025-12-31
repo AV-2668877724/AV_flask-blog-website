@@ -67,7 +67,7 @@
             <li class="nav-item">
               <a class="nav-link" href="/about">About</a>
             </li>
-            {% if user.is_authenticated %}
+            {% if current_user.is_authenticated %}
             <li class="nav-item">
               <a class="nav-link" href="/create-post">Create</a>
             </li>
@@ -75,7 +75,7 @@
           </ul>
 
           <div class="d-flex align-items-center">
-            {% if user.is_authenticated %}
+            {% if current_user.is_authenticated %}
             <!-- Search form -->
             <form
               action="/search"
@@ -142,11 +142,13 @@
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                {{ user.username }}
+                {{ current_user.username }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li>
-                  <a class="dropdown-item" href="/posts/{{ user.username }}"
+                  <a
+                    class="dropdown-item"
+                    href="/posts/{{ current_user.username }}"
                     >My Posts</a
                   >
                 </li>
