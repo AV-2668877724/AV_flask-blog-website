@@ -32,7 +32,7 @@ def login():
             flash("Incorrect password. Please try again.", category="error")
         else:
             login_user(user, remember=True)
-            flash("Logged in successfully!", category="success")
+            flash(f"Welcome {user.username} in AV Postory", category="welcome")
             return redirect(url_for("views.home"))
 
     return render_template("login.html")
@@ -78,7 +78,7 @@ def signup():
                 db.session.commit()
 
                 login_user(new_user, remember=True)
-                flash('Account created successfully!', category='success')
+                flash(f"Welcome {new_user.username} in AV Postory", category="welcome")
                 return redirect(url_for('views.home'))
 
             except Exception as e:
