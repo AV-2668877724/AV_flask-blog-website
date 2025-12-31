@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setDarkMode(enabled);
   });
 
-  // Live search with highlight
+  // Live search with highlight (scoped to posts only)
   const searchInput = document.getElementById('searchBox'); // FIXED ID
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const text = original.toLowerCase();
         if (text.includes(q)) {
-          // Highlight matches
+          // Highlight matches only in post content
           const regex = new RegExp(`(${q})`, 'gi');
           card.innerHTML = original.replace(regex, '<mark>$1</mark>');
           card.closest('.card').style.display = '';

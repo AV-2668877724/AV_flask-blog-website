@@ -155,11 +155,25 @@ body {
   margin: 0.5rem 0;
 }
 
-/* Highlighted search matches */
+
+/* Light mode highlight */
 mark {
-  background-color: #FFE066;   /* bright yellow */
-  color: #000;                 /* black text for contrast */
-  font-weight: bold;           /* emphasize the match */
-  padding: 0 2px;              /* small padding so highlight looks neat */
-  border-radius: 2px;          /* subtle rounded corners */
+  background-color: #f1c83f; /* soft Bootstrap warning yellow */
+  color: #212529;            /* dark text for readability */
+  font-weight: 600;
+  border-radius: 0.25rem;
+  padding: 0.1em 0.2em;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Dark mode highlight */
+body.dark-mode mark {
+  background-color: rgba(241, 229, 229, 0.25); /* subtle amber glow */
+  color: #12eb36; /* white text for contrast */
+}
+
+
+
+
+
+
