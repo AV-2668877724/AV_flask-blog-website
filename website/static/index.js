@@ -11,31 +11,32 @@ document.addEventListener('DOMContentLoaded', () => {
     setDarkMode(enabled);
   });
 
-  // Live search with highlight (scoped to posts only)
-  const searchInput = document.getElementById('searchBox'); // FIXED ID
+  // Live search with highlight (scoped to #searchResults only)
+  const searchInput = document.getElementById('searchBox');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
       const q = e.target.value.toLowerCase();
 
-      document.querySelectorAll('.card .post-text').forEach(card => {
-        const original = card.dataset.original || card.innerText; // preserve original text
-        card.dataset.original = original; // store once
+      const resultsContainer = document.getElementById('searchResults');
+      if (!resultsContainer) return;
+
+      resultsContainer.querySelectorAll('.post-text, .post-username').forEach(el => {
+        const original = el.dataset.original || el.innerText;
+        el.dataset.original = original;
 
         if (!q) {
-          // Reset to original text if query is empty
-          card.innerHTML = original;
-          card.closest('.card').style.display = '';
+          el.innerHTML = original;
+          el.closest('.card').style.display = '';
           return;
         }
 
         const text = original.toLowerCase();
         if (text.includes(q)) {
-          // Highlight matches only in post content
           const regex = new RegExp(`(${q})`, 'gi');
-          card.innerHTML = original.replace(regex, '<mark>$1</mark>');
-          card.closest('.card').style.display = '';
+          el.innerHTML = original.replace(regex, '<mark>$1</mark>');
+          el.closest('.card').style.display = '';
         } else {
-          card.closest('.card').style.display = 'none';
+          el.closest('.card').style.display = 'none';
         }
       });
     });
