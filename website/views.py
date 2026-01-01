@@ -149,3 +149,40 @@ def like_post(post_id):
 @views.route('/about')
 def about():
     return render_template("about.html", user=current_user)
+
+@views.route('/search')
+@login_required
+def search():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({'users': [], 'posts': []})
+    
+    # Search users
+    users = User.query.filter(User.username.like(f'%{query}%')).limit(5).all()
+    user_results = [{'username': u.username, 'id': u.id} for u in users]
+    
+    # Always search posts
+    posts = Post.query.filter(Post.text.like(f'%{query}%')).limit(5).all()
+    post_results = [{'id': p.id, 'text': p.text[:100] + '...' if len(p.text) > 100 else p.text, 'author': p.user.username} for p in posts]
+    
+    return jsonify({'users': user_results, 'posts': post_results})
+
+@views.route('/search-page')
+@login_required
+def search_page():
+    query = request.args.get('q', '').strip()
+    if not query:
+        flash('No search query provided.', category='error')
+        return redirect(url_for('views.home'))
+    
+    # Search users
+    users = User.query.filter(User.username.like(f'%{query}%')).limit(5).all()
+    
+    # Search posts
+    posts = Post.query.filter(Post.text.like(f'%{query}%')).limit(10).all()
+    if not posts:
+        # If no posts match, show recent posts as suggestions
+        posts = Post.query.order_by(Post.date_created.desc()).limit(10).all()
+    enriched_posts = enrich_posts(posts, current_user.id)
+    
+    return render_template("search.html", query=query, users=users, posts=enriched_posts, user=current_user)

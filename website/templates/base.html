@@ -34,31 +34,6 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='styles.css') }}"
     />
-
-    <style>
-      /* Toast animation: slide down + fade in */
-      .toast.showing,
-      .toast.show {
-        animation: slideDownFade 0.6s ease forwards;
-      }
-      @keyframes slideDownFade {
-        from {
-          transform: translateY(-30px);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-
-      /* Rounded corners + shadow for branded card look */
-      .toast {
-        border-radius: 0.75rem !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        font-size: 1rem;
-      }
-    </style>
   </head>
 
   <body>
@@ -94,6 +69,15 @@
             <li class="nav-item"><a class="nav-link" href="/create-post">Create</a></li>
             {% endif %}
           </ul>
+
+          {% if current_user.is_authenticated %}
+          <div class="d-flex align-items-center me-3">
+            <div class="position-relative">
+              <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Search users..." autocomplete="off" style="width: 200px;" />
+              <div id="searchResults" class="dropdown-menu position-absolute w-100" style="top: 100%; z-index: 1050;"></div>
+            </div>
+          </div>
+          {% endif %}
 
           <div class="d-flex align-items-center">
             {% if current_user.is_authenticated %}
@@ -185,6 +169,58 @@
         document.querySelectorAll('#toastContainer .toast').forEach(function(toastEl) {
           const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
           toast.show();
+        });
+      });
+    </script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        let timeout;
+
+        searchInput.addEventListener('input', function() {
+          clearTimeout(timeout);
+          const query = this.value.trim();
+          if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+          }
+          timeout = setTimeout(() => {
+            fetch(`/search?q=${encodeURIComponent(query)}`)
+              .then(response => response.json())
+              .then(data => {
+                searchResults.innerHTML = '';
+                if (data.users.length > 0) {
+                  data.users.forEach(user => {
+                    const item = document.createElement('a');
+                    item.className = 'dropdown-item';
+                    item.href = `/search-page?q=${user.username}`;
+                    item.innerHTML = `<strong>${user.username}</strong>`;
+                    searchResults.appendChild(item);
+                  });
+                  searchResults.style.display = 'block';
+                } else {
+                  searchResults.style.display = 'none';
+                }
+              });
+          }, 300); // debounce
+        });
+
+        searchInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const query = this.value.trim();
+            if (query.length < 2) return;
+            window.location.href = `/search-page?q=${encodeURIComponent(query)}`;
+          }
+        });
+
+        // Hide on click outside
+        document.addEventListener('click', function(e) {
+          if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.style.display = 'none';
+          }
         });
       });
     </script>
