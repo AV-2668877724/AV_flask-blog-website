@@ -168,7 +168,7 @@ mark {
 
 /* Dark mode highlight */
 body.dark-mode mark {
-  background-color: rgba(241, 229, 229, 0.25); /* subtle amber glow */
+  background-color: rgba(255, 119, 210, 0.25); /* subtle amber glow */
   color: #12eb36; /* white text for contrast */
 }
 
