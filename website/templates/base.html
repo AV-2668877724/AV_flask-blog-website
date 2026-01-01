@@ -97,37 +97,7 @@
 
           <div class="d-flex align-items-center">
             {% if current_user.is_authenticated %}
-            <!-- Search form -->
-            <form
-              action="/search"
-              method="get"
-              class="d-flex me-3 align-items-center"
-              style="min-width: 250px; max-width: 420px"
-              onsubmit="return validateSearch();"
-            >
-              <label
-                for="filter"
-                class="form-label mb-0 me-2 text-light small"
-                style="white-space: nowrap"
-              >
-                Search by:
-              </label>
-              <select id="filter" class="form-select form-select-sm me-2" name="filter">
-                <option value="keywords">Post Content</option>
-                <option value="username">Username</option>
-              </select>
-              <input
-                type="search"
-                class="form-control form-control-sm me-2"
-                id="searchBox"
-                name="q"
-                placeholder="Type to search..."
-                aria-label="Search"
-              />
-              <button class="btn btn-outline-light btn-sm" type="submit">
-                <i class="fas fa-search"></i>
-              </button>
-            </form>
+            
 
             <script>
               function validateSearch() {

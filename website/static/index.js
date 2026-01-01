@@ -1,4 +1,4 @@
-// index.js - dark mode, live search with highlight, see more/less toggle, likes, toasts
+// index.js - dark mode, see more/less toggle, likes, toasts
 
 document.addEventListener('DOMContentLoaded', () => {
   // Dark mode toggle
@@ -10,37 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('darkMode', enabled);
     setDarkMode(enabled);
   });
-
-  // Live search with highlight (scoped to #searchResults only)
-  const searchInput = document.getElementById('searchBox');
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase();
-
-      const resultsContainer = document.getElementById('searchResults');
-      if (!resultsContainer) return;
-
-      resultsContainer.querySelectorAll('.post-text, .post-username').forEach(el => {
-        const original = el.dataset.original || el.innerText;
-        el.dataset.original = original;
-
-        if (!q) {
-          el.innerHTML = original;
-          el.closest('.card').style.display = '';
-          return;
-        }
-
-        const text = original.toLowerCase();
-        if (text.includes(q)) {
-          const regex = new RegExp(`(${q})`, 'gi');
-          el.innerHTML = original.replace(regex, '<mark>$1</mark>');
-          el.closest('.card').style.display = '';
-        } else {
-          el.closest('.card').style.display = 'none';
-        }
-      });
-    });
-  }
 
   // Show overlay initially for truncated posts
   document.querySelectorAll('.post-text').forEach(el => {
