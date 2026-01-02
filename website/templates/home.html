@@ -1,1 +1,18 @@
-{% extends 'posts_div.html'%} {% block title%} Home {% endblock %} 
+{% extends 'base.html'%}
+{% block title%} Home {% endblock %}
+{% block content %}
+<div class="hero-section text-center py-5 mb-5">
+  <div class="container">
+    <h1 class="display-4 text-white mb-3">Welcome to AV Postory</h1>
+    <p class="lead text-white mb-4">Share your thoughts, connect with friends, and discover amazing content.</p>
+    {% if not posts %}
+    <a href="/create-post" class="btn btn-primary btn-lg">Create Your First Post</a>
+    {% else %}
+    <a href="/create-post" class="btn btn-primary btn-lg">Create a New Post</a>
+    {% endif %}
+  </div>
+</div>
+
+{% set page_title = "Latest Posts" %}
+{% include '_posts.html' %}
+{% endblock %} 

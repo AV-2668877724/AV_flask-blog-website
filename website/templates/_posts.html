@@ -1,0 +1,137 @@
+<div class="container mt-4">
+  <h2 class="text-center mb-4">{{ page_title }}</h2>
+
+  {% for post in posts %}
+  <div class="card shadow-sm mb-5">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <div>
+        <strong>
+          <a href="/posts/{{ post.user.username }}" class="text-decoration-none">
+            {{ post.user.username }}
+          </a>
+        </strong>
+        <small class="text-muted ms-2">{{ post.date_created }}</small>
+      </div>
+
+      <div>
+        <span id="likes-count-{{ post.id }}" class="likes-count">{{ post.likes_count }}</span>
+        {% if post.liked %}
+          <i class="fas fa-thumbs-up text-primary like-btn"
+             id="like-button-{{ post.id }}"
+             onclick="like('{{ post.id }}')"></i>
+        {% else %}
+          <i class="far fa-thumbs-up like-btn"
+             id="like-button-{{ post.id }}"
+             onclick="like('{{ post.id }}')"></i>
+        {% endif %}
+
+        {% if user.id == post.author %}
+        <div class="dropdown d-inline ms-2">
+          <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a href="/edit-post/{{ post.id }}" class="dropdown-item"><i class="bi bi-pencil"></i> Edit Post</a>
+            </li>
+            <li>
+              <a href="/delete-post/{{ post.id }}" class="dropdown-item text-danger"><i class="bi bi-trash"></i> Delete Post</a>
+            </li>
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Post text with fade overlay -->
+      <div class="post-wrapper" id="post-wrapper-{{ post.id }}">
+        <div class="card-text post-text" id="post-text-{{ post.id }}">
+          {{ post.text|trim }}
+        </div>
+        <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
+      </div>
+
+      {% if post.text|length > 300 %}
+        <!-- See More / See Less button -->
+        <button class="btn btn-link p-0 see-more-btn mt-2" data-post-id="{{ post.id }}">
+          See More
+        </button>
+      {% else %}
+        <!-- Comments section -->
+        {% if post.comments|length > 0 %}
+        <button class="btn btn-sm btn-link p-0" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
+          View {{ post.comments|length }} comments
+        </button>
+        {% else %}
+        <small class="text-muted">No comments yet</small>
+        {% endif %}
+      {% endif %}
+
+      <!-- Comment form -->
+      <form method="POST" action="/create-comment/{{ post.id }}" class="mt-3">
+        <div class="input-group">
+          <input type="text" name="text" class="form-control" placeholder="Write a comment..." required />
+          <button class="btn btn-primary">Post</button>
+        </div>
+      </form>
+
+      {% if post.text|length > 300 %}
+        <!-- Comments section -->
+        {% if post.comments|length > 0 %}
+        <button class="btn btn-sm btn-link p-0" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
+          View {{ post.comments|length }} comments
+        </button>
+        {% else %}
+        <small class="text-muted">No comments yet</small>
+        {% endif %}
+      {% endif %}
+
+      <div class="collapse mt-3" id="comments-{{ post.id }}">
+        <div class="border rounded p-3 bg-light">
+          {% for comment in post.comments %}
+          <div class="mb-3 pb-2 border-bottom">
+            <div class="d-flex justify-content-between align-items-start mb-1">
+              <div class="d-flex align-items-center">
+                <strong>
+                  <a href="/posts/{{ comment.user.username }}" class="text-decoration-none">
+                    {{ comment.user.username }}
+                  </a>
+                </strong>
+                <span class="text-muted small ms-2">{{ comment.date_created }}</span>
+              </div>
+
+              {% if user.id == comment.author %}
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle p-1" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li>
+                    <a href="/delete-comment/{{ comment.id }}" class="dropdown-item text-danger">
+                      <i class="bi bi-trash"></i> Delete Comment
+                    </a>
+                  </li>
+                </ul>
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="mt-2">{{ comment.text|trim }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% if not loop.last %}
+  <hr class="post-divider">
+  {% endif %}
+  {% else %}
+  <p class="text-center text-muted">No posts available.</p>
+  {% endfor %}
+
+  <div class="text-center mt-4">
+    <a href="/create-post" class="btn btn-primary btn-lg">Create a Post</a>
+  </div>
+</div>

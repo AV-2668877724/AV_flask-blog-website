@@ -1,14 +1,10 @@
-{% extends 'posts_div.html'%}
+{% extends 'base.html'%}
 {% block title%} {{username}}'s Posts {% endblock %}
-{% block header %} {{username}}'s Posts {% endblock %}
-
-{% block footer%}
-
-<div align="center">
-  <a href="/home">
-    <button class="btn btn-primary btn-lg">Back</button></a
-  >
+{% block content %}
+{% set page_title = username + "'s Posts" %}
+{% include '_posts.html' %}
+<div class="text-center mt-4">
+  <a href="/home" class="btn btn-primary btn-lg">Back</a>
 </div>
-
 {% endblock %}
 
