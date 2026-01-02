@@ -481,3 +481,54 @@ body:not(.dark-mode) .fade-overlay {
     rgba(255, 255, 255, 0.95)
   ) !important;
 }
+
+/* =====================================================
+   🔧 NAVBAR VISIBILITY FIX (LIGHT MODE)
+   ===================================================== */
+
+body:not(.dark-mode) .navbar {
+  background: rgba(248, 246, 255, 0.9) !important;
+}
+
+/* Navbar links */
+body:not(.dark-mode) .navbar .nav-link {
+  color: #2c2f4a !important;
+}
+
+/* Username dropdown button */
+body:not(.dark-mode) .navbar .dropdown-toggle {
+  color: #2c2f4a !important;
+  border-color: rgba(44, 47, 74, 0.3) !important;
+}
+
+/* Dark mode toggle button */
+body:not(.dark-mode) #darkToggle {
+  color: #2c2f4a !important;
+  border-color: rgba(44, 47, 74, 0.3) !important;
+}
+
+/* Icons inside navbar buttons */
+body:not(.dark-mode) .navbar i {
+  color: #2c2f4a !important;
+}
+
+/* Hover states */
+body:not(.dark-mode) .navbar .nav-link:hover,
+body:not(.dark-mode) .navbar .dropdown-toggle:hover,
+body:not(.dark-mode) #darkToggle:hover {
+  color: #6f5cff !important;
+}
+
+/* Dropdown menu text */
+body:not(.dark-mode) .dropdown-menu {
+  background: #ffffff !important;
+}
+
+body:not(.dark-mode) .dropdown-menu .dropdown-item {
+  color: #2c2f4a !important;
+}
+
+body:not(.dark-mode) .dropdown-menu .dropdown-item:hover {
+  background-color: rgba(111, 92, 255, 0.1) !important;
+  color: #6f5cff !important;
+}
