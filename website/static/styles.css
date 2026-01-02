@@ -280,3 +280,204 @@ body.dark-mode mark {
   margin: 2rem 0;
   border-radius: 1px;
 }
+
+.page-header {
+  max-width: 900px;
+  margin: 2rem auto 1.5rem auto;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  color: #212529;
+}
+
+.page-header p {
+  font-size: 1rem;
+}
+
+/* Dark mode support */
+.dark-mode .page-header {
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .page-header h1 {
+  color: #f1f1f1;
+}
+
+.dark-mode .page-header p {
+  color: #adb5bd;
+}
+
+/* ======================================================
+   🌸 SOFT PASTEL LIGHT THEME (FINAL)
+   Works only when NOT in dark-mode
+   ====================================================== */
+
+body:not(.dark-mode) {
+  background: linear-gradient(
+    180deg,
+    #f6f4ff 0%,
+    #f9fbff 100%
+  ) !important;
+  color: #2c2f4a;
+}
+
+/* ---------------------------
+   Navbar (Pastel)
+   --------------------------- */
+body:not(.dark-mode) .light-aware-navbar {
+  background: rgba(248, 246, 255, 0.85) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(123, 104, 238, 0.15);
+}
+
+body:not(.dark-mode) .light-aware-navbar .navbar-brand,
+body:not(.dark-mode) .light-aware-navbar .brand-text,
+body:not(.dark-mode) .light-aware-navbar .nav-link {
+  color: #2c2f4a !important;
+  font-weight: 600;
+}
+
+body:not(.dark-mode) .light-aware-navbar .nav-link:hover {
+  color: #6f5cff !important;
+}
+
+body:not(.dark-mode) .light-aware-navbar .navbar-toggler {
+  filter: invert(1);
+}
+
+/* ---------------------------
+   Page Header (Pastel Glow)
+   --------------------------- */
+body:not(.dark-mode) .page-header {
+  background: linear-gradient(
+    180deg,
+    rgba(111, 92, 255, 0.12),
+    rgba(255, 255, 255, 0)
+  );
+  border-radius: 18px;
+  border-bottom: none;
+  padding: 1.75rem 1rem;
+}
+
+body:not(.dark-mode) .page-header h1 {
+  color: #2c2f4a;
+}
+
+body:not(.dark-mode) .page-header p {
+  color: #6c6f8a;
+}
+
+/* ---------------------------
+   Section Headings
+   --------------------------- */
+body:not(.dark-mode) h2,
+body:not(.dark-mode) h3 {
+  color: #2c2f4a;
+  font-weight: 700;
+}
+
+body:not(.dark-mode) h3::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    #6f5cff,
+    #9b8cff
+  );
+}
+
+/* ---------------------------
+   Cards (Pastel Glass)
+   --------------------------- */
+body:not(.dark-mode) .card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 18px !important;
+  border: 1px solid rgba(111, 92, 255, 0.12) !important;
+  box-shadow: 0 12px 30px rgba(111, 92, 255, 0.12) !important;
+}
+
+/* Card hover */
+body:not(.dark-mode) .card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(111, 92, 255, 0.18) !important;
+}
+
+/* Card header */
+body:not(.dark-mode) .card-header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(111, 92, 255, 0.15);
+}
+
+/* ---------------------------
+   List Groups (Matching Users)
+   --------------------------- */
+body:not(.dark-mode) .list-group-item {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(111, 92, 255, 0.12) !important;
+  color: #2c2f4a;
+}
+
+/* ---------------------------
+   Alerts
+   --------------------------- */
+body:not(.dark-mode) .alert-success {
+  background: rgba(119, 245, 148, 0.25) !important;
+  border-color: rgba(119, 245, 148, 0.45) !important;
+  color: #1f7a3f !important;
+}
+
+body:not(.dark-mode) .alert-danger {
+  background: rgba(255, 99, 132, 0.15) !important;
+  border-color: rgba(255, 99, 132, 0.35) !important;
+  color: #842029 !important;
+}
+
+/* ---------------------------
+   Comments area
+   --------------------------- */
+body:not(.dark-mode) .bg-light {
+  background: rgba(245, 244, 255, 0.9) !important;
+}
+
+/* ---------------------------
+   Buttons
+   --------------------------- */
+body:not(.dark-mode) .btn-primary {
+  background: linear-gradient(
+    45deg,
+    #6f5cff,
+    #9b8cff
+  ) !important;
+  border: none;
+  box-shadow: 0 6px 18px rgba(111, 92, 255, 0.35);
+}
+
+body:not(.dark-mode) .btn-primary:hover {
+  box-shadow: 0 10px 26px rgba(111, 92, 255, 0.45);
+}
+
+/* ---------------------------
+   Post text readability
+   --------------------------- */
+body:not(.dark-mode) .post-text {
+  color: #2c2f4a;
+  line-height: 1.65;
+}
+
+/* ---------------------------
+   Fade overlay (Pastel)
+   --------------------------- */
+body:not(.dark-mode) .fade-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.95)
+  ) !important;
+}
