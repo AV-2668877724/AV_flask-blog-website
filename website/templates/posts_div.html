@@ -52,13 +52,39 @@
         <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
       </div>
 
-      <!-- Comments section -->
-      {% if post.comments|length > 0 %}
-      <button class="btn btn-sm btn-link p-0" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
-        View {{ post.comments|length }} comments
-      </button>
+      {% if post.text|length > 300 %}
+        <!-- See More / See Less button -->
+        <button class="btn btn-link p-0 see-more-btn mt-2" data-post-id="{{ post.id }}">
+          See More
+        </button>
       {% else %}
-      <small class="text-muted">No comments yet</small>
+        <!-- Comments section -->
+        {% if post.comments|length > 0 %}
+        <button class="btn btn-sm btn-link p-0" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
+          View {{ post.comments|length }} comments
+        </button>
+        {% else %}
+        <small class="text-muted">No comments yet</small>
+        {% endif %}
+      {% endif %}
+
+      <!-- Comment form -->
+      <form method="POST" action="/create-comment/{{ post.id }}" class="mt-3">
+        <div class="input-group">
+          <input type="text" name="text" class="form-control" placeholder="Write a comment..." required />
+          <button class="btn btn-primary">Post</button>
+        </div>
+      </form>
+
+      {% if post.text|length > 300 %}
+        <!-- Comments section -->
+        {% if post.comments|length > 0 %}
+        <button class="btn btn-sm btn-link p-0" data-bs-toggle="collapse" data-bs-target="#comments-{{ post.id }}">
+          View {{ post.comments|length }} comments
+        </button>
+        {% else %}
+        <small class="text-muted">No comments yet</small>
+        {% endif %}
       {% endif %}
 
       <div class="collapse mt-3" id="comments-{{ post.id }}">
@@ -96,21 +122,6 @@
           {% endfor %}
         </div>
       </div>
-
-      <!-- Comment form -->
-      <form method="POST" action="/create-comment/{{ post.id }}" class="mt-3">
-        <div class="input-group">
-          <input type="text" name="text" class="form-control" placeholder="Write a comment..." required />
-          <button class="btn btn-primary">Post</button>
-        </div>
-      </form>
-
-      <!-- See More / See Less button placed at bottom -->
-      {% if post.text|length > 300 %}
-        <button class="btn btn-link p-0 see-more-btn mt-2" data-post-id="{{ post.id }}">
-          See More
-        </button>
-      {% endif %}
     </div>
   </div>
   {% else %}
