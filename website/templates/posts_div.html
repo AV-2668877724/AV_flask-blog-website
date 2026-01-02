@@ -35,7 +35,10 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a href="/delete-post/{{ post.id }}" class="dropdown-item text-danger">Delete Post</a>
+              <a href="/edit-post/{{ post.id }}" class="dropdown-item"><i class="bi bi-pencil"></i> Edit Post</a>
+            </li>
+            <li>
+              <a href="/delete-post/{{ post.id }}" class="dropdown-item text-danger"><i class="bi bi-trash"></i> Delete Post</a>
             </li>
           </ul>
         </div>

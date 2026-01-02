@@ -51,7 +51,7 @@ def highlight_username(username, query):
 def home():
     posts = Post.query.order_by(Post.date_created.desc()).all()
     enriched = enrich_posts(posts, current_user.id)
-    return render_template("home.html", user=current_user, posts=enriched)
+    return render_template("home.html", user=current_user, posts=enriched, is_home=True)
 
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
@@ -66,7 +66,7 @@ def create_post():
             db.session.commit()
             flash('Post created!', category='success')
             return redirect(url_for('views.home'))
-    return render_template("create_posts.html", user=current_user)
+    return render_template("create_posts.html", user=current_user, is_home=False)
 
 @views.route('/delete-post/<id>')
 @login_required
@@ -82,6 +82,27 @@ def delete_post(id):
         flash('Post deleted!', category='success')
     return redirect(url_for('views.home'))
 
+@views.route('/edit-post/<id>', methods=['GET', 'POST'])
+@login_required
+def edit_post(id):
+    post = Post.query.filter_by(id=id).first()
+    if not post:
+        flash('Post not found!', category='error')
+        return redirect(url_for('views.home'))
+    if current_user.id != post.author:
+        flash('You do not have permission to edit this post.', category='error')
+        return redirect(url_for('views.home'))
+    if request.method == 'POST':
+        text = request.form.get('text')
+        if not text or not text.strip():
+            flash('Post cannot be empty!', category='error')
+        else:
+            post.text = text.strip()
+            db.session.commit()
+            flash('Post updated!', category='success')
+            return redirect(url_for('views.home'))
+    return render_template("edit_post.html", user=current_user, post=post, is_home=False)
+
 @views.route('/posts/<username>')
 @login_required
 def posts(username):
@@ -91,7 +112,7 @@ def posts(username):
         return redirect(url_for('views.home'))
     posts = user.posts
     enriched = enrich_posts(posts, current_user.id)
-    return render_template("posts.html", user=current_user, posts=enriched, username=username)
+    return render_template("posts.html", user=current_user, posts=enriched, username=username, is_home=False)
 
 @views.route('/create-comment/<post_id>', methods=['POST'])
 @login_required
@@ -148,7 +169,7 @@ def like_post(post_id):
 
 @views.route('/about')
 def about():
-    return render_template("about.html", user=current_user)
+    return render_template("about.html", user=current_user, is_home=False)
 
 @views.route('/search')
 @login_required
@@ -185,4 +206,4 @@ def search_page():
         posts = Post.query.order_by(Post.date_created.desc()).limit(10).all()
     enriched_posts = enrich_posts(posts, current_user.id)
     
-    return render_template("search.html", query=query, users=users, posts=enriched_posts, user=current_user)
+    return render_template("search.html", query=query, users=users, posts=enriched_posts, user=current_user, is_home=False)

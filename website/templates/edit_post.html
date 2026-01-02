@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Edit Post{% endblock %}
+{% block content %}
+<h1 class="text-center">Edit Post</h1>
+
+<form method="POST" onsubmit="return validatePostForm()">
+  <textarea name="text" id="text" class="form-control" rows="6" placeholder="Share something...">{{ post.text }}</textarea>
+  <br />
+  <div class="text-center">
+    <button type="submit" class="btn btn-lg btn-primary">Update Post</button>
+  </div>
+</form>
+
+<br />
+<div class="text-center">
+  <a href="/home" class="btn btn-lg btn-secondary">Back</a>
+</div>
+
+<script>
+function validatePostForm() {
+  const t = document.getElementById('text').value.trim();
+  if (!t) {
+    alert('Post cannot be empty');
+    return false;
+  }
+  return true;
+}
+</script>
+{% endblock %}
