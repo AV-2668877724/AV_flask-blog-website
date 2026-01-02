@@ -21,19 +21,20 @@ AV-Postory/
 │   ├── templates/                 # HTML templates
 │   │   │
 │   │   ├── base.html
-│   │   │   ├── home.html
-│   │   │   ├── posts_div.html
-│   │   │   ├── posts.html
-│   │   │   ├── create_posts.html
-│   │   │   ├── login.html
-│   │   │   ├── signup.html
-│   │   │   ├── forgot_password.html
-│   │   │   └── search_result.html
+│   │   ├── home.html
+│   │   ├── posts.html
+│   │   ├── posts_div.html
+│   │   ├── _posts.html            # 🔹 Reusable post component (partials)
+│   │   ├── create_posts.html
+│   │   ├── edit_post.html         # 🔹 Edit existing post
+│   │   ├── login.html
+│   │   ├── signup.html
+│   │   ├── forgot_password.html
+│   │   ├── search.html
+│   │   └── about.html             # 🔹 About page
 │   │
 │   └── __pycache__/
 │
 ├── requirements.txt
 ├── README.md
 └── .gitignore
-
-
