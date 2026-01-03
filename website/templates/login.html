@@ -1,21 +1,32 @@
-{% extends 'base.html' %}
-{% block title %} Login {% endblock %}
-{% block content %}
-<div class="mx-auto" style="max-width:420px;">
+{% extends 'base.html' %} {% block title %} Login {% endblock %} {% block
+content %}
+
+<div class="auth-page mx-auto" style="max-width: 420px">
   <div class="card shadow-sm border-0">
     <div class="card-body p-4">
       <h3 class="text-center mb-3">
         <i class="fas fa-sign-in-alt text-primary me-2"></i> Login
       </h3>
-      <p class="text-center text-muted mb-4">Welcome back to <strong>AV Postory</strong></p>
+      <p class="text-center text-muted mb-4">
+        Welcome back to <strong>AV Postory</strong>
+      </p>
 
       <form method="POST">
         <!-- Email or Username -->
         <div class="mb-3">
-          <label for="login" class="form-label">Username or email address</label>
+          <label for="login" class="form-label"
+            >Username or email address</label
+          >
           <div class="input-group">
             <span class="input-group-text"><i class="fas fa-user"></i></span>
-            <input type="text" class="form-control" id="login" name="login" placeholder="Enter email or username" required />
+            <input
+              type="text"
+              class="form-control"
+              id="login"
+              name="login"
+              placeholder="Enter email or username"
+              required
+            />
           </div>
         </div>
 
@@ -24,7 +35,14 @@
           <label for="password" class="form-label">Password</label>
           <div class="input-group">
             <span class="input-group-text"><i class="fas fa-lock"></i></span>
-            <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required />
+            <input
+              type="password"
+              class="form-control"
+              id="password"
+              name="password"
+              placeholder="Enter password"
+              required
+            />
           </div>
         </div>
 
@@ -42,10 +60,13 @@
 
         <!-- Sign up link -->
         <div class="text-center mt-2">
-          <p class="small">Don’t have an account? <a href="/sign-up">Sign up here</a></p>
+          <p class="small">
+            Don’t have an account? <a href="/sign-up">Sign up here</a>
+          </p>
         </div>
       </form>
     </div>
   </div>
 </div>
+
 {% endblock %}

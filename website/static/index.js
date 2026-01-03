@@ -1,5 +1,5 @@
 // index.js
-// Dark mode, see more/less, likes, toasts, global search
+// Dark mode, see more/less, likes, toasts, global search, timestamps
 
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
@@ -7,13 +7,27 @@ document.addEventListener("DOMContentLoaded", () => {
   ========================== */
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
-  setDarkMode(saved);
 
-  darkToggle?.addEventListener("click", () => {
-    const enabled = document.body.classList.toggle("dark-mode");
-    localStorage.setItem("darkMode", enabled);
-    setDarkMode(enabled);
-  });
+  // Auth-only dark mode button safety
+  if (darkToggle) {
+    setDarkMode(saved);
+
+    darkToggle.addEventListener("click", () => {
+      const enabled = document.body.classList.toggle("dark-mode");
+      localStorage.setItem("darkMode", enabled);
+      setDarkMode(enabled);
+    });
+  } else {
+    // Force light mode on auth pages
+    document.body.classList.remove("dark-mode");
+  }
+
+  /* =========================
+     AUTO TOAST SHOW (FLASH)
+  ========================== */
+  document
+    .querySelectorAll("#toastContainer .toast")
+    .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
   /* =========================
      POST TRUNCATION
@@ -28,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-     SEE MORE / LESS
+     SEE MORE / SEE LESS
   ========================== */
   document.querySelectorAll(".see-more-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -59,14 +73,13 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-     🔍 GLOBAL SEARCH (FIXED)
+     🔍 GLOBAL SEARCH
   ========================== */
   const searchInput = document.getElementById("searchInput");
   const searchResults = document.getElementById("searchResults");
   let timeout;
 
   if (searchInput && searchResults) {
-    // Live dropdown search
     searchInput.addEventListener("input", () => {
       clearTimeout(timeout);
       const query = searchInput.value.trim();
@@ -82,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
           .then((data) => {
             searchResults.innerHTML = "";
 
-            if (data.users.length > 0) {
+            if (data.users && data.users.length > 0) {
               data.users.forEach((user) => {
                 const item = document.createElement("a");
                 item.className = "dropdown-item";
@@ -103,18 +116,18 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 300);
     });
 
-    // ✅ ENTER KEY HANDLER (THIS FIXES YOUR ISSUE)
+    // ENTER → full search page
     searchInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
         const query = searchInput.value.trim();
-        if (query.length < 2) return;
-
-        window.location.href = `/search-page?q=${encodeURIComponent(query)}`;
+        if (query.length >= 2) {
+          window.location.href = `/search-page?q=${encodeURIComponent(query)}`;
+        }
       }
     });
 
-    // Hide dropdown on outside click
+    // Outside click close
     document.addEventListener("click", (e) => {
       if (
         !searchInput.contains(e.target) &&
@@ -124,6 +137,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  /* =========================
+     TIMESTAMP REFRESH
+  ========================== */
+  refreshTimestamps();
+  setInterval(refreshTimestamps, 60000);
 });
 
 /* =========================
@@ -165,7 +184,7 @@ function showToast(message, isError = false) {
 }
 
 /* =========================
-   👍 LIKE HANDLER
+   👍 LIKE HANDLER (SAFE)
 ========================== */
 function like(postId) {
   const countEl = document.getElementById(`likes-count-${postId}`);
@@ -178,6 +197,7 @@ function like(postId) {
   const liked = btn.classList.contains("far");
   const current = parseInt(countEl.innerText, 10) || 0;
 
+  // Optimistic UI
   countEl.innerText = liked ? current + 1 : Math.max(0, current - 1);
   btn.classList.toggle("far");
   btn.classList.toggle("fas");
@@ -199,7 +219,9 @@ function like(postId) {
     .finally(() => (btn.dataset.loading = "false"));
 }
 
-
+/* =========================
+   ⏱️ TIME AGO SUPPORT
+========================== */
 function timeAgoFromISO(isoString) {
   const now = new Date();
   const then = new Date(isoString);
@@ -227,16 +249,8 @@ function timeAgoFromISO(isoString) {
 }
 
 function refreshTimestamps() {
-  document.querySelectorAll("[data-timestamp]").forEach(el => {
+  document.querySelectorAll("[data-timestamp]").forEach((el) => {
     const ts = el.getAttribute("data-timestamp");
-    if (ts) {
-      el.textContent = timeAgoFromISO(ts);
-    }
+    if (ts) el.textContent = timeAgoFromISO(ts);
   });
 }
-
-// Initial update (important for SPA-like behavior)
-document.addEventListener("DOMContentLoaded", refreshTimestamps);
-
-// Refresh every 60 seconds
-setInterval(refreshTimestamps, 60000);

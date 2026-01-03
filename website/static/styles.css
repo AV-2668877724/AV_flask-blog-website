@@ -545,8 +545,54 @@ body:not(.dark-mode) .dropdown-menu .dropdown-item:hover {
   font-size: 0.85rem;
 }
 
-/* Dark mode */
+/* Dark mode timestamps */
 body.dark-mode .card-header small.text-muted,
 body.dark-mode .card-header span.text-muted {
-  color: #495057 !important;
+  color: #6f7377 !important;
+  font-weight: 500;
+}
+
+
+
+/* Page fade-in animation */
+body {
+  animation: fadeIn 0.4s ease-in;
+}
+
+/* Keyframes for fade-in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Prevent animation glitch on modal/backdrop */
+.modal,
+.toast,
+.dropdown-menu {
+  animation: none !important;
+}
+
+/* =====================================================
+   FIX: LOGIN / SIGNUP BUTTON VISIBILITY (LIGHT MODE)
+   ===================================================== */
+
+/* Login button */
+body:not(.dark-mode) .navbar .btn-outline-light {
+  color: #2c2f4a !important;
+  border-color: rgba(44, 47, 74, 0.4) !important;
+}
+
+/* Signup button */
+body:not(.dark-mode) .navbar .btn-primary {
+  color: #ffffff !important;
+}
+
+/* Hover states */
+body:not(.dark-mode) .navbar .btn-outline-light:hover {
+  background-color: rgba(111, 92, 255, 0.1) !important;
+  color: #6f5cff !important;
 }
