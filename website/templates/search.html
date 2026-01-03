@@ -26,7 +26,6 @@
   <h3>Related Posts</h3>
   {% else %}
   <h3 class="mb-4">Suggested Posts</h3>
-
   {% endif %} {% for post in posts %}
   <div class="card shadow-sm mb-4">
     <div
@@ -41,7 +40,11 @@
             {{ post.user.username }}
           </a>
         </strong>
-        <small class="text-muted ms-2">{{ post.date_created }}</small>
+
+        <!-- ✅ FIXED -->
+        <small class="text-muted ms-2">
+          {{ post.date_created | timeago }}
+        </small>
       </div>
 
       <div>
@@ -86,7 +89,7 @@
       <!-- Post text -->
       <div class="post-wrapper" id="post-wrapper-{{ post.id }}">
         <div class="card-text post-text" id="post-text-{{ post.id }}">
-          {{ post.text|trim }}
+          {{ post.text | trim }}
         </div>
         <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
       </div>
@@ -119,8 +122,10 @@
                     {{ comment.user.username }}
                   </a>
                 </strong>
+
+                <!-- ✅ FIXED -->
                 <span class="text-muted small ms-2">
-                  {{ comment.date_created }}
+                  {{ comment.date_created | timeago }}
                 </span>
               </div>
 
@@ -146,7 +151,7 @@
               {% endif %}
             </div>
 
-            <div class="mt-2">{{ comment.text|trim }}</div>
+            <div class="mt-2">{{ comment.text | trim }}</div>
           </div>
           {% endfor %}
         </div>
