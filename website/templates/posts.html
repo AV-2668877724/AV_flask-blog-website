@@ -1,7 +1,7 @@
-{% extends 'base.html'%} {% set page_title = "Search Results" %} {% set
-page_subtitle = "Find users and posts" %} {% block title%} {{username}}'s Posts
-{% endblock %} {% block content %} {% set page_title = username + "'s Posts" %}
-{% include '_posts.html' %}
+{% extends 'base.html' %} {% block title %} {{ username }}'s Posts {% endblock
+%} {% block content %} {% set page_title = username + "'s Posts" %} {% include
+'_posts.html' %}
+
 <div class="text-center mt-4">
   <a href="/home" class="btn btn-primary btn-lg">Back</a>
 </div>

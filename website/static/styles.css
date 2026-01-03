@@ -532,3 +532,21 @@ body:not(.dark-mode) .dropdown-menu .dropdown-item:hover {
   background-color: rgba(111, 92, 255, 0.1) !important;
   color: #6f5cff !important;
 }
+
+/* ===============================
+   FORCE FIX FOR BOOTSTRAP .text-muted
+   =============================== */
+
+/* Light mode */
+.card-header small.text-muted,
+.card-header span.text-muted {
+  color: #495057 !important;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+/* Dark mode */
+body.dark-mode .card-header small.text-muted,
+body.dark-mode .card-header span.text-muted {
+  color: #495057 !important;
+}
