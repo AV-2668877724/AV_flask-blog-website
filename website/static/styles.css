@@ -596,3 +596,42 @@ body:not(.dark-mode) .navbar .btn-outline-light:hover {
   background-color: rgba(111, 92, 255, 0.1) !important;
   color: #6f5cff !important;
 }
+
+/* ======================================
+   FIX: Unwanted line below auth headings
+   (Login & Forgot Password)
+   ====================================== */
+
+/* Remove any implicit border or divider */
+.auth-card {
+  border: none !important;
+}
+
+/* Remove top margin that looks like a line */
+.auth-card .card-body > p {
+  margin-top: 0 !important;
+}
+
+/* Prevent pseudo borders from global styles */
+.auth-card h3 {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+}
+
+/* Ensure no hr-like effect */
+.auth-card::before,
+.auth-card::after {
+  display: none !important;
+}
+
+.auth-page .card {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+
+
+.auth-page .auth-heading::after {
+  display: none !important;
+  content: none !important;
+}

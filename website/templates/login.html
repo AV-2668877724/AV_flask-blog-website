@@ -2,23 +2,28 @@
 content %}
 
 <div class="auth-page mx-auto" style="max-width: 420px">
+  <!-- ✅ MOVED OUTSIDE CARD -->
+  <h3 class="text-center mb-2 auth-heading">
+
+    <i class="fas fa-sign-in-alt text-primary me-2"></i> Login
+  </h3>
+  <p class="text-center text-muted mb-4">
+    Welcome back to <strong>AV Postory</strong>
+  </p>
+
+  <!-- Card starts AFTER heading -->
   <div class="card shadow-sm border-0">
     <div class="card-body p-4">
-      <h3 class="text-center mb-3">
-        <i class="fas fa-sign-in-alt text-primary me-2"></i> Login
-      </h3>
-      <p class="text-center text-muted mb-4">
-        Welcome back to <strong>AV Postory</strong>
-      </p>
-
       <form method="POST">
         <!-- Email or Username -->
         <div class="mb-3">
-          <label for="login" class="form-label"
-            >Username or email address</label
-          >
+          <label for="login" class="form-label">
+            Username or email address
+          </label>
           <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-user"></i></span>
+            <span class="input-group-text">
+              <i class="fas fa-user"></i>
+            </span>
             <input
               type="text"
               class="form-control"
@@ -34,7 +39,9 @@ content %}
         <div class="mb-3">
           <label for="password" class="form-label">Password</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+            <span class="input-group-text">
+              <i class="fas fa-lock"></i>
+            </span>
             <input
               type="password"
               class="form-control"
@@ -51,16 +58,16 @@ content %}
           <i class="fas fa-sign-in-alt me-1"></i> Login
         </button>
 
-        <!-- Forgot password link -->
+        <!-- Forgot password -->
         <div class="text-center mt-3">
           <a href="/forgot-password" class="text-decoration-none">
             <i class="fas fa-key me-1"></i> Forgot your password?
           </a>
         </div>
 
-        <!-- Sign up link -->
+        <!-- Sign up -->
         <div class="text-center mt-2">
-          <p class="small">
+          <p class="small mb-0">
             Don’t have an account? <a href="/sign-up">Sign up here</a>
           </p>
         </div>
