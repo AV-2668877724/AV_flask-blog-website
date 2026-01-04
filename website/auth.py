@@ -1,41 +1,53 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
-from flask_login import login_user, login_required, logout_user, current_user
-from . import db
-from werkzeug.security import check_password_hash, generate_password_hash
+from flask import (
+    Blueprint, render_template, request,
+    flash, redirect, url_for,
+    session
+)
+from werkzeug.security import (
+    check_password_hash,
+    generate_password_hash
+)
+from flask_login import (
+    login_user, logout_user,
+    login_required, current_user
+)
+
 from .models import User
+from . import db
+
 
 auth = Blueprint('auth', __name__)
+
+# 🔒 Admin config (EMAIL ONLY)
+ADMIN_EMAIL = "avadminpostory777@gmai.com"
+
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        login_input = (request.form.get('login') or "").strip()
-        password = request.form.get('password')
+        email = (request.form.get('email') or '').strip().lower()
+        password = request.form.get('password') or ''
 
-        user = None
-        login_type = None
-
-        if "@" in login_input:
-            user = User.query.filter_by(email=login_input).first()
-            login_type = "email"
-        else:
-            user = User.query.filter_by(username=login_input).first()
-            login_type = "username"
-
+        user = User.query.filter_by(email=email).first()
         if not user:
-            flash(
-                "No account found with that email address." if login_type == "email"
-                else "No account found with that username.",
-                category="error"
-            )
-        elif not check_password_hash(user.password, password):
-            flash("Incorrect password. Please try again.", category="error")
-        else:
-            login_user(user, remember=True)
-            flash(f"Welcome {user.username} in AV Postory", category="welcome")
-            return redirect(url_for("views.home"))
+            flash('Email does not exist.', category='error')
+            return redirect(url_for('auth.login'))
 
-    return render_template("login.html")
+        if not check_password_hash(user.password, password):
+            flash('Incorrect password.', category='error')
+            return redirect(url_for('auth.login'))
+
+        # ✅ ADMIN CHECK (EMAIL-BASED ONLY)
+        if user.email == ADMIN_EMAIL:
+            session['is_admin'] = True
+        else:
+            session['is_admin'] = False
+
+        login_user(user, remember=True)
+        flash('Logged in successfully!', category='success')
+        return redirect(url_for('views.home'))
+
+    return render_template("login.html", user=current_user)
 
 
 @auth.route('/sign-up', methods=['GET', 'POST'])
@@ -77,6 +89,9 @@ def signup():
                 db.session.add(new_user)
                 db.session.commit()
 
+                # Auto-login after signup (NOT admin unless email matches)
+                session['is_admin'] = (email == ADMIN_EMAIL)
+
                 login_user(new_user, remember=True)
                 flash(f"Welcome {new_user.username} in AV Postory", category="welcome")
                 return redirect(url_for('views.home'))
@@ -84,7 +99,10 @@ def signup():
             except Exception as e:
                 db.session.rollback()
                 print(f"[SIGNUP ERROR] {str(e)}")
-                flash('An error occurred while creating your account. Please try again.', category='error')
+                flash(
+                    'An error occurred while creating your account. Please try again.',
+                    category='error'
+                )
 
     return render_template("signup.html")
 
@@ -111,14 +129,23 @@ def forgot_password():
             flash('New password is too short.', category='error')
         else:
             try:
-                user.password = generate_password_hash(new_password, method='pbkdf2:sha256')
+                user.password = generate_password_hash(
+                    new_password, method='pbkdf2:sha256'
+                )
                 db.session.commit()
-                flash('Password reset successful! Please login with your new password.', category='success')
+                flash(
+                    'Password reset successful! Please login with your new password.',
+                    category='success'
+                )
                 return redirect(url_for('auth.login'))
+
             except Exception as e:
                 db.session.rollback()
                 print(f"[FORGOT PASSWORD ERROR] {str(e)}")
-                flash('An error occurred while resetting your password. Please try again.', category='error')
+                flash(
+                    'An error occurred while resetting your password.',
+                    category='error'
+                )
 
     return render_template("forgot_password.html")
 
@@ -126,5 +153,7 @@ def forgot_password():
 @auth.route('/logout')
 @login_required
 def logout():
+    session.pop('is_admin', None)
     logout_user()
-    return redirect(url_for('views.home'))
+    flash('Logged out successfully!', category='success')
+    return redirect(url_for('auth.login'))
