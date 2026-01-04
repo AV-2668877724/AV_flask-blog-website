@@ -55,10 +55,22 @@ def highlight_username(username, query):
 @views.route('/home')
 @login_required
 def home():
-    posts = Post.query.filter_by(is_deleted=False) \
-        .order_by(Post.date_created.desc()).all()
-    enriched = enrich_posts(posts, current_user.id)
-    return render_template("home.html", user=current_user, posts=enriched, is_home=True)
+    page = request.args.get('page', 1, type=int)
+
+    pagination = Post.query.filter_by(is_deleted=False) \
+        .order_by(Post.date_created.desc()) \
+        .paginate(page=page, per_page=5, error_out=False)
+
+    enriched = enrich_posts(pagination.items, current_user.id)
+
+    return render_template(
+        "home.html",
+        user=current_user,
+        posts=enriched,
+        pagination=pagination,
+        is_home=True
+    )
+
 
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
@@ -118,19 +130,25 @@ def posts(username):
         flash('No user with that username exists.', category='error')
         return redirect(url_for('views.home'))
 
-    posts = Post.query.filter_by(
+    page = request.args.get('page', 1, type=int)
+
+    pagination = Post.query.filter_by(
         author=user.id,
         is_deleted=False
-    ).order_by(Post.date_created.desc()).all()
+    ).order_by(Post.date_created.desc()) \
+     .paginate(page=page, per_page=5, error_out=False)
 
-    enriched = enrich_posts(posts, current_user.id)
+    enriched = enrich_posts(pagination.items, current_user.id)
+
     return render_template(
         "posts.html",
         user=current_user,
         posts=enriched,
         username=username,
+        pagination=pagination,
         is_home=False
     )
+
 
 @views.route('/create-comment/<post_id>', methods=['POST'])
 @login_required
