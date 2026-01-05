@@ -1,93 +1,70 @@
-import re
 from functools import wraps
-from markupsafe import Markup
-from flask import (
-    Blueprint, render_template, request,
-    flash, redirect, url_for,
-    jsonify, abort, session
-)
+from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, session, jsonify
 from flask_login import login_required, current_user
-
 from .models import User, Post, Comment, Like
 from . import db
+import re
+from markupsafe import Markup
 
 views = Blueprint('views', __name__)
 
-# ===============================
-# ADMIN DECORATOR
-# ===============================
-
+# ================= ADMIN DECORATOR =================
 def admin_required(f):
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         if not session.get('is_admin'):
             abort(403)
         return f(*args, **kwargs)
-    return decorated_function
+    return wrapper
 
 
-# ===============================
-# ADMIN ROUTES
-# ===============================
+# ================= ADMIN ACTIONS =================
+@views.route('/admin/delete-post/<int:post_id>')
+@login_required
+@admin_required
+def admin_delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.is_deleted:
+        flash("Post already deleted", "warning")
+    else:
+        post.is_deleted = True
+        db.session.commit()
+        flash("Post deleted", "success")
+    return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin/restore-post/<int:post_id>')
 @login_required
 @admin_required
 def admin_restore_post(post_id):
-    post = Post.query.filter_by(id=post_id, is_deleted=True).first()
-    if not post:
-        flash('Post not found or already restored.', category='error')
-        return redirect(url_for('views.home'))
-
+    post = Post.query.filter_by(id=post_id, is_deleted=True).first_or_404()
     post.is_deleted = False
     db.session.commit()
-    flash('Post restored successfully.', category='success')
-    return redirect(url_for('views.home'))
-
-
-@views.route('/admin/delete-post/<int:post_id>')
-@login_required
-@admin_required
-def admin_delete_post(post_id):
-    post = Post.query.get(post_id)
-    if not post:
-        flash('Post not found.', category='error')
-        return redirect(url_for('views.home'))
-
-    post.is_deleted = True
-    db.session.commit()
-    flash('Post deleted by admin.', category='success')
-    return redirect(url_for('views.home'))
-
+    flash("Post restored", "success")
+    return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin/delete-user/<int:user_id>')
 @login_required
 @admin_required
 def admin_delete_user(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        flash('User not found.', category='error')
-        return redirect(url_for('views.home'))
-
-    db.session.delete(user)
-    db.session.commit()
-    flash('User deleted successfully.', category='success')
-    return redirect(url_for('views.home'))
-
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash("You cannot delete yourself", "error")
+    else:
+        db.session.delete(user)
+        db.session.commit()
+        flash("User deleted", "success")
+    return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin/delete-comment/<int:comment_id>')
 @login_required
 @admin_required
 def admin_delete_comment(comment_id):
-    comment = Comment.query.get(comment_id)
-    if not comment:
-        flash('Comment not found.', category='error')
-        return redirect(url_for('views.home'))
-
+    comment = Comment.query.get_or_404(comment_id)
     db.session.delete(comment)
     db.session.commit()
-    flash('Comment deleted by admin.', category='success')
-    return redirect(url_for('views.home'))
+    flash("Comment deleted", "success")
+    return redirect(url_for('views.admin_dashboard'))
+
 
 @views.route('/admin/dashboard')
 @login_required
