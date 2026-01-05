@@ -16,6 +16,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(150), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
@@ -98,7 +99,7 @@ class Comment(db.Model):
         db.ForeignKey('post.id', ondelete='CASCADE'),
         nullable=False
     )
-
+    is_deleted = db.Column(db.Boolean, default=False)
 
 # =====================================================
 # Like Model

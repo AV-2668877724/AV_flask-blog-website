@@ -37,17 +37,16 @@ def login():
             flash('Incorrect password.', category='error')
             return redirect(url_for('auth.login'))
 
-        # ✅ ADMIN CHECK (EMAIL-BASED ONLY)
-        if user.email == ADMIN_EMAIL:
-            session['is_admin'] = True
-        else:
-            session['is_admin'] = False
-
+        # ✅ FIRST log the user in
         login_user(user, remember=True)
+
+        
+
         flash('Logged in successfully!', category='success')
         return redirect(url_for('views.home'))
 
     return render_template("login.html", user=current_user)
+
 
 
 @auth.route('/sign-up', methods=['GET', 'POST'])

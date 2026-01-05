@@ -66,6 +66,10 @@ def create_app():
         return User.query.get(int(id))
 
     return app
+    @app.context_processor
+    def inject_admin_flag():
+        return dict(is_admin=session.get('is_admin', False))
+
 
 
 def create_database(app):

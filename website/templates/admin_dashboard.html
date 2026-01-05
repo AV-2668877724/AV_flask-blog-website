@@ -3,80 +3,154 @@ block content %}
 
 <h2 class="text-center mb-4">👑 Admin Dashboard</h2>
 
-<!-- USERS -->
+<!-- ================= USERS ================= -->
 <div class="card mb-4">
   <div class="card-header fw-bold">Users</div>
   <div class="card-body">
     {% for u in users %}
-    <div class="d-flex justify-content-between mb-2">
+    <div class="d-flex justify-content-between align-items-center mb-3">
       <span>{{ u.username }} ({{ u.email }})</span>
+
       {% if u.id != user.id %}
-      <a
-        href="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
-        class="btn btn-danger btn-sm"
-        onclick="return confirm('Delete this user permanently?')"
-        >Delete</a
+      <form
+        method="POST"
+        action="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
+        class="d-flex gap-2"
       >
+        <input
+          type="password"
+          name="admin_password"
+          class="form-control form-control-sm"
+          placeholder="Admin password"
+          required
+        />
+        <button class="btn btn-danger btn-sm">Delete User</button>
+      </form>
       {% endif %}
     </div>
+    {% else %}
+    <p class="text-muted">No users found.</p>
     {% endfor %}
   </div>
 </div>
 
-<!-- ACTIVE POSTS -->
+<!-- ================= ACTIVE POSTS ================= -->
 <div class="card mb-4">
   <div class="card-header fw-bold">Active Posts</div>
   <div class="card-body">
     {% for p in active_posts %}
-    <p>{{ p.text[:120] }}...</p>
-    <a
-      href="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
-      class="btn btn-danger btn-sm"
-      onclick="return confirm('Delete this post?')"
-      >Delete</a
-    >
+    <div class="mb-3">
+      <p class="mb-1">
+        {{ p.text[:120] }}{% if p.text|length > 120 %}...{% endif %}
+      </p>
+
+      <form
+        method="POST"
+        action="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
+        class="d-flex gap-2"
+      >
+        <input
+          type="password"
+          name="admin_password"
+          class="form-control form-control-sm"
+          placeholder="Admin password"
+          required
+        />
+        <button class="btn btn-danger btn-sm">Delete Post</button>
+      </form>
+    </div>
     <hr />
+    {% else %}
+    <p class="text-muted">No active posts.</p>
     {% endfor %}
   </div>
 </div>
 
-<!-- DELETED POSTS -->
+<!-- ================= DELETED POSTS ================= -->
 <div class="card mb-4">
   <div class="card-header fw-bold">Deleted Posts</div>
   <div class="card-body">
     {% for p in deleted_posts %}
-    <p>{{ p.text[:120] }}...</p>
-    <a
-      href="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
-      class="btn btn-success btn-sm"
-      onclick="return confirm('Restore this post?')"
-      >Restore</a
-    >
+    <div class="mb-3">
+      <p class="mb-1">
+        {{ p.text[:120] }}{% if p.text|length > 120 %}...{% endif %}
+      </p>
+
+      <form
+        method="POST"
+        action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
+        class="d-flex gap-2"
+      >
+        <input
+          type="password"
+          name="admin_password"
+          class="form-control form-control-sm"
+          placeholder="Admin password"
+          required
+        />
+        <button class="btn btn-success btn-sm">Restore Post</button>
+      </form>
+    </div>
     <hr />
+    {% else %}
+    <p class="text-muted">No deleted posts.</p>
     {% endfor %}
   </div>
 </div>
 
-<!-- COMMENTS -->
+<!-- ================= COMMENTS ================= -->
 <div class="card mb-4">
   <div class="card-header fw-bold">Recent Comments</div>
   <div class="card-body">
     {% for c in comments %}
-    <div class="d-flex justify-content-between mb-2">
-      <span>{{ c.text }}</span>
-      <a
-        href="{{ url_for('views.admin_delete_comment', comment_id=c.id) }}"
-        class="btn btn-danger btn-sm"
-        onclick="return confirm('Delete this comment?')"
-        >Delete</a
+    <div class="mb-3">
+      <p class="mb-1">{{ c.text }}</p>
+
+      {% if not c.is_deleted %}
+      <!-- DELETE COMMENT -->
+      <form
+        method="POST"
+        action="{{ url_for('views.admin_delete_comment', comment_id=c.id) }}"
+        class="d-flex gap-2"
       >
+        <input
+          type="password"
+          name="admin_password"
+          class="form-control form-control-sm"
+          placeholder="Admin password"
+          required
+        />
+        <button class="btn btn-danger btn-sm">Delete Comment</button>
+      </form>
+      {% else %}
+      <!-- RESTORE COMMENT -->
+      <form
+        method="POST"
+        action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
+        class="d-flex gap-2"
+      >
+        <input
+          type="password"
+          name="admin_password"
+          class="form-control form-control-sm"
+          placeholder="Admin password"
+          required
+        />
+        <button class="btn btn-success btn-sm">Restore Comment</button>
+      </form>
+      {% endif %}
     </div>
+    <hr />
+    {% else %}
+    <p class="text-muted">No comments found.</p>
     {% endfor %}
   </div>
 </div>
 
 <div class="text-center">
-  <a href="{{ url_for('views.home') }}" class="btn btn-primary">Back to Home</a>
+  <a href="{{ url_for('views.home') }}" class="btn btn-primary">
+    Back to Home
+  </a>
 </div>
 
 {% endblock %}

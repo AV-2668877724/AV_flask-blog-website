@@ -7,85 +7,117 @@ import re
 from markupsafe import Markup
 
 views = Blueprint('views', __name__)
+ADMIN_ACTION_PASSWORD = "adminready777"
 
 # ================= ADMIN DECORATOR =================
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not session.get('is_admin'):
+        if not current_user.is_admin:
             abort(403)
         return f(*args, **kwargs)
     return wrapper
 
 
+# ================= ADMIN PASSWORD CHECK =================
+def verify_admin_password():
+    password = request.form.get("admin_password")
+    if password != ADMIN_ACTION_PASSWORD:
+        flash("Invalid admin password. Action denied.", "error")
+        return False
+    return True
+
+
 # ================= ADMIN ACTIONS =================
-@views.route('/admin/delete-post/<int:post_id>')
+
+@views.route('/admin/delete-post/<int:post_id>', methods=['POST'])
 @login_required
 @admin_required
 def admin_delete_post(post_id):
+    if not verify_admin_password():
+        return redirect(url_for('views.admin_dashboard'))
+
     post = Post.query.get_or_404(post_id)
     if post.is_deleted:
-        flash("Post already deleted", "warning")
+        flash("Post already deleted.", "warning")
     else:
         post.is_deleted = True
         db.session.commit()
-        flash("Post deleted", "success")
+        flash("Post deleted successfully.", "success")
     return redirect(url_for('views.admin_dashboard'))
 
-@views.route('/admin/restore-post/<int:post_id>')
+
+@views.route('/admin/restore-post/<int:post_id>', methods=['POST'])
 @login_required
 @admin_required
 def admin_restore_post(post_id):
+    if not verify_admin_password():
+        return redirect(url_for('views.admin_dashboard'))
+
     post = Post.query.filter_by(id=post_id, is_deleted=True).first_or_404()
     post.is_deleted = False
     db.session.commit()
-    flash("Post restored", "success")
+    flash("Post restored successfully.", "success")
     return redirect(url_for('views.admin_dashboard'))
 
-@views.route('/admin/delete-user/<int:user_id>')
+
+@views.route('/admin/delete-user/<int:user_id>', methods=['POST'])
 @login_required
 @admin_required
 def admin_delete_user(user_id):
+    if not verify_admin_password():
+        return redirect(url_for('views.admin_dashboard'))
+
     user = User.query.get_or_404(user_id)
+
     if user.id == current_user.id:
-        flash("You cannot delete yourself", "error")
+        flash("You cannot delete yourself.", "error")
     else:
         db.session.delete(user)
         db.session.commit()
-        flash("User deleted", "success")
+        flash("User deleted successfully.", "success")
     return redirect(url_for('views.admin_dashboard'))
 
-@views.route('/admin/delete-comment/<int:comment_id>')
+
+@views.route('/admin/delete-comment/<int:comment_id>', methods=['POST'])
 @login_required
 @admin_required
 def admin_delete_comment(comment_id):
+    if not verify_admin_password():
+        return redirect(url_for('views.admin_dashboard'))
+
     comment = Comment.query.get_or_404(comment_id)
-    db.session.delete(comment)
+    comment.is_deleted = True
     db.session.commit()
-    flash("Comment deleted", "success")
+    flash("Comment deleted successfully.", "success")
     return redirect(url_for('views.admin_dashboard'))
 
 
+@views.route('/admin/restore-comment/<int:comment_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_restore_comment(comment_id):
+    if not verify_admin_password():
+        return redirect(url_for('views.admin_dashboard'))
+
+    comment = Comment.query.filter_by(id=comment_id, is_deleted=True).first_or_404()
+    comment.is_deleted = False
+    db.session.commit()
+    flash("Comment restored successfully.", "success")
+    return redirect(url_for('views.admin_dashboard'))
+
+
+# ================= ADMIN DASHBOARD =================
 @views.route('/admin/dashboard')
 @login_required
 @admin_required
 def admin_dashboard():
-    users = User.query.order_by(User.date_created.desc()).all()
-
-    active_posts = Post.query.filter_by(is_deleted=False) \
-        .order_by(Post.date_created.desc()).all()
-
-    deleted_posts = Post.query.filter_by(is_deleted=True) \
-        .order_by(Post.date_created.desc()).all()
-
-    comments = Comment.query.order_by(Comment.date_created.desc()).limit(50).all()
-
     return render_template(
         "admin_dashboard.html",
-        users=users,
-        active_posts=active_posts,
-        deleted_posts=deleted_posts,
-        comments=comments,
+        users=User.query.order_by(User.date_created.desc()).all(),
+        active_posts=Post.query.filter_by(is_deleted=False).order_by(Post.date_created.desc()).all(),
+        deleted_posts=Post.query.filter_by(is_deleted=True).order_by(Post.date_created.desc()).all(),
+        comments=Comment.query.order_by(Comment.date_created.desc()).limit(50).all(),
         user=current_user,
         is_home=False
     )
@@ -141,6 +173,8 @@ def highlight_username(username, query):
 @views.route('/home')
 @login_required
 def home():
+    
+ 
     page = request.args.get('page', 1, type=int)
 
     pagination = Post.query.filter_by(is_deleted=False) \
@@ -178,14 +212,16 @@ def create_post():
 @login_required
 def delete_post(id):
     post = Post.query.filter_by(id=id).first()
+
     if not post or post.is_deleted:
-        flash('Post not found!', category='error')
-    elif current_user.id != post.author and not session.get('is_admin'):
-        flash('You do not have permission to delete this post.', category='error')
+        flash('Post not found!', 'error')
+    elif current_user.id != post.author and not current_user.is_admin:
+        flash('You do not have permission to delete this post.', 'error')
     else:
         post.is_deleted = True
         db.session.commit()
-        flash('Post deleted!', category='success')
+        flash('Post deleted!', 'success')
+
     return redirect(url_for('views.home'))
 
 
@@ -262,19 +298,20 @@ def create_comment(post_id):
             flash('Comment added!', category='success')
     return redirect(url_for('views.home'))
 
-
 @views.route('/delete-comment/<comment_id>')
 @login_required
 def delete_comment(comment_id):
     comment = Comment.query.filter_by(id=comment_id).first()
+
     if not comment:
-        flash('Comment not found.', category='error')
-    elif current_user.id != comment.author and not session.get('is_admin'):
-        flash('You do not have permission to delete this comment.', category='error')
+        flash('Comment not found.', 'error')
+    elif current_user.id != comment.author and not current_user.is_admin:
+        flash('You do not have permission to delete this comment.', 'error')
     else:
-        db.session.delete(comment)
+        comment.is_deleted = True
         db.session.commit()
-        flash('Comment deleted!', category='success')
+        flash('Comment deleted!', 'success')
+
     return redirect(url_for('views.home'))
 
 

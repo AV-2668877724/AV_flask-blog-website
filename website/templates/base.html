@@ -133,7 +133,9 @@
                   </a>
                 </li>
 
-                {% if session.get('is_admin') %}
+                {% if current_user.is_admin %}
+
+
                 <li>
                   <a
                     class="dropdown-item"
