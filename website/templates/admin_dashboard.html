@@ -38,46 +38,62 @@ block content %}
       class="card-header fw-bold d-flex justify-content-between align-items-center"
     >
       👤 Users
-      <button
-        class="btn btn-sm btn-outline-primary"
-        data-bs-toggle="collapse"
-        data-bs-target="#usersSection"
-      >
-        Toggle
-      </button>
+      <div class="d-flex gap-2 align-items-center">
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Search users..."
+          onkeydown="handleEnterSearch(event,'usersSection', this.value)"
+        />
+        <button
+          class="btn btn-sm btn-outline-primary"
+          data-bs-toggle="collapse"
+          data-bs-target="#usersSection"
+        >
+          Toggle
+        </button>
+      </div>
     </div>
+    <small class="text-muted ms-3 mt-1" id="usersSection-info"></small>
 
     <div class="collapse" id="usersSection">
       <div class="card-body">
         {% for u in users %}
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div>
-            <strong>{{ u.username }}</strong>
-            <small class="text-muted d-block">{{ u.email }}</small>
-            <small class="text-muted"
-              >Joined {{ u.date_created | timeago }}</small
-            >
-          </div>
-
-          {% if u.id != user.id %}
-          <form
-            method="POST"
-            action="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
-            class="d-flex gap-2"
-            onsubmit="return confirm('Delete this user permanently?');"
+        <div class="admin-row">
+          <div
+            class="admin-item d-flex justify-content-between align-items-center mb-3"
+            data-username="{{ u.username }}"
+            data-search="{{ u.username }} {{ u.email }}"
           >
-            <input
-              type="password"
-              name="admin_password"
-              class="form-control form-control-sm"
-              placeholder="Admin password"
-              required
-            />
-            <button class="btn btn-danger btn-sm">Delete</button>
-          </form>
-          {% else %}
-          <span class="badge bg-secondary">You</span>
-          {% endif %}
+            <div>
+              <strong>{{ u.username }}</strong>
+              <small class="text-muted d-block">{{ u.email }}</small>
+              <small class="text-muted">
+                Joined {{ u.date_created | timeago }}
+              </small>
+            </div>
+
+            {% if u.id != user.id %}
+            <form
+              method="POST"
+              action="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
+              class="d-flex gap-2"
+              onsubmit="return confirm('Delete this user permanently?');"
+            >
+              <input
+                type="password"
+                name="admin_password"
+                class="form-control form-control-sm"
+                placeholder="Admin password"
+                required
+              />
+              <button class="btn btn-danger btn-sm">Delete</button>
+            </form>
+            {% else %}
+            <span class="badge bg-secondary">You</span>
+            {% endif %}
+          </div>
+          <hr />
         </div>
         {% else %}
         <p class="text-muted">No users found.</p>
@@ -92,47 +108,61 @@ block content %}
       class="card-header fw-bold d-flex justify-content-between align-items-center"
     >
       📝 Active Posts
-      <button
-        class="btn btn-sm btn-outline-primary"
-        data-bs-toggle="collapse"
-        data-bs-target="#activePostsSection"
-      >
-        Toggle
-      </button>
+      <div class="d-flex gap-2 align-items-center">
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Search posts..."
+          onkeydown="handleEnterSearch(event,'activePostsSection', this.value)"
+        />
+        <button
+          class="btn btn-sm btn-outline-primary"
+          data-bs-toggle="collapse"
+          data-bs-target="#activePostsSection"
+        >
+          Toggle
+        </button>
+      </div>
     </div>
+    <small class="text-muted ms-3 mt-1" id="activePostsSection-info"></small>
 
     <div class="collapse" id="activePostsSection">
       <div class="card-body">
         {% for p in active_posts %}
-        <div class="mb-3">
-          <p class="mb-1">
-            <strong>{{ p.user.username }}</strong>
-            <small class="text-muted ms-2"
-              >{{ p.date_created | timeago }}</small
-            >
-          </p>
-
-          <p class="text-muted">
-            {{ p.text[:120] }}{% if p.text|length > 120 %}…{% endif %}
-          </p>
-
-          <form
-            method="POST"
-            action="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
-            class="d-flex gap-2"
-            onsubmit="return confirm('Delete this post?');"
+        <div class="admin-row">
+          <div
+            class="admin-item mb-3"
+            data-search="{{ p.user.username }} {{ p.text }}"
           >
-            <input
-              type="password"
-              name="admin_password"
-              class="form-control form-control-sm"
-              placeholder="Admin password"
-              required
-            />
-            <button class="btn btn-danger btn-sm">Delete Post</button>
-          </form>
+            <p class="mb-1">
+              <strong>{{ p.user.username }}</strong>
+              <small class="text-muted ms-2"
+                >{{ p.date_created | timeago }}</small
+              >
+            </p>
+
+            <p class="text-muted">
+              {{ p.text[:120] }}{% if p.text|length > 120 %}…{% endif %}
+            </p>
+
+            <form
+              method="POST"
+              action="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
+              class="d-flex gap-2"
+              onsubmit="return confirm('Delete this post?');"
+            >
+              <input
+                type="password"
+                name="admin_password"
+                class="form-control form-control-sm"
+                placeholder="Admin password"
+                required
+              />
+              <button class="btn btn-danger btn-sm">Delete Post</button>
+            </form>
+          </div>
+          <hr />
         </div>
-        <hr />
         {% else %}
         <p class="text-muted">No active posts.</p>
         {% endfor %}
@@ -146,47 +176,61 @@ block content %}
       class="card-header fw-bold d-flex justify-content-between align-items-center"
     >
       ♻️ Deleted Posts
-      <button
-        class="btn btn-sm btn-outline-primary"
-        data-bs-toggle="collapse"
-        data-bs-target="#deletedPostsSection"
-      >
-        Toggle
-      </button>
+      <div class="d-flex gap-2 align-items-center">
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Search deleted posts..."
+          onkeydown="handleEnterSearch(event,'deletedPostsSection', this.value)"
+        />
+        <button
+          class="btn btn-sm btn-outline-primary"
+          data-bs-toggle="collapse"
+          data-bs-target="#deletedPostsSection"
+        >
+          Toggle
+        </button>
+      </div>
     </div>
+    <small class="text-muted ms-3 mt-1" id="deletedPostsSection-info"></small>
 
     <div class="collapse" id="deletedPostsSection">
       <div class="card-body">
         {% for p in deleted_posts %}
-        <div class="mb-3">
-          <p class="mb-1">
-            <strong>{{ p.user.username }}</strong>
-            <small class="text-muted ms-2"
-              >{{ p.date_created | timeago }}</small
-            >
-            <span class="badge bg-danger ms-2">Deleted</span>
-          </p>
-
-          <p class="text-muted">
-            {{ p.text[:120] }}{% if p.text|length > 120 %}…{% endif %}
-          </p>
-
-          <form
-            method="POST"
-            action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
-            class="d-flex gap-2"
+        <div class="admin-row">
+          <div
+            class="admin-item mb-3"
+            data-search="{{ p.user.username }} {{ p.text }}"
           >
-            <input
-              type="password"
-              name="admin_password"
-              class="form-control form-control-sm"
-              placeholder="Admin password"
-              required
-            />
-            <button class="btn btn-success btn-sm">Restore</button>
-          </form>
+            <p class="mb-1">
+              <strong>{{ p.user.username }}</strong>
+              <small class="text-muted ms-2"
+                >{{ p.date_created | timeago }}</small
+              >
+              <span class="badge bg-danger ms-2">Deleted</span>
+            </p>
+
+            <p class="text-muted">
+              {{ p.text[:120] }}{% if p.text|length > 120 %}…{% endif %}
+            </p>
+
+            <form
+              method="POST"
+              action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
+              class="d-flex gap-2"
+            >
+              <input
+                type="password"
+                name="admin_password"
+                class="form-control form-control-sm"
+                placeholder="Admin password"
+                required
+              />
+              <button class="btn btn-success btn-sm">Restore</button>
+            </form>
+          </div>
+          <hr />
         </div>
-        <hr />
         {% else %}
         <p class="text-muted">No deleted posts.</p>
         {% endfor %}
@@ -194,72 +238,136 @@ block content %}
     </div>
   </div>
 
-  <!-- ================= COMMENTS ================= -->
+  <!-- ================= ACTIVE COMMENTS ================= -->
   <div class="card mb-4">
     <div
       class="card-header fw-bold d-flex justify-content-between align-items-center"
     >
-      💬 Comments
-      <button
-        class="btn btn-sm btn-outline-primary"
-        data-bs-toggle="collapse"
-        data-bs-target="#commentsSection"
-      >
-        Toggle
-      </button>
+      💬 Active Comments
+      <div class="d-flex gap-2 align-items-center">
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Search active comments..."
+          onkeydown="handleEnterSearch(event,'activeCommentsSection', this.value)"
+        />
+        <button
+          class="btn btn-sm btn-outline-primary"
+          data-bs-toggle="collapse"
+          data-bs-target="#activeCommentsSection"
+        >
+          Toggle
+        </button>
+      </div>
     </div>
+    <small class="text-muted ms-3 mt-1" id="activeCommentsSection-info"></small>
 
-    <div class="collapse" id="commentsSection">
+    <div class="collapse" id="activeCommentsSection">
       <div class="card-body">
-        {% for c in comments %}
-        <div class="mb-3">
-          <p class="mb-1">
-            <strong>{{ c.user.username }}</strong>
-            <small class="text-muted ms-2"
-              >{{ c.date_created | timeago }}</small
+        {% for c in comments if not c.is_deleted %}
+        <div class="admin-row">
+          <div
+            class="admin-item mb-3"
+            data-search="{{ c.user.username }} {{ c.text }}"
+          >
+            <p class="mb-1">
+              <strong>{{ c.user.username }}</strong>
+              <small class="text-muted ms-2"
+                >{{ c.date_created | timeago }}</small
+              >
+            </p>
+
+            <p class="text-muted">{{ c.text }}</p>
+
+            <form
+              method="POST"
+              action="{{ url_for('views.admin_delete_comment', comment_id=c.id) }}"
+              class="d-flex gap-2"
+              onsubmit="return confirm('Delete this comment?');"
             >
-            {% if c.is_deleted %}
-            <span class="badge bg-danger ms-2">Deleted</span>
-            {% endif %}
-          </p>
-
-          <p class="text-muted">{{ c.text }}</p>
-
-          {% if not c.is_deleted %}
-          <form
-            method="POST"
-            action="{{ url_for('views.admin_delete_comment', comment_id=c.id) }}"
-            class="d-flex gap-2"
-          >
-            <input
-              type="password"
-              name="admin_password"
-              class="form-control form-control-sm"
-              placeholder="Admin password"
-              required
-            />
-            <button class="btn btn-danger btn-sm">Delete</button>
-          </form>
-          {% else %}
-          <form
-            method="POST"
-            action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
-            class="d-flex gap-2"
-          >
-            <input
-              type="password"
-              name="admin_password"
-              class="form-control form-control-sm"
-              placeholder="Admin password"
-              required
-            />
-            <button class="btn btn-success btn-sm">Restore</button>
-          </form>
-          {% endif %}
+              <input
+                type="password"
+                name="admin_password"
+                class="form-control form-control-sm"
+                placeholder="Admin password"
+                required
+              />
+              <button class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </div>
+          <hr />
         </div>
-        <hr />
         {% else %}
-        <p class="text-muted">No comments found.</p>
+        <p class="text-muted">No active comments.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DELETED COMMENTS ================= -->
+  <div class="card mb-4">
+    <div
+      class="card-header fw-bold d-flex justify-content-between align-items-center"
+    >
+      ♻️ Deleted Comments
+      <div class="d-flex gap-2 align-items-center">
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Search deleted comments..."
+          onkeydown="handleEnterSearch(event,'deletedCommentsSection', this.value)"
+        />
+        <button
+          class="btn btn-sm btn-outline-primary"
+          data-bs-toggle="collapse"
+          data-bs-target="#deletedCommentsSection"
+        >
+          Toggle
+        </button>
+      </div>
+    </div>
+    <small
+      class="text-muted ms-3 mt-1"
+      id="deletedCommentsSection-info"
+    ></small>
+
+    <div class="collapse" id="deletedCommentsSection">
+      <div class="card-body">
+        {% for c in comments if c.is_deleted %}
+        <div class="admin-row">
+          <div
+            class="admin-item mb-3"
+            data-search="{{ c.user.username }} {{ c.text }}"
+          >
+            <p class="mb-1">
+              <strong>{{ c.user.username }}</strong>
+              <small class="text-muted ms-2"
+                >{{ c.date_created | timeago }}</small
+              >
+              <span class="badge bg-danger ms-2">Deleted</span>
+            </p>
+
+            <p class="text-muted">{{ c.text }}</p>
+
+            <form
+              method="POST"
+              action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
+              class="d-flex gap-2"
+            >
+              <input
+                type="password"
+                name="admin_password"
+                class="form-control form-control-sm"
+                placeholder="Admin password"
+                required
+              />
+              <button class="btn btn-success btn-sm">Restore</button>
+            </form>
+          </div>
+          <hr />
+        </div>
+        {% else %}
+        <p class="text-muted">No deleted comments.</p>
         {% endfor %}
       </div>
     </div>

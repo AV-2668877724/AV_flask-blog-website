@@ -254,3 +254,72 @@ function refreshTimestamps() {
     if (ts) el.textContent = timeAgoFromISO(ts);
   });
 }
+
+// * ADMIN DASHBOARD SEARCH
+
+// Expose to HTML inline handlers
+window.handleEnterSearch = function (event, sectionId, value) {
+  const section = document.getElementById(sectionId);
+  const info = document.getElementById(sectionId + "-info");
+  if (!section) return;
+
+  if (event.key === "Enter") {
+    event.preventDefault();
+
+    if (!section.classList.contains("show")) {
+      new bootstrap.Collapse(section, { show: true });
+    }
+
+    applyAdminFilter(sectionId, value);
+  }
+
+  if (event.key === "Escape") {
+    event.preventDefault();
+    event.target.value = "";
+    resetAdminFilter(sectionId);
+  }
+};
+
+function applyAdminFilter(sectionId, query) {
+  query = query.trim().toLowerCase();
+  const section = document.getElementById(sectionId);
+  const info = document.getElementById(sectionId + "-info");
+
+  if (!query) {
+    resetAdminFilter(sectionId);
+    return;
+  }
+
+  let count = 0;
+
+  section.querySelectorAll(".admin-row").forEach((row) => {
+    const item = row.querySelector(".admin-item");
+    let match = false;
+
+    if (item.dataset.username) {
+      match = item.dataset.username.toLowerCase() === query;
+    } else {
+      match = item.dataset.search.toLowerCase().includes(query);
+    }
+
+    row.classList.toggle("d-none", !match);
+    if (match) count++;
+  });
+
+  if (info) {
+    info.textContent = count
+      ? `${count} result${count > 1 ? "s" : ""} found`
+      : "No results found";
+  }
+}
+
+function resetAdminFilter(sectionId) {
+  const section = document.getElementById(sectionId);
+  const info = document.getElementById(sectionId + "-info");
+
+  section.querySelectorAll(".admin-row").forEach((row) => {
+    row.classList.remove("d-none");
+  });
+
+  if (info) info.textContent = "";
+}
