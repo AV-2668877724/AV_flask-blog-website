@@ -84,13 +84,14 @@
       {% endif %}
 
       <!-- Comments toggle -->
-      {% if post.comments|length > 0 %}
+      {% set visible_comments = post.comments | selectattr('is_deleted',
+      'equalto', False) | list %} {% if visible_comments|length > 0 %}
       <button
         class="btn btn-sm btn-link p-0"
         data-bs-toggle="collapse"
         data-bs-target="#comments-{{ post.id }}"
       >
-        View {{ post.comments|length }} comments
+        View {{ visible_comments|length }} comments
       </button>
       {% else %}
       <small class="text-muted">No comments yet</small>
@@ -99,7 +100,9 @@
       <!-- Comments -->
       <div class="collapse mt-3" id="comments-{{ post.id }}">
         <div class="border rounded p-3 bg-light">
-          {% for comment in post.comments %}
+          {% for comment in visible_comments %}
+
+
           <div class="mb-3 pb-2 border-bottom">
             <div class="d-flex justify-content-between align-items-start mb-1">
               <div class="d-flex align-items-center">

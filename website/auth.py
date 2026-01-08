@@ -25,27 +25,27 @@ ADMIN_EMAIL = "avadminpostory777@gmai.com"
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = (request.form.get('email') or '').strip().lower()
+        login_input = (request.form.get('login') or '').strip().lower()
         password = request.form.get('password') or ''
 
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter(
+            (User.email == login_input) | (User.username == login_input)
+        ).first()
+
         if not user:
-            flash('Email does not exist.', category='error')
+            flash('Email or username does not exist.', category='error')
             return redirect(url_for('auth.login'))
 
         if not check_password_hash(user.password, password):
             flash('Incorrect password.', category='error')
             return redirect(url_for('auth.login'))
 
-        # ✅ FIRST log the user in
         login_user(user, remember=True)
-
-        
-
         flash('Logged in successfully!', category='success')
         return redirect(url_for('views.home'))
 
     return render_template("login.html", user=current_user)
+
 
 
 
