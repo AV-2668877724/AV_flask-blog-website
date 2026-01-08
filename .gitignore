@@ -237,3 +237,5 @@ Thumbs.db
 
 # Custom ignore
 AV_Blog_Structure.txt" > .gitignore
+
+tools/
