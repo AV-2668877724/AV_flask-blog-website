@@ -7,7 +7,10 @@
     >
       <div>
         <strong>
-          <a href="/profile/{{ post.user.username }}">
+          <a
+            href="/profile/{{ post.user.username }}"
+            class="text-decoration-none"
+          >
             {{ post.user.username }}
           </a>
         </strong>
@@ -17,6 +20,7 @@
       </div>
 
       <div class="d-flex align-items-center gap-2">
+        <!-- 👍 Likes -->
         <span id="likes-count-{{ post.id }}" class="likes-count">
           {{ post.likes_count }}
         </span>
@@ -33,7 +37,11 @@
           id="like-button-{{ post.id }}"
           onclick="like('{{ post.id }}')"
         ></i>
-        {% endif %} {% if current_user.id == post.author %}
+        {% endif %}
+
+        <!-- ⋮ Post actions -->
+        {% if current_user.is_authenticated and current_user.id == post.author
+        %}
         <div class="dropdown ms-2">
           <button
             class="btn btn-sm btn-outline-secondary dropdown-toggle"
@@ -63,6 +71,7 @@
 
     <!-- ================= POST BODY ================= -->
     <div class="card-body">
+      <!-- Post text -->
       <div class="post-wrapper" id="post-wrapper-{{ post.id }}">
         <div class="card-text post-text" id="post-text-{{ post.id }}">
           {{ post.text | trim }}
@@ -87,8 +96,7 @@
         data-bs-toggle="collapse"
         data-bs-target="#comments-{{ post.id }}"
       >
-        View {{ visible_comments|length }} comment{{ 's' if
-        visible_comments|length > 1 }}
+        View {{ visible_comments|length }} comments
       </button>
       {% else %}
       <small class="text-muted d-block mt-2">No comments yet</small>
@@ -99,7 +107,7 @@
         <div class="border rounded p-3 bg-light">
           {% for comment in visible_comments %}
           <div class="mb-3 pb-2 border-bottom">
-            <div class="d-flex justify-content-between align-items-start">
+            <div class="d-flex justify-content-between align-items-start mb-1">
               <div>
                 <strong>
                   <a
@@ -109,12 +117,13 @@
                     {{ comment.user.username }}
                   </a>
                 </strong>
-                <small class="text-muted ms-2">
+                <span class="text-muted small ms-2">
                   {{ comment.date_created | timeago }}
-                </small>
+                </span>
               </div>
 
-              {% if current_user.id == comment.author %}
+              {% if current_user.is_authenticated and current_user.id ==
+              comment.author %}
               <div class="dropdown">
                 <button
                   class="btn btn-sm btn-outline-secondary dropdown-toggle p-1"
@@ -143,6 +152,7 @@
       </div>
 
       <!-- ================= COMMENT FORM ================= -->
+      {% if current_user.is_authenticated %}
       <form method="POST" action="/create-comment/{{ post.id }}" class="mt-3">
         <div class="input-group">
           <input
@@ -155,9 +165,13 @@
           <button class="btn btn-primary">Post</button>
         </div>
       </form>
+      {% endif %}
     </div>
   </div>
-  {% endfor %} {% if not posts %}
-  <p class="text-center text-muted mt-4">No posts available.</p>
-  {% endif %}
+
+  {% if not (hide_dividers | default(false)) and not loop.last %}
+  <hr class="post-divider" />
+  {% endif %} {% else %}
+  <p class="text-center text-muted">No posts available.</p>
+  {% endfor %}
 </div>

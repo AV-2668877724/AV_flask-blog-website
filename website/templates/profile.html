@@ -1,43 +1,41 @@
-{% extends "base.html" %} {% block title %}{{ profile_user.username }}{%
+{% extends "base.html" %} {% block title %} {{ profile_user.username }} {%
 endblock %} {% block content %}
 
-<!-- ================= PROFILE HEADER ================= -->
-<div class="card shadow-sm mb-4">
-  <div class="card-body text-center">
-    <h3 class="fw-bold mb-1">{{ profile_user.username }}</h3>
+<!-- ================= PROFILE COVER ================= -->
+<div class="card shadow-sm mb-4 profile-cover">
+  <div
+    class="card-body d-flex flex-column flex-md-row align-items-center gap-4"
+  >
+    <!-- AVATAR -->
+    <div class="profile-avatar">{{ profile_user.username[0]|upper }}</div>
 
-    <p class="text-muted mb-2">
-      Joined {{ profile_user.date_created | timeago }}
-    </p>
+    <!-- USER INFO -->
+    <div class="text-center text-md-start">
+      <h3 class="mb-1 fw-bold">{{ profile_user.username }}</h3>
 
-    <!-- ================= STATS ================= -->
-    <div class="row mt-3">
-      <div class="col-md-4">
-        <h5 class="fw-bold">{{ total_posts }}</h5>
-        <small class="text-muted">Posts</small>
-      </div>
+      <small class="text-muted">
+        Joined {{ profile_user.date_created | timeago }}
+      </small>
 
-      <div class="col-md-4">
-        <h5 class="fw-bold">{{ total_likes }}</h5>
-        <small class="text-muted">Likes</small>
-      </div>
-
-      <div class="col-md-4">
-        <h5 class="fw-bold">{{ profile_user.date_created.strftime('%Y') }}</h5>
-        <small class="text-muted">Member Since</small>
+      <!-- STATS -->
+      <div
+        class="d-flex gap-4 mt-3 justify-content-center justify-content-md-start"
+      >
+        <div>
+          <div class="fw-bold fs-5">{{ total_posts }}</div>
+          <small class="text-muted">Posts</small>
+        </div>
+        <div>
+          <div class="fw-bold fs-5">{{ total_likes }}</div>
+          <small class="text-muted">Likes</small>
+        </div>
       </div>
     </div>
-
-    {% if profile_user.id == current_user.id %}
-    <div class="mt-3">
-      <span class="badge bg-primary">This is you</span>
-    </div>
-    {% endif %}
   </div>
 </div>
 
 <!-- ================= USER POSTS ================= -->
-{% if posts %} {% set page_title = profile_user.username + "'s Posts" %} {%
-include "_posts.html" %} {% else %}
-<p class="text-center text-muted mt-5">This user hasn’t posted anything yet.</p>
+{% if posts %} {% set hide_dividers = True %} {% include "_posts.html" %} {%
+else %}
+<p class="text-center text-muted">No posts yet.</p>
 {% endif %} {% endblock %}

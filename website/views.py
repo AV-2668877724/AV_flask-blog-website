@@ -1,16 +1,44 @@
 from functools import wraps
-from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, session, jsonify,abort
+from flask import ( 
+    Blueprint, render_template, request,
+    flash, redirect, url_for, abort, jsonify
+)
 from flask_login import login_required, current_user
 from .models import User, Post, Comment, Like
 from . import db
-import re
-from markupsafe import Markup
 from sqlalchemy import func
 
 views = Blueprint('views', __name__)
+
 ADMIN_ACTION_PASSWORD = "adminready777"
 
-# ================= ADMIN DECORATOR =================
+# =================================================
+# UTILITY HELPERS
+# =================================================
+
+def enrich_posts(posts, current_user_id):
+    """Convert Post objects → dicts with likes info"""
+    enriched = []
+    for p in posts:
+        likes_count = len(p.likes)
+        liked = any(l.author == current_user_id for l in p.likes)
+        enriched.append({
+            "id": p.id,
+            "text": p.text,
+            "date_created": p.date_created,
+            "author": p.author,
+            "user": p.user,
+            "comments": p.comments,
+            "likes_count": likes_count,
+            "liked": liked
+        })
+    return enriched
+
+
+# =================================================
+# ADMIN DECORATOR & PASSWORD CHECK
+# =================================================
+
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -20,7 +48,6 @@ def admin_required(f):
     return wrapper
 
 
-# ================= ADMIN PASSWORD CHECK =================
 def verify_admin_password():
     password = request.form.get("admin_password")
     if password != ADMIN_ACTION_PASSWORD:
@@ -29,45 +56,44 @@ def verify_admin_password():
     return True
 
 
-# ================= ADMIN ACTIONS =================
+# =================================================
+# ADMIN ACTIONS
+# =================================================
 
-@views.route('/admin/delete-post/<int:post_id>', methods=['POST'])
+@views.route("/admin/delete-post/<int:post_id>", methods=["POST"])
 @login_required
 @admin_required
 def admin_delete_post(post_id):
     if not verify_admin_password():
-        return redirect(url_for('views.admin_dashboard'))
+        return redirect(url_for("views.admin_dashboard"))
 
     post = Post.query.get_or_404(post_id)
-    if post.is_deleted:
-        flash("Post already deleted.", "warning")
-    else:
-        post.is_deleted = True
-        db.session.commit()
-        flash("Post deleted successfully.", "success")
-    return redirect(url_for('views.admin_dashboard'))
+    post.is_deleted = True
+    db.session.commit()
+    flash("Post deleted successfully.", "success")
+    return redirect(url_for("views.admin_dashboard"))
 
 
-@views.route('/admin/restore-post/<int:post_id>', methods=['POST'])
+@views.route("/admin/restore-post/<int:post_id>", methods=["POST"])
 @login_required
 @admin_required
 def admin_restore_post(post_id):
     if not verify_admin_password():
-        return redirect(url_for('views.admin_dashboard'))
+        return redirect(url_for("views.admin_dashboard"))
 
     post = Post.query.filter_by(id=post_id, is_deleted=True).first_or_404()
     post.is_deleted = False
     db.session.commit()
     flash("Post restored successfully.", "success")
-    return redirect(url_for('views.admin_dashboard'))
+    return redirect(url_for("views.admin_dashboard"))
 
 
-@views.route('/admin/delete-user/<int:user_id>', methods=['POST'])
+@views.route("/admin/delete-user/<int:user_id>", methods=["POST"])
 @login_required
 @admin_required
 def admin_delete_user(user_id):
     if not verify_admin_password():
-        return redirect(url_for('views.admin_dashboard'))
+        return redirect(url_for("views.admin_dashboard"))
 
     user = User.query.get_or_404(user_id)
 
@@ -77,39 +103,43 @@ def admin_delete_user(user_id):
         db.session.delete(user)
         db.session.commit()
         flash("User deleted successfully.", "success")
-    return redirect(url_for('views.admin_dashboard'))
+
+    return redirect(url_for("views.admin_dashboard"))
 
 
-@views.route('/admin/delete-comment/<int:comment_id>', methods=['POST'])
+@views.route("/admin/delete-comment/<int:comment_id>", methods=["POST"])
 @login_required
 @admin_required
 def admin_delete_comment(comment_id):
     if not verify_admin_password():
-        return redirect(url_for('views.admin_dashboard'))
+        return redirect(url_for("views.admin_dashboard"))
 
     comment = Comment.query.get_or_404(comment_id)
     comment.is_deleted = True
     db.session.commit()
     flash("Comment deleted successfully.", "success")
-    return redirect(url_for('views.admin_dashboard'))
+    return redirect(url_for("views.admin_dashboard"))
 
 
-@views.route('/admin/restore-comment/<int:comment_id>', methods=['POST'])
+@views.route("/admin/restore-comment/<int:comment_id>", methods=["POST"])
 @login_required
 @admin_required
 def admin_restore_comment(comment_id):
     if not verify_admin_password():
-        return redirect(url_for('views.admin_dashboard'))
+        return redirect(url_for("views.admin_dashboard"))
 
     comment = Comment.query.filter_by(id=comment_id, is_deleted=True).first_or_404()
     comment.is_deleted = False
     db.session.commit()
     flash("Comment restored successfully.", "success")
-    return redirect(url_for('views.admin_dashboard'))
+    return redirect(url_for("views.admin_dashboard"))
 
 
-# ================= ADMIN DASHBOARD =================
-@views.route('/admin/dashboard')
+# =================================================
+# ADMIN DASHBOARD
+# =================================================
+
+@views.route("/admin/dashboard")
 @login_required
 @admin_required
 def admin_dashboard():
@@ -119,248 +149,177 @@ def admin_dashboard():
         active_posts=Post.query.filter_by(is_deleted=False).order_by(Post.date_created.desc()).all(),
         deleted_posts=Post.query.filter_by(is_deleted=True).order_by(Post.date_created.desc()).all(),
         comments=Comment.query.order_by(Comment.date_created.desc()).limit(50).all(),
-        user=current_user,
         is_home=False
     )
 
 
-# -------------------------------------------------
-# Utility helpers
-# -------------------------------------------------
-
-def enrich_posts(posts, current_user_id):
-    enriched = []
-    for p in posts:
-        likes_count = len(p.likes)
-        liked = any(l.author == current_user_id for l in p.likes)
-        enriched.append({
-            'id': p.id,
-            'text': p.text,
-            'date_created': p.date_created,
-            'author': p.author,
-            'user': p.user,
-            'comments': p.comments,
-            'likes_count': likes_count,
-            'liked': liked
-        })
-    return enriched
-
-
-def highlight(text, query):
-    if not query:
-        return text
-    try:
-        regex = re.compile(re.escape(query), re.IGNORECASE)
-        return Markup(regex.sub(lambda m: f"<mark>{m.group(0)}</mark>", text))
-    except Exception:
-        return text
-
-
-def highlight_username(username, query):
-    if not query:
-        return username
-    try:
-        regex = re.compile(re.escape(query), re.IGNORECASE)
-        return Markup(regex.sub(lambda m: f"<mark>{m.group(0)}</mark>", username))
-    except Exception:
-        return username
-
-
-# -------------------------------------------------
+# =================================================
 # MAIN ROUTES
-# -------------------------------------------------
+# =================================================
 
-@views.route('/')
-@views.route('/home')
+@views.route("/")
+@views.route("/home")
 @login_required
 def home():
-    
- 
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
 
-    pagination = Post.query.filter_by(is_deleted=False) \
-        .order_by(Post.date_created.desc()) \
+    pagination = (
+        Post.query
+        .filter_by(is_deleted=False)
+        .order_by(Post.date_created.desc())
         .paginate(page=page, per_page=5, error_out=False)
+    )
 
-    enriched = enrich_posts(pagination.items, current_user.id)
+    posts = enrich_posts(pagination.items, current_user.id)
 
     return render_template(
         "home.html",
-        user=current_user,
-        posts=enriched,
+        posts=posts,
         pagination=pagination,
         is_home=True
     )
 
 
-@views.route('/create-post', methods=['GET', 'POST'])
+@views.route("/create-post", methods=["GET", "POST"])
 @login_required
 def create_post():
-    if request.method == 'POST':
-        text = request.form.get('text')
-        if not text or not text.strip():
-            flash('Post cannot be empty!', category='error')
+    if request.method == "POST":
+        text = request.form.get("text", "").strip()
+        if not text:
+            flash("Post cannot be empty!", "error")
         else:
-            post = Post(text=text.strip(), author=current_user.id)
+            post = Post(text=text, author=current_user.id)
             db.session.add(post)
             db.session.commit()
-            flash('Post created!', category='success')
-            return redirect(url_for('views.home'))
-    return render_template("create_posts.html", user=current_user, is_home=False)
+            flash("Post created!", "success")
+            return redirect(url_for("views.home"))
+
+    return render_template("create_posts.html", is_home=False)
 
 
-@views.route('/delete-post/<id>')
+@views.route("/edit-post/<int:id>", methods=["GET", "POST"])
+@login_required
+def edit_post(id):
+    post = Post.query.filter_by(id=id, is_deleted=False).first_or_404()
+
+    if post.author != current_user.id:
+        flash("Permission denied.", "error")
+        return redirect(url_for("views.home"))
+
+    if request.method == "POST":
+        text = request.form.get("text", "").strip()
+        if not text:
+            flash("Post cannot be empty!", "error")
+        else:
+            post.text = text
+            db.session.commit()
+            flash("Post updated!", "success")
+            return redirect(url_for("views.home"))
+
+    return render_template("edit_post.html", post=post, is_home=False)
+
+
+@views.route("/delete-post/<int:id>")
 @login_required
 def delete_post(id):
-    post = Post.query.filter_by(id=id).first()
+    post = Post.query.get_or_404(id)
 
-    if not post or post.is_deleted:
-        flash('Post not found!', 'error')
-    elif current_user.id != post.author and not current_user.is_admin:
-        flash('You do not have permission to delete this post.', 'error')
+    if post.author != current_user.id and not current_user.is_admin:
+        flash("Permission denied.", "error")
     else:
         post.is_deleted = True
         db.session.commit()
-        flash('Post deleted!', 'success')
+        flash("Post deleted.", "success")
 
-    return redirect(url_for('views.home'))
-
-
-@views.route('/edit-post/<id>', methods=['GET', 'POST'])
-@login_required
-def edit_post(id):
-    post = Post.query.filter_by(id=id, is_deleted=False).first()
-    if not post:
-        flash('Post not found!', category='error')
-        return redirect(url_for('views.home'))
-    if current_user.id != post.author:
-        flash('You do not have permission to edit this post.', category='error')
-        return redirect(url_for('views.home'))
-
-    if request.method == 'POST':
-        text = request.form.get('text')
-        if not text or not text.strip():
-            flash('Post cannot be empty!', category='error')
-        else:
-            post.text = text.strip()
-            db.session.commit()
-            flash('Post updated!', category='success')
-            return redirect(url_for('views.home'))
-
-    return render_template("edit_post.html", user=current_user, post=post, is_home=False)
+    return redirect(url_for("views.home"))
 
 
-@views.route('/posts/<username>')
+@views.route("/posts/<username>")
 @login_required
 def posts(username):
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        flash('No user with that username exists.', category='error')
-        return redirect(url_for('views.home'))
+    user = User.query.filter_by(username=username).first_or_404()
 
-    page = request.args.get('page', 1, type=int)
+    page = request.args.get("page", 1, type=int)
+    pagination = (
+        Post.query
+        .filter_by(author=user.id, is_deleted=False)
+        .order_by(Post.date_created.desc())
+        .paginate(page=page, per_page=5, error_out=False)
+    )
 
-    pagination = Post.query.filter_by(
-        author=user.id,
-        is_deleted=False
-    ).order_by(Post.date_created.desc()) \
-     .paginate(page=page, per_page=5, error_out=False)
-
-    enriched = enrich_posts(pagination.items, current_user.id)
+    posts = enrich_posts(pagination.items, current_user.id)
 
     return render_template(
         "posts.html",
-        user=current_user,
-        posts=enriched,
-        username=username,
+        posts=posts,
         pagination=pagination,
         is_home=False
     )
 
 
-@views.route('/create-comment/<post_id>', methods=['POST'])
+# =================================================
+# COMMENTS & LIKES
+# =================================================
+
+@views.route("/create-comment/<int:post_id>", methods=["POST"])
 @login_required
 def create_comment(post_id):
-    text = request.form.get('text')
-    if not text or not text.strip():
-        flash('Comment cannot be empty!', category='error')
+    text = request.form.get("text", "").strip()
+    if not text:
+        flash("Comment cannot be empty.", "error")
     else:
-        post = Post.query.filter_by(id=post_id, is_deleted=False).first()
-        if not post:
-            flash('Post does not exist or was deleted.', category='error')
-        else:
-            comment = Comment(
-                text=text.strip(),
-                author=current_user.id,
-                post_id=post_id
-            )
-            db.session.add(comment)
-            db.session.commit()
-            flash('Comment added!', category='success')
-    return redirect(url_for('views.home'))
+        comment = Comment(text=text, author=current_user.id, post_id=post_id)
+        db.session.add(comment)
+        db.session.commit()
+        flash("Comment added!", "success")
 
-@views.route('/delete-comment/<comment_id>')
+    return redirect(url_for("views.home"))
+
+
+@views.route("/delete-comment/<int:comment_id>")
 @login_required
 def delete_comment(comment_id):
-    comment = Comment.query.filter_by(id=comment_id).first()
+    comment = Comment.query.get_or_404(comment_id)
 
-    if not comment:
-        flash('Comment not found.', 'error')
-    elif current_user.id != comment.author and not current_user.is_admin:
-        flash('You do not have permission to delete this comment.', 'error')
+    if comment.author != current_user.id and not current_user.is_admin:
+        flash("Permission denied.", "error")
     else:
         comment.is_deleted = True
         db.session.commit()
-        flash('Comment deleted!', 'success')
+        flash("Comment deleted.", "success")
 
-    return redirect(url_for('views.home'))
+    return redirect(url_for("views.home"))
 
 
-@views.route('/like-post/<post_id>', methods=['POST'])
+@views.route("/like-post/<int:post_id>", methods=["POST"])
+@login_required
 def like_post(post_id):
-    if not current_user.is_authenticated:
-        return jsonify({'error': 'Login required'}), 401
+    post = Post.query.filter_by(id=post_id, is_deleted=False).first_or_404()
 
-    post = Post.query.filter_by(id=post_id, is_deleted=False).first()
-    if not post:
-        return jsonify({'error': 'Post no longer available'}), 410
-
-    like = Like.query.filter_by(
-        author=current_user.id,
-        post_id=post_id
-    ).first()
+    like = Like.query.filter_by(author=current_user.id, post_id=post_id).first()
 
     if like:
         db.session.delete(like)
-        db.session.commit()
     else:
-        like = Like(author=current_user.id, post_id=post_id)
-        db.session.add(like)
-        db.session.commit()
+        db.session.add(Like(author=current_user.id, post_id=post_id))
 
-    likes_count = len(post.likes)
-    liked = any(l.author == current_user.id for l in post.likes)
+    db.session.commit()
 
-    return jsonify({'likes': likes_count, 'liked': liked}), 200
-
-
-@views.route('/about')
-def about():
-    return render_template("about.html", user=current_user, is_home=False)
+    return jsonify({
+        "likes": len(post.likes),
+        "liked": any(l.author == current_user.id for l in post.likes)
+    })
 
 
+# =================================================
+# USER PROFILE
+# =================================================
 
-
-# ================= USER PROFILE =================
-# ================= USER PROFILE =================
 @views.route("/profile/<username>")
 @login_required
 def profile(username):
-    profile_user = User.query.filter_by(username=username).first()
-    if not profile_user:
-        abort(404)
+    profile_user = User.query.filter_by(username=username).first_or_404()
 
-    # Raw posts
     raw_posts = (
         Post.query
         .filter_by(author=profile_user.id, is_deleted=False)
@@ -368,12 +327,9 @@ def profile(username):
         .all()
     )
 
-    # 🔥 Enrich posts (IMPORTANT)
     posts = enrich_posts(raw_posts, current_user.id)
 
-    # Stats
     total_posts = len(raw_posts)
-
     total_likes = (
         db.session.query(func.count(Like.id))
         .join(Post, Like.post_id == Post.id)
@@ -387,7 +343,15 @@ def profile(username):
         posts=posts,
         total_posts=total_posts,
         total_likes=total_likes,
-        is_home=False
+        is_home=False,
+        hide_dividers=True
     )
 
 
+# =================================================
+# ABOUT
+# =================================================
+
+@views.route("/about")
+def about():
+    return render_template("about.html", is_home=False)
