@@ -123,19 +123,19 @@
               >
                 {{ current_user.username }}
               </a>
+
               <ul class="dropdown-menu dropdown-menu-end">
+                <!-- ✅ MY PROFILE -->
                 <li>
                   <a
                     class="dropdown-item"
-                    href="/posts/{{ current_user.username }}"
+                    href="/profile/{{ current_user.username }}"
                   >
-                    My Posts
+                    My Profile
                   </a>
                 </li>
 
                 {% if current_user.is_admin %}
-
-
                 <li>
                   <a
                     class="dropdown-item"

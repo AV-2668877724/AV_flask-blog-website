@@ -1,10 +1,11 @@
 from functools import wraps
-from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, session, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, abort, session, jsonify,abort
 from flask_login import login_required, current_user
 from .models import User, Post, Comment, Like
 from . import db
 import re
 from markupsafe import Markup
+from sqlalchemy import func
 
 views = Blueprint('views', __name__)
 ADMIN_ACTION_PASSWORD = "adminready777"
@@ -346,3 +347,47 @@ def like_post(post_id):
 @views.route('/about')
 def about():
     return render_template("about.html", user=current_user, is_home=False)
+
+
+
+
+# ================= USER PROFILE =================
+# ================= USER PROFILE =================
+@views.route("/profile/<username>")
+@login_required
+def profile(username):
+    profile_user = User.query.filter_by(username=username).first()
+    if not profile_user:
+        abort(404)
+
+    # Raw posts
+    raw_posts = (
+        Post.query
+        .filter_by(author=profile_user.id, is_deleted=False)
+        .order_by(Post.date_created.desc())
+        .all()
+    )
+
+    # 🔥 Enrich posts (IMPORTANT)
+    posts = enrich_posts(raw_posts, current_user.id)
+
+    # Stats
+    total_posts = len(raw_posts)
+
+    total_likes = (
+        db.session.query(func.count(Like.id))
+        .join(Post, Like.post_id == Post.id)
+        .filter(Post.author == profile_user.id)
+        .scalar()
+    ) or 0
+
+    return render_template(
+        "profile.html",
+        profile_user=profile_user,
+        posts=posts,
+        total_posts=total_posts,
+        total_likes=total_likes,
+        is_home=False
+    )
+
+
