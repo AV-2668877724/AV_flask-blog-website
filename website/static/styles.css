@@ -636,22 +636,113 @@ body:not(.dark-mode) .navbar .btn-outline-light:hover {
   content: none !important;
 }
 
-/* ================= PROFILE COVER ================= */
 
-.profile-cover {
-  border-radius: 16px;
+
+/* ================= PROFILE PAGE ================= */
+
+.profile-hero {
+  position: relative;
+  text-align: center;
 }
 
-.profile-avatar {
-  width: 90px;
-  height: 90px;
+/* COVER */
+.profile-cover-bg {
+  height: 220px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0d6efd, #6610f2, #6f42c1);
+}
+
+/* PROFILE CARD */
+.profile-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 80px 30px 30px;
+  margin-top: -90px;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* AVATAR */
+.profile-avatar-lg {
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   background: linear-gradient(135deg, #0d6efd, #6610f2);
   color: #fff;
-  font-size: 36px;
-  font-weight: 700;
+  font-size: 46px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: -120px auto 0;
+  border: 6px solid #fff;
+}
+
+/* STATS */
+.profile-stats {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+}
+
+.stat-box span {
+  font-size: 22px;
+  font-weight: 700;
+  display: block;
+}
+
+.stat-box small {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+/* POSTS AREA */
+.profile-posts {
+  margin-top: 30px;
+}
+
+/* ================= DARK MODE SUPPORT: PROFILE ================= */
+
+.dark-mode .profile-card {
+  background: #1e1e1e;
+  color: #eaeaea;
+}
+
+.dark-mode .profile-card small {
+  color: #b0b0b0;
+}
+
+.dark-mode .stat-box small {
+  color: #9aa0a6;
+}
+
+.dark-mode .profile-avatar-lg {
+  border-color: #1e1e1e;
+}
+
+/* Dark cover stays vibrant */
+.dark-mode .profile-cover-bg {
+  background: linear-gradient(135deg, #0d6efd, #4c2a85, #111);
+}
+
+/* Posts container spacing fix */
+.dark-mode .profile-posts {
+  color: #eaeaea;
+}
+
+.dark-mode .profile-card {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* ================= PROFILE PAGE TITLE ================= */
+.profile-page-title {
+  font-weight: 800;
+  letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+/* Dark mode support */
+.dark-mode .profile-page-title {
+  color: #f1f1f1;
 }

@@ -1,41 +1,46 @@
 {% extends "base.html" %} {% block title %} {{ profile_user.username }} {%
 endblock %} {% block content %}
 
-<!-- ================= PROFILE COVER ================= -->
-<div class="card shadow-sm mb-4 profile-cover">
-  <div
-    class="card-body d-flex flex-column flex-md-row align-items-center gap-4"
-  >
-    <!-- AVATAR -->
-    <div class="profile-avatar">{{ profile_user.username[0]|upper }}</div>
+<!-- ================= PROFILE PAGE TITLE ================= -->
+<div class="text-center mb-3">
+  <h1 class="profile-page-title">Profile</h1>
+</div>
 
-    <!-- USER INFO -->
-    <div class="text-center text-md-start">
-      <h3 class="mb-1 fw-bold">{{ profile_user.username }}</h3>
+<!-- ================= PROFILE HERO ================= -->
+<div class="profile-hero mb-5">
+  <!-- COVER -->
+  <div class="profile-cover-bg"></div>
 
-      <small class="text-muted">
-        Joined {{ profile_user.date_created | timeago }}
-      </small>
+  <!-- PROFILE CARD -->
+  <div class="profile-card shadow-sm">
+    <div class="profile-avatar-lg">{{ profile_user.username[0]|upper }}</div>
 
-      <!-- STATS -->
-      <div
-        class="d-flex gap-4 mt-3 justify-content-center justify-content-md-start"
-      >
-        <div>
-          <div class="fw-bold fs-5">{{ total_posts }}</div>
-          <small class="text-muted">Posts</small>
-        </div>
-        <div>
-          <div class="fw-bold fs-5">{{ total_likes }}</div>
-          <small class="text-muted">Likes</small>
-        </div>
+    <h2 class="fw-bold mt-3 mb-1">{{ profile_user.username }}</h2>
+
+    <small class="text-muted">
+      Joined {{ profile_user.date_created | timeago }}
+    </small>
+
+    <!-- STATS -->
+    <div class="profile-stats mt-4">
+      <div class="stat-box">
+        <span>{{ total_posts }}</span>
+        <small>Posts</small>
+      </div>
+      <div class="stat-box">
+        <span>{{ total_likes }}</span>
+        <small>Likes</small>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ================= USER POSTS ================= -->
-{% if posts %} {% set hide_dividers = True %} {% include "_posts.html" %} {%
-else %}
-<p class="text-center text-muted">No posts yet.</p>
-{% endif %} {% endblock %}
+<!-- ================= POSTS SECTION ================= -->
+<div class="profile-posts">
+  {% if posts %} {% set hide_dividers = True %} {% include "_posts.html" %} {%
+  else %}
+  <p class="text-center text-muted">No posts yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
