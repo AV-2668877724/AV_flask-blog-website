@@ -7,6 +7,7 @@ from datetime import datetime
 db = SQLAlchemy()
 DB_NAME = "database.db"
 
+
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'CCAV@129'
@@ -15,9 +16,9 @@ def create_app():
 
     db.init_app(app)
 
-    # -------------------------------
+    # -------------------------------------------------
     # ✅ JINJA FILTER: TIME AGO
-    # -------------------------------
+    # -------------------------------------------------
     @app.template_filter('timeago')
     def timeago(dt):
         if dt is None:
@@ -49,14 +50,24 @@ def create_app():
             years = days // 365
             return f"{years} year ago" if years == 1 else f"{years} years ago"
 
+    # -------------------------------------------------
+    # BLUEPRINTS
+    # -------------------------------------------------
     from .views import views
     from .auth import auth
+
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
+    # -------------------------------------------------
+    # DATABASE INITIALIZATION
+    # -------------------------------------------------
     from .models import User, Post, Comment, Like
     create_database(app)
 
+    # -------------------------------------------------
+    # LOGIN MANAGER
+    # -------------------------------------------------
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
@@ -65,11 +76,14 @@ def create_app():
     def load_user(id):
         return User.query.get(int(id))
 
-    return app
+    # -------------------------------------------------
+    # CONTEXT PROCESSOR (FIXED POSITION)
+    # -------------------------------------------------
     @app.context_processor
     def inject_admin_flag():
-        return dict(is_admin=session.get('is_admin', False))
+        return dict(is_admin=getattr(load_user, "is_admin", False))
 
+    return app
 
 
 def create_database(app):
