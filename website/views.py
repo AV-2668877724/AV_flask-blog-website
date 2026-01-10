@@ -347,6 +347,21 @@ def profile(username):
         hide_dividers=True
     )
 
+@views.route("/profile/edit/bio", methods=["POST"])
+@login_required
+def edit_bio():
+    bio = request.form.get("bio", "").strip()
+
+    if len(bio) > 300:
+        flash("Bio must be under 300 characters.", "error")
+        return redirect(url_for("views.profile", username=current_user.username))
+
+    current_user.bio = bio
+    db.session.commit()
+
+    flash("Bio updated successfully.", "success")
+    return redirect(url_for("views.profile", username=current_user.username))
+
 
 # =================================================
 # ABOUT

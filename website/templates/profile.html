@@ -13,15 +13,58 @@ endblock %} {% block content %}
 
   <!-- PROFILE CARD -->
   <div class="profile-card shadow-sm">
+    <!-- AVATAR -->
     <div class="profile-avatar-lg">{{ profile_user.username[0]|upper }}</div>
 
+    <!-- USERNAME -->
     <h2 class="fw-bold mt-3 mb-1">{{ profile_user.username }}</h2>
 
+    <!-- JOIN DATE -->
     <small class="text-muted">
       Joined {{ profile_user.date_created | timeago }}
     </small>
 
-    <!-- STATS -->
+    <!-- ================= BIO ================= -->
+    <div class="profile-bio mt-3">
+      {% if profile_user.bio %}
+      <p class="mb-2">{{ profile_user.bio }}</p>
+      {% else %}
+      <p class="text-muted fst-italic">No bio added yet.</p>
+      {% endif %}
+    </div>
+
+    <!-- EDIT BIO (OWNER ONLY) -->
+    {% if current_user.id == profile_user.id %}
+    <button
+      class="btn btn-sm btn-outline-primary mt-2"
+      data-bs-toggle="collapse"
+      data-bs-target="#editBioBox"
+      aria-expanded="false"
+    >
+      Edit Bio
+    </button>
+
+    <div class="collapse mt-3" id="editBioBox">
+      <form method="POST" action="{{ url_for('views.edit_bio') }}">
+        <textarea
+          name="bio"
+          class="form-control"
+          rows="3"
+          maxlength="300"
+          placeholder="Write something about yourself (max 300 characters)"
+        >
+{{ profile_user.bio }}</textarea
+        >
+
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <small class="text-muted">Max 300 characters</small>
+          <button class="btn btn-primary btn-sm">Save</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- ================= STATS ================= -->
     <div class="profile-stats mt-4">
       <div class="stat-box">
         <span>{{ total_posts }}</span>

@@ -746,3 +746,16 @@ body:not(.dark-mode) .navbar .btn-outline-light:hover {
 .dark-mode .profile-page-title {
   color: #f1f1f1;
 }
+
+/* ================= PROFILE BIO ================= */
+.profile-bio {
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Dark mode */
+.dark-mode .profile-bio {
+  color: #dcdcdc;
+}

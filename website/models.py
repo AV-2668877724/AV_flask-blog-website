@@ -17,9 +17,9 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-
+    bio = db.Column(db.String(300), default="")
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
-
+    
     # Security question hashes
     dob_hash = db.Column(db.String(150))
     fav_person_hash = db.Column(db.String(150))
