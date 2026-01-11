@@ -7,6 +7,7 @@ from flask_login import login_required, current_user
 from .models import User, Post, Comment, Like
 from . import db
 from sqlalchemy import func
+import re
 
 views = Blueprint('views', __name__)
 
@@ -347,7 +348,7 @@ def profile(username):
         hide_dividers=True
     )
 
-@views.route("/profile/edit/bio", methods=["POST"])
+@views.route("/profile/edit-bio", methods=["POST"])
 @login_required
 def edit_bio():
     bio = request.form.get("bio", "").strip()
@@ -361,6 +362,30 @@ def edit_bio():
 
     flash("Bio updated successfully.", "success")
     return redirect(url_for("views.profile", username=current_user.username))
+
+@views.route("/profile/change-username", methods=["POST"])
+@login_required
+def change_username():
+    new_username = request.form.get("username", "").strip()
+
+    if not re.match(r"^[A-Za-z0-9_]{3,20}$", new_username):
+        flash(
+            "Username must be 3–20 characters (letters, numbers, underscore).",
+            "error"
+        )
+        return redirect(url_for("views.profile", username=current_user.username))
+
+    existing = User.query.filter_by(username=new_username).first()
+    if existing:
+        flash("Username already taken.", "error")
+        return redirect(url_for("views.profile", username=current_user.username))
+
+    current_user.username = new_username
+    db.session.commit()
+
+    flash("Username changed successfully. Please login again.", "success")
+    return redirect(url_for("auth.logout"))
+
 
 
 # =================================================

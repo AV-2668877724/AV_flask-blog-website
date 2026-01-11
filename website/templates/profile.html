@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block title %} {{ profile_user.username }} {%
+{% extends "base.html" %} {% block title %}{{ profile_user.username }}{%
 endblock %} {% block content %}
 
 <!-- ================= PROFILE PAGE TITLE ================= -->
@@ -16,53 +16,93 @@ endblock %} {% block content %}
     <!-- AVATAR -->
     <div class="profile-avatar-lg">{{ profile_user.username[0]|upper }}</div>
 
-    <!-- USERNAME -->
-    <h2 class="fw-bold mt-3 mb-1">{{ profile_user.username }}</h2>
+    <!-- USERNAME + EDIT ICON -->
+    <div class="d-flex justify-content-center align-items-center gap-2 mt-3">
+      <h2 class="fw-bold mb-0">{{ profile_user.username }}</h2>
+
+      {% if current_user.id == profile_user.id %}
+      <button
+        class="btn btn-sm btn-outline-secondary rounded-circle"
+        title="Edit username"
+        data-bs-toggle="collapse"
+        data-bs-target="#editUsernameBox"
+        style="width: 32px; height: 32px"
+      >
+        <i class="bi bi-pencil"></i>
+      </button>
+      {% endif %}
+    </div>
 
     <!-- JOIN DATE -->
-    <small class="text-muted">
+    <small class="text-muted d-block">
       Joined {{ profile_user.date_created | timeago }}
     </small>
 
+    <!-- ================= CHANGE USERNAME (COLLAPSED) ================= -->
+    {% if current_user.id == profile_user.id %}
+    <div class="collapse mt-3" id="editUsernameBox">
+      <form
+        method="POST"
+        action="{{ url_for('views.change_username') }}"
+        class="mx-auto"
+        style="max-width: 320px"
+      >
+        <input
+          type="text"
+          name="username"
+          class="form-control mb-2"
+          placeholder="New username"
+          required
+        />
+
+        <button class="btn btn-warning btn-sm w-100">Update Username</button>
+
+        <small class="text-muted d-block mt-2 text-center">
+          You will be logged out after changing your username.
+        </small>
+      </form>
+    </div>
+    {% endif %}
+
     <!-- ================= BIO ================= -->
-    <div class="profile-bio mt-3">
+    <div class="profile-bio mt-4">
       {% if profile_user.bio %}
       <p class="mb-2">{{ profile_user.bio }}</p>
       {% else %}
       <p class="text-muted fst-italic">No bio added yet.</p>
       {% endif %}
-    </div>
 
-    <!-- EDIT BIO (OWNER ONLY) -->
-    {% if current_user.id == profile_user.id %}
-    <button
-      class="btn btn-sm btn-outline-primary mt-2"
-      data-bs-toggle="collapse"
-      data-bs-target="#editBioBox"
-      aria-expanded="false"
-    >
-      Edit Bio
-    </button>
+      <!-- EDIT BIO (OWNER ONLY) -->
+      {% if current_user.id == profile_user.id %}
+      <button
+        class="btn btn-sm btn-outline-primary mt-2"
+        data-bs-toggle="collapse"
+        data-bs-target="#editBioBox"
+        aria-expanded="false"
+      >
+        Edit Bio
+      </button>
 
-    <div class="collapse mt-3" id="editBioBox">
-      <form method="POST" action="{{ url_for('views.edit_bio') }}">
-        <textarea
-          name="bio"
-          class="form-control"
-          rows="3"
-          maxlength="300"
-          placeholder="Write something about yourself (max 300 characters)"
-        >
+      <div class="collapse mt-3" id="editBioBox">
+        <form method="POST" action="{{ url_for('views.edit_bio') }}">
+          <textarea
+            name="bio"
+            class="form-control"
+            rows="3"
+            maxlength="300"
+            placeholder="Write something about yourself (max 300 characters)"
+          >
 {{ profile_user.bio }}</textarea
-        >
+          >
 
-        <div class="d-flex justify-content-between align-items-center mt-2">
-          <small class="text-muted">Max 300 characters</small>
-          <button class="btn btn-primary btn-sm">Save</button>
-        </div>
-      </form>
+          <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted">Max 300 characters</small>
+            <button class="btn btn-primary btn-sm">Save</button>
+          </div>
+        </form>
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
 
     <!-- ================= STATS ================= -->
     <div class="profile-stats mt-4">
