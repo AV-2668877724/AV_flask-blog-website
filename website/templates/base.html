@@ -152,10 +152,13 @@
               </ul>
             </div>
             {% else %}
-            <!-- AUTH PAGES (ALWAYS LIGHT MODE) -->
+            <!-- AUTH BUTTONS (CONDITIONAL) -->
+
+            {% if not hide_login_btn %}
             <a class="btn btn-outline-light btn-sm me-2" href="/login">Login</a>
+            {% endif %} {% if not hide_signup_btn %}
             <a class="btn btn-primary btn-sm" href="/sign-up">Sign Up</a>
-            {% endif %}
+            {% endif %} {% endif %}
           </div>
         </div>
       </div>

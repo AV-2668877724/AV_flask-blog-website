@@ -44,7 +44,7 @@ def login():
         flash('Logged in successfully!', category='success')
         return redirect(url_for('views.home'))
 
-    return render_template("login.html", user=current_user)
+    return render_template("login.html", user=current_user, hide_login_btn=True)
 
 
 
@@ -103,7 +103,8 @@ def signup():
                     category='error'
                 )
 
-    return render_template("signup.html")
+    return render_template("signup.html", hide_signup_btn=True)
+
 
 
 @auth.route('/forgot-password', methods=['GET', 'POST'])
