@@ -386,6 +386,26 @@ def change_username():
     flash("Username changed successfully. Please login again.", "success")
     return redirect(url_for("auth.logout"))
 
+@views.route('/check-username', methods=['POST'])
+@login_required
+def check_username():
+    data = request.get_json()
+    username = data.get('username', '').strip()
+
+    if not username:
+        return jsonify({'available': False, 'message': 'Username required'})
+
+    # Same username as current → allow
+    if username == current_user.username:
+        return jsonify({'available': True, 'message': 'This is already your username'})
+
+    # Check DB
+    exists = User.query.filter_by(username=username).first()
+
+    if exists:
+        return jsonify({'available': False, 'message': 'Username already taken'})
+    else:
+        return jsonify({'available': True, 'message': 'Username is available'})
 
 
 # =================================================

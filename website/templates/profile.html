@@ -8,77 +8,97 @@ endblock %} {% block content %}
 
 <!-- ================= PROFILE HERO ================= -->
 <div class="profile-hero mb-5">
-  <!-- COVER -->
   <div class="profile-cover-bg"></div>
 
-  <!-- PROFILE CARD -->
   <div class="profile-card shadow-sm">
     <!-- AVATAR -->
     <div class="profile-avatar-lg">{{ profile_user.username[0]|upper }}</div>
 
     <!-- USERNAME + EDIT ICON -->
-    <div class="d-flex justify-content-center align-items-center gap-2 mt-3">
-      <h2 class="fw-bold mb-0">{{ profile_user.username }}</h2>
+    <div class="text-center mt-3">
+      <div class="d-flex justify-content-center align-items-center gap-2">
+        <h2 class="fw-bold mb-0">{{ profile_user.username }}</h2>
 
+        {% if current_user.id == profile_user.id %}
+        <button
+          class="btn btn-sm btn-outline-secondary"
+          data-bs-toggle="collapse"
+          data-bs-target="#editUsernameBox"
+          title="Edit username"
+        >
+          <i class="bi bi-pencil"></i>
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- ================= CHANGE USERNAME (RIGHT BELOW USERNAME) ================= -->
       {% if current_user.id == profile_user.id %}
-      <button
-        class="btn btn-sm btn-outline-secondary rounded-circle"
-        title="Edit username"
-        data-bs-toggle="collapse"
-        data-bs-target="#editUsernameBox"
-        style="width: 32px; height: 32px"
-      >
-        <i class="bi bi-pencil"></i>
-      </button>
+      <div class="collapse mt-3" id="editUsernameBox">
+        <div
+          class="border rounded p-3 bg-light mx-auto"
+          style="max-width: 420px"
+        >
+          <h6 class="fw-bold mb-2">Change Username</h6>
+
+          <div class="input-group">
+            <input
+              type="text"
+              id="newUsername"
+              class="form-control"
+              placeholder="New username"
+              required
+            />
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              onclick="checkUsername()"
+            >
+              Check
+            </button>
+          </div>
+
+          <small id="usernameStatus" class="d-block mt-2"></small>
+
+          <form
+            method="POST"
+            action="{{ url_for('views.change_username') }}"
+            onsubmit="return allowUsernameSubmit"
+          >
+            <input type="hidden" name="username" id="finalUsername" />
+
+            <button
+              class="btn btn-warning btn-sm mt-2"
+              disabled
+              id="submitUsernameBtn"
+            >
+              Change Username
+            </button>
+          </form>
+
+          <small class="text-muted d-block mt-1">
+            You will be logged out after changing your username.
+          </small>
+        </div>
+      </div>
       {% endif %}
     </div>
 
     <!-- JOIN DATE -->
-    <small class="text-muted d-block">
+    <small class="text-muted d-block mt-2">
       Joined {{ profile_user.date_created | timeago }}
     </small>
 
-    <!-- ================= CHANGE USERNAME (COLLAPSED) ================= -->
-    {% if current_user.id == profile_user.id %}
-    <div class="collapse mt-3" id="editUsernameBox">
-      <form
-        method="POST"
-        action="{{ url_for('views.change_username') }}"
-        class="mx-auto"
-        style="max-width: 320px"
-      >
-        <input
-          type="text"
-          name="username"
-          class="form-control mb-2"
-          placeholder="New username"
-          required
-        />
-
-        <button class="btn btn-warning btn-sm w-100">Update Username</button>
-
-        <small class="text-muted d-block mt-2 text-center">
-          You will be logged out after changing your username.
-        </small>
-      </form>
-    </div>
-    {% endif %}
-
     <!-- ================= BIO ================= -->
-    <div class="profile-bio mt-4">
+    <div class="profile-bio mt-3">
       {% if profile_user.bio %}
       <p class="mb-2">{{ profile_user.bio }}</p>
       {% else %}
       <p class="text-muted fst-italic">No bio added yet.</p>
-      {% endif %}
-
-      <!-- EDIT BIO (OWNER ONLY) -->
-      {% if current_user.id == profile_user.id %}
+      {% endif %} {% if current_user.id == profile_user.id %}
       <button
         class="btn btn-sm btn-outline-primary mt-2"
         data-bs-toggle="collapse"
         data-bs-target="#editBioBox"
-        aria-expanded="false"
       >
         Edit Bio
       </button>

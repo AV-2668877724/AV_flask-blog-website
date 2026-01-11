@@ -323,3 +323,42 @@ function resetAdminFilter(sectionId) {
 
   if (info) info.textContent = "";
 }
+
+let allowUsernameSubmit = false;
+
+function checkUsername() {
+  const input = document.getElementById("newUsername");
+  const status = document.getElementById("usernameStatus");
+  const submitBtn = document.getElementById("submitUsernameBtn");
+
+  const username = input.value.trim();
+
+  if (!username) {
+    status.textContent = "Please enter a username";
+    status.className = "text-danger";
+    submitBtn.disabled = true;
+    allowUsernameSubmit = false;
+    return;
+  }
+
+  fetch("/check-username", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      status.textContent = data.message;
+
+      if (data.available) {
+        status.className = "text-success";
+        submitBtn.disabled = false;
+        allowUsernameSubmit = true;
+        document.getElementById("finalUsername").value = username;
+      } else {
+        status.className = "text-danger";
+        submitBtn.disabled = true;
+        allowUsernameSubmit = false;
+      }
+    });
+}
