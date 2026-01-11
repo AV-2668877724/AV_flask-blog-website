@@ -1,7 +1,7 @@
-from flask import Flask
+from flask import Flask, app
 from flask_sqlalchemy import SQLAlchemy
 from os import path
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from datetime import datetime
 
 db = SQLAlchemy()
@@ -82,6 +82,11 @@ def create_app():
     @app.context_processor
     def inject_admin_flag():
         return dict(is_admin=getattr(load_user, "is_admin", False))
+    
+
+    @app.context_processor
+    def inject_global_user():
+        return dict(current_user=current_user)
 
     return app
 

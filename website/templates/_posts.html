@@ -1,5 +1,5 @@
 <div class="container mt-4">
-  {% for post in posts %}
+  {% if posts %} {% for post in posts %}
   <div class="card shadow-sm mb-5">
     <!-- ================= POST HEADER ================= -->
     <div
@@ -71,7 +71,6 @@
 
     <!-- ================= POST BODY ================= -->
     <div class="card-body">
-      <!-- Post text -->
       <div class="post-wrapper" id="post-wrapper-{{ post.id }}">
         <div class="card-text post-text" id="post-text-{{ post.id }}">
           {{ post.text | trim }}
@@ -88,9 +87,9 @@
       </button>
       {% endif %}
 
-      <!-- ================= COMMENTS TOGGLE ================= -->
+      <!-- ================= COMMENTS ================= -->
       {% set visible_comments = post.comments | selectattr('is_deleted',
-      'equalto', False) | list %} {% if visible_comments|length > 0 %}
+      'equalto', False) | list %} {% if visible_comments %}
       <button
         class="btn btn-sm btn-link p-0 mt-2"
         data-bs-toggle="collapse"
@@ -102,7 +101,6 @@
       <small class="text-muted d-block mt-2">No comments yet</small>
       {% endif %}
 
-      <!-- ================= COMMENTS ================= -->
       <div class="collapse mt-3" id="comments-{{ post.id }}">
         <div class="border rounded p-3 bg-light">
           {% for comment in visible_comments %}
@@ -171,7 +169,7 @@
 
   {% if not (hide_dividers | default(false)) and not loop.last %}
   <hr class="post-divider" />
-  {% endif %} {% else %}
+  {% endif %} {% endfor %} {% else %}
   <p class="text-center text-muted">No posts available.</p>
-  {% endfor %}
+  {% endif %}
 </div>

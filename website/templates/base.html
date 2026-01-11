@@ -73,6 +73,7 @@
             <li class="nav-item">
               <a class="nav-link" href="/about">About</a>
             </li>
+
             {% if current_user.is_authenticated %}
             <li class="nav-item">
               <a class="nav-link" href="/create-post">Create</a>
@@ -80,8 +81,8 @@
             {% endif %}
           </ul>
 
-          <!-- SEARCH (HOME ONLY, AUTH ONLY) -->
-          {% if current_user.is_authenticated and is_home %}
+          <!-- SEARCH (HOME ONLY) -->
+          {% if current_user.is_authenticated and (is_home | default(false)) %}
           <div class="me-3 position-relative">
             <input
               type="text"
@@ -109,8 +110,7 @@
               title="Toggle dark mode"
               aria-pressed="false"
             >
-              <i class="fas fa-moon" aria-hidden="true"></i>
-              <span class="visually-hidden">Toggle dark mode</span>
+              <i class="fas fa-moon"></i>
             </button>
 
             <!-- USER DROPDOWN -->
@@ -125,7 +125,6 @@
               </a>
 
               <ul class="dropdown-menu dropdown-menu-end">
-                <!-- ✅ MY PROFILE -->
                 <li>
                   <a
                     class="dropdown-item"
@@ -151,14 +150,17 @@
                 </li>
               </ul>
             </div>
-            {% else %}
-            <!-- AUTH BUTTONS (CONDITIONAL) -->
 
-            {% if not hide_login_btn %}
+            {% else %}
+            <!-- AUTH BUTTONS -->
+            {% if not (hide_login_btn | default(false)) %}
             <a class="btn btn-outline-light btn-sm me-2" href="/login">Login</a>
-            {% endif %} {% if not hide_signup_btn %}
+            {% endif %}
+
+            {% if not (hide_signup_btn | default(false)) %}
             <a class="btn btn-primary btn-sm" href="/sign-up">Sign Up</a>
-            {% endif %} {% endif %}
+            {% endif %}
+            {% endif %}
           </div>
         </div>
       </div>
@@ -177,19 +179,25 @@
     {% endif %}
 
     <!-- ================= MAIN CONTENT ================= -->
-    <div class="container my-4">{% block content %}{% endblock %}</div>
+    <div class="container my-4">
+      {% block content %}{% endblock %}
+    </div>
 
     <!-- ================= TOAST CONTAINER ================= -->
     <div
       class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"
-      id="toastContainer"
       aria-live="polite"
       aria-atomic="true"
     >
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
       <div
-        class="toast align-items-center {% if category == 'error' %}text-bg-danger {% elif category == 'warning' %}text-bg-warning {% else %}text-bg-success{% endif %} border-0 text-center"
+        class="toast align-items-center
+          {% if category == 'error' %}text-bg-danger
+          {% elif category == 'warning' %}text-bg-warning
+          {% else %}text-bg-success{% endif %}
+          border-0 text-center"
         role="alert"
       >
         <div class="d-flex justify-content-center align-items-center">
@@ -201,7 +209,9 @@
           ></button>
         </div>
       </div>
-      {% endfor %} {% endif %} {% endwith %}
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
     </div>
 
     <!-- ================= SCRIPTS ================= -->
