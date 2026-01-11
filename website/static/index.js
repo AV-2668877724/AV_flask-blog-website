@@ -362,3 +362,41 @@ function checkUsername() {
       }
     });
 }
+
+let signupUsernameValid = false;
+
+function checkSignupUsername() {
+  const input = document.getElementById("signupUsername");
+  const status = document.getElementById("signupUsernameStatus");
+  const submitBtn = document.getElementById("signupSubmitBtn");
+
+  const username = input.value.trim();
+
+  if (!username) {
+    status.textContent = "Username is required";
+    status.className = "text-danger";
+    submitBtn.disabled = true;
+    signupUsernameValid = false;
+    return;
+  }
+
+  fetch("/check-username-signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username })
+  })
+    .then(res => res.json())
+    .then(data => {
+      status.textContent = data.message;
+
+      if (data.available) {
+        status.className = "text-success";
+        submitBtn.disabled = false;
+        signupUsernameValid = true;
+      } else {
+        status.className = "text-danger";
+        submitBtn.disabled = true;
+        signupUsernameValid = false;
+      }
+    });
+}

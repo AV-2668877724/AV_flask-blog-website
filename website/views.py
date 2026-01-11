@@ -407,6 +407,28 @@ def check_username():
     else:
         return jsonify({'available': True, 'message': 'Username is available'})
 
+@views.route('/check-username-signup', methods=['POST'])
+def check_username_signup():
+    data = request.get_json()
+    username = data.get('username', '').strip()
+
+    if not username:
+        return jsonify({'available': False, 'message': 'Username is required'})
+
+    # Basic validation
+    if len(username) < 3:
+        return jsonify({'available': False, 'message': 'Username too short'})
+
+    if not username.isalnum():
+        return jsonify({'available': False, 'message': 'Only letters and numbers allowed'})
+
+    exists = User.query.filter_by(username=username).first()
+
+    if exists:
+        return jsonify({'available': False, 'message': 'Username already taken'})
+    else:
+        return jsonify({'available': True, 'message': 'Username is available'})
+
 
 # =================================================
 # ABOUT

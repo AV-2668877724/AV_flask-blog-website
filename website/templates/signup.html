@@ -1,6 +1,5 @@
-{% extends 'base.html' %}
-{% block title %} Sign Up {% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% block title %} Sign Up {% endblock %} {% block
+content %}
 
 <div
   class="auth-page d-flex align-items-center justify-content-center position-relative"
@@ -20,7 +19,11 @@
       z-index: 0;
     "
   >
-    <svg viewBox="0 0 1440 320" preserveAspectRatio="none" style="width: 100%; height: 100%">
+    <svg
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+      style="width: 100%; height: 100%"
+    >
       <path
         fill="#0d6efd"
         fill-opacity="0.15"
@@ -30,9 +33,11 @@
   </div>
 
   <!-- Signup Card -->
-  <div class="card shadow-lg border-0 mx-auto" style="max-width: 540px; width: 100%; z-index: 1">
+  <div
+    class="card shadow-lg border-0 mx-auto"
+    style="max-width: 540px; width: 100%; z-index: 1"
+  >
     <div class="card-body p-4">
-
       <!-- Header -->
       <div class="text-center mb-4">
         <img
@@ -40,39 +45,55 @@
           alt="AV Postory Logo"
           style="height: 60px"
         />
-        <h4 class="mt-2 fw-bold text-primary">
-          Welcome to AV Postory
-        </h4>
+        <h4 class="mt-2 fw-bold text-primary">Welcome to AV Postory</h4>
         <p class="text-muted">Where ideas turn into stories ✨</p>
       </div>
 
       <!-- Signup Form -->
       <form method="POST">
-
         <!-- Email -->
         <div class="mb-3">
           <label class="form-label">Email Address</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-            <input type="email" name="email" class="form-control" placeholder="Enter email" required />
+            <span class="input-group-text"
+              ><i class="fas fa-envelope"></i
+            ></span>
+            <input
+              type="email"
+              name="email"
+              class="form-control"
+              placeholder="Enter email"
+              required
+            />
           </div>
         </div>
 
         <!-- Username -->
         <div class="mb-3">
           <label class="form-label">Username</label>
+
           <div class="input-group">
             <span class="input-group-text"><i class="fas fa-user"></i></span>
+
             <input
               type="text"
               name="username"
+              id="signupUsername"
               class="form-control"
               placeholder="Choose a username"
               required
-              data-bs-toggle="tooltip"
-              title="This will be visible to other users"
             />
+
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              onclick="checkSignupUsername()"
+            >
+              Check
+            </button>
           </div>
+
+          <small id="signupUsernameStatus" class="d-block mt-1"></small>
         </div>
 
         <!-- Password -->
@@ -113,14 +134,17 @@
         <!-- Security Info -->
         <div class="alert alert-info small">
           <i class="fas fa-shield-alt me-1"></i>
-          These details help you recover your account if you forget your password.
+          These details help you recover your account if you forget your
+          password.
         </div>
 
         <!-- DOB -->
         <div class="mb-3">
           <label class="form-label">Date of Birth</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+            <span class="input-group-text"
+              ><i class="fas fa-calendar"></i
+            ></span>
             <input type="date" name="dob" class="form-control" required />
           </div>
         </div>
@@ -129,8 +153,16 @@
         <div class="mb-3">
           <label class="form-label">Favorite Person's Name</label>
           <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-heart text-danger"></i></span>
-            <input type="text" name="fav_person" class="form-control" placeholder="Favorite person" required />
+            <span class="input-group-text"
+              ><i class="fas fa-heart text-danger"></i
+            ></span>
+            <input
+              type="text"
+              name="fav_person"
+              class="form-control"
+              placeholder="Favorite person"
+              required
+            />
           </div>
         </div>
 
@@ -140,21 +172,66 @@
         </div>
 
         <!-- Submit -->
-        <button type="submit" class="btn btn-primary w-100 signup-btn">
+        <button
+          type="submit"
+          class="btn btn-primary w-100 signup-btn"
+          id="signupSubmitBtn"
+          disabled
+        >
           <i class="fas fa-paper-plane me-1"></i> Sign Up
         </button>
 
         <!-- Login -->
         <div class="text-center mt-3">
-          <small>Already have an account? <a href="/login">Login here</a></small>
+          <small
+            >Already have an account? <a href="/login">Login here</a></small
+          >
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Page Scripts -->
+<!-- Scripts -->
 <script>
+  let signupUsernameValid = false;
+
+  function checkSignupUsername() {
+    const input = document.getElementById("signupUsername");
+    const status = document.getElementById("signupUsernameStatus");
+    const submitBtn = document.getElementById("signupSubmitBtn");
+
+    const username = input.value.trim();
+
+    if (!username) {
+      status.textContent = "Username is required";
+      status.className = "text-danger";
+      submitBtn.disabled = true;
+      signupUsernameValid = false;
+      return;
+    }
+
+    fetch("/check-username-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        status.textContent = data.message;
+
+        if (data.available) {
+          status.className = "text-success";
+          submitBtn.disabled = false;
+          signupUsernameValid = true;
+        } else {
+          status.className = "text-danger";
+          submitBtn.disabled = true;
+          signupUsernameValid = false;
+        }
+      });
+  }
+
   // Password strength checker
   document.getElementById("password1").addEventListener("input", function () {
     const val = this.value;
@@ -180,7 +257,7 @@
       (strength < 50 ? "Weak" : strength < 75 ? "Medium" : "Strong");
   });
 
-  // Form progress indicator
+  // Form progress
   const inputs = document.querySelectorAll("form input");
   const progress = document.getElementById("formProgress");
   inputs.forEach((input) =>
@@ -189,11 +266,6 @@
       progress.style.width = (filled / inputs.length) * 100 + "%";
     })
   );
-
-  // Enable Bootstrap tooltips
-  document
-    .querySelectorAll('[data-bs-toggle="tooltip"]')
-    .forEach((el) => new bootstrap.Tooltip(el));
 </script>
 
 <style>
