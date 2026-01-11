@@ -7,7 +7,8 @@ from flask_login import login_required, current_user
 from .models import User, Post, Comment, Like
 from . import db
 from sqlalchemy import func
-import re
+import re,json
+from sqlalchemy.orm.attributes import flag_modified
 
 views = Blueprint('views', __name__)
 
@@ -16,6 +17,34 @@ ADMIN_ACTION_PASSWORD = "adminready777"
 # =================================================
 # UTILITY HELPERS
 # =================================================
+
+# =================================================
+# SOCIAL LINK AUTO-DETECTION
+# =================================================
+
+SOCIAL_PATTERNS = {
+    "github": r"github\.com",
+    "twitter": r"(twitter\.com|x\.com)",
+    "linkedin": r"linkedin\.com",
+    "youtube": r"(youtube\.com|youtu\.be)",
+    "instagram": r"instagram\.com",
+    "whatsapp": r"(wa\.me|whatsapp\.com)",
+    "snapchat": r"snapchat\.com",
+    "facebook": r"facebook\.com",
+    "telegram": r"(t\.me|telegram\.me)",
+    "website": r"^https?://"
+}
+
+def detect_platform(url: str) -> str:
+    """
+    Detect social platform from a URL.
+    Returns a platform key used for icons & labels.
+    """
+    for platform, pattern in SOCIAL_PATTERNS.items():
+        if re.search(pattern, url, re.IGNORECASE):
+            return platform
+    return "link"
+
 
 def enrich_posts(posts, current_user_id):
     """Convert Post objects → dicts with likes info"""
@@ -428,6 +457,62 @@ def check_username_signup():
         return jsonify({'available': False, 'message': 'Username already taken'})
     else:
         return jsonify({'available': True, 'message': 'Username is available'})
+
+
+
+
+@views.route("/profile/add-social", methods=["POST"])
+@login_required
+def add_social_link():
+    url = request.form.get("new_link", "").strip()
+
+    if not url:
+        flash("Please enter a valid link.", "error")
+        return redirect(url_for("views.profile", username=current_user.username))
+
+    # 🔁 ALWAYS work on a COPY
+    links = dict(current_user.social_links or {})
+
+    platform = detect_platform(url)
+
+    # ensure unique key
+    index = 1
+    key = f"{platform}_{index}"
+    while key in links:
+        index += 1
+        key = f"{platform}_{index}"
+
+    links[key] = url
+
+    current_user.social_links = links
+
+    # 🔥 THIS IS THE CRITICAL LINE
+    flag_modified(current_user, "social_links")
+
+    db.session.commit()
+
+    flash("Link added successfully.", "success")
+    return redirect(url_for("views.profile", username=current_user.username))
+
+@views.route("/profile/remove-social", methods=["POST"])
+@login_required
+def remove_social_link():
+    data = request.get_json()
+    url = data.get("url") if data else None
+
+    if not url:
+        return jsonify(success=False), 400
+
+    links = dict(current_user.social_links or {})
+    links = {k: v for k, v in links.items() if v != url}
+
+    current_user.social_links = links
+    flag_modified(current_user, "social_links")
+
+    db.session.commit()
+    return jsonify(success=True)
+
+
 
 
 # =================================================

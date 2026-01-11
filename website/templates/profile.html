@@ -14,7 +14,7 @@ endblock %} {% block content %}
     <!-- AVATAR -->
     <div class="profile-avatar-lg">{{ profile_user.username[0]|upper }}</div>
 
-    <!-- USERNAME + EDIT ICON -->
+    <!-- ================= USERNAME ================= -->
     <div class="text-center mt-3">
       <div class="d-flex justify-content-center align-items-center gap-2">
         <h2 class="fw-bold mb-0">{{ profile_user.username }}</h2>
@@ -31,7 +31,6 @@ endblock %} {% block content %}
         {% endif %}
       </div>
 
-      <!-- ================= CHANGE USERNAME (COLLAPSE) ================= -->
       {% if current_user.id == profile_user.id %}
       <div class="collapse mt-3" id="editUsernameBox">
         <div
@@ -50,8 +49,7 @@ endblock %} {% block content %}
             />
             <button
               type="button"
-              class="btn btn-outline-secondary"
-              onclick="checkUsername()"
+              class="btn btn-outline-secondary check-username-btn"
             >
               Check
             </button>
@@ -62,10 +60,9 @@ endblock %} {% block content %}
           <form
             method="POST"
             action="{{ url_for('views.change_username') }}"
-            onsubmit="return allowUsernameSubmit"
+            class="change-username-form"
           >
             <input type="hidden" name="username" id="finalUsername" />
-
             <button
               class="btn btn-warning btn-sm mt-2"
               id="submitUsernameBtn"
@@ -124,6 +121,81 @@ endblock %} {% block content %}
       {% endif %}
     </div>
 
+    <!-- ================= SOCIAL LINKS ================= -->
+    <div class="mt-4">
+      <h5 class="fw-bold text-center">Social Links</h5>
+
+      {% if profile_user.social_links and profile_user.social_links|length > 0
+      %}
+      <div class="d-flex justify-content-center flex-wrap gap-3 mt-2">
+        {% for key, url in profile_user.social_links.items() %} {% set platform
+        = key.split('_')[0] %}
+        <div class="position-relative">
+          {% if platform in [ 'github','twitter','linkedin','youtube',
+          'instagram','whatsapp','snapchat', 'facebook','telegram' ] %}
+          <a
+            href="{{ url }}"
+            target="_blank"
+            class="btn btn-outline-secondary btn-sm text-capitalize"
+          >
+            <i class="fab fa-{{ platform }}"></i> {{ platform }}
+          </a>
+          {% else %}
+          <a
+            href="{{ url }}"
+            target="_blank"
+            class="btn btn-outline-secondary btn-sm text-break"
+            style="max-width: 100%"
+          >
+            <i class="fas fa-link me-1"></i> {{ url }}
+          </a>
+          {% endif %} {% if current_user.id == profile_user.id %}
+          <button
+            type="button"
+            class="btn btn-danger btn-sm rounded-circle px-1 py-0 remove-social-btn"
+            data-url="{{ url }}"
+            title="Remove link"
+            style="position: absolute; top: -6px; right: -6px"
+          >
+            ✕
+          </button>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-center text-muted mt-2">No social links added.</p>
+      {% endif %} {% if current_user.id == profile_user.id %}
+      <div class="text-center mt-3">
+        <button
+          class="btn btn-sm btn-primary"
+          data-bs-toggle="collapse"
+          data-bs-target="#addSocialLink"
+        >
+          Add Link
+        </button>
+      </div>
+
+      <div class="collapse mt-3" id="addSocialLink">
+        <form
+          method="POST"
+          action="{{ url_for('views.add_social_link') }}"
+          class="d-flex gap-2 justify-content-center"
+          style="max-width: 520px; margin: auto"
+        >
+          <input
+            type="url"
+            name="new_link"
+            class="form-control"
+            placeholder="Paste any social or website link"
+            required
+          />
+          <button class="btn btn-success btn-sm">Add</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+
     <!-- ================= STATS ================= -->
     <div class="profile-stats mt-4">
       <div class="stat-box">
@@ -138,61 +210,12 @@ endblock %} {% block content %}
   </div>
 </div>
 
-<!-- ================= POSTS SECTION ================= -->
+<!-- ================= POSTS ================= -->
 <div class="profile-posts">
   {% if posts %} {% set hide_dividers = True %} {% include "_posts.html" %} {%
   else %}
   <p class="text-center text-muted">No posts yet.</p>
   {% endif %}
 </div>
-
-<!-- ================= USERNAME CHECK SCRIPT ================= -->
-<script>
-  let allowUsernameSubmit = false;
-
-  function checkUsername() {
-    const usernameInput = document.getElementById("newUsername");
-    const status = document.getElementById("usernameStatus");
-    const submitBtn = document.getElementById("submitUsernameBtn");
-    const hiddenInput = document.getElementById("finalUsername");
-
-    const username = usernameInput.value.trim();
-
-    if (!username) {
-      status.textContent = "Please enter a username.";
-      status.className = "text-danger";
-      submitBtn.disabled = true;
-      allowUsernameSubmit = false;
-      return;
-    }
-
-    fetch("/check-username", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        status.textContent = data.message;
-
-        if (data.available) {
-          status.className = "text-success";
-          submitBtn.disabled = false;
-          hiddenInput.value = username;
-          allowUsernameSubmit = true;
-        } else {
-          status.className = "text-danger";
-          submitBtn.disabled = true;
-          allowUsernameSubmit = false;
-        }
-      })
-      .catch(() => {
-        status.textContent = "Error checking username.";
-        status.className = "text-danger";
-        submitBtn.disabled = true;
-        allowUsernameSubmit = false;
-      });
-  }
-</script>
 
 {% endblock %}

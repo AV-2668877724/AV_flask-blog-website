@@ -400,3 +400,35 @@ function checkSignupUsername() {
       }
     });
 }
+
+// ================= SOCIAL LINK REMOVE (AJAX) =================
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest(".remove-social-btn");
+  if (!btn) return;
+
+  const url = btn.dataset.url;
+  if (!url) return;
+
+  if (!confirm("Remove this link?")) return;
+
+  fetch("/profile/remove-social", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+    body: JSON.stringify({ url }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        // remove the whole wrapper (button + link)
+        btn.closest(".position-relative").remove();
+      } else {
+        alert(data.message || "Failed to remove link.");
+      }
+    })
+    .catch(() => {
+      alert("Network error. Please try again.");
+    });
+});

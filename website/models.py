@@ -1,7 +1,7 @@
 from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.types import JSON
 
 
 # =====================================================
@@ -17,40 +17,31 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+
     bio = db.Column(db.String(300), default="")
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
-    
-    # Security question hashes
+
+    # 🔐 Security question hashes
     dob_hash = db.Column(db.String(150))
     fav_person_hash = db.Column(db.String(150))
 
+    
+    social_links = db.Column(JSON, default=dict)
+
     # Relationships
-    posts = db.relationship(
-        'Post',
-        backref='user',
-        passive_deletes=True
-    )
-    comments = db.relationship(
-        'Comment',
-        backref='user',
-        passive_deletes=True
-    )
-    likes = db.relationship(
-        'Like',
-        backref='user',
-        passive_deletes=True
-    )
+    posts = db.relationship('Post', backref='user', passive_deletes=True)
+    comments = db.relationship('Comment', backref='user', passive_deletes=True)
+    likes = db.relationship('Like', backref='user', passive_deletes=True)
 
 
 # =====================================================
-# Post Model (Soft Delete Enabled)
+# Post Model
 # =====================================================
 
 class Post(db.Model):
     __tablename__ = 'post'
 
     id = db.Column(db.Integer, primary_key=True)
-
     text = db.Column(db.Text, nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
@@ -60,20 +51,10 @@ class Post(db.Model):
         nullable=False
     )
 
-    # ✅ Soft delete flag (SAFE for SQLite)
     is_deleted = db.Column(db.Boolean, default=False, nullable=False)
 
-    # Relationships
-    comments = db.relationship(
-        'Comment',
-        backref='post',
-        passive_deletes=True
-    )
-    likes = db.relationship(
-        'Like',
-        backref='post',
-        passive_deletes=True
-    )
+    comments = db.relationship('Comment', backref='post', passive_deletes=True)
+    likes = db.relationship('Like', backref='post', passive_deletes=True)
 
 
 # =====================================================
@@ -84,7 +65,6 @@ class Comment(db.Model):
     __tablename__ = 'comment'
 
     id = db.Column(db.Integer, primary_key=True)
-
     text = db.Column(db.String(200), nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
@@ -99,7 +79,9 @@ class Comment(db.Model):
         db.ForeignKey('post.id', ondelete='CASCADE'),
         nullable=False
     )
+
     is_deleted = db.Column(db.Boolean, default=False)
+
 
 # =====================================================
 # Like Model
