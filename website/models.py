@@ -105,3 +105,30 @@ class Like(db.Model):
     )
 
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+
+# =====================================================
+# Follow Model (User ↔ User)
+# =====================================================
+
+class Follow(db.Model):
+    __tablename__ = 'follow'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    follower_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    following_id = db.Column(
+        db.Integer,
+        db.ForeignKey('user.id', ondelete='CASCADE'),
+        nullable=False
+    )
+
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+
+    __table_args__ = (
+        db.UniqueConstraint('follower_id', 'following_id', name='unique_follow'),
+    )

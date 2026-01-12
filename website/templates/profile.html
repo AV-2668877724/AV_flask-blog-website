@@ -31,6 +31,7 @@ endblock %} {% block content %}
         {% endif %}
       </div>
 
+      <!-- CHANGE USERNAME -->
       {% if current_user.id == profile_user.id %}
       <div class="collapse mt-3" id="editUsernameBox">
         <div
@@ -45,7 +46,6 @@ endblock %} {% block content %}
               id="newUsername"
               class="form-control"
               placeholder="New username"
-              autocomplete="off"
             />
             <button
               type="button"
@@ -57,11 +57,7 @@ endblock %} {% block content %}
 
           <small id="usernameStatus" class="d-block mt-2"></small>
 
-          <form
-            method="POST"
-            action="{{ url_for('views.change_username') }}"
-            class="change-username-form"
-          >
+          <form method="POST" action="{{ url_for('views.change_username') }}">
             <input type="hidden" name="username" id="finalUsername" />
             <button
               class="btn btn-warning btn-sm mt-2"
@@ -81,12 +77,12 @@ endblock %} {% block content %}
     </div>
 
     <!-- JOIN DATE -->
-    <small class="text-muted d-block mt-2">
+    <small class="text-muted d-block mt-2 text-center">
       Joined {{ profile_user.date_created | timeago }}
     </small>
 
     <!-- ================= BIO ================= -->
-    <div class="profile-bio mt-3">
+    <div class="profile-bio mt-3 text-center">
       {% if profile_user.bio %}
       <p class="mb-2">{{ profile_user.bio }}</p>
       {% else %}
@@ -102,17 +98,10 @@ endblock %} {% block content %}
 
       <div class="collapse mt-3" id="editBioBox">
         <form method="POST" action="{{ url_for('views.edit_bio') }}">
-          <textarea
-            name="bio"
-            class="form-control"
-            rows="3"
-            maxlength="300"
-            placeholder="Write something about yourself (max 300 characters)"
-          >
+          <textarea name="bio" class="form-control" rows="3" maxlength="300">
 {{ profile_user.bio }}</textarea
           >
-
-          <div class="d-flex justify-content-between align-items-center mt-2">
+          <div class="d-flex justify-content-between mt-2">
             <small class="text-muted">Max 300 characters</small>
             <button class="btn btn-primary btn-sm">Save</button>
           </div>
@@ -121,18 +110,51 @@ endblock %} {% block content %}
       {% endif %}
     </div>
 
+    <!-- ================= FOLLOW STATS ================= -->
+    <div class="profile-stats mt-4">
+      <div class="stat-box">
+        <span>{{ followers_count }}</span>
+        <small>Followers</small>
+      </div>
+      <div class="stat-box">
+        <span>{{ following_count }}</span>
+        <small>Following</small>
+      </div>
+      <div class="stat-box">
+        <span>{{ total_posts }}</span>
+        <small>Posts</small>
+      </div>
+      <div class="stat-box">
+        <span>{{ total_likes }}</span>
+        <small>Likes</small>
+      </div>
+    </div>
+
+    <!-- FOLLOW / UNFOLLOW -->
+    {% if current_user.id != profile_user.id %}
+    <div class="text-center mt-3">
+      <button
+        class="btn btn-sm {% if is_following %}btn-outline-danger{% else %}btn-primary{% endif %}"
+        id="followBtn"
+        data-user-id="{{ profile_user.id }}"
+      >
+        {% if is_following %}Unfollow{% else %}Follow{% endif %}
+      </button>
+    </div>
+    {% endif %}
+
     <!-- ================= SOCIAL LINKS ================= -->
     <div class="mt-4">
       <h5 class="fw-bold text-center">Social Links</h5>
 
-      {% if profile_user.social_links and profile_user.social_links|length > 0
-      %}
+      {% if profile_user.social_links %}
       <div class="d-flex justify-content-center flex-wrap gap-3 mt-2">
         {% for key, url in profile_user.social_links.items() %} {% set platform
         = key.split('_')[0] %}
         <div class="position-relative">
-          {% if platform in [ 'github','twitter','linkedin','youtube',
-          'instagram','whatsapp','snapchat', 'facebook','telegram' ] %}
+          {% if platform in
+          ['github','twitter','linkedin','youtube','instagram','whatsapp','snapchat','facebook','telegram']
+          %}
           <a
             href="{{ url }}"
             target="_blank"
@@ -145,16 +167,15 @@ endblock %} {% block content %}
             href="{{ url }}"
             target="_blank"
             class="btn btn-outline-secondary btn-sm text-break"
-            style="max-width: 100%"
           >
-            <i class="fas fa-link me-1"></i> {{ url }}
+            <i class="fas fa-link"></i> {{ url }}
           </a>
           {% endif %} {% if current_user.id == profile_user.id %}
           <button
             type="button"
             class="btn btn-danger btn-sm rounded-circle px-1 py-0 remove-social-btn"
             data-url="{{ url }}"
-            title="Remove link"
+            aria-label="Remove social link"
             style="position: absolute; top: -6px; right: -6px"
           >
             ✕
@@ -194,18 +215,6 @@ endblock %} {% block content %}
         </form>
       </div>
       {% endif %}
-    </div>
-
-    <!-- ================= STATS ================= -->
-    <div class="profile-stats mt-4">
-      <div class="stat-box">
-        <span>{{ total_posts }}</span>
-        <small>Posts</small>
-      </div>
-      <div class="stat-box">
-        <span>{{ total_likes }}</span>
-        <small>Likes</small>
-      </div>
     </div>
   </div>
 </div>

@@ -4,7 +4,8 @@ from flask import (
     flash, redirect, url_for, abort, jsonify
 )
 from flask_login import login_required, current_user
-from .models import User, Post, Comment, Like
+from .models import User, Post, Comment, Like, Follow
+from sqlalchemy.exc import IntegrityError
 from . import db
 from sqlalchemy import func
 import re,json
@@ -350,6 +351,9 @@ def like_post(post_id):
 def profile(username):
     profile_user = User.query.filter_by(username=username).first_or_404()
 
+    # -----------------------------
+    # User Posts
+    # -----------------------------
     raw_posts = (
         Post.query
         .filter_by(author=profile_user.id, is_deleted=False)
@@ -360,6 +364,7 @@ def profile(username):
     posts = enrich_posts(raw_posts, current_user.id)
 
     total_posts = len(raw_posts)
+
     total_likes = (
         db.session.query(func.count(Like.id))
         .join(Post, Like.post_id == Post.id)
@@ -367,15 +372,43 @@ def profile(username):
         .scalar()
     ) or 0
 
+    # -----------------------------
+    # FOLLOW SYSTEM (NEW)
+    # -----------------------------
+    from .models import Follow
+
+    followers_count = Follow.query.filter_by(
+        following_id=profile_user.id
+    ).count()
+
+    following_count = Follow.query.filter_by(
+        follower_id=profile_user.id
+    ).count()
+
+    is_following = Follow.query.filter_by(
+        follower_id=current_user.id,
+        following_id=profile_user.id
+    ).first() is not None
+
+    # -----------------------------
+    # Render
+    # -----------------------------
     return render_template(
         "profile.html",
         profile_user=profile_user,
         posts=posts,
         total_posts=total_posts,
         total_likes=total_likes,
+
+        # FOLLOW DATA
+        followers_count=followers_count,
+        following_count=following_count,
+        is_following=is_following,
+
         is_home=False,
         hide_dividers=True
     )
+
 
 @views.route("/profile/edit-bio", methods=["POST"])
 @login_required
@@ -512,6 +545,44 @@ def remove_social_link():
     db.session.commit()
     return jsonify(success=True)
 
+
+# =================================================
+# FOLLOW / UNFOLLOW
+# =================================================
+
+@views.route("/follow/<int:user_id>", methods=["POST"])
+@login_required
+def follow_user(user_id):
+    if user_id == current_user.id:
+        return jsonify(success=False)
+
+    follow = Follow(
+        follower_id=current_user.id,
+        following_id=user_id
+    )
+
+    try:
+        db.session.add(follow)
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+
+    return jsonify(success=True)
+
+
+@views.route("/unfollow/<int:user_id>", methods=["POST"])
+@login_required
+def unfollow_user(user_id):
+    follow = Follow.query.filter_by(
+        follower_id=current_user.id,
+        following_id=user_id
+    ).first()
+
+    if follow:
+        db.session.delete(follow)
+        db.session.commit()
+
+    return jsonify(success=True)
 
 
 

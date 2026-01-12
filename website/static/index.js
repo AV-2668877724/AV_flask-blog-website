@@ -432,3 +432,22 @@ document.addEventListener("click", function (e) {
       alert("Network error. Please try again.");
     });
 });
+
+// ================= FOLLOW / UNFOLLOW =================
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest("#followBtn");
+  if (!btn) return;
+
+  const userId = btn.dataset.userId;
+  const isUnfollow = btn.innerText === "Unfollow";
+
+  fetch(`/${isUnfollow ? "unfollow" : "follow"}/${userId}`, {
+    method: "POST",
+  })
+    .then(() => {
+      btn.innerText = isUnfollow ? "Follow" : "Unfollow";
+      btn.classList.toggle("btn-primary");
+      btn.classList.toggle("btn-outline-danger");
+    })
+    .catch(() => alert("Action failed"));
+});
