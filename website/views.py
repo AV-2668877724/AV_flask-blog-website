@@ -584,6 +584,65 @@ def unfollow_user(user_id):
 
     return jsonify(success=True)
 
+# =================================================
+# FOLLOW LIST PAGES
+# =================================================
+
+@views.route("/followers/<username>")
+@login_required
+def followers_list(username):
+    user = User.query.filter_by(username=username).first_or_404()
+
+    followers = (
+        User.query
+        .join(Follow, Follow.follower_id == User.id)
+        .filter(Follow.following_id == user.id)
+        .order_by(User.username.asc())
+        .all()
+    )
+
+    following_ids = {
+        f.following_id
+        for f in Follow.query.filter_by(follower_id=current_user.id).all()
+    }
+
+    return render_template(
+        "followers.html",
+        profile_user=user,
+        users=followers,
+        following_ids=following_ids,
+        title="Followers",
+        is_home=False
+    )
+
+
+@views.route("/following/<username>")
+@login_required
+def following_list(username):
+    user = User.query.filter_by(username=username).first_or_404()
+
+    following = (
+        User.query
+        .join(Follow, Follow.following_id == User.id)
+        .filter(Follow.follower_id == user.id)
+        .order_by(User.username.asc())
+        .all()
+    )
+
+    following_ids = {
+        f.following_id
+        for f in Follow.query.filter_by(follower_id=current_user.id).all()
+    }
+
+    return render_template(
+        "followers.html",
+        profile_user=user,
+        users=following,
+        following_ids=following_ids,
+        title="Following",
+        is_home=False
+    )
+
 
 
 # =================================================

@@ -1,0 +1,62 @@
+{% extends "base.html" %} {% block title %}{{ title }} · {{
+profile_user.username }}{% endblock %} {% block content %}
+
+<div class="container">
+  <!-- ================= PAGE HEADER ================= -->
+  <div class="text-center mb-4">
+    <h2 class="fw-bold">{{ title }}</h2>
+    <p class="text-muted">{{ profile_user.username }}</p>
+  </div>
+
+  <!-- ================= USER LIST ================= -->
+  {% if users %}
+  <div class="list-group mx-auto" style="max-width: 520px">
+    {% for user in users %}
+    <div
+      class="list-group-item d-flex align-items-center justify-content-between"
+    >
+      <!-- USER LINK -->
+      <a
+        href="{{ url_for('views.profile', username=user.username) }}"
+        class="d-flex align-items-center gap-3 text-decoration-none text-dark"
+      >
+        <div class="profile-avatar-sm">{{ user.username[0]|upper }}</div>
+        <strong>{{ user.username }}</strong>
+      </a>
+
+      <!-- FOLLOW / UNFOLLOW -->
+      {% if user.id != current_user.id %} {% if user.id in following_ids %}
+      <!-- ✅ MUST HAVE unfollow-btn -->
+      <button
+        class="btn btn-sm btn-outline-danger unfollow-btn"
+        data-user-id="{{ user.id }}"
+      >
+        Unfollow
+      </button>
+      {% else %}
+      <button
+        class="btn btn-sm btn-primary follow-btn"
+        data-user-id="{{ user.id }}"
+      >
+        Follow
+      </button>
+      {% endif %} {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-center text-muted mt-4">No {{ title|lower }} yet.</p>
+  {% endif %}
+
+  <!-- ================= BACK BUTTON ================= -->
+  <div class="text-center mt-4">
+    <a
+      href="{{ url_for('views.profile', username=profile_user.username) }}"
+      class="btn btn-outline-primary btn-sm"
+    >
+      ← Back to Profile
+    </a>
+  </div>
+</div>
+
+{% endblock %}

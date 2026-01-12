@@ -31,7 +31,6 @@ endblock %} {% block content %}
         {% endif %}
       </div>
 
-      <!-- CHANGE USERNAME -->
       {% if current_user.id == profile_user.id %}
       <div class="collapse mt-3" id="editUsernameBox">
         <div
@@ -46,10 +45,12 @@ endblock %} {% block content %}
               id="newUsername"
               class="form-control"
               placeholder="New username"
+              autocomplete="off"
             />
             <button
               type="button"
-              class="btn btn-outline-secondary check-username-btn"
+              class="btn btn-outline-secondary"
+              onclick="checkUsername()"
             >
               Check
             </button>
@@ -101,6 +102,7 @@ endblock %} {% block content %}
           <textarea name="bio" class="form-control" rows="3" maxlength="300">
 {{ profile_user.bio }}</textarea
           >
+
           <div class="d-flex justify-content-between mt-2">
             <small class="text-muted">Max 300 characters</small>
             <button class="btn btn-primary btn-sm">Save</button>
@@ -110,32 +112,40 @@ endblock %} {% block content %}
       {% endif %}
     </div>
 
-    <!-- ================= FOLLOW STATS ================= -->
+    <!-- ================= STATS ================= -->
     <div class="profile-stats mt-4">
-      <div class="stat-box">
+      <a
+        href="{{ url_for('views.followers_list', username=profile_user.username) }}"
+        class="stat-box text-decoration-none"
+      >
         <span>{{ followers_count }}</span>
         <small>Followers</small>
-      </div>
-      <div class="stat-box">
+      </a>
+
+      <a
+        href="{{ url_for('views.following_list', username=profile_user.username) }}"
+        class="stat-box text-decoration-none"
+      >
         <span>{{ following_count }}</span>
         <small>Following</small>
-      </div>
+      </a>
+
       <div class="stat-box">
         <span>{{ total_posts }}</span>
         <small>Posts</small>
       </div>
+
       <div class="stat-box">
         <span>{{ total_likes }}</span>
         <small>Likes</small>
       </div>
     </div>
 
-    <!-- FOLLOW / UNFOLLOW -->
+    <!-- ================= FOLLOW / UNFOLLOW ================= -->
     {% if current_user.id != profile_user.id %}
     <div class="text-center mt-3">
       <button
-        class="btn btn-sm {% if is_following %}btn-outline-danger{% else %}btn-primary{% endif %}"
-        id="followBtn"
+        class="btn btn-sm {% if is_following %} btn-outline-danger unfollow-btn {% else %} btn-primary follow-btn {% endif %}"
         data-user-id="{{ profile_user.id }}"
       >
         {% if is_following %}Unfollow{% else %}Follow{% endif %}
@@ -175,7 +185,7 @@ endblock %} {% block content %}
             type="button"
             class="btn btn-danger btn-sm rounded-circle px-1 py-0 remove-social-btn"
             data-url="{{ url }}"
-            aria-label="Remove social link"
+            title="Remove link"
             style="position: absolute; top: -6px; right: -6px"
           >
             ✕

@@ -383,10 +383,10 @@ function checkSignupUsername() {
   fetch("/check-username-signup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username })
+    body: JSON.stringify({ username }),
   })
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       status.textContent = data.message;
 
       if (data.available) {
@@ -433,21 +433,69 @@ document.addEventListener("click", function (e) {
     });
 });
 
-// ================= FOLLOW / UNFOLLOW =================
+// ================= FOLLOW BUTTON (LIST PAGES) =================
 document.addEventListener("click", function (e) {
-  const btn = e.target.closest("#followBtn");
+  const btn = e.target.closest(".follow-btn");
   if (!btn) return;
 
   const userId = btn.dataset.userId;
-  const isUnfollow = btn.innerText === "Unfollow";
+  if (!userId) return;
 
-  fetch(`/${isUnfollow ? "unfollow" : "follow"}/${userId}`, {
+  btn.disabled = true;
+
+  fetch(`/follow/${userId}`, {
     method: "POST",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+    },
   })
-    .then(() => {
-      btn.innerText = isUnfollow ? "Follow" : "Unfollow";
-      btn.classList.toggle("btn-primary");
-      btn.classList.toggle("btn-outline-danger");
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        btn.textContent = "Following";
+        btn.classList.remove("btn-primary");
+        btn.classList.add("btn-outline-secondary");
+      } else {
+        btn.disabled = false;
+      }
     })
-    .catch(() => alert("Action failed"));
+    .catch(() => {
+      btn.disabled = false;
+      alert("Network error");
+    });
+});
+
+// ================= UNFOLLOW BUTTON =================
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest(".unfollow-btn");
+  if (!btn) return;
+
+  const userId = btn.dataset.userId;
+  if (!userId) return;
+
+  if (!confirm("Unfollow this user?")) return;
+
+  btn.disabled = true;
+
+  fetch(`/unfollow/${userId}`, {
+    method: "POST",
+    headers: {
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        btn.textContent = "Follow";
+        btn.classList.remove("btn-outline-danger", "unfollow-btn");
+        btn.classList.add("btn-primary", "follow-btn");
+        btn.disabled = false;
+      } else {
+        btn.disabled = false;
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      alert("Network error");
+    });
 });
