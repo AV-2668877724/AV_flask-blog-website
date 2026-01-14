@@ -1,271 +1,363 @@
 {% extends "base.html" %} {% block title %}Admin Dashboard{% endblock %} {%
 block content %}
-
-<div class="container">
-  <h2 class="text-center mb-4">👑 Admin Dashboard</h2>
-
-  <!-- ================= QUICK STATS ================= -->
-  <div class="row text-center mb-4">
-    <div class="col-md-3 mb-2">
-      <div class="card p-3 shadow-sm">
-        <h6 class="text-muted">Users</h6>
-        <span class="fs-4 fw-bold">{{ users|length }}</span>
-      </div>
-    </div>
-    <div class="col-md-3 mb-2">
-      <div class="card p-3 shadow-sm">
-        <h6 class="text-muted">Active Posts</h6>
-        <span class="fs-4 fw-bold text-success">{{ active_posts|length }}</span>
-      </div>
-    </div>
-    <div class="col-md-3 mb-2">
-      <div class="card p-3 shadow-sm">
-        <h6 class="text-muted">Deleted Posts</h6>
-        <span class="fs-4 fw-bold text-danger">{{ deleted_posts|length }}</span>
-      </div>
-    </div>
-    <div class="col-md-3 mb-2">
-      <div class="card p-3 shadow-sm">
-        <h6 class="text-muted">Comments</h6>
-        <span class="fs-4 fw-bold">{{ comments|length }}</span>
-      </div>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="font-heading fw-bold mb-0">Admin Dashboard</h2>
+    <p class="text-muted mb-0">Manage users, content, and safety.</p>
   </div>
+  <span class="badge bg-dark px-3 py-2 rounded-pill">Super Admin</span>
+</div>
 
-  <!-- ================= USERS ================= -->
-  <div class="card mb-4">
-    <div
-      class="card-header fw-bold d-flex justify-content-between align-items-center"
-    >
-      👤 Users
-      <div class="d-flex gap-2 align-items-center">
-        <input
-          type="text"
-          class="form-control form-control-sm"
-          placeholder="Search users..."
-          onkeydown="handleEnterSearch(event,'usersSection', this.value)"
-        />
-        <button
-          class="btn btn-sm btn-outline-primary"
-          data-bs-toggle="collapse"
-          data-bs-target="#usersSection"
-        >
-          Toggle
-        </button>
-      </div>
-    </div>
-
-    <div class="collapse" id="usersSection">
+<div class="row g-3 mb-5">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        {% for u in users %}
-        <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <strong>{{ u.username }}</strong>
-              <small class="text-muted d-block">{{ u.email }}</small>
-              <small class="text-muted"
-                >Joined {{ u.date_created | timeago }}</small
-              >
-            </div>
-
-            {% if u.id != current_user.id %}
-            <form
-              method="POST"
-              action="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
-              class="d-flex gap-2"
-              onsubmit="return confirm('Delete this user permanently?');"
-            >
-              <input
-                type="password"
-                name="admin_password"
-                class="form-control form-control-sm"
-                placeholder="Admin password"
-                required
-              />
-              <button class="btn btn-danger btn-sm">Delete</button>
-            </form>
-            {% else %}
-            <span class="badge bg-secondary">You</span>
-            {% endif %}
-          </div>
-          <hr />
-        </div>
-        {% else %}
-        <p class="text-muted">No users found.</p>
-        {% endfor %}
+        <h6 class="text-muted text-uppercase small fw-bold">Total Users</h6>
+        <h2 class="fw-bold mb-0">{{ users|length }}</h2>
       </div>
     </div>
   </div>
-
-  <!-- ================= ACTIVE POSTS ================= -->
-  <div class="card mb-4">
-    <div
-      class="card-header fw-bold d-flex justify-content-between align-items-center"
-    >
-      📝 Active Posts
-      <button
-        class="btn btn-sm btn-outline-primary"
-        data-bs-toggle="collapse"
-        data-bs-target="#activePostsSection"
-      >
-        Toggle
-      </button>
-    </div>
-
-    <div class="collapse" id="activePostsSection">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        {% for p in active_posts %}
-        <div class="mb-3">
-          <p class="mb-1">
-            <strong>{{ p.user.username }}</strong>
-            <small class="text-muted ms-2"
-              >{{ p.date_created | timeago }}</small
-            >
-          </p>
-
-          <p class="text-muted">
-            {{ p.text[:120] }}{% if p.text|length > 120 %}…{% endif %}
-          </p>
-
-          <form
-            method="POST"
-            action="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
-            class="d-flex gap-2"
-            onsubmit="return confirm('Delete this post?');"
-          >
-            <input
-              type="password"
-              name="admin_password"
-              class="form-control form-control-sm"
-              placeholder="Admin password"
-              required
-            />
-            <button class="btn btn-danger btn-sm">Delete Post</button>
-          </form>
-          <hr />
-        </div>
-        {% else %}
-        <p class="text-muted">No active posts.</p>
-        {% endfor %}
+        <h6 class="text-muted text-uppercase small fw-bold">Active Posts</h6>
+        <h2 class="fw-bold text-success mb-0">{{ active_posts|length }}</h2>
       </div>
     </div>
   </div>
-
-  <!-- ================= DELETED POSTS ================= -->
-  <div class="card mb-4">
-    <div
-      class="card-header fw-bold d-flex justify-content-between align-items-center"
-    >
-      ♻️ Deleted Posts
-      <button
-        class="btn btn-sm btn-outline-primary"
-        data-bs-toggle="collapse"
-        data-bs-target="#deletedPostsSection"
-      >
-        Toggle
-      </button>
-    </div>
-
-    <div class="collapse" id="deletedPostsSection">
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        {% for p in deleted_posts %}
-        <div class="mb-3">
-          <p class="mb-1">
-            <strong>{{ p.user.username }}</strong>
-            <small class="text-muted ms-2"
-              >{{ p.date_created | timeago }}</small
-            >
-            <span class="badge bg-danger ms-2">Deleted</span>
-          </p>
-
-          <p class="text-muted">
-            {{ p.text[:120] }}{% if p.text|length > 120 %}…{% endif %}
-          </p>
-
-          <form
-            method="POST"
-            action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
-            class="d-flex gap-2"
-          >
-            <input
-              type="password"
-              name="admin_password"
-              class="form-control form-control-sm"
-              placeholder="Admin password"
-              required
-            />
-            <button class="btn btn-success btn-sm">Restore</button>
-          </form>
-          <hr />
-        </div>
-        {% else %}
-        <p class="text-muted">No deleted posts.</p>
-        {% endfor %}
+        <h6 class="text-muted text-uppercase small fw-bold">Deleted Posts</h6>
+        <h2 class="fw-bold text-danger mb-0">{{ deleted_posts|length }}</h2>
       </div>
     </div>
   </div>
-
-  <!-- ================= COMMENTS ================= -->
-  <div class="card mb-4">
-    <div class="card-header fw-bold">💬 Comments</div>
-
-    <div class="card-body">
-      {% for c in comments %}
-      <div class="mb-3">
-        <p class="mb-1">
-          <strong>{{ c.user.username }}</strong>
-          <small class="text-muted ms-2">{{ c.date_created | timeago }}</small>
-          {% if c.is_deleted %}
-          <span class="badge bg-danger ms-2">Deleted</span>
-          {% endif %}
-        </p>
-
-        <p class="text-muted">{{ c.text }}</p>
-
-        {% if not c.is_deleted %}
-        <form
-          method="POST"
-          action="{{ url_for('views.admin_delete_comment', comment_id=c.id) }}"
-          class="d-flex gap-2"
-        >
-          <input
-            type="password"
-            name="admin_password"
-            class="form-control form-control-sm"
-            placeholder="Admin password"
-            required
-          />
-          <button class="btn btn-danger btn-sm">Delete</button>
-        </form>
-        {% else %}
-        <form
-          method="POST"
-          action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
-          class="d-flex gap-2"
-        >
-          <input
-            type="password"
-            name="admin_password"
-            class="form-control form-control-sm"
-            placeholder="Admin password"
-            required
-          />
-          <button class="btn btn-success btn-sm">Restore</button>
-        </form>
-        {% endif %}
-        <hr />
+  <div class="col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="text-muted text-uppercase small fw-bold">Total Comments</h6>
+        <h2 class="fw-bold text-primary mb-0">{{ comments|length }}</h2>
       </div>
-      {% else %}
-      <p class="text-muted">No comments available.</p>
-      {% endfor %}
     </div>
-  </div>
-
-  <div class="text-center mb-4">
-    <a href="{{ url_for('views.home') }}" class="btn btn-primary">
-      Back to Home
-    </a>
   </div>
 </div>
 
+<ul class="nav nav-pills mb-3" id="adminTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link active fw-bold"
+      id="users-tab"
+      data-bs-toggle="pill"
+      data-bs-target="#pills-users"
+      type="button"
+    >
+      Users
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link fw-bold"
+      id="posts-tab"
+      data-bs-toggle="pill"
+      data-bs-target="#pills-posts"
+      type="button"
+    >
+      Active Posts
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link fw-bold"
+      id="deleted-tab"
+      data-bs-toggle="pill"
+      data-bs-target="#pills-deleted"
+      type="button"
+    >
+      Deleted Posts
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link fw-bold"
+      id="comments-tab"
+      data-bs-toggle="pill"
+      data-bs-target="#pills-comments"
+      type="button"
+    >
+      Comments Audit
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="adminTabsContent">
+  <div class="tab-pane fade show active" id="pills-users">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0">All Users</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+              <tr>
+                <th class="ps-4">User</th>
+                <th>Email</th>
+                <th>Joined</th>
+                <th class="text-end pe-4">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td class="ps-4 fw-bold">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="user-avatar-xs">{{ u.username[0]|upper }}</div>
+                    {{ u.username }}
+                  </div>
+                </td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.date_created.strftime('%Y-%m-%d') }}</td>
+                <td class="text-end pe-4">
+                  {% if u.id != current_user.id %}
+                  <form
+                    method="POST"
+                    action="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
+                    onsubmit="return confirm('WARNING: This will permanently delete the user and cannot be undone. Proceed?');"
+                    class="d-inline-flex gap-2"
+                  >
+                    <input
+                      type="password"
+                      name="admin_password"
+                      class="form-control form-control-sm"
+                      placeholder="Admin Pass"
+                      style="width: 120px"
+                      required
+                    />
+                    <button class="btn btn-danger btn-sm">Delete</button>
+                  </form>
+                  {% else %}
+                  <span class="badge bg-secondary">You</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">
+                  No users found.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="pills-posts">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0">Active Posts</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4">Author</th>
+              <th>Content Snippet</th>
+              <th>Date</th>
+              <th class="text-end pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in active_posts %}
+            <tr>
+              <td class="ps-4 fw-bold">{{ p.user.username }}</td>
+              <td style="max-width: 300px">
+                <span class="text-truncate d-block text-muted"
+                  >{{ p.text[:60] }}...</span
+                >
+              </td>
+              <td><small>{{ p.date_created | timeago }}</small></td>
+              <td class="text-end pe-4">
+                <form
+                  method="POST"
+                  action="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
+                  onsubmit="return confirm('Move this post to trash?');"
+                  class="d-inline-flex gap-2"
+                >
+                  <input
+                    type="password"
+                    name="admin_password"
+                    class="form-control form-control-sm"
+                    placeholder="Admin Pass"
+                    style="width: 120px"
+                    required
+                  />
+                  <button class="btn btn-warning btn-sm text-white">
+                    Delete
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">
+                No active posts.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="pills-deleted">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0">Trash (Deleted Posts)</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4">Original Author</th>
+              <th>Content</th>
+              <th>Deleted Date</th>
+              <th class="text-end pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in deleted_posts %}
+            <tr>
+              <td class="ps-4 fw-bold text-danger">{{ p.user.username }}</td>
+              <td style="max-width: 300px">
+                <span class="text-truncate d-block text-muted"
+                  >{{ p.text[:60] }}...</span
+                >
+              </td>
+              <td><small>{{ p.date_created | timeago }}</small></td>
+              <td class="text-end pe-4">
+                <form
+                  method="POST"
+                  action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
+                  class="d-inline-flex gap-2"
+                >
+                  <input
+                    type="password"
+                    name="admin_password"
+                    class="form-control form-control-sm"
+                    placeholder="Admin Pass"
+                    style="width: 120px"
+                    required
+                  />
+                  <button class="btn btn-success btn-sm">Restore</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">
+                Trash is empty.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-pane fade" id="pills-comments">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0">Recent Comments</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4">Author</th>
+              <th>Comment</th>
+              <th>Status</th>
+              <th class="text-end pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in comments %}
+            <tr>
+              <td class="ps-4 fw-bold">{{ c.user.username }}</td>
+              <td style="max-width: 300px">
+                <span class="text-truncate d-block text-muted"
+                  >{{ c.text }}</span
+                >
+                <small class="text-muted" style="font-size: 0.75rem"
+                  >On post #{{ c.post_id }}</small
+                >
+              </td>
+              <td>
+                {% if c.is_deleted %}
+                <span
+                  class="badge bg-danger-subtle text-danger border border-danger-subtle"
+                  >Deleted</span
+                >
+                {% else %}
+                <span
+                  class="badge bg-success-subtle text-success border border-success-subtle"
+                  >Active</span
+                >
+                {% endif %}
+              </td>
+              <td class="text-end pe-4">
+                {% if not c.is_deleted %}
+                <form
+                  method="POST"
+                  action="{{ url_for('views.admin_delete_comment', comment_id=c.id) }}"
+                  onsubmit="return confirm('Hide this comment?');"
+                  class="d-inline-flex gap-2"
+                >
+                  <input
+                    type="password"
+                    name="admin_password"
+                    class="form-control form-control-sm"
+                    placeholder="Admin Pass"
+                    style="width: 120px"
+                    required
+                  />
+                  <button class="btn btn-danger btn-sm">Delete</button>
+                </form>
+                {% else %}
+                <form
+                  method="POST"
+                  action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
+                  class="d-inline-flex gap-2"
+                >
+                  <input
+                    type="password"
+                    name="admin_password"
+                    class="form-control form-control-sm"
+                    placeholder="Admin Pass"
+                    style="width: 120px"
+                    required
+                  />
+                  <button class="btn btn-success btn-sm">Restore</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">
+                No comments found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

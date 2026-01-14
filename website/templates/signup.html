@@ -1,89 +1,48 @@
-{% extends 'base.html' %} {% block title %} Sign Up {% endblock %} {% block
-content %}
-
+{% extends 'base.html' %} {% block title %} Join AV Postory {% endblock %} {%
+block content %}
 <div
-  class="auth-page d-flex align-items-center justify-content-center position-relative"
-  style="
-    min-height: 100vh;
-    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-  "
+  class="row justify-content-center align-items-center"
+  style="min-height: 80vh"
 >
-  <!-- Decorative Wave -->
-  <div
-    style="
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 180px;
-      z-index: 0;
-    "
-  >
-    <svg
-      viewBox="0 0 1440 320"
-      preserveAspectRatio="none"
-      style="width: 100%; height: 100%"
-    >
-      <path
-        fill="#0d6efd"
-        fill-opacity="0.15"
-        d="M0,160L48,165.3C96,171,192,181,288,176C384,171,480,149,576,160C672,171,768,213,864,229.3C960,245,1056,235,1152,213.3C1248,192,1344,160,1392,144L1440,128V0H0Z"
-      ></path>
-    </svg>
-  </div>
+  <div class="col-md-6 col-lg-5">
+    <div class="text-center mb-4">
+      <img
+        src="{{ url_for('static', filename='images/logo.png') }}"
+        alt="Logo"
+        style="height: 48px; margin-bottom: 1rem"
+      />
+      <h2 class="font-heading fw-bold">Create your account</h2>
+      <p class="text-muted">Join the community of storytellers today.</p>
+    </div>
 
-  <!-- Signup Card -->
-  <div
-    class="card shadow-lg border-0 mx-auto"
-    style="max-width: 540px; width: 100%; z-index: 1"
-  >
-    <div class="card-body p-4">
-      <!-- Header -->
-      <div class="text-center mb-4">
-        <img
-          src="{{ url_for('static', filename='images/logo.png') }}"
-          alt="AV Postory Logo"
-          style="height: 60px"
-        />
-        <h4 class="mt-2 fw-bold text-primary">Welcome to AV Postory</h4>
-        <p class="text-muted">Where ideas turn into stories ✨</p>
-      </div>
-
-      <!-- Signup Form -->
+    <div class="card border-0 shadow-sm p-4">
       <form method="POST">
-        <!-- Email -->
         <div class="mb-3">
-          <label class="form-label">Email Address</label>
-          <div class="input-group">
-            <span class="input-group-text"
-              ><i class="fas fa-envelope"></i
-            ></span>
-            <input
-              type="email"
-              name="email"
-              class="form-control"
-              placeholder="Enter email"
-              required
-            />
-          </div>
+          <label class="form-label small fw-bold text-muted text-uppercase"
+            >Email Address</label
+          >
+          <input
+            type="email"
+            name="email"
+            class="form-control"
+            placeholder="name@example.com"
+            required
+          />
         </div>
 
-        <!-- Username -->
         <div class="mb-3">
-          <label class="form-label">Username</label>
-
+          <label class="form-label small fw-bold text-muted text-uppercase"
+            >Username</label
+          >
           <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-user"></i></span>
-
             <input
               type="text"
               name="username"
               id="signupUsername"
               class="form-control"
-              placeholder="Choose a username"
+              placeholder="Choose a handle"
               required
             />
-
             <button
               type="button"
               class="btn btn-outline-secondary"
@@ -92,107 +51,82 @@ content %}
               Check
             </button>
           </div>
-
           <small id="signupUsernameStatus" class="d-block mt-1"></small>
         </div>
 
-        <!-- Password -->
-        <div class="mb-3">
-          <label class="form-label">Password</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label class="form-label small fw-bold text-muted text-uppercase"
+              >Password</label
+            >
             <input
               type="password"
               id="password1"
               name="password1"
               class="form-control"
-              placeholder="Enter password"
               required
             />
           </div>
-          <div class="progress mt-2" style="height: 5px">
-            <div id="strengthBar" class="progress-bar"></div>
-          </div>
-          <small id="strengthText" class="text-muted"></small>
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mb-3">
-          <label class="form-label">Confirm Password</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold text-muted text-uppercase"
+              >Confirm</label
+            >
             <input
               type="password"
               name="password2"
               class="form-control"
-              placeholder="Confirm password"
               required
             />
           </div>
         </div>
 
-        <!-- Security Info -->
-        <div class="alert alert-info small">
-          <i class="fas fa-shield-alt me-1"></i>
-          These details help you recover your account if you forget your
-          password.
+        <div class="progress mb-3" style="height: 4px">
+          <div id="strengthBar" class="progress-bar" role="progressbar"></div>
         </div>
+        <small
+          id="strengthText"
+          class="text-muted d-block mb-3"
+          style="font-size: 0.8rem"
+        ></small>
 
-        <!-- DOB -->
         <div class="mb-3">
-          <label class="form-label">Date of Birth</label>
-          <div class="input-group">
-            <span class="input-group-text"
-              ><i class="fas fa-calendar"></i
-            ></span>
-            <input type="date" name="dob" class="form-control" required />
-          </div>
+          <label class="form-label small fw-bold text-muted text-uppercase"
+            >Date of Birth</label
+          >
+          <input type="date" name="dob" class="form-control" required />
         </div>
 
-        <!-- Favorite Person -->
-        <div class="mb-3">
-          <label class="form-label">Favorite Person's Name</label>
-          <div class="input-group">
-            <span class="input-group-text"
-              ><i class="fas fa-heart text-danger"></i
-            ></span>
-            <input
-              type="text"
-              name="fav_person"
-              class="form-control"
-              placeholder="Favorite person"
-              required
-            />
-          </div>
+        <div class="mb-4">
+          <label class="form-label small fw-bold text-muted text-uppercase"
+            >Security Question</label
+          >
+          <input
+            type="text"
+            name="fav_person"
+            class="form-control"
+            placeholder="Name of your favorite person?"
+            required
+          />
+          <div class="form-text">Used for password recovery.</div>
         </div>
 
-        <!-- Form Progress -->
-        <div class="progress mb-3" style="height: 8px">
-          <div id="formProgress" class="progress-bar bg-info"></div>
-        </div>
-
-        <!-- Submit -->
         <button
           type="submit"
-          class="btn btn-primary w-100 signup-btn"
+          class="btn btn-primary w-100 py-2 mb-3"
           id="signupSubmitBtn"
           disabled
         >
-          <i class="fas fa-paper-plane me-1"></i> Sign Up
+          Sign Up
         </button>
 
-        <!-- Login -->
-        <div class="text-center mt-3">
-          <small
-            >Already have an account? <a href="/login">Login here</a></small
-          >
-        </div>
+        <p class="text-center text-muted small mb-0">
+          Already have an account? <a href="/login" class="fw-bold">Log in</a>
+        </p>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Scripts -->
 <script>
   let signupUsernameValid = false;
 
@@ -200,14 +134,12 @@ content %}
     const input = document.getElementById("signupUsername");
     const status = document.getElementById("signupUsernameStatus");
     const submitBtn = document.getElementById("signupSubmitBtn");
-
     const username = input.value.trim();
 
     if (!username) {
       status.textContent = "Username is required";
-      status.className = "text-danger";
+      status.className = "text-danger small";
       submitBtn.disabled = true;
-      signupUsernameValid = false;
       return;
     }
 
@@ -219,20 +151,13 @@ content %}
       .then((res) => res.json())
       .then((data) => {
         status.textContent = data.message;
-
-        if (data.available) {
-          status.className = "text-success";
-          submitBtn.disabled = false;
-          signupUsernameValid = true;
-        } else {
-          status.className = "text-danger";
-          submitBtn.disabled = true;
-          signupUsernameValid = false;
-        }
+        status.className = data.available
+          ? "text-success small fw-bold"
+          : "text-danger small fw-bold";
+        submitBtn.disabled = !data.available;
       });
   }
 
-  // Password strength checker
   document.getElementById("password1").addEventListener("input", function () {
     const val = this.value;
     const bar = document.getElementById("strengthBar");
@@ -245,37 +170,17 @@ content %}
     if (/[^A-Za-z0-9]/.test(val)) strength += 25;
 
     bar.style.width = strength + "%";
-    bar.className =
-      strength < 50
-        ? "progress-bar bg-danger"
-        : strength < 75
-        ? "progress-bar bg-warning"
-        : "progress-bar bg-success";
 
-    text.textContent =
-      "Password strength: " +
-      (strength < 50 ? "Weak" : strength < 75 ? "Medium" : "Strong");
+    if (strength < 50) {
+      bar.className = "progress-bar bg-danger";
+      text.textContent = "Weak";
+    } else if (strength < 75) {
+      bar.className = "progress-bar bg-warning";
+      text.textContent = "Medium";
+    } else {
+      bar.className = "progress-bar bg-success";
+      text.textContent = "Strong";
+    }
   });
-
-  // Form progress
-  const inputs = document.querySelectorAll("form input");
-  const progress = document.getElementById("formProgress");
-  inputs.forEach((input) =>
-    input.addEventListener("input", () => {
-      const filled = [...inputs].filter((i) => i.value.trim()).length;
-      progress.style.width = (filled / inputs.length) * 100 + "%";
-    })
-  );
 </script>
-
-<style>
-  .signup-btn {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .signup-btn:hover {
-    transform: scale(1.03);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  }
-</style>
-
 {% endblock %}

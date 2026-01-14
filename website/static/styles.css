@@ -1,773 +1,305 @@
-/* Hero section */
-.hero-section {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
-  border-radius: 20px;
-  margin: 2rem auto;
-  max-width: 1200px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+/* =========================================
+   VARIABLES & THEME CONFIG
+   ========================================= */
+:root {
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+
+  /* Light Theme (Default) */
+  --bg-body: #F9FAFB;
+  --bg-card: #FFFFFF;
+  --bg-input: #F3F4F6;
+  --text-main: #111827;
+  --text-muted: #6B7280;
+  --border-color: #E5E7EB;
+  
+  /* Brand Colors */
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --accent: #10B981;
+  --danger: #EF4444;
+
+  /* UI Elements */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
 }
 
-/* Post truncation + overlay */
+/* Dark Theme Variables */
+body.dark-mode {
+  --bg-body: #111827;
+  --bg-card: #1F2937;
+  --bg-input: #374151;
+  --text-main: #F9FAFB;
+  --text-muted: #9CA3AF;
+  --border-color: #374151;
+  
+  --primary: #60A5FA;
+  --primary-hover: #93C5FD;
+}
+
+/* =========================================
+   GLOBAL RESET
+   ========================================= */
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-body);
+  color: var(--text-main);
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover {
+  color: var(--primary-hover);
+}
+
+/* =========================================
+   NAVBAR
+   ========================================= */
+.navbar {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 0;
+}
+
+.brand-text {
+  font-size: 1.25rem;
+  letter-spacing: -0.5px;
+}
+
+.nav-link {
+  color: var(--text-muted) !important;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+.nav-link:hover, .nav-link.active {
+  color: var(--primary) !important;
+}
+
+.nav-logo {
+  height: 32px;
+  width: auto;
+  border-radius: 6px;
+}
+
+/* Search Input */
+.search-input {
+  background-color: var(--bg-input);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  padding-left: 1rem;
+  width: 240px;
+}
+.search-input:focus {
+  background-color: var(--bg-card);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+.btn {
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-icon {
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-icon:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* =========================================
+   CARDS & POSTS
+   ========================================= */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 1.25rem;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Post Text Styling */
+.post-text {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+  white-space: pre-wrap;
+}
+
+/* Truncation Overlay */
 .post-wrapper {
   position: relative;
-}
-.post-text {
-  white-space: pre-wrap;
-  max-height: 150px; /* collapsed height */
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-  margin-top: 0;
 }
 .fade-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 40px;
-  background: linear-gradient(to bottom, rgba(255,255,255,0), #fff);
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--bg-card));
   pointer-events: none;
-  display: none; /* only shown when truncated */
-}
-.see-more-btn {
-  font-size: 0.9rem;
-  color: #0d6efd;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-.see-more-btn:hover {
-  text-decoration: underline;
-  color: #0056b3;
+  display: none;
 }
 
-/* Card hover */
-.card {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  border: none;
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border-top: 2px solid rgba(102, 126, 234, 0.3);
-  border-bottom: 2px solid rgba(118, 75, 162, 0.3);
-}
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-}
-
-/* Like button */
-.like-btn {
-  cursor: pointer;
-  font-size: 1.1rem;
-  transition: transform 0.2s ease, color 0.2s ease;
-  color: #6c757d;
-}
-.like-btn:hover {
-  transform: scale(1.1);
-  color: #0d6efd;
-}
-.dark-mode .like-btn {
-  color: #61686e;
-}
-.dark-mode .like-btn:hover {
-  color: #0d6efd;
-}
-.dark-mode .text-primary.like-btn {
-  color: #0d6efd !important;
-}
-
-/* Likes count */
-.likes-count {
-  font-weight: 600;
-  margin-left: 0.25rem;
-  color: #1a1515;
-}
-.dark-mode .likes-count {
-  color: #1b1616 !important;
-}
-
-/* Toast container */
-.toast-container {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 1080;
-}
-
-/* Navbar branding */
-.navbar {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-.navbar-brand img {
-  max-height: 40px;
-  width: auto;
-  display: block;
-}
-.navbar-brand .brand-text {
+/* =========================================
+   AVATARS
+   ========================================= */
+.user-avatar-xs {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary);
   color: #fff;
-  font-size: 1.2rem;
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-@media (max-width: 576px) {
-  .navbar-brand img {
-    max-height: 32px;
-  }
-}
-
-/* Dark mode */
-.dark-mode {
-  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  color: #e6e6e6;
-}
-.dark-mode .card {
-  background: rgba(0, 0, 0, 0.7);
-  color: #e6e6e6;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border-top: 2px solid rgba(102, 126, 234, 0.5);
-  border-bottom: 2px solid rgba(118, 75, 162, 0.5);
-}
-.dark-mode .card .bg-light,
-.dark-mode .card .border,
-.dark-mode .card .input-group,
-.dark-mode .card .form-control {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #e6e6e6 !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
-}
-.dark-mode .btn-primary {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-  color: #fff;
-}
-.dark-mode a.text-decoration-none {
-  color: #0d6efd;
-}
-.dark-mode .text-muted {
-  color: #6c757d !important;
-}
-.dark-mode img {
-  filter: brightness(0.95) contrast(1.02);
-}
-
-/* Form controls */
-.form-control:focus {
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-  border-color: #86b7fe;
-}
-.input-group .btn {
-  white-space: nowrap;
-}
-
-/* Buttons */
-.btn {
-  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 600;
-  transition: all 0.3s ease;
-}
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-.btn-primary {
-  background: linear-gradient(45deg, #007bff, #0056b3);
-  border: none;
-}
-.btn-outline-light {
-  border-color: rgba(255, 255, 255, 0.5);
-  color: #fff;
-}
-.btn-outline-light:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: #fff;
-}
-
-.muted-small {
-  font-size: 0.85rem;
-  color: #6c757d;
-}
-
-/* Markdown-like formatting */
-.post-text h1, .post-text h2, .post-text h3 {
-  font-weight: bold;
-  color: #0d6efd;
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
-}
-.post-text ul {
-  padding-left: 1.2rem;
-  list-style-type: disc;
-  margin-bottom: 1rem;
-}
-.post-text ol {
-  padding-left: 1.2rem;
-  list-style-type: decimal;
-  margin-bottom: 1rem;
-}
-.post-text strong {
-  font-weight: 600;
-}
-.post-text code {
-  background: #f8f9fa;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
-}
-.post-text blockquote {
-  border-left: 3px solid #0d6efd;
-  padding-left: 0.75rem;
-  color: #555;
-  margin: 0.5rem 0;
-}
-
-
-/* Light mode highlight */
-mark {
-  background-color: #f1c83f; /* soft Bootstrap warning yellow */
-  color: #212529;            /* dark text for readability */
-  font-weight: 600;
-  border-radius: 0.25rem;
-  padding: 0.1em 0.2em;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Dark mode highlight */
-body.dark-mode mark {
-  background-color: rgba(255, 119, 210, 0.25); /* subtle amber glow */
-  color: #12eb36; /* white text for contrast */
-}
-
-/* Toast animation: slide down + fade in */
-.toast.showing,
-.toast.show {
-  animation: slideDownFade 0.6s ease forwards;
-}
-@keyframes slideDownFade {
-  from {
-    transform: translateY(-30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Rounded corners + shadow for branded card look */
-.toast {
-  border-radius: 0.75rem !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  font-size: 1rem;
-}
-
-/* Darker green for success alerts */
-.alert-success {
-  background-color: #77f594 !important;
-  border-color: #5cf07e !important;
-  color: white !important;
-}
-
-
-
-/* Post divider */
-.post-divider {
-  border: none;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3), rgba(102, 126, 234, 0.3));
-  margin: 2rem 0;
-  border-radius: 1px;
-}
-
-.page-header {
-  max-width: 900px;
-  margin: 2rem auto 1.5rem auto;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-}
-
-.page-header h1 {
-  font-size: 2rem;
-  color: #212529;
-}
-
-.page-header p {
-  font-size: 1rem;
-}
-
-/* Dark mode support */
-.dark-mode .page-header {
-  border-bottom-color: rgba(255, 255, 255, 0.15);
-}
-
-.dark-mode .page-header h1 {
-  color: #f1f1f1;
-}
-
-.dark-mode .page-header p {
-  color: #adb5bd;
-}
-
-/* ======================================================
-   🌸 SOFT PASTEL LIGHT THEME (FINAL)
-   Works only when NOT in dark-mode
-   ====================================================== */
-
-body:not(.dark-mode) {
-  background: linear-gradient(
-    180deg,
-    #f6f4ff 0%,
-    #f9fbff 100%
-  ) !important;
-  color: #2c2f4a;
-}
-
-/* ---------------------------
-   Navbar (Pastel)
-   --------------------------- */
-body:not(.dark-mode) .light-aware-navbar {
-  background: rgba(248, 246, 255, 0.85) !important;
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(123, 104, 238, 0.15);
-}
-
-body:not(.dark-mode) .light-aware-navbar .navbar-brand,
-body:not(.dark-mode) .light-aware-navbar .brand-text,
-body:not(.dark-mode) .light-aware-navbar .nav-link {
-  color: #2c2f4a !important;
-  font-weight: 600;
-}
-
-body:not(.dark-mode) .light-aware-navbar .nav-link:hover {
-  color: #6f5cff !important;
-}
-
-body:not(.dark-mode) .light-aware-navbar .navbar-toggler {
-  filter: invert(1);
-}
-
-/* ---------------------------
-   Page Header (Pastel Glow)
-   --------------------------- */
-body:not(.dark-mode) .page-header {
-  background: linear-gradient(
-    180deg,
-    rgba(111, 92, 255, 0.12),
-    rgba(255, 255, 255, 0)
-  );
-  border-radius: 18px;
-  border-bottom: none;
-  padding: 1.75rem 1rem;
-}
-
-body:not(.dark-mode) .page-header h1 {
-  color: #2c2f4a;
-}
-
-body:not(.dark-mode) .page-header p {
-  color: #6c6f8a;
-}
-
-/* ---------------------------
-   Section Headings
-   --------------------------- */
-body:not(.dark-mode) h2,
-body:not(.dark-mode) h3 {
-  color: #2c2f4a;
-  font-weight: 700;
-}
-
-body:not(.dark-mode) h3::after {
-  content: "";
-  display: block;
-  width: 56px;
-  height: 4px;
-  margin-top: 8px;
-  border-radius: 4px;
-  background: linear-gradient(
-    90deg,
-    #6f5cff,
-    #9b8cff
-  );
-}
-
-/* ---------------------------
-   Cards (Pastel Glass)
-   --------------------------- */
-body:not(.dark-mode) .card {
-  background: rgba(255, 255, 255, 0.85) !important;
-  backdrop-filter: blur(10px);
-  border-radius: 18px !important;
-  border: 1px solid rgba(111, 92, 255, 0.12) !important;
-  box-shadow: 0 12px 30px rgba(111, 92, 255, 0.12) !important;
-}
-
-/* Card hover */
-body:not(.dark-mode) .card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 18px 40px rgba(111, 92, 255, 0.18) !important;
-}
-
-/* Card header */
-body:not(.dark-mode) .card-header {
-  background: transparent !important;
-  border-bottom: 1px solid rgba(111, 92, 255, 0.15);
-}
-
-/* ---------------------------
-   List Groups (Matching Users)
-   --------------------------- */
-body:not(.dark-mode) .list-group-item {
-  background: rgba(255, 255, 255, 0.75) !important;
-  border: 1px solid rgba(111, 92, 255, 0.12) !important;
-  color: #2c2f4a;
-}
-
-/* ---------------------------
-   Alerts
-   --------------------------- */
-body:not(.dark-mode) .alert-success {
-  background: rgba(119, 245, 148, 0.25) !important;
-  border-color: rgba(119, 245, 148, 0.45) !important;
-  color: #1f7a3f !important;
-}
-
-body:not(.dark-mode) .alert-danger {
-  background: rgba(255, 99, 132, 0.15) !important;
-  border-color: rgba(255, 99, 132, 0.35) !important;
-  color: #842029 !important;
-}
-
-/* ---------------------------
-   Comments area
-   --------------------------- */
-body:not(.dark-mode) .bg-light {
-  background: rgba(245, 244, 255, 0.9) !important;
-}
-
-/* ---------------------------
-   Buttons
-   --------------------------- */
-body:not(.dark-mode) .btn-primary {
-  background: linear-gradient(
-    45deg,
-    #6f5cff,
-    #9b8cff
-  ) !important;
-  border: none;
-  box-shadow: 0 6px 18px rgba(111, 92, 255, 0.35);
-}
-
-body:not(.dark-mode) .btn-primary:hover {
-  box-shadow: 0 10px 26px rgba(111, 92, 255, 0.45);
-}
-
-/* ---------------------------
-   Post text readability
-   --------------------------- */
-body:not(.dark-mode) .post-text {
-  color: #2c2f4a;
-  line-height: 1.65;
-}
-
-/* ---------------------------
-   Fade overlay (Pastel)
-   --------------------------- */
-body:not(.dark-mode) .fade-overlay {
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0),
-    rgba(255, 255, 255, 0.95)
-  ) !important;
-}
-
-/* =====================================================
-   🔧 NAVBAR VISIBILITY FIX (LIGHT MODE)
-   ===================================================== */
-
-body:not(.dark-mode) .navbar {
-  background: rgba(248, 246, 255, 0.9) !important;
-}
-
-/* Navbar links */
-body:not(.dark-mode) .navbar .nav-link {
-  color: #2c2f4a !important;
-}
-
-/* Username dropdown button */
-body:not(.dark-mode) .navbar .dropdown-toggle {
-  color: #2c2f4a !important;
-  border-color: rgba(44, 47, 74, 0.3) !important;
-}
-
-/* Dark mode toggle button */
-body:not(.dark-mode) #darkToggle {
-  color: #2c2f4a !important;
-  border-color: rgba(44, 47, 74, 0.3) !important;
-}
-
-/* Icons inside navbar buttons */
-body:not(.dark-mode) .navbar i {
-  color: #2c2f4a !important;
-}
-
-/* Hover states */
-body:not(.dark-mode) .navbar .nav-link:hover,
-body:not(.dark-mode) .navbar .dropdown-toggle:hover,
-body:not(.dark-mode) #darkToggle:hover {
-  color: #6f5cff !important;
-}
-
-/* Dropdown menu text */
-body:not(.dark-mode) .dropdown-menu {
-  background: #ffffff !important;
-}
-
-body:not(.dark-mode) .dropdown-menu .dropdown-item {
-  color: #2c2f4a !important;
-}
-
-body:not(.dark-mode) .dropdown-menu .dropdown-item:hover {
-  background-color: rgba(111, 92, 255, 0.1) !important;
-  color: #6f5cff !important;
-}
-
-/* ===============================
-   FORCE FIX FOR BOOTSTRAP .text-muted
-   =============================== */
-
-/* Light mode */
-.card-header small.text-muted,
-.card-header span.text-muted {
-  color: #495057 !important;
-  font-weight: 500;
   font-size: 0.85rem;
 }
 
-/* Dark mode timestamps */
-body.dark-mode .card-header small.text-muted,
-body.dark-mode .card-header span.text-muted {
-  color: #6f7377 !important;
-  font-weight: 500;
-}
-
-
-
-/* Page fade-in animation */
-body {
-  animation: fadeIn 0.4s ease-in;
-}
-
-/* Keyframes for fade-in */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Prevent animation glitch on modal/backdrop */
-.modal,
-.toast,
-.dropdown-menu {
-  animation: none !important;
-}
-
-/* =====================================================
-   FIX: LOGIN / SIGNUP BUTTON VISIBILITY (LIGHT MODE)
-   ===================================================== */
-
-/* Login button */
-body:not(.dark-mode) .navbar .btn-outline-light {
-  color: #2c2f4a !important;
-  border-color: rgba(44, 47, 74, 0.4) !important;
-}
-
-/* Signup button */
-body:not(.dark-mode) .navbar .btn-primary {
-  color: #ffffff !important;
-}
-
-/* Hover states */
-body:not(.dark-mode) .navbar .btn-outline-light:hover {
-  background-color: rgba(111, 92, 255, 0.1) !important;
-  color: #6f5cff !important;
-}
-
-/* ======================================
-   FIX: Unwanted line below auth headings
-   (Login & Forgot Password)
-   ====================================== */
-
-/* Remove any implicit border or divider */
-.auth-card {
-  border: none !important;
-}
-
-/* Remove top margin that looks like a line */
-.auth-card .card-body > p {
-  margin-top: 0 !important;
-}
-
-/* Prevent pseudo borders from global styles */
-.auth-card h3 {
-  border-bottom: none !important;
-  padding-bottom: 0 !important;
-}
-
-/* Ensure no hr-like effect */
-.auth-card::before,
-.auth-card::after {
-  display: none !important;
-}
-
-.auth-page .card {
-  border-top: none !important;
-  border-bottom: none !important;
-}
-
-
-
-.auth-page .auth-heading::after {
-  display: none !important;
-  content: none !important;
-}
-
-
-
-/* ================= PROFILE PAGE ================= */
-
-.profile-hero {
-  position: relative;
+/* =========================================
+   HERO SECTION
+   ========================================= */
+.hero-section {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding: 4rem 0;
   text-align: center;
 }
 
-/* COVER */
-.profile-cover-bg {
-  height: 220px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #0d6efd, #6610f2, #6f42c1);
+.hero-section h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+.hero-section p {
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  max-width: 600px;
+  margin: 0 auto 2rem auto;
 }
 
-/* PROFILE CARD */
-.profile-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 80px 30px 30px;
-  margin-top: -90px;
-  max-width: 520px;
-  margin-left: auto;
-  margin-right: auto;
+/* =========================================
+   FORMS
+   ========================================= */
+.form-control, .form-select {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+}
+.form-control:focus {
+  background-color: var(--bg-card);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  color: var(--text-main);
 }
 
-/* AVATAR */
-.profile-avatar-lg {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #0d6efd, #6610f2);
-  color: #fff;
-  font-size: 46px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: -120px auto 0;
-  border: 6px solid #fff;
+/* =========================================
+   UTILITIES
+   ========================================= */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+.bg-light {
+  background-color: var(--bg-input) !important;
 }
 
-/* STATS */
-.profile-stats {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
+/* Authentication Pages */
+.auth-page .card {
+  box-shadow: var(--shadow-md);
+  border: none;
 }
 
-.stat-box span {
-  font-size: 22px;
-  font-weight: 700;
-  display: block;
+/* =========================================
+   DARK MODE OVERRIDES (FIXES)
+   ========================================= */
+/* Force bootstrap text utilities to adapt to theme */
+body.dark-mode .text-dark, 
+body.dark-mode .link-dark {
+    color: var(--text-main) !important;
 }
 
-.stat-box small {
-  color: #6c757d;
-  font-size: 13px;
+/* Ensure white backgrounds turn dark in dark mode */
+body.dark-mode .bg-white {
+    background-color: var(--bg-card) !important;
 }
 
-/* POSTS AREA */
-.profile-posts {
-  margin-top: 30px;
+/* Ensure borders are visible but subtle in dark mode */
+body.dark-mode .border-light {
+    border-color: var(--border-color) !important;
 }
 
-/* ================= DARK MODE SUPPORT: PROFILE ================= */
-
-.dark-mode .profile-card {
-  background: #1e1e1e;
-  color: #eaeaea;
+/* Fix for profile stats links hovering in dark mode */
+body.dark-mode a.text-decoration-none:hover {
+    color: var(--primary) !important;
 }
 
-.dark-mode .profile-card small {
-  color: #b0b0b0;
+/* Fix for dropdown menus in dark mode */
+body.dark-mode .dropdown-menu {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+}
+body.dark-mode .dropdown-item {
+    color: var(--text-main);
+}
+body.dark-mode .dropdown-item:hover {
+    background-color: var(--bg-input);
 }
 
-.dark-mode .stat-box small {
-  color: #9aa0a6;
+/* Fix for List Groups (Search Results) */
+body.dark-mode .list-group-item {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-main);
 }
-
-.dark-mode .profile-avatar-lg {
-  border-color: #1e1e1e;
-}
-
-/* Dark cover stays vibrant */
-.dark-mode .profile-cover-bg {
-  background: linear-gradient(135deg, #0d6efd, #4c2a85, #111);
-}
-
-/* Posts container spacing fix */
-.dark-mode .profile-posts {
-  color: #eaeaea;
-}
-
-.dark-mode .profile-card {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-}
-
-/* ================= PROFILE PAGE TITLE ================= */
-.profile-page-title {
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-/* Dark mode support */
-.dark-mode .profile-page-title {
-  color: #f1f1f1;
-}
-
-/* ================= PROFILE BIO ================= */
-.profile-bio {
-  font-size: 15px;
-  line-height: 1.6;
-  max-width: 420px;
-  margin: 0 auto;
-}
-
-/* Dark mode */
-.dark-mode .profile-bio {
-  color: #dcdcdc;
-}
-
-.profile-avatar-sm {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #6c757d;
-  color: #fff;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+body.dark-mode .list-group-item-action:hover {
+    background-color: var(--bg-input);
 }

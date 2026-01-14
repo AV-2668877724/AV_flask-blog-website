@@ -1,79 +1,53 @@
 {% extends 'base.html' %} {% block title %} Login {% endblock %} {% block
 content %}
+<div
+  class="row justify-content-center align-items-center"
+  style="min-height: 70vh"
+>
+  <div class="col-md-5 col-lg-4">
+    <div class="text-center mb-4">
+      <h2 class="font-heading fw-bold">Welcome Back</h2>
+      <p class="text-muted">Please enter your details.</p>
+    </div>
 
-<div class="auth-page mx-auto" style="max-width: 420px">
-  <!-- ✅ MOVED OUTSIDE CARD -->
-  <h3 class="text-center mb-2 auth-heading">
-
-    <i class="fas fa-sign-in-alt text-primary me-2"></i> Login
-  </h3>
-  <p class="text-center text-muted mb-4">
-    Welcome back to <strong>AV Postory</strong>
-  </p>
-
-  <!-- Card starts AFTER heading -->
-  <div class="card shadow-sm border-0">
-    <div class="card-body p-4">
+    <div class="card border-0 shadow-sm p-4">
       <form method="POST">
-        <!-- Email or Username -->
         <div class="mb-3">
-          <label for="login" class="form-label">
-            Username or email address
-          </label>
-          <div class="input-group">
-            <span class="input-group-text">
-              <i class="fas fa-user"></i>
-            </span>
-            <input
-              type="text"
-              class="form-control"
-              id="login"
-              name="login"
-              placeholder="Enter email or username"
-              required
-            />
-          </div>
+          <label class="form-label small fw-bold text-muted text-uppercase"
+            >Email or Username</label
+          >
+          <input type="text" class="form-control" name="login" required />
         </div>
 
-        <!-- Password -->
-        <div class="mb-3">
-          <label for="password" class="form-label">Password</label>
-          <div class="input-group">
-            <span class="input-group-text">
-              <i class="fas fa-lock"></i>
-            </span>
-            <input
-              type="password"
-              class="form-control"
-              id="password"
-              name="password"
-              placeholder="Enter password"
-              required
-            />
+        <div class="mb-4">
+          <div class="d-flex justify-content-between">
+            <label class="form-label small fw-bold text-muted text-uppercase"
+              >Password</label
+            >
+            <a href="/forgot-password" class="small text-decoration-none"
+              >Forgot password?</a
+            >
           </div>
+          <input
+            type="password"
+            class="form-control"
+            name="password"
+            required
+          />
         </div>
 
-        <!-- Submit -->
-        <button type="submit" class="btn btn-primary w-100">
-          <i class="fas fa-sign-in-alt me-1"></i> Login
+        <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
+          Sign in
         </button>
 
-        <!-- Forgot password -->
-        <div class="text-center mt-3">
-          <a href="/forgot-password" class="text-decoration-none">
-            <i class="fas fa-key me-1"></i> Forgot your password?
-          </a>
-        </div>
-
-        <!-- Sign up -->
-        <div class="text-center mt-2">
-          <p class="small mb-0">
-            Don’t have an account? <a href="/sign-up">Sign up here</a>
-          </p>
+        <div class="text-center">
+          <small class="text-muted"
+            >Don't have an account?
+            <a href="/sign-up" class="fw-bold">Sign up</a></small
+          >
         </div>
       </form>
     </div>
   </div>
 </div>
-
 {% endblock %}

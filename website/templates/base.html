@@ -5,37 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}{% endblock %}</title>
 
-    <!-- Bootstrap CSS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap"
       rel="stylesheet"
+    />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
       crossorigin="anonymous"
     />
 
-    <!-- Bootstrap Icons -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
     />
 
-    <!-- Font Awesome -->
     <script
       src="https://kit.fontawesome.com/3b08e91fa8.js"
       crossorigin="anonymous"
     ></script>
 
-    <!-- Favicon -->
     <link
       rel="icon"
       type="image/png"
       href="{{ url_for('static', filename='images/logo.png') }}"
     />
-    <link
-      rel="shortcut icon"
-      href="{{ url_for('static', filename='images/logo.png') }}"
-    />
 
-    <!-- Custom CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='styles.css') }}"
@@ -43,16 +42,15 @@
   </head>
 
   <body>
-    <!-- ================= NAVBAR ================= -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark light-aware-navbar">
-      <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg sticky-top">
+      <div class="container">
         <a class="navbar-brand d-flex align-items-center gap-2" href="/home">
           <img
             src="{{ url_for('static', filename='images/logo.png') }}"
             alt="AV Postory logo"
-            height="36"
+            class="nav-logo"
           />
-          <span class="brand-text d-none d-sm-inline">AV Postory</span>
+          <span class="brand-text">AV Postory</span>
         </a>
 
         <button
@@ -65,7 +63,6 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbar">
-          <!-- LEFT LINKS -->
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
               <a class="nav-link" href="/home">Home</a>
@@ -73,150 +70,146 @@
             <li class="nav-item">
               <a class="nav-link" href="/about">About</a>
             </li>
-
             {% if current_user.is_authenticated %}
             <li class="nav-item">
-              <a class="nav-link" href="/create-post">Create</a>
+              <a class="nav-link" href="/create-post">Write</a>
             </li>
             {% endif %}
           </ul>
 
-          <!-- SEARCH (HOME ONLY) -->
-          {% if current_user.is_authenticated and (is_home | default(false)) %}
-          <div class="me-3 position-relative">
-            <input
-              type="text"
-              id="searchInput"
-              class="form-control form-control-sm"
-              placeholder="Search users..."
-              autocomplete="off"
-              style="width: 200px"
-            />
-            <div
-              id="searchResults"
-              class="dropdown-menu position-absolute w-100"
-              style="top: 100%; z-index: 1050"
-            ></div>
-          </div>
-          {% endif %}
-
-          <!-- RIGHT SIDE -->
-          <div class="d-flex align-items-center">
-            {% if current_user.is_authenticated %}
-            <!-- 🌙 DARK MODE TOGGLE -->
-            <button
-              id="darkToggle"
-              class="btn btn-outline-light btn-sm me-2"
-              title="Toggle dark mode"
-              aria-pressed="false"
-            >
-              <i class="fas fa-moon"></i>
+          <div class="d-flex align-items-center gap-3">
+            {% if current_user.is_authenticated and (is_home | default(false))
+            %}
+            <div class="position-relative d-none d-md-block">
+              <input
+                type="text"
+                id="searchInput"
+                class="form-control form-control-sm search-input"
+                placeholder="Search..."
+                autocomplete="off"
+              />
+              <div
+                id="searchResults"
+                class="dropdown-menu position-absolute w-100 mt-1 shadow-sm"
+              ></div>
+            </div>
+            {% endif %} {% if current_user.is_authenticated %}
+            <button id="darkToggle" class="btn btn-icon" title="Toggle theme">
+              <i class="far fa-moon"></i>
             </button>
 
-            <!-- USER DROPDOWN -->
             <div class="dropdown">
               <a
-                class="btn btn-outline-light btn-sm dropdown-toggle"
+                class="d-flex align-items-center text-decoration-none dropdown-toggle user-dropdown-link"
                 href="#"
                 role="button"
                 data-bs-toggle="dropdown"
               >
-                {{ current_user.username }}
+                <div class="user-avatar-xs">
+                  {{ current_user.username[0]|upper }}
+                </div>
               </a>
 
-              <ul class="dropdown-menu dropdown-menu-end">
+              <ul
+                class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
+              >
+                <li>
+                  <h6 class="dropdown-header">
+                    Signed in as <strong>{{ current_user.username }}</strong>
+                  </h6>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
                 <li>
                   <a
                     class="dropdown-item"
                     href="/profile/{{ current_user.username }}"
                   >
-                    My Profile
+                    <i class="bi bi-person me-2"></i>Profile
                   </a>
                 </li>
-
                 {% if current_user.is_admin %}
                 <li>
                   <a
                     class="dropdown-item"
                     href="{{ url_for('views.admin_dashboard') }}"
                   >
-                    Admin Dashboard
+                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
                   </a>
                 </li>
                 {% endif %}
-
+                <li><hr class="dropdown-divider" /></li>
                 <li>
-                  <a class="dropdown-item" href="/logout">Logout</a>
+                  <a class="dropdown-item text-danger" href="/logout">
+                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                  </a>
                 </li>
               </ul>
             </div>
 
             {% else %}
-            <!-- AUTH BUTTONS -->
-            {% if not (hide_login_btn | default(false)) %}
-            <a class="btn btn-outline-light btn-sm me-2" href="/login">Login</a>
-            {% endif %}
-
-            {% if not (hide_signup_btn | default(false)) %}
-            <a class="btn btn-primary btn-sm" href="/sign-up">Sign Up</a>
-            {% endif %}
+            <div class="d-flex gap-2">
+              {% if not (hide_login_btn | default(false)) %}
+              <a class="btn btn-link nav-link px-0" href="/login">Log in</a>
+              {% endif %} {% if not (hide_signup_btn | default(false)) %}
+              <a
+                class="btn btn-primary btn-sm rounded-pill px-3"
+                href="/sign-up"
+                >Get Started</a
+              >
+              {% endif %}
+            </div>
             {% endif %}
           </div>
         </div>
       </div>
     </nav>
 
-    <!-- ================= PAGE HEADER ================= -->
     {% if page_title %}
-    <div class="page-header text-center py-4">
+    <div class="page-header text-center pt-5 pb-3">
       <div class="container">
-        <h1 class="fw-bold mb-1">{{ page_title }}</h1>
+        <h1 class="display-5 fw-bold mb-2 font-heading">{{ page_title }}</h1>
         {% if page_subtitle %}
-        <p class="text-muted mb-0">{{ page_subtitle }}</p>
+        <p class="text-muted lead">{{ page_subtitle }}</p>
         {% endif %}
       </div>
     </div>
     {% endif %}
 
-    <!-- ================= MAIN CONTENT ================= -->
-    <div class="container my-4">
+    <div class="container my-4" style="min-height: 80vh">
       {% block content %}{% endblock %}
     </div>
 
-    <!-- ================= TOAST CONTAINER ================= -->
+    <footer class="py-4 mt-5 text-center text-muted border-top">
+      <small>&copy; 2026 AV Postory. All rights reserved.</small>
+    </footer>
+
     <div
-      class="toast-container position-fixed top-0 start-50 translate-middle-x p-3"
-      aria-live="polite"
-      aria-atomic="true"
+      class="toast-container position-fixed bottom-0 end-0 p-3"
+      id="toastContainer"
+      style="z-index: 1090"
     >
-      {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-      {% for category, message in messages %}
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
       <div
-        class="toast align-items-center
-          {% if category == 'error' %}text-bg-danger
-          {% elif category == 'warning' %}text-bg-warning
-          {% else %}text-bg-success{% endif %}
-          border-0 text-center"
+        class="toast align-items-center border-0 shadow {% if category == 'error' %}text-bg-danger{% else %}text-bg-dark{% endif %}"
         role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
       >
-        <div class="d-flex justify-content-center align-items-center">
-          <div class="toast-body fw-bold">{{ message }}</div>
+        <div class="d-flex">
+          <div class="toast-body">{{ message }}</div>
           <button
             type="button"
-            class="btn-close btn-close-white ms-2"
+            class="btn-close btn-close-white me-2 m-auto"
             data-bs-dismiss="toast"
           ></button>
         </div>
       </div>
-      {% endfor %}
-      {% endif %}
-      {% endwith %}
+      {% endfor %} {% endif %} {% endwith %}
     </div>
 
-    <!-- ================= SCRIPTS ================= -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
     <script src="{{ url_for('static', filename='index.js') }}"></script>
   </body>
 </html>

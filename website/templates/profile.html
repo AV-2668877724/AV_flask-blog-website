@@ -1,239 +1,189 @@
-{% extends "base.html" %} {% block title %}{{ profile_user.username }}{%
-endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}{{ profile_user.username }} -
+Profile{% endblock %} {% block content %}
 
-<!-- ================= PROFILE PAGE TITLE ================= -->
-<div class="text-center mb-3">
-  <h1 class="profile-page-title">Profile</h1>
-</div>
+<div class="card border-0 shadow-sm mb-4 overflow-hidden">
+  <div style="height: 160px; background-color: #1e293b"></div>
 
-<!-- ================= PROFILE HERO ================= -->
-<div class="profile-hero mb-5">
-  <div class="profile-cover-bg"></div>
+  <div class="card-body position-relative pt-0 pb-4 text-center text-md-start">
+    <div
+      class="d-flex flex-column flex-md-row align-items-center align-items-md-end gap-3"
+      style="margin-top: -60px"
+    >
+      <div
+        class="rounded-circle border border-4 border-white d-flex align-items-center justify-content-center bg-primary text-white shadow-sm"
+        style="
+          width: 120px;
+          height: 120px;
+          font-size: 3rem;
+          font-family: var(--font-serif);
+        "
+      >
+        {{ profile_user.username[0]|upper }}
+      </div>
 
-  <div class="profile-card shadow-sm">
-    <!-- AVATAR -->
-    <div class="profile-avatar-lg">{{ profile_user.username[0]|upper }}</div>
+      <div class="flex-grow-1 mb-2">
+        <h2 class="fw-bold mb-0 font-heading">{{ profile_user.username }}</h2>
+        <small class="text-muted"
+          >Member since {{ profile_user.date_created.strftime('%B %Y') }}</small
+        >
+      </div>
 
-    <!-- ================= USERNAME ================= -->
-    <div class="text-center mt-3">
-      <div class="d-flex justify-content-center align-items-center gap-2">
-        <h2 class="fw-bold mb-0">{{ profile_user.username }}</h2>
-
+      <div class="mb-2">
         {% if current_user.id == profile_user.id %}
         <button
-          class="btn btn-sm btn-outline-secondary"
+          class="btn btn-outline-secondary btn-sm"
           data-bs-toggle="collapse"
-          data-bs-target="#editUsernameBox"
-          title="Edit username"
+          data-bs-target="#editProfileSection"
         >
-          <i class="bi bi-pencil"></i>
+          <i class="fas fa-cog me-1"></i> Edit Profile
+        </button>
+        {% else %}
+        <button
+          class="btn btn-sm {% if is_following %} btn-outline-danger unfollow-btn {% else %} btn-primary follow-btn {% endif %}"
+          data-user-id="{{ profile_user.id }}"
+        >
+          {% if is_following %}Unfollow{% else %}Follow{% endif %}
         </button>
         {% endif %}
       </div>
-
-      {% if current_user.id == profile_user.id %}
-      <div class="collapse mt-3" id="editUsernameBox">
-        <div
-          class="border rounded p-3 bg-light mx-auto"
-          style="max-width: 420px"
-        >
-          <h6 class="fw-bold mb-2">Change Username</h6>
-
-          <div class="input-group">
-            <input
-              type="text"
-              id="newUsername"
-              class="form-control"
-              placeholder="New username"
-              autocomplete="off"
-            />
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              onclick="checkUsername()"
-            >
-              Check
-            </button>
-          </div>
-
-          <small id="usernameStatus" class="d-block mt-2"></small>
-
-          <form method="POST" action="{{ url_for('views.change_username') }}">
-            <input type="hidden" name="username" id="finalUsername" />
-            <button
-              class="btn btn-warning btn-sm mt-2"
-              id="submitUsernameBtn"
-              disabled
-            >
-              Change Username
-            </button>
-          </form>
-
-          <small class="text-muted d-block mt-1">
-            You will be logged out after changing your username.
-          </small>
-        </div>
-      </div>
-      {% endif %}
     </div>
 
-    <!-- JOIN DATE -->
-    <small class="text-muted d-block mt-2 text-center">
-      Joined {{ profile_user.date_created | timeago }}
-    </small>
-
-    <!-- ================= BIO ================= -->
-    <div class="profile-bio mt-3 text-center">
+    <div class="mt-4 mw-700">
       {% if profile_user.bio %}
-      <p class="mb-2">{{ profile_user.bio }}</p>
+      <p class="text-main">{{ profile_user.bio }}</p>
       {% else %}
-      <p class="text-muted fst-italic">No bio added yet.</p>
-      {% endif %} {% if current_user.id == profile_user.id %}
-      <button
-        class="btn btn-sm btn-outline-primary mt-2"
-        data-bs-toggle="collapse"
-        data-bs-target="#editBioBox"
-      >
-        Edit Bio
-      </button>
-
-      <div class="collapse mt-3" id="editBioBox">
-        <form method="POST" action="{{ url_for('views.edit_bio') }}">
-          <textarea name="bio" class="form-control" rows="3" maxlength="300">
-{{ profile_user.bio }}</textarea
-          >
-
-          <div class="d-flex justify-content-between mt-2">
-            <small class="text-muted">Max 300 characters</small>
-            <button class="btn btn-primary btn-sm">Save</button>
-          </div>
-        </form>
-      </div>
+      <p class="text-muted fst-italic small">No bio available.</p>
       {% endif %}
     </div>
 
-    <!-- ================= STATS ================= -->
-    <div class="profile-stats mt-4">
+    <div class="d-flex gap-4 mt-3 border-top pt-3">
       <a
         href="{{ url_for('views.followers_list', username=profile_user.username) }}"
-        class="stat-box text-decoration-none"
+        class="text-decoration-none"
+        style="color: var(--text-main)"
       >
-        <span>{{ followers_count }}</span>
-        <small>Followers</small>
+        <span class="fw-bold">{{ followers_count }}</span>
+        <span class="text-muted small">Followers</span>
       </a>
-
       <a
         href="{{ url_for('views.following_list', username=profile_user.username) }}"
-        class="stat-box text-decoration-none"
+        class="text-decoration-none"
+        style="color: var(--text-main)"
       >
-        <span>{{ following_count }}</span>
-        <small>Following</small>
+        <span class="fw-bold">{{ following_count }}</span>
+        <span class="text-muted small">Following</span>
       </a>
-
-      <div class="stat-box">
-        <span>{{ total_posts }}</span>
-        <small>Posts</small>
-      </div>
-
-      <div class="stat-box">
-        <span>{{ total_likes }}</span>
-        <small>Likes</small>
+      <div style="color: var(--text-main)">
+        <span class="fw-bold">{{ total_posts }}</span>
+        <span class="text-muted small">Posts</span>
       </div>
     </div>
+  </div>
+</div>
 
-    <!-- ================= FOLLOW / UNFOLLOW ================= -->
-    {% if current_user.id != profile_user.id %}
-    <div class="text-center mt-3">
-      <button
-        class="btn btn-sm {% if is_following %} btn-outline-danger unfollow-btn {% else %} btn-primary follow-btn {% endif %}"
-        data-user-id="{{ profile_user.id }}"
-      >
-        {% if is_following %}Unfollow{% else %}Follow{% endif %}
-      </button>
-    </div>
-    {% endif %}
-
-    <!-- ================= SOCIAL LINKS ================= -->
-    <div class="mt-4">
-      <h5 class="fw-bold text-center">Social Links</h5>
-
-      {% if profile_user.social_links %}
-      <div class="d-flex justify-content-center flex-wrap gap-3 mt-2">
-        {% for key, url in profile_user.social_links.items() %} {% set platform
-        = key.split('_')[0] %}
-        <div class="position-relative">
-          {% if platform in
-          ['github','twitter','linkedin','youtube','instagram','whatsapp','snapchat','facebook','telegram']
-          %}
-          <a
-            href="{{ url }}"
-            target="_blank"
-            class="btn btn-outline-secondary btn-sm text-capitalize"
+{% if current_user.id == profile_user.id %}
+<div class="collapse mb-4" id="editProfileSection">
+  <div class="card card-body bg-light border-0">
+    <h5 class="fw-bold mb-3">Edit Profile</h5>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <label class="form-label small fw-bold">Bio</label>
+        <form method="POST" action="{{ url_for('views.edit_bio') }}">
+          <textarea
+            name="bio"
+            class="form-control mb-2"
+            rows="3"
+            maxlength="300"
           >
-            <i class="fab fa-{{ platform }}"></i> {{ platform }}
-          </a>
-          {% else %}
-          <a
-            href="{{ url }}"
-            target="_blank"
-            class="btn btn-outline-secondary btn-sm text-break"
+{{ profile_user.bio }}</textarea
           >
-            <i class="fas fa-link"></i> {{ url }}
-          </a>
-          {% endif %} {% if current_user.id == profile_user.id %}
-          <button
-            type="button"
-            class="btn btn-danger btn-sm rounded-circle px-1 py-0 remove-social-btn"
-            data-url="{{ url }}"
-            title="Remove link"
-            style="position: absolute; top: -6px; right: -6px"
-          >
-            ✕
-          </button>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <p class="text-center text-muted mt-2">No social links added.</p>
-      {% endif %} {% if current_user.id == profile_user.id %}
-      <div class="text-center mt-3">
-        <button
-          class="btn btn-sm btn-primary"
-          data-bs-toggle="collapse"
-          data-bs-target="#addSocialLink"
-        >
-          Add Link
-        </button>
+          <button class="btn btn-primary btn-sm">Save Bio</button>
+        </form>
       </div>
 
-      <div class="collapse mt-3" id="addSocialLink">
+      <div class="col-md-6">
+        <label class="form-label small fw-bold">Add Social Link</label>
         <form
           method="POST"
           action="{{ url_for('views.add_social_link') }}"
-          class="d-flex gap-2 justify-content-center"
-          style="max-width: 520px; margin: auto"
+          class="d-flex gap-2"
         >
           <input
             type="url"
             name="new_link"
             class="form-control"
-            placeholder="Paste any social or website link"
+            placeholder="https://..."
             required
           />
-          <button class="btn btn-success btn-sm">Add</button>
+          <button class="btn btn-dark btn-sm">Add</button>
+        </form>
+
+        <label class="form-label small fw-bold mt-3">Change Username</label>
+        <div class="input-group">
+          <input
+            type="text"
+            id="newUsername"
+            class="form-control"
+            placeholder="New username"
+          />
+          <button class="btn btn-outline-secondary" onclick="checkUsername()">
+            Check
+          </button>
+        </div>
+        <small id="usernameStatus" class="d-block mt-1"></small>
+        <form
+          method="POST"
+          action="{{ url_for('views.change_username') }}"
+          class="mt-2"
+        >
+          <input type="hidden" name="username" id="finalUsername" />
+          <button
+            class="btn btn-warning btn-sm"
+            id="submitUsernameBtn"
+            disabled
+          >
+            Update & Logout
+          </button>
         </form>
       </div>
-      {% endif %}
     </div>
   </div>
 </div>
+{% endif %} {% if profile_user.social_links %}
+<div class="d-flex flex-wrap gap-2 mb-4">
+  {% for key, url in profile_user.social_links.items() %} {% set platform =
+  key.split('_')[0] %}
+  <div class="btn-group">
+    <a
+      href="{{ url }}"
+      target="_blank"
+      class="btn btn-sm btn-outline-secondary bg-white"
+    >
+      <i
+        class="{% if platform in ['link', 'website'] %}fas fa-link{% else %}fab fa-{{ platform }}{% endif %} me-1"
+      ></i>
+      {{ platform|title }}
+    </a>
+    {% if current_user.id == profile_user.id %}
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-danger remove-social-btn"
+      data-url="{{ url }}"
+    >
+      <i class="fas fa-times"></i>
+    </button>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 
-<!-- ================= POSTS ================= -->
+<h4 class="font-heading mb-3 border-bottom pb-2">Latest Posts</h4>
 <div class="profile-posts">
-  {% if posts %} {% set hide_dividers = True %} {% include "_posts.html" %} {%
-  else %}
-  <p class="text-center text-muted">No posts yet.</p>
+  {% if posts %} {% include "_posts.html" %} {% else %}
+  <div class="text-center py-5 bg-white rounded border border-light">
+    <p class="text-muted mb-0">No posts published yet.</p>
+  </div>
   {% endif %}
 </div>
 
