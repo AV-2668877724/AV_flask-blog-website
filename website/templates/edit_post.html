@@ -1,21 +1,27 @@
 {% extends 'base.html' %} {% block title %}Edit Story{% endblock %} {% block
 content %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+
 <div class="row justify-content-center">
   <div class="col-lg-8">
     <h2 class="font-heading fw-bold mb-4">Edit your story</h2>
     <div class="card border-0 shadow-sm p-4">
-      <form method="POST" onsubmit="return validatePostForm()">
+      <form method="POST" id="postForm" onsubmit="return validatePostForm()">
+        <input type="hidden" name="text" id="hiddenInput" />
+
         <div class="mb-3">
-          <textarea
-            name="text"
-            id="text"
-            class="form-control border-0 fs-5"
-            style="min-height: 200px; resize: none"
-            placeholder="What's on your mind?"
+          <div
+            id="editor-container"
+            style="
+              min-height: 300px;
+              font-family: 'Inter', sans-serif;
+              font-size: 1.1rem;
+            "
           >
-{{ post.text }}</textarea
-          >
+            {{ post.text | safe }}
+          </div>
         </div>
+
         <div class="d-flex justify-content-end gap-2 border-top pt-3">
           <a href="/home" class="btn btn-outline-secondary">Cancel</a>
           <button type="submit" class="btn btn-primary px-4">Update</button>
@@ -24,12 +30,49 @@ content %}
     </div>
   </div>
 </div>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
+  var quill = new Quill("#editor-container", {
+    theme: "snow",
+    placeholder: "Tell your story...",
+    modules: {
+      toolbar: [
+        [{ header: [2, 3, false] }],
+        ["bold", "italic", "underline", "link", "blockquote"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["clean"],
+      ],
+    },
+  });
+
   function validatePostForm() {
-    return (
-      document.getElementById("text").value.trim() !== "" ||
-      (alert("Content cannot be empty"), false)
-    );
+    var html = quill.root.innerHTML;
+    var text = quill.getText().trim();
+
+    if (text.length === 0) {
+      alert("Content cannot be empty");
+      return false;
+    }
+    document.getElementById("hiddenInput").value = html;
+    return true;
   }
 </script>
+
+<style>
+  .ql-toolbar.ql-snow {
+    border-color: #e5e7eb;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    background-color: #f9fafb;
+  }
+  .ql-container.ql-snow {
+    border-color: #e5e7eb;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+  }
+  .ql-editor {
+    color: var(--text-main);
+  }
+</style>
 {% endblock %}

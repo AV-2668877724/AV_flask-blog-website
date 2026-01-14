@@ -16,7 +16,8 @@
         <div class="d-flex flex-column">
           <a
             href="/profile/{{ post.user.username }}"
-            class="fw-bold text-dark text-decoration-none lh-1"
+            class="fw-bold text-decoration-none lh-1"
+            style="color: var(--text-main)"
           >
             {{ post.user.username }}
           </a>
@@ -55,8 +56,11 @@
 
     <div class="card-body pt-2">
       <div class="post-wrapper" id="post-wrapper-{{ post.id }}">
-        <div class="post-text font-serif" id="post-text-{{ post.id }}">
-          {{ post.text | trim }}
+        <div
+          class="post-text rich-text font-serif"
+          id="post-text-{{ post.id }}"
+        >
+          {{ post.text | safe }}
         </div>
         <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
       </div>
@@ -138,7 +142,8 @@
                 >
                   <a
                     href="/profile/{{ comment.user.username }}"
-                    class="fw-bold text-dark text-decoration-none small"
+                    class="fw-bold text-decoration-none small"
+                    style="color: #111827"
                   >
                     {{ comment.user.username }}
                   </a>

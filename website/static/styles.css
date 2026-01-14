@@ -303,3 +303,41 @@ body.dark-mode .list-group-item {
 body.dark-mode .list-group-item-action:hover {
     background-color: var(--bg-input);
 }
+/* =========================================
+   RICH TEXT CONTENT FIXES
+   ========================================= */
+
+/* Ensure new Rich Text posts handle margins correctly */
+.rich-text p {
+    margin-bottom: 0.8rem;
+    white-space: normal; /* Override the pre-wrap from old posts */
+}
+
+/* Headings inside posts */
+.rich-text h2, .rich-text h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+/* Lists inside posts */
+.rich-text ul, .rich-text ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+    white-space: normal;
+}
+
+/* Blockquotes */
+.rich-text blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-muted);
+    background: transparent;
+}
+
+/* Fix for pre-existing plain text posts to still look okay */
+.post-text {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+}
