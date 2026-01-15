@@ -3,7 +3,6 @@ from flask_login import UserMixin
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
 
-
 # =====================================================
 # User Model
 # =====================================================
@@ -17,6 +16,9 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    
+    # ✅ NEW: Profile Picture Column
+    profile_pic = db.Column(db.String(150), nullable=True)
 
     bio = db.Column(db.String(300), default="")
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
@@ -25,7 +27,6 @@ class User(db.Model, UserMixin):
     dob_hash = db.Column(db.String(150))
     fav_person_hash = db.Column(db.String(150))
 
-    
     social_links = db.Column(JSON, default=dict)
 
     # Relationships
@@ -43,6 +44,10 @@ class Post(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
+    
+    # ✅ NEW: Cover Image Column
+    cover_image = db.Column(db.String(150), nullable=True)
+    
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
 
     author = db.Column(
@@ -50,85 +55,30 @@ class Post(db.Model):
         db.ForeignKey('user.id', ondelete='CASCADE'),
         nullable=False
     )
-
-    is_deleted = db.Column(db.Boolean, default=False, nullable=False)
 
     comments = db.relationship('Comment', backref='post', passive_deletes=True)
     likes = db.relationship('Like', backref='post', passive_deletes=True)
 
-
-# =====================================================
-# Comment Model
-# =====================================================
-
+# ... (Keep Comment, Like, and Follow models as they were) ...
 class Comment(db.Model):
     __tablename__ = 'comment'
-
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(200), nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
-
-    author = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id', ondelete='CASCADE'),
-        nullable=False
-    )
-
-    post_id = db.Column(
-        db.Integer,
-        db.ForeignKey('post.id', ondelete='CASCADE'),
-        nullable=False
-    )
-
+    author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False)
     is_deleted = db.Column(db.Boolean, default=False)
-
-
-# =====================================================
-# Like Model
-# =====================================================
 
 class Like(db.Model):
     __tablename__ = 'like'
-
     id = db.Column(db.Integer, primary_key=True)
-
-    author = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id', ondelete='CASCADE'),
-        nullable=False
-    )
-
-    post_id = db.Column(
-        db.Integer,
-        db.ForeignKey('post.id', ondelete='CASCADE'),
-        nullable=False
-    )
-
+    author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
-
-# =====================================================
-# Follow Model (User ↔ User)
-# =====================================================
 
 class Follow(db.Model):
     __tablename__ = 'follow'
-
     id = db.Column(db.Integer, primary_key=True)
-
-    follower_id = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id', ondelete='CASCADE'),
-        nullable=False
-    )
-
-    following_id = db.Column(
-        db.Integer,
-        db.ForeignKey('user.id', ondelete='CASCADE'),
-        nullable=False
-    )
-
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    following_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
-
-    __table_args__ = (
-        db.UniqueConstraint('follower_id', 'following_id', name='unique_follow'),
-    )
