@@ -280,16 +280,4 @@ Profile{% endblock %} {% block content %}
   {% endif %}
 </div>
 
-<script>
-  function viewFullSize(src) {
-    // Set the src of the modal image
-    document.getElementById("fullSizeImage").src = src;
-    // Show the modal using Bootstrap API
-    var myModal = new bootstrap.Modal(
-      document.getElementById("imageViewModal")
-    );
-    myModal.show();
-  }
-</script>
-
 {% endblock %}

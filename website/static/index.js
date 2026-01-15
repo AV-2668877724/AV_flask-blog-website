@@ -499,3 +499,22 @@ document.addEventListener("click", function (e) {
       alert("Network error");
     });
 });
+
+/* =========================================
+   PROFILE IMAGE VIEWER (LIGHTBOX)
+   ========================================= */
+function viewFullSize(src) {
+    // 1. Find the modal image element
+    const imgElement = document.getElementById('fullSizeImage');
+    const modalElement = document.getElementById('imageViewModal');
+    
+    if (imgElement && modalElement) {
+        // 2. Set the source
+        imgElement.src = src;
+        
+        // 3. Show the modal using Bootstrap's JS API
+        // We use 'new' to ensure we get a fresh instance or existing one
+        const myModal = new bootstrap.Modal(modalElement);
+        myModal.show();
+    }
+}
