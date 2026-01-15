@@ -564,3 +564,6 @@ def following_list(username):
     following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
     
     return render_template("followers.html", profile_user=user, users=following, following_ids=following_ids, title="Following")
+@views.route('/about')
+def about():
+    return render_template("about.html", user=current_user)
