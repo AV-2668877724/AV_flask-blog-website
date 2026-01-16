@@ -435,7 +435,7 @@ document.addEventListener("click", function (e) {
 });
 
 /* =========================================
-   PROFILE IMAGE VIEWER (LIGHTBOX)
+  PROFILE IMAGE VIEWER (LIGHTBOX)
    ========================================= */
 function viewFullSize(src) {
   // 1. Find the modal image element
