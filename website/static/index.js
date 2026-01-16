@@ -154,7 +154,7 @@ function like(postId) {
 }
 
 /* =========================
-   ⏱️ TIME AGO SUPPORT
+  TIME AGO SUPPORT
 ========================== */
 function timeAgoFromISO(isoString) {
   const now = new Date();
