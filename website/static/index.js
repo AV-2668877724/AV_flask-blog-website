@@ -3,7 +3,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
-     DARK MODE
+      DARK MODE
   ========================== */
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
@@ -23,14 +23,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================
-     AUTO TOAST SHOW (FLASH)
+      AUTO TOAST SHOW (FLASH)
   ========================== */
   document
     .querySelectorAll("#toastContainer .toast")
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
   /* =========================
-     POST TRUNCATION
+      POST TRUNCATION
   ========================== */
   document.querySelectorAll(".post-text").forEach((el) => {
     const overlay = el.parentElement.querySelector(".fade-overlay");
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-     SEE MORE / SEE LESS
+      SEE MORE / SEE LESS
   ========================== */
   document.querySelectorAll(".see-more-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -73,73 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-     🔍 GLOBAL SEARCH
-  ========================== */
-  const searchInput = document.getElementById("searchInput");
-  const searchResults = document.getElementById("searchResults");
-  let timeout;
-
-  if (searchInput && searchResults) {
-    searchInput.addEventListener("input", () => {
-      clearTimeout(timeout);
-      const query = searchInput.value.trim();
-
-      if (query.length < 2) {
-        searchResults.style.display = "none";
-        return;
-      }
-
-      timeout = setTimeout(() => {
-        fetch(`/search?q=${encodeURIComponent(query)}`)
-          .then((res) => res.json())
-          .then((data) => {
-            searchResults.innerHTML = "";
-
-            if (data.users && data.users.length > 0) {
-              data.users.forEach((user) => {
-                const item = document.createElement("a");
-                item.className = "dropdown-item";
-                item.href = `/search-page?q=${encodeURIComponent(
-                  user.username
-                )}`;
-                item.innerHTML = `<strong>${user.username}</strong>`;
-                searchResults.appendChild(item);
-              });
-              searchResults.style.display = "block";
-            } else {
-              searchResults.style.display = "none";
-            }
-          })
-          .catch(() => {
-            searchResults.style.display = "none";
-          });
-      }, 300);
-    });
-
-    // ENTER → full search page
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const query = searchInput.value.trim();
-        if (query.length >= 2) {
-          window.location.href = `/search-page?q=${encodeURIComponent(query)}`;
-        }
-      }
-    });
-
-    // Outside click close
-    document.addEventListener("click", (e) => {
-      if (
-        !searchInput.contains(e.target) &&
-        !searchResults.contains(e.target)
-      ) {
-        searchResults.style.display = "none";
-      }
-    });
-  }
-
-  /* =========================
-     TIMESTAMP REFRESH
+      TIMESTAMP REFRESH
   ========================== */
   refreshTimestamps();
   setInterval(refreshTimestamps, 60000);
@@ -504,17 +438,99 @@ document.addEventListener("click", function (e) {
    PROFILE IMAGE VIEWER (LIGHTBOX)
    ========================================= */
 function viewFullSize(src) {
-    // 1. Find the modal image element
-    const imgElement = document.getElementById('fullSizeImage');
-    const modalElement = document.getElementById('imageViewModal');
-    
-    if (imgElement && modalElement) {
-        // 2. Set the source
-        imgElement.src = src;
-        
-        // 3. Show the modal using Bootstrap's JS API
-        // We use 'new' to ensure we get a fresh instance or existing one
-        const myModal = new bootstrap.Modal(modalElement);
-        myModal.show();
-    }
+  // 1. Find the modal image element
+  const imgElement = document.getElementById("fullSizeImage");
+  const modalElement = document.getElementById("imageViewModal");
+
+  if (imgElement && modalElement) {
+    // 2. Set the source
+    imgElement.src = src;
+
+    // 3. Show the modal using Bootstrap's JS API
+    // We use 'new' to ensure we get a fresh instance or existing one
+    const myModal = new bootstrap.Modal(modalElement);
+    myModal.show();
+  }
 }
+
+/* =========================================
+   LIVE SEARCH (AUTOCOMPLETE) & GLOBAL SEARCH
+   ========================================= */
+
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInput = document.getElementById("searchInput");
+  const searchResults = document.getElementById("searchResults");
+
+  if (searchInput && searchResults) {
+    // 1. Listen for typing (Live Dropdown)
+    searchInput.addEventListener("input", async function () {
+      const query = this.value.trim();
+
+      // If empty, hide dropdown
+      if (query.length < 1) {
+        searchResults.classList.remove("show");
+        return;
+      }
+
+      try {
+        // 2. Fetch data from Python API
+        const response = await fetch(`/api/search-users?q=${query}`);
+        const users = await response.json();
+
+        // 3. Clear previous results
+        searchResults.innerHTML = "";
+
+        if (users.length > 0) {
+          // 4. Create Dropdown Items
+          users.forEach((user) => {
+            const item = document.createElement("a");
+            item.className =
+              "dropdown-item d-flex align-items-center gap-2 py-2";
+            item.href = `/profile/${user.username}`; // Link to profile
+
+            // Handle Avatar (Image or Initials)
+            let avatarHtml = "";
+            if (user.profile_pic) {
+              avatarHtml = `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle" style="width: 24px; height: 24px; object-fit: cover;">`;
+            } else {
+              const initial = user.username.charAt(0).toUpperCase();
+              avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 24px; height: 24px; font-size: 0.75rem; font-weight: bold;">${initial}</div>`;
+            }
+
+            item.innerHTML = `${avatarHtml} <span>${user.username}</span>`;
+            searchResults.appendChild(item);
+          });
+
+          // Show the dropdown
+          searchResults.classList.add("show");
+          searchResults.style.display = "block";
+        } else {
+          searchResults.classList.remove("show");
+          searchResults.style.display = "none";
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+      }
+    });
+
+    // 5. Handle "Enter" key to go to full search page
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        // ✅ FIXED: Points to /search-page instead of /search
+        window.location.href = `/search-page?q=${this.value}`;
+      }
+    });
+
+    // 6. Hide dropdown when clicking outside
+    document.addEventListener("click", function (e) {
+      if (
+        !searchInput.contains(e.target) &&
+        !searchResults.contains(e.target)
+      ) {
+        searchResults.classList.remove("show");
+        searchResults.style.display = "none";
+      }
+    });
+  }
+});

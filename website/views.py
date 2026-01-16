@@ -11,6 +11,7 @@ from sqlalchemy import func
 import re, json, os, uuid
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.sql.expression import func
 
 views = Blueprint('views', __name__)
 
@@ -495,21 +496,7 @@ def admin_restore_comment(comment_id):
 # SEARCH & FOLLOW
 # =================================================
 
-@views.route("/search")
-@login_required
-def search():
-    query = request.args.get('q', '').strip()
-    if not query:
-        return redirect(url_for('views.home'))
-        
-    # Search Users
-    users = User.query.filter(User.username.ilike(f"%{query}%")).all()
-    
-    # Search Posts
-    posts = Post.query.filter(Post.text.ilike(f"%{query}%")).all()
-    posts = enrich_posts(posts)
-    
-    return render_template("search.html", user=current_user, users=users, posts=posts, query=query)
+
 
 @views.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
@@ -617,6 +604,57 @@ def admin_toggle_user_status(user_id):
     flash(f"User {user.username} is now {status}.", category='success')
     
     return redirect(url_for('views.admin_dashboard'))
+
+
+
+@views.route('/api/search-users')
+@login_required
+def api_search_users():
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify([])
+    
+    # Search users (case insensitive) - Limit to 5 for dropdown
+    users = User.query.filter(User.username.ilike(f"%{query}%")).limit(5).all()
+    
+    results = []
+    for u in users:
+        results.append({
+            'username': u.username,
+            'profile_pic': u.profile_pic
+        })
+    return jsonify(results)
+
+# Replace your current @views.route("/search-page") function with this:
+
+@views.route("/search-page")
+@login_required
+def search():
+    query = request.args.get('q', '').strip()
+    
+    # 1. Search for matches
+    users = User.query.filter(User.username.ilike(f"%{query}%")).all()
+    posts = Post.query.filter(Post.text.ilike(f"%{query}%")).all()
+    posts = enrich_posts(posts)
+    
+    suggestions = []
+    
+    # 2. STRICT LOGIC: Only fetch suggestions if NO users are found
+    if len(users) == 0:
+        # Fetch 3 random users
+        suggestions = User.query.order_by(func.random()).limit(3).all()
+    else:
+        # If users are found, force suggestions to be empty
+        suggestions = []
+
+    return render_template(
+        "search.html", 
+        user=current_user, 
+        users=users, 
+        posts=posts, 
+        suggestions=suggestions,
+        query=query
+    )
 
 @views.route('/about')
 def about():

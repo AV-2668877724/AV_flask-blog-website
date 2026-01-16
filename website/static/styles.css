@@ -303,6 +303,7 @@ body.dark-mode .list-group-item {
 body.dark-mode .list-group-item-action:hover {
     background-color: var(--bg-input);
 }
+
 /* =========================================
    RICH TEXT CONTENT FIXES
    ========================================= */
@@ -341,13 +342,12 @@ body.dark-mode .list-group-item-action:hover {
     overflow-wrap: break-word;
     word-wrap: break-word;
 }
+
 /* =========================================
    DARK MODE BUTTON FIXES
    ========================================= */
 
-/* Inverts "Outline Dark" buttons (Github/X) to be White in Dark Mode 
-   so they are visible against the dark background.
-*/
+/* Inverts "Outline Dark" buttons (Github/X) to be White in Dark Mode */
 body.dark-mode .btn-outline-dark {
     color: #F9FAFB;           /* White text */
     border-color: #F9FAFB;    /* White border */
@@ -359,7 +359,7 @@ body.dark-mode .btn-outline-dark:hover {
     border-color: #F9FAFB;
 }
 
-/* Optional: Ensure Primary (LinkedIn) and Danger (Email) pop more */
+/* Ensure Primary (LinkedIn) and Danger (Email) pop more */
 body.dark-mode .btn-outline-primary {
     color: #60A5FA;
     border-color: #60A5FA;
@@ -370,42 +370,15 @@ body.dark-mode .btn-outline-danger {
 }
 
 /* =========================================
-   ABOUT PAGE STYLES
+   ABOUT PAGE & FEATURE CARDS
    ========================================= */
+
+/* Hover Effect for Cards */
 .transition-hover:hover {
     transform: translateY(-5px);
     transition: transform 0.3s ease;
     box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
 }
-
-/* =========================================
-   DARK MODE BUTTON FIXES
-   ========================================= */
-/* Inverts "Outline Dark" buttons (Github/X) to be White in Dark Mode */
-body.dark-mode .btn-outline-dark {
-    color: #F9FAFB;           
-    border-color: #F9FAFB;    
-}
-
-body.dark-mode .btn-outline-dark:hover {
-    background-color: #F9FAFB; 
-    color: #111827;            
-    border-color: #F9FAFB;
-}
-
-/* Make Primary/Danger outlines pop in dark mode */
-body.dark-mode .btn-outline-primary {
-    color: #60A5FA;
-    border-color: #60A5FA;
-}
-body.dark-mode .btn-outline-danger {
-    color: #F87171;
-    border-color: #F87171;
-}
-
-/* =========================================
-   ABOUT PAGE - EXPANDED STYLES
-   ========================================= */
 
 /* Feature Cards */
 .feature-card {
@@ -453,4 +426,38 @@ body.dark-mode .tech-badge {
 }
 body.dark-mode .creator-card {
     background: var(--bg-card);
+}
+
+/* =========================================
+   SEARCH DROPDOWN FIXES
+   ========================================= */
+#searchResults {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 9999 !important; /* Force it to be on top */
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    display: none; /* Hidden by default */
+}
+
+#searchResults.show {
+    display: block;
+}
+
+/* Dark Mode support for dropdown */
+body.dark-mode #searchResults {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+body.dark-mode #searchResults .dropdown-item {
+    color: #e5e7eb;
+}
+body.dark-mode #searchResults .dropdown-item:hover {
+    background-color: #374151;
 }
