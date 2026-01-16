@@ -22,6 +22,7 @@ auth = Blueprint('auth', __name__)
 ADMIN_EMAIL = "avadminpostory777@gmai.com"
 
 
+
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -38,6 +39,11 @@ def login():
 
         if not check_password_hash(user.password, password):
             flash('Incorrect password.', category='error')
+            return redirect(url_for('auth.login'))
+
+        # ✅ NEW: Check if account is deactivated
+        if user.is_active is False:  # Explicit check
+            flash('This account has been deactivated. Contact admin to restore.', category='error')
             return redirect(url_for('auth.login'))
 
         login_user(user, remember=True)

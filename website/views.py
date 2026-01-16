@@ -3,7 +3,7 @@ from flask import (
     Blueprint, render_template, request,
     flash, redirect, url_for, abort, jsonify, current_app
 )
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow
 from sqlalchemy.exc import IntegrityError
 from . import db
@@ -564,6 +564,60 @@ def following_list(username):
     following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
     
     return render_template("followers.html", profile_user=user, users=following, following_ids=following_ids, title="Following")
+
+
+
+
+
+# =================================================
+# ACCOUNT DEACTIVATION (USER SIDE)
+# =================================================
+
+@views.route('/deactivate-account', methods=['POST'])
+@login_required
+def deactivate_account():
+    # Optional: You could ask for password confirmation here for extra security
+    current_user.is_active = False
+    db.session.commit()
+    
+    logout_user() # Log them out immediately
+    flash('Your account has been deactivated. Goodbye!', category='success')
+    return redirect(url_for('auth.login'))
+
+
+# =================================================
+# ADMIN REACTIVATION (ADMIN SIDE)
+# =================================================
+
+@views.route('/admin/toggle-user-status/<int:user_id>', methods=['POST'])
+@login_required
+def admin_toggle_user_status(user_id):
+    if not current_user.is_admin:
+        abort(403)
+        
+    pwd = request.form.get('admin_password')
+    if pwd != ADMIN_ACTION_PASSWORD:
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found', category='error')
+        return redirect(url_for('views.admin_dashboard'))
+    
+    if user.is_admin:
+        flash('Cannot deactivate an admin.', category='error')
+        return redirect(url_for('views.admin_dashboard'))
+
+    # Toggle status
+    user.is_active = not user.is_active
+    db.session.commit()
+    
+    status = "Active" if user.is_active else "Deactivated"
+    flash(f"User {user.username} is now {status}.", category='success')
+    
+    return redirect(url_for('views.admin_dashboard'))
+
 @views.route('/about')
 def about():
     return render_template("about.html", user=current_user)
