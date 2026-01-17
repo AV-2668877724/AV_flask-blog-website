@@ -97,15 +97,13 @@
                 id="notifDropdown"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                onclick="markRead()"
               >
                 <i class="far fa-bell"></i>
 
                 {% if unread_count and unread_count > 0 %}
                 <span
                   id="notifBadge"
-                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                  style="font-size: 0.6rem"
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger badge-dot"
                 >
                   {{ unread_count }}
                 </span>
@@ -113,8 +111,7 @@
               </button>
 
               <ul
-                class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
-                style="width: 350px"
+                class="dropdown-menu dropdown-menu-end shadow border-0 p-0 notif-dropdown-menu"
               >
                 <li
                   class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center"
@@ -131,20 +128,15 @@
                 <li>
                   <a
                     href="{% if n.post_id %}/home#post-wrapper-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}"
-                    class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %}"
-                    style="white-space: normal"
+                    class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
                   >
                     {% if n.visitor.profile_pic %}
                     <img
                       src="{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}"
-                      class="rounded-circle"
-                      style="width: 35px; height: 35px; object-fit: cover"
+                      class="rounded-circle avatar-sm"
                     />
                     {% else %}
-                    <div
-                      class="user-avatar-xs"
-                      style="width: 35px; height: 35px; font-size: 0.8rem"
-                    >
+                    <div class="user-avatar-xs avatar-sm">
                       {{ n.visitor.username[0]|upper }}
                     </div>
                     {% endif %}
@@ -158,16 +150,13 @@
                         {% elif n.action == 'follow' %} started following you.
                         {% endif %}
                       </p>
-                      <small class="text-muted" style="font-size: 0.7rem"
+                      <small class="text-muted small-text"
                         >{{ n.date_created | timeago }}</small
                       >
                     </div>
 
                     {% if not n.is_read %}
-                    <span
-                      class="position-absolute top-50 end-0 translate-middle-y me-3 bg-primary rounded-circle"
-                      style="width: 6px; height: 6px"
-                    ></span>
+                    <span class="unread-dot"></span>
                     {% endif %}
                   </a>
                 </li>
@@ -197,8 +186,7 @@
                 {% if current_user.profile_pic %}
                 <img
                   src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
-                  class="rounded-circle border border-2 border-white shadow-sm"
-                  style="width: 32px; height: 32px; object-fit: cover"
+                  class="rounded-circle border border-2 border-white shadow-sm user-avatar-nav"
                 />
                 {% else %}
                 <div class="user-avatar-xs">
@@ -448,15 +436,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
     <script src="{{ url_for('static', filename='index.js') }}"></script>
-
-    <script>
-      function markRead() {
-        const badge = document.getElementById("notifBadge");
-        if (badge) {
-          badge.style.display = "none";
-          fetch("/api/mark-notifications-read", { method: "POST" });
-        }
-      }
-    </script>
   </body>
 </html>

@@ -1,10 +1,9 @@
 // index.js
-// Dark mode, see more/less, likes, toasts, global search, timestamps
 
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
-      DARK MODE
-  ========================== */
+        DARK MODE
+    ========================== */
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
 
@@ -23,15 +22,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================
-      AUTO TOAST SHOW (FLASH)
-  ========================== */
+        AUTO TOAST SHOW (FLASH)
+    ========================== */
   document
     .querySelectorAll("#toastContainer .toast")
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
   /* =========================
-      POST TRUNCATION
-  ========================== */
+        POST TRUNCATION
+    ========================== */
   document.querySelectorAll(".post-text").forEach((el) => {
     const overlay = el.parentElement.querySelector(".fade-overlay");
     if (el.scrollHeight > 150) {
@@ -42,8 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-      SEE MORE / SEE LESS
-  ========================== */
+        SEE MORE / SEE LESS
+    ========================== */
   document.querySelectorAll(".see-more-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const postId = btn.dataset.postId;
@@ -73,10 +72,106 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-      TIMESTAMP REFRESH
-  ========================== */
+        NOTIFICATION BADGE LOGIC
+    ========================== */
+  const notifBtn = document.getElementById("notifDropdown");
+  if (notifBtn) {
+    notifBtn.addEventListener("click", () => {
+      const badge = document.getElementById("notifBadge");
+      if (badge) {
+        // 1. Visual Hide
+        badge.style.display = "none";
+        // 2. Backend Sync
+        fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
+          console.error("Error marking read:", err),
+        );
+      }
+    });
+  }
+
+  /* =========================
+        TIMESTAMP REFRESH
+    ========================== */
   refreshTimestamps();
   setInterval(refreshTimestamps, 60000);
+
+  /* =========================
+        LIVE SEARCH (AUTOCOMPLETE)
+    ========================== */
+  const searchInput = document.getElementById("searchInput");
+  const searchResults = document.getElementById("searchResults");
+
+  if (searchInput && searchResults) {
+    // 1. Listen for typing (Live Dropdown)
+    searchInput.addEventListener("input", async function () {
+      const query = this.value.trim();
+
+      // If empty, hide dropdown
+      if (query.length < 1) {
+        searchResults.classList.remove("show");
+        return;
+      }
+
+      try {
+        // 2. Fetch data from Python API
+        const response = await fetch(`/api/search-users?q=${query}`);
+        const users = await response.json();
+
+        // 3. Clear previous results
+        searchResults.innerHTML = "";
+
+        if (users.length > 0) {
+          // 4. Create Dropdown Items
+          users.forEach((user) => {
+            const item = document.createElement("a");
+            item.className =
+              "dropdown-item d-flex align-items-center gap-2 py-2";
+            item.href = `/profile/${user.username}`; // Link to profile
+
+            // Handle Avatar
+            let avatarHtml = "";
+            if (user.profile_pic) {
+              avatarHtml = `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">`;
+            } else {
+              const initial = user.username.charAt(0).toUpperCase();
+              avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 30px; height: 30px; font-size: 0.8rem; font-weight: bold;">${initial}</div>`;
+            }
+
+            item.innerHTML = `${avatarHtml} <span>${user.username}</span>`;
+            searchResults.appendChild(item);
+          });
+
+          // Show the dropdown
+          searchResults.classList.add("show");
+          searchResults.style.display = "block";
+        } else {
+          searchResults.classList.remove("show");
+          searchResults.style.display = "none";
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+      }
+    });
+
+    // 5. Handle "Enter" key to go to full search page
+    searchInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        window.location.href = `/search-page?q=${this.value}`;
+      }
+    });
+
+    // 6. Hide dropdown when clicking outside
+    document.addEventListener("click", function (e) {
+      if (
+        !searchInput.contains(e.target) &&
+        !searchResults.contains(e.target)
+      ) {
+        searchResults.classList.remove("show");
+        searchResults.style.display = "none";
+      }
+    });
+  }
 });
 
 /* =========================
@@ -112,7 +207,9 @@ function showToast(message, isError = false) {
     </div>`;
   container.appendChild(toast);
 
-  const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+  const bsToast = new bootstrap.Toast(toast, {
+    delay: 3000,
+  });
   bsToast.show();
   toast.addEventListener("hidden.bs.toast", () => toast.remove());
 }
@@ -137,7 +234,9 @@ function like(postId) {
   btn.classList.toggle("fas");
   btn.classList.toggle("text-primary");
 
-  fetch(`/like-post/${postId}`, { method: "POST" })
+  fetch(`/like-post/${postId}`, {
+    method: "POST",
+  })
     .then((res) => res.json())
     .then((data) => {
       countEl.innerText = data.likes;
@@ -201,7 +300,9 @@ window.handleEnterSearch = function (event, sectionId, value) {
     event.preventDefault();
 
     if (!section.classList.contains("show")) {
-      new bootstrap.Collapse(section, { show: true });
+      new bootstrap.Collapse(section, {
+        show: true,
+      });
     }
 
     applyAdminFilter(sectionId, value);
@@ -277,8 +378,12 @@ function checkUsername() {
 
   fetch("/check-username", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username,
+    }),
   })
     .then((res) => res.json())
     .then((data) => {
@@ -316,8 +421,12 @@ function checkSignupUsername() {
 
   fetch("/check-username-signup", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      username,
+    }),
   })
     .then((res) => res.json())
     .then((data) => {
@@ -351,7 +460,9 @@ document.addEventListener("click", function (e) {
       "Content-Type": "application/json",
       "X-Requested-With": "XMLHttpRequest",
     },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({
+      url,
+    }),
   })
     .then((res) => res.json())
     .then((data) => {
@@ -452,85 +563,3 @@ function viewFullSize(src) {
     myModal.show();
   }
 }
-
-/* =========================================
-   LIVE SEARCH (AUTOCOMPLETE) & GLOBAL SEARCH
-   ========================================= */
-
-document.addEventListener("DOMContentLoaded", function () {
-  const searchInput = document.getElementById("searchInput");
-  const searchResults = document.getElementById("searchResults");
-
-  if (searchInput && searchResults) {
-    // 1. Listen for typing (Live Dropdown)
-    searchInput.addEventListener("input", async function () {
-      const query = this.value.trim();
-
-      // If empty, hide dropdown
-      if (query.length < 1) {
-        searchResults.classList.remove("show");
-        return;
-      }
-
-      try {
-        // 2. Fetch data from Python API
-        const response = await fetch(`/api/search-users?q=${query}`);
-        const users = await response.json();
-
-        // 3. Clear previous results
-        searchResults.innerHTML = "";
-
-        if (users.length > 0) {
-          // 4. Create Dropdown Items
-          users.forEach((user) => {
-            const item = document.createElement("a");
-            item.className =
-              "dropdown-item d-flex align-items-center gap-2 py-2";
-            item.href = `/profile/${user.username}`; // Link to profile
-
-            // Handle Avatar (Image or Initials)
-            let avatarHtml = "";
-            if (user.profile_pic) {
-              avatarHtml = `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle" style="width: 24px; height: 24px; object-fit: cover;">`;
-            } else {
-              const initial = user.username.charAt(0).toUpperCase();
-              avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 24px; height: 24px; font-size: 0.75rem; font-weight: bold;">${initial}</div>`;
-            }
-
-            item.innerHTML = `${avatarHtml} <span>${user.username}</span>`;
-            searchResults.appendChild(item);
-          });
-
-          // Show the dropdown
-          searchResults.classList.add("show");
-          searchResults.style.display = "block";
-        } else {
-          searchResults.classList.remove("show");
-          searchResults.style.display = "none";
-        }
-      } catch (error) {
-        console.error("Search error:", error);
-      }
-    });
-
-    // 5. Handle "Enter" key to go to full search page
-    searchInput.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        // ✅ FIXED: Points to /search-page instead of /search
-        window.location.href = `/search-page?q=${this.value}`;
-      }
-    });
-
-    // 6. Hide dropdown when clicking outside
-    document.addEventListener("click", function (e) {
-      if (
-        !searchInput.contains(e.target) &&
-        !searchResults.contains(e.target)
-      ) {
-        searchResults.classList.remove("show");
-        searchResults.style.display = "none";
-      }
-    });
-  }
-});

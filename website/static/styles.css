@@ -429,6 +429,58 @@ body.dark-mode .creator-card {
 }
 
 /* =========================================
+   NOTIFICATION DROPDOWN STYLES
+   ========================================= */
+.notif-dropdown-menu {
+    width: 350px;
+}
+
+.bg-blue-subtle {
+    background-color: #f0f9ff;
+}
+
+.badge-dot {
+    font-size: 0.6rem;
+}
+
+.avatar-sm {
+    width: 35px; 
+    height: 35px; 
+    object-fit: cover;
+}
+
+.wrap-text {
+    white-space: normal;
+}
+
+.small-text {
+    font-size: 0.7rem;
+}
+
+.unread-dot {
+    position: absolute; 
+    top: 50%; 
+    right: 0; 
+    transform: translateY(-50%); 
+    margin-right: 1rem; 
+    width: 6px; 
+    height: 6px; 
+    background-color: var(--primary); 
+    border-radius: 50%;
+}
+
+.user-avatar-nav {
+    width: 32px; 
+    height: 32px; 
+    object-fit: cover;
+}
+
+/* Dark Mode Overrides for Notifications */
+body.dark-mode .bg-blue-subtle {
+    background-color: #1e293b;
+}
+
+/* =========================================
    SEARCH DROPDOWN FIXES
    ========================================= */
 #searchResults {
@@ -460,15 +512,6 @@ body.dark-mode #searchResults .dropdown-item {
 }
 body.dark-mode #searchResults .dropdown-item:hover {
     background-color: #374151;
-}
-
-/* Light blue background for unread notifications */
-.bg-blue-subtle {
-    background-color: #f0f9ff;
-}
-/* Dark mode version */
-body.dark-mode .bg-blue-subtle {
-    background-color: #1e293b;
 }
 
 /* =========================================
