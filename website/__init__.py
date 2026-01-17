@@ -4,7 +4,6 @@ from os import path, makedirs
 from flask_login import LoginManager, current_user
 from datetime import datetime
 
-# NOTE: Do NOT import models here to avoid circular import errors.
 
 db = SQLAlchemy()
 DB_NAME = "database.db"
