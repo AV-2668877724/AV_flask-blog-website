@@ -7,42 +7,44 @@ AV-Postory/
 │
 ├── website/
 │   │
-│   ├── __init__.py                # 🔧 App factory & DB initialization
-│   ├── models.py                  # 🧱 Database models (User, Post, Comment, Like)
-│   ├── views.py                   # 🌐 Main routes (home, posts, profile, admin)
-│   ├── auth.py                    # 🔐 Authentication routes (login, signup, logout)
+│   ├── __init__.py                # 🔧 App factory, DB init & Context Processors
+│   ├── models.py                  # 🧱 Database models (User, Post, Comment, Like, Notification)
+│   ├── views.py                   # 🌐 Main routes (home, search, notifications, admin)
+│   ├── auth.py                    # 🔐 Authentication routes (login, sign-up, logout)
 │   │
 │   ├── static/                    # 🎨 Static assets
 │   │   │
-│   │   ├── styles.css             # ✅ MAIN GLOBAL CSS (light/dark mode, layout)
-│   │   ├── index.js               # ⚡ JavaScript (likes, search, dark mode, AJAX)
-│   │   └── images/                # 🖼️ Logos, icons, avatars
-│   │       └── logo.png
+│   │   ├── styles.css             # ✅ MAIN CSS (Dark mode, Layouts, Inputs)
+│   │   ├── index.js               # ⚡ JavaScript (Live Search, Bell Icon, AJAX)
+│   │   │
+│   │   ├── images/                # 🖼️ Site assets
+│   │   │   
+│   │   │
+│   │   └── uploads/               # 📂 User Uploaded Content
+│   │       ├── avatars/           # User profile pictures
+│   │       └── posts/             # Post cover images
 │   │
 │   ├── templates/                 # 🧩 HTML templates (Jinja2)
 │   │   │
-│   │   ├── base.html              # 🧱 Base layout (navbar, dark mode, flashes)
-│   │   ├── home.html              # 🏠 Feed / timeline
-│   │   ├── posts.html             # 📄 User posts page
-│   │   ├── _posts.html            # 🔹 Reusable post component (partials)
-│   │   ├── create_posts.html      # ✍️ Create new post
-│   │   ├── edit_post.html         # ✏️ Edit existing post
-│   │   │
-│   │   ├── profile.html           # 👤 User profile page (bio, stats, edit username)
-│   │   ├── admin_dashboard.html   # 👑 Admin panel (users, posts, comments)
+│   │   ├── base.html              # 🧱 Base layout (Navbar with Bell, Footer)
+│   │   ├── home.html              # 🏠 Main Feed
+│   │   ├── about.html             # ℹ️ About Us page
 │   │   │
 │   │   ├── login.html             # 🔐 Login page
-│   │   ├── signup.html            # 📝 Signup page
-│   │   ├── forgot_password.html   # 🔁 Password recovery
-│   │   ├── search.html            # 🔍 Search results
-│   │   └── about.html             # ℹ️ About AV-Postory
+│   │   ├── sign_up.html           # 📝 Sign-up page
+│   │   │
+│   │   ├── create_posts.html      # ✍️ Write new story
+│   │   ├── edit_post.html         # ✏️ Edit story
+│   │   ├── _posts.html            # 🔹 Reusable Post Card (Partial)
+│   │   │
+│   │   ├── profile.html           # 👤 User Profile (Bio, Stats, Deactivate)
+│   │   ├── followers.html         # 👥 Followers / Following List
+│   │   ├── notifications.html     # 🔔 ✅ NEW: All Notifications Page
+│   │   │
+│   │   ├── search.html            # 🔍 Search Results Page
+│   │   └── admin_dashboard.html   # 👑 Admin Panel (Manage users/content)
 │   │
 │   └── __pycache__/               # 🧠 Python bytecode cache
-│
-├── tools/                         # 🛠️ Maintenance / DB utilities
-│   ├── add_bio_column.py          # DB migration helper
-│   ├── list_tables.py             # Inspect database tables
-│   └── view_users.py              # Admin/debug helper scripts
 │
 ├── requirements.txt               # 📦 Python dependencies
 ├── README.md                      # 📘 Project documentation
