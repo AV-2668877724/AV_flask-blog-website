@@ -4,14 +4,13 @@ from flask import (
     flash, redirect, url_for, abort, jsonify, current_app
 )
 from flask_login import login_required, current_user, logout_user
-from .models import User, Post, Comment, Like, Follow
+from .models import User, Post, Comment, Like, Follow, Notification
 from sqlalchemy.exc import IntegrityError
 from . import db
 from sqlalchemy import func
 import re, json, os, uuid
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm.attributes import flag_modified
-from sqlalchemy.sql.expression import func
 
 views = Blueprint('views', __name__)
 
@@ -33,37 +32,52 @@ def allowed_file(filename):
 def save_picture(form_picture, folder_name="posts"):
     """
     Saves a file to static/uploads/{folder_name} with a unique random name.
-    Returns the new filename.
     """
-    # Generate a random hex to prevent filename collisions
     random_hex = str(uuid.uuid4().hex)[:8]
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
     
-    # Build the full path: website/static/uploads/{folder_name}/{filename}
     upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)
     
-    # Create directory if it doesn't exist
     if not os.path.exists(upload_path):
         os.makedirs(upload_path)
         
-    # Save the file
     file_path = os.path.join(upload_path, picture_fn)
     form_picture.save(file_path)
-    
     return picture_fn
 
 def enrich_posts(posts):
-    """
-    Adds auxiliary data to posts (like count, user liked status).
-    Useful for creating a consistent object structure for templates.
-    """
+    """Adds auxiliary data (like count, user liked status) to posts."""
     for post in posts:
         post.likes_count = len(post.likes)
         post.liked = False
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
     return posts
+
+def create_notification(visitor_id, recipient_id, action, post_id=None):
+    """Creates a notification only if the visitor is not the recipient."""
+    if visitor_id == recipient_id:
+        return 
+        
+    # Prevent duplicate unread notifications
+    existing = Notification.query.filter_by(
+        visitor_id=visitor_id, 
+        recipient_id=recipient_id, 
+        action=action, 
+        post_id=post_id,
+        is_read=False
+    ).first()
+    
+    if not existing:
+        notif = Notification(
+            visitor_id=visitor_id, 
+            recipient_id=recipient_id, 
+            action=action, 
+            post_id=post_id
+        )
+        db.session.add(notif)
+        db.session.commit()
 
 # =================================================
 # SOCIAL LINK AUTO-DETECTION
@@ -98,11 +112,9 @@ def home():
     page = request.args.get('page', 1, type=int)
     per_page = 5
     
-    # Fetch posts, newest first
     pagination = Post.query.order_by(Post.date_created.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
-    
     posts = enrich_posts(pagination.items)
 
     return render_template(
@@ -113,24 +125,21 @@ def home():
         is_home=True
     )
 
+
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
 def create_post():
     if request.method == 'POST':
         text = request.form.get('text')
-        
-        # Check for cover image upload
         cover_image_file = request.files.get('cover_image')
         cover_image_name = None
 
         if not text:
             flash('Post content cannot be empty!', category='error')
         else:
-            # Process Image if it exists
             if cover_image_file and allowed_file(cover_image_file.filename):
                 cover_image_name = save_picture(cover_image_file, 'posts')
             
-            # Save Post
             post = Post(text=text, author=current_user.id, cover_image=cover_image_name)
             db.session.add(post)
             db.session.commit()
@@ -150,18 +159,13 @@ def edit_post(id):
 
     if request.method == "POST":
         text = request.form.get('text')
-        
-        # Check for new cover image
         cover_image_file = request.files.get('cover_image')
         
         if not text:
             flash("Post content cannot be empty.", category='error')
         else:
             post.text = text
-            
-            # Update image only if a new one is uploaded
             if cover_image_file and allowed_file(cover_image_file.filename):
-                # Optional: Delete old image here if you want to save space
                 new_filename = save_picture(cover_image_file, 'posts')
                 post.cover_image = new_filename
                 
@@ -203,6 +207,10 @@ def create_comment(post_id):
             comment = Comment(text=text, author=current_user.id, post_id=post_id)
             db.session.add(comment)
             db.session.commit()
+            
+            # ✅ Notify Author
+            create_notification(current_user.id, post.author, 'comment', post.id)
+            
             flash('Comment added!', category='success')
         else:
             flash('Post does not exist.', category='error')
@@ -213,13 +221,11 @@ def create_comment(post_id):
 @login_required
 def delete_comment(comment_id):
     comment = Comment.query.filter_by(id=comment_id).first()
-
     if not comment:
         flash('Comment does not exist.', category='error')
     elif current_user.id != comment.author and current_user.id != comment.post.author and not current_user.is_admin:
         flash('You do not have permission to delete this comment.', category='error')
     else:
-        # Soft delete (hide it)
         comment.is_deleted = True
         db.session.commit()
         flash('Comment deleted.', category='success')
@@ -244,11 +250,33 @@ def like(post_id):
         db.session.add(like)
         db.session.commit()
         liked = True
+        
+        # ✅ Notify Author
+        create_notification(current_user.id, post.author, 'like', post.id)
 
-    return jsonify({
-        "likes": len(post.likes), 
-        "liked": liked
-    })
+    return jsonify({"likes": len(post.likes), "liked": liked})
+
+# =================================================
+# NOTIFICATIONS SYSTEM
+# =================================================
+
+@views.route('/notifications')
+@login_required
+def notifications():
+    # Fetch all notifications for current user, newest first
+    notifs = Notification.query.filter_by(recipient_id=current_user.id)\
+        .order_by(Notification.date_created.desc()).limit(50).all()
+    return render_template("notifications.html", user=current_user, notifications=notifs)
+
+@views.route('/api/mark-notifications-read', methods=['POST'])
+@login_required
+def mark_notifications_read():
+    # Mark all unread as read
+    unread_notifs = Notification.query.filter_by(recipient_id=current_user.id, is_read=False).all()
+    for n in unread_notifs:
+        n.is_read = True
+    db.session.commit()
+    return jsonify({'success': True})
 
 # =================================================
 # PROFILE & SETTINGS
@@ -301,16 +329,12 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
     
     file = request.files['profile_pic']
-    
     if file.filename == '':
         flash('No selected file.', category='error')
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # Save to 'avatars' folder inside static/uploads
         filename = save_picture(file, 'avatars')
-        
-        # Update User Model
         current_user.profile_pic = filename
         db.session.commit()
         flash('Profile picture updated!', category='success')
@@ -335,8 +359,6 @@ def edit_bio():
 @login_required
 def change_username():
     new_username = request.form.get('username')
-    
-    # Validation
     if not new_username or len(new_username) < 3:
         flash("Username too short.", category='error')
     elif not re.match("^[a-zA-Z0-9_.]+$", new_username):
@@ -349,9 +371,7 @@ def change_username():
             current_user.username = new_username
             db.session.commit()
             flash("Username updated! Please login again.", category='success')
-            # Logout logic could go here, but usually nice to keep them logged in or redirect to logout
             return redirect(url_for('auth.logout'))
-            
     return redirect(url_for('views.profile', username=current_user.username))
 
 @views.route('/add-social-link', methods=['POST'])
@@ -362,26 +382,17 @@ def add_social_link():
         flash("Link cannot be empty", category='error')
     else:
         platform = detect_platform(link)
-        
-        # We need a copy of the dictionary to modify it safely
         current_links = dict(current_user.social_links) if current_user.social_links else {}
-        
-        # Handle multiple links of same platform (e.g., twitter_1, twitter_2)
         key = platform
         counter = 1
         while key in current_links:
             key = f"{platform}_{counter}"
             counter += 1
-            
         current_links[key] = link
-        
-        # Force SQLAlchemy to detect change in JSON column
         current_user.social_links = current_links
         flag_modified(current_user, "social_links")
-        
         db.session.commit()
         flash("Link added!", category='success')
-        
     return redirect(url_for('views.profile', username=current_user.username))
 
 # =================================================
@@ -393,13 +404,9 @@ def add_social_link():
 def admin_dashboard():
     if not current_user.is_admin:
         abort(403)
-        
     users = User.query.all()
-    active_posts = Post.query.all() # Hard delete model implies all posts are active
+    active_posts = Post.query.all()
     comments = Comment.query.order_by(Comment.date_created.desc()).limit(50).all()
-    
-    # Since we are using hard deletes for Posts in this phase, deleted_posts is empty
-    # unless you have a separate Archive model. Passing empty list for safety.
     deleted_posts = []
 
     return render_template(
@@ -416,7 +423,6 @@ def admin_dashboard():
 def admin_delete_user(user_id):
     if not current_user.is_admin:
         abort(403)
-        
     pwd = request.form.get('admin_password')
     if pwd != ADMIN_ACTION_PASSWORD:
         flash("Incorrect admin password", category='error')
@@ -432,156 +438,13 @@ def admin_delete_user(user_id):
             flash(f"User {user_to_delete.username} deleted permanently.", category='success')
     else:
         flash("User not found", category='error')
-        
     return redirect(url_for('views.admin_dashboard'))
-
-@views.route('/admin/delete-post/<int:post_id>', methods=['POST'])
-@login_required
-def admin_delete_post(post_id):
-    if not current_user.is_admin:
-        abort(403)
-        
-    pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
-        flash("Incorrect admin password", category='error')
-        return redirect(url_for('views.admin_dashboard'))
-        
-    post = Post.query.get(post_id)
-    if post:
-        db.session.delete(post)
-        db.session.commit()
-        flash("Post deleted.", category='success')
-    
-    return redirect(url_for('views.admin_dashboard'))
-
-@views.route('/admin/delete-comment/<int:comment_id>', methods=['POST'])
-@login_required
-def admin_delete_comment(comment_id):
-    if not current_user.is_admin:
-        abort(403)
-        
-    pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
-        flash("Incorrect admin password", category='error')
-        return redirect(url_for('views.admin_dashboard'))
-        
-    comment = Comment.query.get(comment_id)
-    if comment:
-        comment.is_deleted = True
-        db.session.commit()
-        flash("Comment hidden.", category='success')
-        
-    return redirect(url_for('views.admin_dashboard'))
-
-@views.route('/admin/restore-comment/<int:comment_id>', methods=['POST'])
-@login_required
-def admin_restore_comment(comment_id):
-    if not current_user.is_admin:
-        abort(403)
-        
-    pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
-        flash("Incorrect admin password", category='error')
-        return redirect(url_for('views.admin_dashboard'))
-        
-    comment = Comment.query.get(comment_id)
-    if comment:
-        comment.is_deleted = False
-        db.session.commit()
-        flash("Comment restored.", category='success')
-        
-    return redirect(url_for('views.admin_dashboard'))
-    
-# =================================================
-# SEARCH & FOLLOW
-# =================================================
-
-
-
-@views.route('/follow/<int:user_id>', methods=['POST'])
-@login_required
-def follow_user(user_id):
-    user_to_follow = User.query.get(user_id)
-    if not user_to_follow:
-        return jsonify({'error': 'User not found'}), 404
-        
-    if user_to_follow.id == current_user.id:
-        return jsonify({'error': 'Cannot follow self'}), 400
-        
-    existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
-    if not existing:
-        new_follow = Follow(follower_id=current_user.id, following_id=user_id)
-        db.session.add(new_follow)
-        db.session.commit()
-        return jsonify({'success': True, 'action': 'followed'})
-        
-    return jsonify({'success': False, 'message': 'Already following'})
-
-@views.route('/unfollow/<int:user_id>', methods=['POST'])
-@login_required
-def unfollow_user(user_id):
-    follow_record = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
-    if follow_record:
-        db.session.delete(follow_record)
-        db.session.commit()
-        return jsonify({'success': True, 'action': 'unfollowed'})
-        
-    return jsonify({'success': False, 'message': 'Not following'})
-
-@views.route("/followers/<username>")
-@login_required
-def followers_list(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    
-    followers = User.query.join(Follow, Follow.follower_id == User.id)\
-        .filter(Follow.following_id == user.id).all()
-        
-    following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
-    
-    return render_template("followers.html", profile_user=user, users=followers, following_ids=following_ids, title="Followers")
-
-@views.route("/following/<username>")
-@login_required
-def following_list(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    
-    following = User.query.join(Follow, Follow.following_id == User.id)\
-        .filter(Follow.follower_id == user.id).all()
-        
-    following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
-    
-    return render_template("followers.html", profile_user=user, users=following, following_ids=following_ids, title="Following")
-
-
-
-
-
-# =================================================
-# ACCOUNT DEACTIVATION (USER SIDE)
-# =================================================
-
-@views.route('/deactivate-account', methods=['POST'])
-@login_required
-def deactivate_account():
-    # Optional: You could ask for password confirmation here for extra security
-    current_user.is_active = False
-    db.session.commit()
-    
-    logout_user() # Log them out immediately
-    flash('Your account has been deactivated. Goodbye!', category='success')
-    return redirect(url_for('auth.login'))
-
-
-# =================================================
-# ADMIN REACTIVATION (ADMIN SIDE)
-# =================================================
 
 @views.route('/admin/toggle-user-status/<int:user_id>', methods=['POST'])
 @login_required
 def admin_toggle_user_status(user_id):
     if not current_user.is_admin:
         abort(403)
-        
     pwd = request.form.get('admin_password')
     if pwd != ADMIN_ACTION_PASSWORD:
         flash("Incorrect admin password", category='error')
@@ -602,10 +465,126 @@ def admin_toggle_user_status(user_id):
     
     status = "Active" if user.is_active else "Deactivated"
     flash(f"User {user.username} is now {status}.", category='success')
-    
     return redirect(url_for('views.admin_dashboard'))
 
+@views.route('/admin/delete-post/<int:post_id>', methods=['POST'])
+@login_required
+def admin_delete_post(post_id):
+    if not current_user.is_admin:
+        abort(403)
+    pwd = request.form.get('admin_password')
+    if pwd != ADMIN_ACTION_PASSWORD:
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+    post = Post.query.get(post_id)
+    if post:
+        db.session.delete(post)
+        db.session.commit()
+        flash("Post deleted.", category='success')
+    return redirect(url_for('views.admin_dashboard'))
 
+@views.route('/admin/delete-comment/<int:comment_id>', methods=['POST'])
+@login_required
+def admin_delete_comment(comment_id):
+    if not current_user.is_admin:
+        abort(403)
+    pwd = request.form.get('admin_password')
+    if pwd != ADMIN_ACTION_PASSWORD:
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+    comment = Comment.query.get(comment_id)
+    if comment:
+        comment.is_deleted = True
+        db.session.commit()
+        flash("Comment hidden.", category='success')
+    return redirect(url_for('views.admin_dashboard'))
+
+@views.route('/admin/restore-comment/<int:comment_id>', methods=['POST'])
+@login_required
+def admin_restore_comment(comment_id):
+    if not current_user.is_admin:
+        abort(403)
+    pwd = request.form.get('admin_password')
+    if pwd != ADMIN_ACTION_PASSWORD:
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+    comment = Comment.query.get(comment_id)
+    if comment:
+        comment.is_deleted = False
+        db.session.commit()
+        flash("Comment restored.", category='success')
+    return redirect(url_for('views.admin_dashboard'))
+
+# =================================================
+# SEARCH & FOLLOW
+# =================================================
+
+@views.route('/follow/<int:user_id>', methods=['POST'])
+@login_required
+def follow_user(user_id):
+    user_to_follow = User.query.get(user_id)
+    if not user_to_follow:
+        return jsonify({'error': 'User not found'}), 404
+    if user_to_follow.id == current_user.id:
+        return jsonify({'error': 'Cannot follow self'}), 400
+        
+    existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
+    if not existing:
+        new_follow = Follow(follower_id=current_user.id, following_id=user_id)
+        db.session.add(new_follow)
+        db.session.commit()
+        
+        # ✅ Notify User
+        create_notification(current_user.id, user_id, 'follow')
+        
+        return jsonify({'success': True, 'action': 'followed'})
+        
+    return jsonify({'success': False, 'message': 'Already following'})
+
+@views.route('/unfollow/<int:user_id>', methods=['POST'])
+@login_required
+def unfollow_user(user_id):
+    follow_record = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
+    if follow_record:
+        db.session.delete(follow_record)
+        db.session.commit()
+        return jsonify({'success': True, 'action': 'unfollowed'})
+    return jsonify({'success': False, 'message': 'Not following'})
+
+@views.route("/followers/<username>")
+@login_required
+def followers_list(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    followers = User.query.join(Follow, Follow.follower_id == User.id)\
+        .filter(Follow.following_id == user.id).all()
+    following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
+    return render_template("followers.html", profile_user=user, users=followers, following_ids=following_ids, title="Followers")
+
+@views.route("/following/<username>")
+@login_required
+def following_list(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    following = User.query.join(Follow, Follow.following_id == User.id)\
+        .filter(Follow.follower_id == user.id).all()
+    following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
+    return render_template("followers.html", profile_user=user, users=following, following_ids=following_ids, title="Following")
+
+# =================================================
+# ACCOUNT DEACTIVATION
+# =================================================
+
+@views.route('/deactivate-account', methods=['POST'])
+@login_required
+def deactivate_account():
+    current_user.is_active = False
+    db.session.commit()
+    logout_user() 
+    flash('Your account has been deactivated. Goodbye!', category='success')
+    return redirect(url_for('auth.login'))
+
+# =================================================
+# API ROUTES (SEARCH)
+# =================================================
 
 @views.route('/api/search-users')
 @login_required
@@ -614,9 +593,7 @@ def api_search_users():
     if not query:
         return jsonify([])
     
-    # Search users (case insensitive) - Limit to 5 for dropdown
     users = User.query.filter(User.username.ilike(f"%{query}%")).limit(5).all()
-    
     results = []
     for u in users:
         results.append({
@@ -625,26 +602,21 @@ def api_search_users():
         })
     return jsonify(results)
 
-# Replace your current @views.route("/search-page") function with this:
-
 @views.route("/search-page")
 @login_required
 def search():
     query = request.args.get('q', '').strip()
     
-    # 1. Search for matches
     users = User.query.filter(User.username.ilike(f"%{query}%")).all()
     posts = Post.query.filter(Post.text.ilike(f"%{query}%")).all()
     posts = enrich_posts(posts)
     
     suggestions = []
     
-    # 2. STRICT LOGIC: Only fetch suggestions if NO users are found
+    # STRICT LOGIC: Suggestions only if NO users found
     if len(users) == 0:
-        # Fetch 3 random users
         suggestions = User.query.order_by(func.random()).limit(3).all()
     else:
-        # If users are found, force suggestions to be empty
         suggestions = []
 
     return render_template(
@@ -655,7 +627,7 @@ def search():
         suggestions=suggestions,
         query=query
     )
-
+    
 @views.route('/about')
 def about():
     return render_template("about.html", user=current_user)

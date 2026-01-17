@@ -7,6 +7,30 @@ from sqlalchemy.types import JSON
 # User Model
 # =====================================================
 
+class Notification(db.Model):
+    __tablename__ = 'notification'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Who triggered it? (e.g., The person who Liked your post)
+    visitor_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    
+    # Who receives it? (You)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    
+    # What happened? ('like', 'comment', 'follow')
+    action = db.Column(db.String(50), nullable=False)
+    
+    # Which post? (Optional, null if it's a follow)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=True)
+    
+    is_read = db.Column(db.Boolean, default=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now())
+
+    # Relationships (for easy access in templates)
+    visitor = db.relationship('User', foreign_keys=[visitor_id], lazy=True)
+    recipient = db.relationship('User', foreign_keys=[recipient_id], lazy=True)
+    post = db.relationship('Post', lazy=True)
+    
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
 

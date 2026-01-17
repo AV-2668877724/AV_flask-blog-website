@@ -1,0 +1,55 @@
+{% extends "base.html" %} 
+{% block title %}Notifications{% endblock %} 
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="font-heading fw-bold mb-0">Notifications</h3>
+            <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">Refresh</button>
+        </div>
+
+        <div class="list-group shadow-sm">
+            {% for n in notifications %}
+            <a href="{% if n.post_id %}/home#post-wrapper-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}" 
+               class="list-group-item list-group-item-action p-3 border-0 border-bottom d-flex align-items-center gap-3 {% if not n.is_read %}bg-blue-subtle{% endif %}">
+                
+                {% if n.visitor.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                {% else %}
+                <div class="user-avatar-xs" style="width: 40px; height: 40px;">{{ n.visitor.username[0]|upper }}</div>
+                {% endif %}
+
+                <div class="flex-grow-1">
+                    <p class="mb-0 small">
+                        <strong>{{ n.visitor.username }}</strong>
+                        {% if n.action == 'like' %}
+                            liked your story. <i class="fas fa-heart text-danger ms-1"></i>
+                        {% elif n.action == 'comment' %}
+                            commented on your story. <i class="fas fa-comment text-primary ms-1"></i>
+                        {% elif n.action == 'follow' %}
+                            started following you. <i class="fas fa-user-plus text-success ms-1"></i>
+                        {% endif %}
+                    </p>
+                    <small class="text-muted" style="font-size: 0.75rem;">{{ n.date_created | timeago }}</small>
+                </div>
+
+                {% if not n.is_read %}
+                <span class="badge bg-primary rounded-circle p-1" style="width: 8px; height: 8px;"> </span>
+                {% endif %}
+            </a>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="far fa-bell-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No new notifications.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-blue-subtle { background-color: #eff6ff; }
+    body.dark-mode .bg-blue-subtle { background-color: #1e293b; }
+</style>
+{% endblock %}

@@ -4,6 +4,8 @@ from os import path, makedirs
 from flask_login import LoginManager, current_user
 from datetime import datetime
 
+# ✅ FIX: Removed "from .models import Notification" from here to stop the crash.
+
 db = SQLAlchemy()
 DB_NAME = "database.db"
 
@@ -12,9 +14,8 @@ def create_app():
     app.config['SECRET_KEY'] = 'CCAV@129'
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    
-    # ✅ NEW: Configure Upload Folder
-    # This creates a folder at website/static/uploads
+
+    # Configure Upload Folder
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     
@@ -24,10 +25,57 @@ def create_app():
 
     db.init_app(app)
 
-    # ... (Keep your existing Jinja filters and Blueprints setup) ...
+    # -------------------------------------------------
+    # BLUEPRINTS
+    # -------------------------------------------------
+    from .views import views
+    from .auth import auth
+
+    app.register_blueprint(views, url_prefix='/')
+    app.register_blueprint(auth, url_prefix='/')
 
     # -------------------------------------------------
-    # ✅ JINJA FILTER: TIME AGO
+    # MODELS & DB CREATION
+    # -------------------------------------------------
+    # Import models here to ensure they are registered with SQLAlchemy
+    from .models import User, Post, Comment, Like, Notification, Follow
+    
+    create_database(app)
+
+    # -------------------------------------------------
+    # LOGIN MANAGER
+    # -------------------------------------------------
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login'
+    login_manager.init_app(app)
+
+    @login_manager.user_loader
+    def load_user(id):
+        return User.query.get(int(id))
+
+    # -------------------------------------------------
+    # CONTEXT PROCESSORS (Global Variables)
+    # -------------------------------------------------
+    
+    @app.context_processor
+    def inject_notifications():
+        unread_count = 0
+        if current_user.is_authenticated:
+            # ✅ SAFE IMPORT: Importing here prevents the Circular Import Error
+            from .models import Notification
+            
+            unread_count = Notification.query.filter_by(
+                recipient_id=current_user.id, 
+                is_read=False
+            ).count()
+        return dict(unread_count=unread_count)
+
+    @app.context_processor
+    def inject_global_user():
+        return dict(current_user=current_user)
+
+    # -------------------------------------------------
+    # JINJA FILTER: TIME AGO
     # -------------------------------------------------
     @app.template_filter('timeago')
     def timeago(dt):
@@ -50,35 +98,6 @@ def create_app():
             return f"{months} month ago" if months == 1 else f"{months} months ago"
         else:
             return dt.strftime('%Y-%m-%d')
-
-    # BLUEPRINTS
-    from .views import views
-    from .auth import auth
-
-    app.register_blueprint(views, url_prefix='/')
-    app.register_blueprint(auth, url_prefix='/')
-
-    # DATABASE
-    from .models import User, Post, Comment, Like
-    create_database(app)
-
-    # LOGIN MANAGER
-    login_manager = LoginManager()
-    login_manager.login_view = 'auth.login'
-    login_manager.init_app(app)
-
-    @login_manager.user_loader
-    def load_user(id):
-        return User.query.get(int(id))
-    
-    # CONTEXT PROCESSORS
-    @app.context_processor
-    def inject_admin_flag():
-        return dict(is_admin=getattr(load_user, "is_admin", False))
-
-    @app.context_processor
-    def inject_global_user():
-        return dict(current_user=current_user)
 
     return app
 
