@@ -461,3 +461,12 @@ body.dark-mode #searchResults .dropdown-item {
 body.dark-mode #searchResults .dropdown-item:hover {
     background-color: #374151;
 }
+
+/* Light blue background for unread notifications */
+.bg-blue-subtle {
+    background-color: #f0f9ff;
+}
+/* Dark mode version */
+body.dark-mode .bg-blue-subtle {
+    background-color: #1e293b;
+}

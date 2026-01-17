@@ -4,7 +4,7 @@ from os import path, makedirs
 from flask_login import LoginManager, current_user
 from datetime import datetime
 
-# ✅ FIX: Removed "from .models import Notification" from here to stop the crash.
+# NOTE: Do NOT import models here to avoid circular import errors.
 
 db = SQLAlchemy()
 DB_NAME = "database.db"
@@ -15,7 +15,9 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Configure Upload Folder
+    # -------------------------------------------------
+    # CONFIG: UPLOAD FOLDER
+    # -------------------------------------------------
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     
@@ -59,20 +61,42 @@ def create_app():
     
     @app.context_processor
     def inject_notifications():
+        """
+        Injects 'unread_count' and 'latest_notifs' into every template.
+        Includes logic to prevent circular imports.
+        """
         unread_count = 0
+        latest_notifs = []
+        
         if current_user.is_authenticated:
-            # ✅ SAFE IMPORT: Importing here prevents the Circular Import Error
+            # ✅ SAFE IMPORT: Import inside function to prevent crash
             from .models import Notification
             
+            # 1. Get Count of Unread
             unread_count = Notification.query.filter_by(
                 recipient_id=current_user.id, 
                 is_read=False
             ).count()
-        return dict(unread_count=unread_count)
+            
+            # 2. Get the actual latest 5 notifications for the dropdown
+            latest_notifs = Notification.query.filter_by(recipient_id=current_user.id)\
+                .order_by(Notification.date_created.desc())\
+                .limit(5)\
+                .all()
+                
+        return dict(unread_count=unread_count, latest_notifs=latest_notifs)
 
     @app.context_processor
     def inject_global_user():
         return dict(current_user=current_user)
+        
+    @app.context_processor
+    def inject_admin_flag():
+        # Safe check in case user is not logged in or doesn't have attribute
+        is_admin = False
+        if current_user.is_authenticated:
+            is_admin = getattr(current_user, "is_admin", False)
+        return dict(is_admin=is_admin)
 
     # -------------------------------------------------
     # JINJA FILTER: TIME AGO

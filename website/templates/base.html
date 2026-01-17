@@ -114,21 +114,74 @@
 
               <ul
                 class="dropdown-menu dropdown-menu-end shadow border-0 p-0"
-                style="width: 320px; max-height: 400px; overflow-y: auto"
+                style="width: 350px"
               >
                 <li
                   class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center"
                 >
-                  <h6 class="mb-0 fw-bold">Notifications</h6>
+                  <h6 class="mb-0 fw-bold small text-uppercase text-muted">
+                    Recent Activity
+                  </h6>
                   <a href="/notifications" class="small text-decoration-none"
                     >View All</a
                   >
                 </li>
+
+                {% if latest_notifs %} {% for n in latest_notifs %}
+                <li>
+                  <a
+                    href="{% if n.post_id %}/home#post-wrapper-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}"
+                    class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %}"
+                    style="white-space: normal"
+                  >
+                    {% if n.visitor.profile_pic %}
+                    <img
+                      src="{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}"
+                      class="rounded-circle"
+                      style="width: 35px; height: 35px; object-fit: cover"
+                    />
+                    {% else %}
+                    <div
+                      class="user-avatar-xs"
+                      style="width: 35px; height: 35px; font-size: 0.8rem"
+                    >
+                      {{ n.visitor.username[0]|upper }}
+                    </div>
+                    {% endif %}
+
+                    <div class="lh-sm">
+                      <p class="mb-0 small text-dark">
+                        <strong>{{ n.visitor.username }}</strong>
+                        {% if n.action == 'like' %} liked your post.
+                        <i class="fas fa-heart text-danger small"></i>
+                        {% elif n.action == 'comment' %} commented: "Have a
+                        great..." {% elif n.action == 'follow' %} started
+                        following you. {% endif %}
+                      </p>
+                      <small class="text-muted" style="font-size: 0.7rem"
+                        >{{ n.date_created | timeago }}</small
+                      >
+                    </div>
+
+                    {% if not n.is_read %}
+                    <span
+                      class="position-absolute top-50 end-0 translate-middle-y me-3 bg-primary rounded-circle"
+                      style="width: 6px; height: 6px"
+                    ></span>
+                    {% endif %}
+                  </a>
+                </li>
+                {% endfor %} {% else %}
                 <li class="text-center p-4">
+                  <p class="text-muted small mb-0">No new notifications.</p>
+                </li>
+                {% endif %}
+
+                <li class="p-2 text-center bg-light">
                   <a
                     href="/notifications"
-                    class="btn btn-sm btn-outline-primary"
-                    >View Activity</a
+                    class="small text-decoration-none fw-bold"
+                    >See All History</a
                   >
                 </li>
               </ul>
