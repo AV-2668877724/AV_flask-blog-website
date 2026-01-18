@@ -657,6 +657,33 @@ def remove_social():
     
     return jsonify({'success': False, 'message': 'Link not found'})
 
+@views.route('/update-cover-pic', methods=['POST'])
+@login_required
+def update_cover_pic():
+    if 'cover_pic' not in request.files:
+        flash('No file provided.', category='error')
+        return redirect(url_for('views.profile', username=current_user.username))
+    
+    file = request.files['cover_pic']
+    
+    if file.filename == '':
+        flash('No selected file.', category='error')
+        return redirect(url_for('views.profile', username=current_user.username))
+        
+    if file and allowed_file(file.filename):
+        # reuse the existing save_picture helper, saving to 'covers' folder (optional, or just 'posts')
+        # Let's save to 'posts' folder to keep it simple, or create a 'covers' logic if you prefer.
+        # using 'posts' folder is fine for now as it stores generic images.
+        filename = save_picture(file, 'posts') 
+        
+        current_user.cover_pic = filename
+        db.session.commit()
+        flash('Cover photo updated!', category='success')
+    else:
+        flash('Invalid file type.', category='error')
+        
+    return redirect(url_for('views.profile', username=current_user.username))
+
 @views.route('/about')
 def about():
     return render_template("about.html", user=current_user)

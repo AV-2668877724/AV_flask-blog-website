@@ -44,6 +44,7 @@ class User(db.Model, UserMixin):
     
     # ✅ NEW: Profile Picture Column
     profile_pic = db.Column(db.String(150), nullable=True)
+    cover_pic = db.Column(db.String(150), nullable=True)
 
     bio = db.Column(db.String(300), default="")
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())

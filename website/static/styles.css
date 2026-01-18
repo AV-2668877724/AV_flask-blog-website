@@ -539,3 +539,8 @@ body.dark-mode .form-control::placeholder {
     color: #9CA3AF;                  /* Light Gray */
     opacity: 1;
 }
+
+/* Hover effect for edit cover button */
+.hover-opacity-100:hover {
+    opacity: 1 !important;
+}
