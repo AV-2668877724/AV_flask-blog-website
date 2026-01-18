@@ -11,6 +11,44 @@ from sqlalchemy import func
 import re, json, os, uuid
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm.attributes import flag_modified
+from PIL import Image
+import secrets
+import os
+
+
+def compress_image(form_picture, folder, width=None, height=None):
+    """
+    Saves, resizes, and compresses an image.
+    :param form_picture: The file object from the form
+    :param folder: 'avatars' or 'posts' (subfolder in static/uploads)
+    :param width: Max width (optional)
+    :param height: Max height (optional)
+    :return: The new filename
+    """
+    # 1. Generate a random name
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    
+    # 2. Create the save path
+    app = current_app  # Ensure you have 'from flask import current_app'
+    upload_path = os.path.join(app.root_path, 'static/uploads', folder, picture_fn)
+
+    # 3. Open the image using Pillow
+    i = Image.open(form_picture)
+
+    # 4. Resize logic (Maintain Aspect Ratio)
+    # If a specific size is requested, resize it. 
+    # If the image is smaller than the target, we leave it alone.
+    if width and height:
+        i.thumbnail((width, height))
+    
+    # 5. Save with Compression
+    # optimize=True cleans up metadata
+    # quality=85 is the sweet spot for web (great look, low size)
+    i.save(upload_path, optimize=True, quality=85)
+
+    return picture_fn
 
 views = Blueprint('views', __name__)
 
@@ -137,8 +175,11 @@ def create_post():
         if not text:
             flash('Post content cannot be empty!', category='error')
         else:
-            if cover_image_file and allowed_file(cover_image_file.filename):
-                cover_image_name = save_picture(cover_image_file, 'posts')
+            # Check for image and validity (assuming allowed_file is defined)
+            if cover_image_file and cover_image_file.filename != '':
+                # ✅ UPDATED: Use compress_image instead of save_picture
+                # We limit post images to 1080px width to save space
+                cover_image_name = compress_image(cover_image_file, 'posts', width=1080)
             
             post = Post(text=text, author=current_user.id, cover_image=cover_image_name)
             db.session.add(post)
@@ -674,7 +715,7 @@ def update_cover_pic():
         # reuse the existing save_picture helper, saving to 'covers' folder (optional, or just 'posts')
         # Let's save to 'posts' folder to keep it simple, or create a 'covers' logic if you prefer.
         # using 'posts' folder is fine for now as it stores generic images.
-        filename = save_picture(file, 'posts') 
+        filename = compress_image(file, 'posts', width=1080, height=600)
         
         current_user.cover_pic = filename
         db.session.commit()
