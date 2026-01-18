@@ -2,10 +2,11 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from os import path, makedirs
 from flask_login import LoginManager, current_user
+from flask_mail import Mail
 from datetime import datetime
 
-
 db = SQLAlchemy()
+mail = Mail()
 DB_NAME = "database.db"
 
 def create_app():
@@ -14,9 +15,20 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # -------------------------------------------------
+    # =================================================
+    # EMAIL CONFIGURATION (GMAIL)
+    # =================================================
+    app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
+    app.config['MAIL_PORT'] = 587
+    app.config['MAIL_USE_TLS'] = True
+    app.config['MAIL_USERNAME'] = 'varshneyanurag888@gmail.com'  
+    app.config['MAIL_PASSWORD'] = 'nfhpqltxdmpxacoe'    
+    
+    mail.init_app(app)
+
+    # =================================================
     # CONFIG: UPLOAD FOLDER
-    # -------------------------------------------------
+    # =================================================
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     
@@ -26,26 +38,24 @@ def create_app():
 
     db.init_app(app)
 
-    # -------------------------------------------------
+    # =================================================
     # BLUEPRINTS
-    # -------------------------------------------------
+    # =================================================
     from .views import views
     from .auth import auth
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    # -------------------------------------------------
+    # =================================================
     # MODELS & DB CREATION
-    # -------------------------------------------------
-    # Import models here to ensure they are registered with SQLAlchemy
+    # =================================================
     from .models import User, Post, Comment, Like, Notification, Follow
-    
     create_database(app)
 
-    # -------------------------------------------------
+    # =================================================
     # LOGIN MANAGER
-    # -------------------------------------------------
+    # =================================================
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
@@ -54,9 +64,9 @@ def create_app():
     def load_user(id):
         return User.query.get(int(id))
 
-    # -------------------------------------------------
+    # =================================================
     # CONTEXT PROCESSORS (Global Variables)
-    # -------------------------------------------------
+    # =================================================
     
     @app.context_processor
     def inject_notifications():
@@ -91,15 +101,14 @@ def create_app():
         
     @app.context_processor
     def inject_admin_flag():
-        # Safe check in case user is not logged in or doesn't have attribute
         is_admin = False
         if current_user.is_authenticated:
             is_admin = getattr(current_user, "is_admin", False)
         return dict(is_admin=is_admin)
 
-    # -------------------------------------------------
-    # JINJA FILTER: TIME AGO
-    # -------------------------------------------------
+    # =================================================
+    # JINJA FILTERS
+    # =================================================
     @app.template_filter('timeago')
     def timeago(dt):
         if dt is None: return ""
