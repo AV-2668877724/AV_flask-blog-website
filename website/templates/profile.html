@@ -23,8 +23,8 @@ Profile{% endblock %} {% block content %}
             transition: transform 0.2s;
           "
           onclick="viewFullSize(this.src)"
-          onmouseover="this.style.transform='scale(1.05)'"
-          onmouseout="this.style.transform='scale(1)'"
+          onmouseover="this.style.transform = 'scale(1.05)'"
+          onmouseout="this.style.transform = 'scale(1)'"
         />
         {% else %}
         <div
@@ -194,12 +194,13 @@ Profile{% endblock %} {% block content %}
       ></i>
       {{ platform|title }}
     </a>
+
     {% if current_user.id == profile_user.id %}
     <button
       type="button"
-      class="btn btn-sm btn-outline-danger"
-      disabled
-      title="Removal requires backend logic"
+      class="btn btn-sm btn-outline-danger remove-social-btn"
+      data-url="{{ url }}"
+      title="Remove link"
     >
       <i class="fas fa-times"></i>
     </button>

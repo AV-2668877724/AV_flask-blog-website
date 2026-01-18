@@ -467,8 +467,9 @@ document.addEventListener("click", function (e) {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        // remove the whole wrapper (button + link)
-        btn.closest(".position-relative").remove();
+        // ✅ FIXED: Targets the correct HTML container to remove it immediately
+        const wrapper = btn.closest(".btn-group");
+        if (wrapper) wrapper.remove();
       } else {
         alert(data.message || "Failed to remove link.");
       }
@@ -477,7 +478,6 @@ document.addEventListener("click", function (e) {
       alert("Network error. Please try again.");
     });
 });
-
 // ================= FOLLOW BUTTON (LIST PAGES) =================
 document.addEventListener("click", function (e) {
   const btn = e.target.closest(".follow-btn");

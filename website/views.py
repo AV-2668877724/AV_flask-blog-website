@@ -627,7 +627,36 @@ def search():
         suggestions=suggestions,
         query=query
     )
+
+@views.route('/profile/remove-social', methods=['POST'])
+@login_required
+def remove_social():
+    data = request.get_json()
+    url_to_remove = data.get('url')
     
+    if not url_to_remove:
+        return jsonify({'success': False, 'message': 'No URL provided'})
+    
+    # Get current links
+    links = dict(current_user.social_links) if current_user.social_links else {}
+    
+    # Find the key that matches this URL and remove it
+    # We iterate over a copy of items to avoid runtime errors while modifying
+    key_to_delete = None
+    for key, value in links.items():
+        if value == url_to_remove:
+            key_to_delete = key
+            break
+            
+    if key_to_delete:
+        del links[key_to_delete]
+        current_user.social_links = links
+        flag_modified(current_user, "social_links")
+        db.session.commit()
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'message': 'Link not found'})
+
 @views.route('/about')
 def about():
     return render_template("about.html", user=current_user)
