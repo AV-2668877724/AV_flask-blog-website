@@ -5,6 +5,9 @@ from . import db, mail
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+import random
+import string
+from flask import session
 
 auth = Blueprint('auth', __name__)
 
@@ -38,49 +41,117 @@ def send_reset_email(user_email):
     msg.body = f'To reset your password, click the following link: {link}'
     mail.send(msg)
 
-# ==========================================
-#  ROUTES
-# ==========================================
 
+
+
+# ==========================================
+#  STEP 1: ENTER EMAIL
+# ==========================================
 @auth.route('/sign-up', methods=['GET', 'POST'])
 def sign_up():
     if request.method == 'POST':
         email = request.form.get('email')
+        
+        # 1. Check if email already exists
+        user = User.query.filter_by(email=email).first()
+        if user:
+            flash('Email already registered. Please log in.', category='error')
+            return redirect(url_for('auth.login'))
+        
+        # 2. Generate 6-digit OTP
+        otp = ''.join(random.choices(string.digits, k=6))
+        
+        # 3. Store in Session (Temporary memory)
+        session['signup_email'] = email
+        session['signup_otp'] = otp
+        
+        # 4. Send Email
+        try:
+            msg = Message('Your Verification Code - AV Postory', 
+                          sender='varshneyanurag888@gmail.com', 
+                          recipients=[email])
+            msg.body = f'Your verification code is: {otp}\n\nDo not share this code.'
+            mail.send(msg)
+            
+            flash('OTP sent to your email!', category='success')
+            return redirect(url_for('auth.verify_otp'))
+            
+        except Exception as e:
+            print(e)
+            flash('Error sending email. Check your internet connection.', category='error')
+
+    return render_template("signup.html", user=current_user)
+
+# ==========================================
+#  STEP 2: VERIFY OTP
+# ==========================================
+@auth.route('/sign-up/verify', methods=['GET', 'POST'])
+def verify_otp():
+    # Security: If no email in session, kick them back to start
+    if 'signup_email' not in session:
+        return redirect(url_for('auth.sign_up'))
+        
+    if request.method == 'POST':
+        user_otp = request.form.get('otp')
+        generated_otp = session.get('signup_otp')
+        
+        if user_otp == generated_otp:
+            # OTP Matches! Mark as verified
+            session['email_verified'] = True
+            flash('Email verified successfully!', category='success')
+            return redirect(url_for('auth.finish_signup'))
+        else:
+            flash('Invalid OTP. Please try again.', category='error')
+            
+    return render_template("verify_otp.html", email=session['signup_email'], user=current_user)
+
+# ==========================================
+#  STEP 3: CREATE USERNAME & PASSWORD
+# ==========================================
+@auth.route('/sign-up/finish', methods=['GET', 'POST'])
+def finish_signup():
+    # Security: Ensure email is actually verified
+    if not session.get('email_verified'):
+        return redirect(url_for('auth.sign_up'))
+        
+    if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
-
-        user = User.query.filter_by(email=email).first()
-        if user:
-            flash('Email already exists.', category='error')
-        elif len(email) < 4:
-            flash('Email must be greater than 3 characters.', category='error')
-        elif len(username) < 2:
+        email = session.get('signup_email')
+        
+        # Validations
+        if len(username) < 2:
             flash('Username must be greater than 1 character.', category='error')
         elif password != confirm_password:
             flash('Passwords don\'t match.', category='error')
         elif len(password) < 7:
             flash('Password must be at least 7 characters.', category='error')
         else:
-            # Create User (Unverified initially)
+            # Create User (Already Verified)
             new_user = User(email=email, username=username, 
                             password=generate_password_hash(password, method='scrypt'), 
-                            is_verified=False)
+                            is_verified=True) # ✅ True because they used OTP
             
             db.session.add(new_user)
             db.session.commit()
             
-            try:
-                send_verification_email(email)
-                flash('Account created! Please check your email to verify.', category='success')
-                return redirect(url_for('auth.login'))
-            except Exception as e:
-                # If email fails, you might want to log this error
-                print(e)
-                flash('Account created, but verification email failed to send.', category='error')
-                return redirect(url_for('auth.login'))
+            # Login immediately
+            login_user(new_user, remember=True)
+            
+            # Clear session data
+            session.pop('signup_email', None)
+            session.pop('signup_otp', None)
+            session.pop('email_verified', None)
+            
+            flash('Account created successfully!', category='success')
+            return redirect(url_for('views.home'))
 
-    return render_template("signup.html", user=current_user)
+    return render_template("finish_signup.html", user=current_user)
+
+# ==========================================
+#  ROUTES
+# ==========================================
 
 @auth.route('/confirm_email/<token>')
 def confirm_email(token):

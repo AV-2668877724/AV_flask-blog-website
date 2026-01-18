@@ -39,7 +39,10 @@
   <body>
     <nav class="navbar navbar-expand-lg sticky-top">
       <div class="container">
-        <a class="navbar-brand d-flex align-items-center gap-2" href="/home">
+        <a
+          class="navbar-brand d-flex align-items-center gap-2"
+          href="{{ url_for('views.home') }}"
+        >
           <img
             src="{{ url_for('static', filename='images/logo.png') }}"
             alt="AV Postory logo"
@@ -59,13 +62,19 @@
 
         <div class="collapse navbar-collapse" id="navbar">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item"><a class="nav-link" href="/home">Home</a></li>
             <li class="nav-item">
-              <a class="nav-link" href="/about">About Us</a>
+              <a class="nav-link" href="{{ url_for('views.home') }}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('views.about') }}"
+                >About Us</a
+              >
             </li>
             {% if current_user.is_authenticated %}
             <li class="nav-item">
-              <a class="nav-link" href="/create-post">Write</a>
+              <a class="nav-link" href="{{ url_for('views.create_post') }}"
+                >Write</a
+              >
             </li>
             {% endif %}
           </ul>
@@ -119,7 +128,9 @@
                   <h6 class="mb-0 fw-bold small text-uppercase text-muted">
                     Recent Activity
                   </h6>
-                  <a href="/notifications" class="small text-decoration-none"
+                  <a
+                    href="{{ url_for('views.notifications') }}"
+                    class="small text-decoration-none"
                     >View All</a
                   >
                 </li>
@@ -127,7 +138,7 @@
                 {% if latest_notifs %} {% for n in latest_notifs %}
                 <li>
                   <a
-                    href="{% if n.post_id %}/home#post-wrapper-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}"
+                    href="{% if n.post_id %}{{ url_for('views.home', _anchor='post-wrapper-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
                     class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
                   >
                     {% if n.visitor.profile_pic %}
@@ -168,7 +179,7 @@
 
                 <li class="p-2 text-center bg-light">
                   <a
-                    href="/notifications"
+                    href="{{ url_for('views.notifications') }}"
                     class="small text-decoration-none fw-bold"
                     >See All History</a
                   >
@@ -207,7 +218,7 @@
                 <li>
                   <a
                     class="dropdown-item"
-                    href="/profile/{{ current_user.username }}"
+                    href="{{ url_for('views.profile', username=current_user.username) }}"
                   >
                     <i class="bi bi-person me-2"></i>Profile
                   </a>
@@ -311,7 +322,6 @@
     </div>
 
     {% if current_user.is_authenticated %}
-
     <div class="modal fade" id="logoutModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -344,9 +354,8 @@
             <a
               href="/logout"
               class="btn btn-outline-secondary px-4 rounded-pill"
+              >Yes, Log Out</a
             >
-              Yes, Log Out
-            </a>
           </div>
         </div>
       </div>
@@ -366,8 +375,8 @@
           <div class="modal-body text-center py-4">
             <i class="fas fa-user-slash fa-3x text-warning mb-3"></i>
             <p class="text-muted">
-              Are you sure you want to deactivate your account? <br />
-              Your profile and posts will be hidden from everyone.
+              Are you sure you want to deactivate your account? <br />Your
+              profile and posts will be hidden from everyone.
             </p>
           </div>
           <div class="modal-footer border-0 d-flex justify-content-center">
@@ -407,7 +416,6 @@
             <p class="text-muted small">
               Only an administrator can restore your account once deactivated.
             </p>
-
             <form
               method="POST"
               action="/deactivate-account"

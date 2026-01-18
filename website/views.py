@@ -8,13 +8,27 @@ from .models import User, Post, Comment, Like, Follow, Notification
 from sqlalchemy.exc import IntegrityError
 from . import db
 from sqlalchemy import func
-import re, json, os, uuid
-from werkzeug.utils import secure_filename
+import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
 import secrets
-import os
 
+views = Blueprint('views', __name__)
+
+# Security: Password required to perform Admin actions
+ADMIN_ACTION_PASSWORD = "adminready777"
+
+# Allowed Image Extensions
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+# =================================================
+# HELPER FUNCTIONS
+# =================================================
+
+def allowed_file(filename):
+    """Check if the file has a valid extension."""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def compress_image(form_picture, folder, width=None, height=None):
     """
@@ -31,57 +45,28 @@ def compress_image(form_picture, folder, width=None, height=None):
     picture_fn = random_hex + f_ext
     
     # 2. Create the save path
-    app = current_app  # Ensure you have 'from flask import current_app'
+    app = current_app
     upload_path = os.path.join(app.root_path, 'static/uploads', folder, picture_fn)
+
+    # Ensure directory exists
+    if not os.path.exists(os.path.dirname(upload_path)):
+        os.makedirs(os.path.dirname(upload_path))
 
     # 3. Open the image using Pillow
     i = Image.open(form_picture)
 
     # 4. Resize logic (Maintain Aspect Ratio)
-    # If a specific size is requested, resize it. 
-    # If the image is smaller than the target, we leave it alone.
     if width and height:
         i.thumbnail((width, height))
+    elif width:
+         # Calculate height based on aspect ratio
+        w_percent = (width / float(i.size[0]))
+        h_size = int((float(i.size[1]) * float(w_percent)))
+        i = i.resize((width, h_size), Image.Resampling.LANCZOS)
     
     # 5. Save with Compression
-    # optimize=True cleans up metadata
-    # quality=85 is the sweet spot for web (great look, low size)
     i.save(upload_path, optimize=True, quality=85)
 
-    return picture_fn
-
-views = Blueprint('views', __name__)
-
-# Security: Password required to perform Admin actions
-ADMIN_ACTION_PASSWORD = "adminready777"
-
-# Allowed Image Extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
-
-# =================================================
-# UTILITY HELPERS
-# =================================================
-
-def allowed_file(filename):
-    """Check if the file has a valid extension."""
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def save_picture(form_picture, folder_name="posts"):
-    """
-    Saves a file to static/uploads/{folder_name} with a unique random name.
-    """
-    random_hex = str(uuid.uuid4().hex)[:8]
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
-    
-    upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], folder_name)
-    
-    if not os.path.exists(upload_path):
-        os.makedirs(upload_path)
-        
-    file_path = os.path.join(upload_path, picture_fn)
-    form_picture.save(file_path)
     return picture_fn
 
 def enrich_posts(posts):
@@ -98,7 +83,6 @@ def create_notification(visitor_id, recipient_id, action, post_id=None):
     if visitor_id == recipient_id:
         return 
         
-    # Prevent duplicate unread notifications
     existing = Notification.query.filter_by(
         visitor_id=visitor_id, 
         recipient_id=recipient_id, 
@@ -163,7 +147,6 @@ def home():
         is_home=True
     )
 
-
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
 def create_post():
@@ -175,10 +158,8 @@ def create_post():
         if not text:
             flash('Post content cannot be empty!', category='error')
         else:
-            # Check for image and validity (assuming allowed_file is defined)
             if cover_image_file and cover_image_file.filename != '':
-                # ✅ UPDATED: Use compress_image instead of save_picture
-                # We limit post images to 1080px width to save space
+                # Limit post images to 1080px width
                 cover_image_name = compress_image(cover_image_file, 'posts', width=1080)
             
             post = Post(text=text, author=current_user.id, cover_image=cover_image_name)
@@ -207,7 +188,8 @@ def edit_post(id):
         else:
             post.text = text
             if cover_image_file and allowed_file(cover_image_file.filename):
-                new_filename = save_picture(cover_image_file, 'posts')
+                # ✅ UPDATED: Use compress_image
+                new_filename = compress_image(cover_image_file, 'posts', width=1080)
                 post.cover_image = new_filename
                 
             db.session.commit()
@@ -248,10 +230,7 @@ def create_comment(post_id):
             comment = Comment(text=text, author=current_user.id, post_id=post_id)
             db.session.add(comment)
             db.session.commit()
-            
-            # ✅ Notify Author
             create_notification(current_user.id, post.author, 'comment', post.id)
-            
             flash('Comment added!', category='success')
         else:
             flash('Post does not exist.', category='error')
@@ -280,7 +259,7 @@ def like(post_id):
     like = Like.query.filter_by(author=current_user.id, post_id=post_id).first()
 
     if not post:
-        return jsonify({'error': 'Post not found'}, 404)
+        return jsonify({'error': 'Post not found'}), 404
 
     liked = False
     if like:
@@ -291,8 +270,6 @@ def like(post_id):
         db.session.add(like)
         db.session.commit()
         liked = True
-        
-        # ✅ Notify Author
         create_notification(current_user.id, post.author, 'like', post.id)
 
     return jsonify({"likes": len(post.likes), "liked": liked})
@@ -304,7 +281,6 @@ def like(post_id):
 @views.route('/notifications')
 @login_required
 def notifications():
-    # Fetch all notifications for current user, newest first
     notifs = Notification.query.filter_by(recipient_id=current_user.id)\
         .order_by(Notification.date_created.desc()).limit(50).all()
     return render_template("notifications.html", user=current_user, notifications=notifs)
@@ -312,7 +288,6 @@ def notifications():
 @views.route('/api/mark-notifications-read', methods=['POST'])
 @login_required
 def mark_notifications_read():
-    # Mark all unread as read
     unread_notifs = Notification.query.filter_by(recipient_id=current_user.id, is_read=False).all()
     for n in unread_notifs:
         n.is_read = True
@@ -375,7 +350,8 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        filename = save_picture(file, 'avatars')
+        # ✅ UPDATED: Use compress_image, strictly 300x300
+        filename = compress_image(file, 'avatars', width=300, height=300)
         current_user.profile_pic = filename
         db.session.commit()
         flash('Profile picture updated!', category='success')
@@ -402,8 +378,9 @@ def change_username():
     new_username = request.form.get('username')
     if not new_username or len(new_username) < 3:
         flash("Username too short.", category='error')
+    # Prevent spaces in usernames to avoid URL issues
     elif not re.match("^[a-zA-Z0-9_.]+$", new_username):
-        flash("Username can only contain letters, numbers, dots, and underscores.", category='error')
+        flash("Username can only contain letters, numbers, dots, and underscores (No spaces).", category='error')
     else:
         existing = User.query.filter_by(username=new_username).first()
         if existing:
@@ -654,7 +631,6 @@ def search():
     
     suggestions = []
     
-    # STRICT LOGIC: Suggestions only if NO users found
     if len(users) == 0:
         suggestions = User.query.order_by(func.random()).limit(3).all()
     else:
@@ -678,11 +654,8 @@ def remove_social():
     if not url_to_remove:
         return jsonify({'success': False, 'message': 'No URL provided'})
     
-    # Get current links
     links = dict(current_user.social_links) if current_user.social_links else {}
     
-    # Find the key that matches this URL and remove it
-    # We iterate over a copy of items to avoid runtime errors while modifying
     key_to_delete = None
     for key, value in links.items():
         if value == url_to_remove:
@@ -712,9 +685,7 @@ def update_cover_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # reuse the existing save_picture helper, saving to 'covers' folder (optional, or just 'posts')
-        # Let's save to 'posts' folder to keep it simple, or create a 'covers' logic if you prefer.
-        # using 'posts' folder is fine for now as it stores generic images.
+        # ✅ UPDATED: Use compress_image, width=1080
         filename = compress_image(file, 'posts', width=1080, height=600)
         
         current_user.cover_pic = filename
