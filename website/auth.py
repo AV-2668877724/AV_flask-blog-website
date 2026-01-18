@@ -80,7 +80,7 @@ def sign_up():
                 flash('Account created, but verification email failed to send.', category='error')
                 return redirect(url_for('auth.login'))
 
-    return render_template("sign_up.html", user=current_user)
+    return render_template("signup.html", user=current_user)
 
 @auth.route('/confirm_email/<token>')
 def confirm_email(token):

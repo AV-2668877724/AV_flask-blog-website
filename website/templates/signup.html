@@ -1,186 +1,115 @@
-{% extends 'base.html' %} {% block title %} Join AV Postory {% endblock %} {%
-block content %}
+{% extends "base.html" %} {% block title %}Sign Up{% endblock %} {% block
+content %}
 <div
   class="row justify-content-center align-items-center"
-  style="min-height: 80vh"
+  style="min-height: 70vh"
 >
-  <div class="col-md-6 col-lg-5">
-    <div class="text-center mb-4">
-      <img
-        src="{{ url_for('static', filename='images/logo.png') }}"
-        alt="Logo"
-        style="height: 48px; margin-bottom: 1rem"
-      />
-      <h2 class="font-heading fw-bold">Create your account</h2>
-      <p class="text-muted">Join the community of storytellers today.</p>
-    </div>
-
-    <div class="card border-0 shadow-sm p-4">
-      <form method="POST">
-        <div class="mb-3">
-          <label class="form-label small fw-bold text-muted text-uppercase"
-            >Email Address</label
-          >
-          <input
-            type="email"
-            name="email"
-            class="form-control"
-            placeholder="name@example.com"
-            required
-          />
+  <div class="col-md-5">
+    <div class="card shadow border-0 auth-card">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-4">
+          <h2 class="fw-bold font-heading">Join AV Postory</h2>
+          <p class="text-muted small">
+            Create an account to start sharing your stories
+          </p>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label small fw-bold text-muted text-uppercase"
-            >Username</label
-          >
-          <div class="input-group">
-            <input
-              type="text"
-              name="username"
-              id="signupUsername"
-              class="form-control"
-              placeholder="Choose a handle"
-              required
-            />
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              onclick="checkSignupUsername()"
+        <form method="POST">
+          <div class="mb-3">
+            <label for="username" class="form-label fw-bold small text-muted"
+              >Username</label
             >
-              Check
-            </button>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"
+                ><i class="fas fa-user text-muted"></i
+              ></span>
+              <input
+                type="text"
+                class="form-control border-start-0 ps-0 bg-light"
+                id="username"
+                name="username"
+                placeholder="Enter username"
+                required
+              />
+            </div>
           </div>
-          <small id="signupUsernameStatus" class="d-block mt-1"></small>
-        </div>
 
-        <div class="row g-2 mb-3">
-          <div class="col-md-6">
-            <label class="form-label small fw-bold text-muted text-uppercase"
+          <div class="mb-3">
+            <label for="email" class="form-label fw-bold small text-muted"
+              >Email Address</label
+            >
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"
+                ><i class="fas fa-envelope text-muted"></i
+              ></span>
+              <input
+                type="email"
+                class="form-control border-start-0 ps-0 bg-light"
+                id="email"
+                name="email"
+                placeholder="name@example.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label fw-bold small text-muted"
               >Password</label
             >
-            <input
-              type="password"
-              id="password1"
-              name="password1"
-              class="form-control"
-              required
-            />
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"
+                ><i class="fas fa-lock text-muted"></i
+              ></span>
+              <input
+                type="password"
+                class="form-control border-start-0 ps-0 bg-light"
+                id="password"
+                name="password"
+                placeholder="Create a password"
+                required
+              />
+            </div>
+            <div class="form-text">Must be at least 7 characters.</div>
           </div>
-          <div class="col-md-6">
-            <label class="form-label small fw-bold text-muted text-uppercase"
-              >Confirm</label
+
+          <div class="mb-4">
+            <label
+              for="confirm_password"
+              class="form-label fw-bold small text-muted"
+              >Confirm Password</label
             >
-            <input
-              type="password"
-              name="password2"
-              class="form-control"
-              required
-            />
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"
+                ><i class="fas fa-lock text-muted"></i
+              ></span>
+              <input
+                type="password"
+                class="form-control border-start-0 ps-0 bg-light"
+                id="confirm_password"
+                name="confirm_password"
+                placeholder="Confirm password"
+                required
+              />
+            </div>
           </div>
+
+          <div class="d-grid gap-2">
+            <button
+              type="submit"
+              class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm"
+            >
+              Sign Up
+            </button>
+          </div>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top">
+          <p class="text-muted small mb-0">Already have an account?</p>
+          <a href="/login" class="fw-bold text-decoration-none">Log In</a>
         </div>
-
-        <div class="progress mb-3" style="height: 4px">
-          <div id="strengthBar" class="progress-bar" role="progressbar"></div>
-        </div>
-        <small
-          id="strengthText"
-          class="text-muted d-block mb-3"
-          style="font-size: 0.8rem"
-        ></small>
-
-        <div class="mb-3">
-          <label class="form-label small fw-bold text-muted text-uppercase"
-            >Date of Birth</label
-          >
-          <input type="date" name="dob" class="form-control" required />
-        </div>
-
-        <div class="mb-4">
-          <label class="form-label small fw-bold text-muted text-uppercase"
-            >Security Question</label
-          >
-          <input
-            type="text"
-            name="fav_person"
-            class="form-control"
-            placeholder="Name of your favorite person?"
-            required
-          />
-          <div class="form-text">Used for password recovery.</div>
-        </div>
-
-        <button
-          type="submit"
-          class="btn btn-primary w-100 py-2 mb-3"
-          id="signupSubmitBtn"
-          disabled
-        >
-          Sign Up
-        </button>
-
-        <p class="text-center text-muted small mb-0">
-          Already have an account? <a href="/login" class="fw-bold">Log in</a>
-        </p>
-      </form>
+      </div>
     </div>
   </div>
 </div>
-
-<script>
-  let signupUsernameValid = false;
-
-  function checkSignupUsername() {
-    const input = document.getElementById("signupUsername");
-    const status = document.getElementById("signupUsernameStatus");
-    const submitBtn = document.getElementById("signupSubmitBtn");
-    const username = input.value.trim();
-
-    if (!username) {
-      status.textContent = "Username is required";
-      status.className = "text-danger small";
-      submitBtn.disabled = true;
-      return;
-    }
-
-    fetch("/check-username-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        status.textContent = data.message;
-        status.className = data.available
-          ? "text-success small fw-bold"
-          : "text-danger small fw-bold";
-        submitBtn.disabled = !data.available;
-      });
-  }
-
-  document.getElementById("password1").addEventListener("input", function () {
-    const val = this.value;
-    const bar = document.getElementById("strengthBar");
-    const text = document.getElementById("strengthText");
-    let strength = 0;
-
-    if (val.length > 5) strength += 25;
-    if (/[A-Z]/.test(val)) strength += 25;
-    if (/[0-9]/.test(val)) strength += 25;
-    if (/[^A-Za-z0-9]/.test(val)) strength += 25;
-
-    bar.style.width = strength + "%";
-
-    if (strength < 50) {
-      bar.className = "progress-bar bg-danger";
-      text.textContent = "Weak";
-    } else if (strength < 75) {
-      bar.className = "progress-bar bg-warning";
-      text.textContent = "Medium";
-    } else {
-      bar.className = "progress-bar bg-success";
-      text.textContent = "Strong";
-    }
-  });
-</script>
 {% endblock %}
