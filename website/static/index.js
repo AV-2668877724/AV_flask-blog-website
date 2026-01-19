@@ -1,8 +1,6 @@
-// index.js
-
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
-        DARK MODE
+       DARK MODE
     ========================== */
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
@@ -22,14 +20,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================
-        AUTO TOAST SHOW (FLASH)
+       AUTO TOAST SHOW (FLASH)
     ========================== */
   document
     .querySelectorAll("#toastContainer .toast")
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
   /* =========================
-        POST TRUNCATION
+       POST TRUNCATION
     ========================== */
   document.querySelectorAll(".post-text").forEach((el) => {
     const overlay = el.parentElement.querySelector(".fade-overlay");
@@ -41,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-        SEE MORE / SEE LESS
+       SEE MORE / SEE LESS
     ========================== */
   document.querySelectorAll(".see-more-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -72,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   /* =========================
-        NOTIFICATION BADGE LOGIC
+       NOTIFICATION BADGE LOGIC
     ========================== */
   const notifBtn = document.getElementById("notifDropdown");
   if (notifBtn) {
@@ -90,13 +88,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================
-        TIMESTAMP REFRESH
+       TIMESTAMP REFRESH
     ========================== */
   refreshTimestamps();
   setInterval(refreshTimestamps, 60000);
 
   /* =========================
-        LIVE SEARCH (AUTOCOMPLETE)
+       LIVE SEARCH (AUTOCOMPLETE)
     ========================== */
   const searchInput = document.getElementById("searchInput");
   const searchResults = document.getElementById("searchResults");
@@ -217,35 +215,64 @@ function showToast(message, isError = false) {
 /* =========================
    👍 LIKE HANDLER (SAFE)
 ========================== */
+function likePost(postId, btn) {
+  // Note: Replaced 'like' with 'likePost' to match HTML calls if you updated base.html
+  // If your HTML calls "like()", rename this function back to "like"
+  like(postId);
+}
+
 function like(postId) {
   const countEl = document.getElementById(`likes-count-${postId}`);
   const btn = document.getElementById(`like-button-${postId}`);
+  // Try to find button by the icon inside if passed element is different
+  const iconBtn = document.querySelector(`#like-button-${postId} i`) || btn;
+
   if (!countEl || !btn) return;
 
   if (btn.dataset.loading === "true") return;
   btn.dataset.loading = "true";
 
-  const liked = btn.classList.contains("far");
+  // Check if liked based on icon class
+  const isFar = btn.querySelector(".fa-thumbs-up")
+    ? btn.querySelector(".fa-thumbs-up").classList.contains("far")
+    : btn.classList.contains("far");
   const current = parseInt(countEl.innerText, 10) || 0;
 
-  // Optimistic UI
-  countEl.innerText = liked ? current + 1 : Math.max(0, current - 1);
-  btn.classList.toggle("far");
-  btn.classList.toggle("fas");
-  btn.classList.toggle("text-primary");
+  // Optimistic UI Update
+  // If it was 'far' (empty), we are liking it -> +1
+  // If it was 'fas' (solid), we are unliking it -> -1
+  if (isFar) {
+    countEl.innerText = current + 1;
+    // Update Icon
+    const icon = btn.querySelector("i") || btn;
+    icon.classList.remove("far");
+    icon.classList.add("fas", "text-primary");
+    btn.classList.add("text-primary");
+  } else {
+    countEl.innerText = Math.max(0, current - 1);
+    const icon = btn.querySelector("i") || btn;
+    icon.classList.remove("fas", "text-primary");
+    icon.classList.add("far");
+    btn.classList.remove("text-primary");
+  }
 
   fetch(`/like-post/${postId}`, {
     method: "POST",
   })
     .then((res) => res.json())
     .then((data) => {
+      // Server Confirmation
       countEl.innerText = data.likes;
+      const icon = btn.querySelector("i") || btn;
+
       if (data.liked) {
-        btn.classList.add("fas", "text-primary");
-        btn.classList.remove("far");
+        icon.classList.add("fas");
+        icon.classList.remove("far");
+        btn.classList.add("text-primary");
       } else {
-        btn.classList.add("far");
-        btn.classList.remove("fas", "text-primary");
+        icon.classList.add("far");
+        icon.classList.remove("fas");
+        btn.classList.remove("text-primary");
       }
     })
     .catch(() => showToast("Network error", true))
@@ -467,7 +494,6 @@ document.addEventListener("click", function (e) {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        // ✅ FIXED: Targets the correct HTML container to remove it immediately
         const wrapper = btn.closest(".btn-group");
         if (wrapper) wrapper.remove();
       } else {
@@ -546,71 +572,64 @@ document.addEventListener("click", function (e) {
 });
 
 /* =========================================
-  PROFILE IMAGE VIEWER (LIGHTBOX)
+   PROFILE IMAGE VIEWER (LIGHTBOX)
    ========================================= */
 function viewFullSize(src) {
-  // 1. Find the modal image element
   const imgElement = document.getElementById("fullSizeImage");
   const modalElement = document.getElementById("imageViewModal");
 
   if (imgElement && modalElement) {
-    // 2. Set the source
     imgElement.src = src;
-
-    // 3. Show the modal using Bootstrap's JS API
-    // We use 'new' to ensure we get a fresh instance or existing one
     const myModal = new bootstrap.Modal(modalElement);
     myModal.show();
   }
 }
 
 // ==========================================
-//  PRELOADER LOGIC
+//  PRELOADER LOGIC (FIXED)
 // ==========================================
 
 const loader = document.getElementById("preloader");
 
 // 1. Hide Loader when page is fully loaded
 window.addEventListener("load", function () {
-    // Add a slight delay for smoothness
-    setTimeout(() => {
-        loader.classList.add("loader-hidden");
-    }, 300); 
+  setTimeout(() => {
+    if (loader) loader.classList.add("loader-hidden");
+  }, 300);
 });
 
-// 2. Show Loader when navigating to a new page
-// We select all links that are NOT:
-// - Internal anchors (#)
-// - Open in new tab (_blank)
-// - Modals or Dropdowns
-document.addEventListener('click', function (e) {
-    const target = e.target.closest('a'); // Find the closest anchor tag
-    
-    if (target) {
-        const href = target.getAttribute('href');
-        const targetAttr = target.getAttribute('target');
-        const toggleAttr = target.getAttribute('data-bs-toggle');
+// 2. Show Loader when navigating to a new page (Links only)
+document.addEventListener("click", function (e) {
+  const target = e.target.closest("a");
 
-        // Check valid link
-        if (href && 
-            !href.startsWith('#') && 
-            !href.startsWith('javascript') && 
-            targetAttr !== '_blank' && 
-            !toggleAttr) {
-            
-            // Remove the hidden class to show loader immediately
-            loader.classList.remove("loader-hidden");
-        }
+  if (target) {
+    const href = target.getAttribute("href");
+    const targetAttr = target.getAttribute("target");
+    const toggleAttr = target.getAttribute("data-bs-toggle");
+    const dismissAttr = target.getAttribute("data-bs-dismiss");
+
+    // Check valid link
+    if (
+      href &&
+      !href.startsWith("#") &&
+      !href.startsWith("javascript") &&
+      targetAttr !== "_blank" &&
+      !toggleAttr &&
+      !dismissAttr
+    ) {
+      if (loader) loader.classList.remove("loader-hidden");
     }
-    
-    // Also handle form submissions (like Login/Signup)
-    const form = e.target.closest('form');
-    if (form) {
-        // Only show if the form is actually submitting
-        if (form.checkValidity()) { 
-             loader.classList.remove("loader-hidden");
-        }
-    }
+  }
+});
+
+// 3. Show Loader ONLY on Form SUBMIT (Not just clicking inside)
+// ✅ This prevents the loader from showing when typing
+document.addEventListener("submit", function (e) {
+  const form = e.target;
+  // Only show if the form is valid
+  if (form.checkValidity()) {
+    if (loader) loader.classList.remove("loader-hidden");
+  }
 });
 
 // ==========================================
@@ -618,72 +637,67 @@ document.addEventListener('click', function (e) {
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", function () {
-    const sentinel = document.getElementById('sentinel');
-    const container = document.getElementById('posts-container');
-    const spinner = document.getElementById('scroll-spinner');
-    const endMessage = document.getElementById('end-message');
-    
-    // Only run if the sentinel exists (i.e., there are posts)
-    if (sentinel) {
-        let isLoading = false;
+  const sentinel = document.getElementById("sentinel");
+  const container = document.getElementById("posts-container");
+  const spinner = document.getElementById("scroll-spinner");
+  const endMessage = document.getElementById("end-message");
 
-        const observer = new IntersectionObserver((entries) => {
-            // Read current state from DOM attributes
-            const hasNext = sentinel.getAttribute('data-has-next') === 'true';
+  // Only run if the sentinel exists (i.e., there are posts)
+  if (sentinel) {
+    let isLoading = false;
 
-            if (entries[0].isIntersecting && hasNext && !isLoading) {
-                loadMorePosts();
-            } else if (!hasNext && endMessage) {
-                // If no more pages, show "Caught up" message immediately
-                endMessage.classList.remove('d-none');
-            }
-        }, { rootMargin: "200px" });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Read current state from DOM attributes
+        const hasNext = sentinel.getAttribute("data-has-next") === "true";
 
-        observer.observe(sentinel);
-
-        async function loadMorePosts() {
-            if (isLoading) return;
-            isLoading = true;
-
-            // Show spinner
-            spinner.style.display = 'inline-block';
-            
-            // Get current page and URL
-            let page = parseInt(sentinel.getAttribute('data-page'));
-            const baseUrl = sentinel.getAttribute('data-url');
-            const nextPage = page + 1;
-
-            try {
-                // Fetch next page
-                const response = await fetch(`${baseUrl}?page=${nextPage}&ajax=1`);
-                if (!response.ok) throw new Error('Failed to load');
-
-                const html = await response.text();
-
-                // If empty, we are done
-                if (html.trim().length === 0) {
-                    sentinel.setAttribute('data-has-next', 'false');
-                    endMessage.classList.remove('d-none');
-                    spinner.style.display = 'none';
-                    return;
-                }
-
-                // Append new posts
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
-                while (tempDiv.firstChild) {
-                    container.appendChild(tempDiv.firstChild);
-                }
-
-                // Update Page Count in DOM
-                sentinel.setAttribute('data-page', nextPage);
-
-            } catch (error) {
-                console.error("Scroll Error:", error);
-            } finally {
-                isLoading = false;
-                spinner.style.display = 'none';
-            }
+        if (entries[0].isIntersecting && hasNext && !isLoading) {
+          loadMorePosts();
+        } else if (!hasNext && endMessage) {
+          endMessage.classList.remove("d-none");
         }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(sentinel);
+
+    async function loadMorePosts() {
+      if (isLoading) return;
+      isLoading = true;
+
+      spinner.style.display = "inline-block";
+
+      let page = parseInt(sentinel.getAttribute("data-page"));
+      const baseUrl = sentinel.getAttribute("data-url");
+      const nextPage = page + 1;
+
+      try {
+        const response = await fetch(`${baseUrl}?page=${nextPage}&ajax=1`);
+        if (!response.ok) throw new Error("Failed to load");
+
+        const html = await response.text();
+
+        if (html.trim().length === 0) {
+          sentinel.setAttribute("data-has-next", "false");
+          if (endMessage) endMessage.classList.remove("d-none");
+          spinner.style.display = "none";
+          return;
+        }
+
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html;
+        while (tempDiv.firstChild) {
+          container.appendChild(tempDiv.firstChild);
+        }
+
+        sentinel.setAttribute("data-page", nextPage);
+      } catch (error) {
+        console.error("Scroll Error:", error);
+      } finally {
+        isLoading = false;
+        spinner.style.display = "none";
+      }
     }
+  }
 });
