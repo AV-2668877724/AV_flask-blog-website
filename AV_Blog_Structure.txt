@@ -1,51 +1,48 @@
-AV-Postory/
+AV_Blog_website(Flask)/
 │
-├── app.py                         # 🚀 Application entry point
+├── .gitignore                   # ✅ IGNORES uploads & database
+├── app.py                       # Entry point
+├── update_db.py                 # Script for database updates
 │
-├── instance/
-│   └── database.db                # 🗄️ SQLite database (persistent data)
-│
-├── website/
-│   │
-│   ├── __init__.py                # 🔧 App factory, DB init & Context Processors
-│   ├── models.py                  # 🧱 Database models (User, Post, Comment, Like, Notification)
-│   ├── views.py                   # 🌐 Main routes (home, search, notifications, admin)
-│   ├── auth.py                    # 🔐 Authentication routes (login, sign-up, logout)
-│   │
-│   ├── static/                    # 🎨 Static assets
-│   │   │
-│   │   ├── styles.css             # ✅ MAIN CSS (Dark mode, Layouts, Inputs)
-│   │   ├── index.js               # ⚡ JavaScript (Live Search, Bell Icon, AJAX)
-│   │   │
-│   │   ├── images/                # 🖼️ Site assets
-│   │   │   
-│   │   │
-│   │   └── uploads/               # 📂 User Uploaded Content
-│   │       ├── avatars/           # User profile pictures
-│   │       └── posts/             # Post cover images
-│   │
-│   ├── templates/                 # 🧩 HTML templates (Jinja2)
-│   │   │
-│   │   ├── base.html              # 🧱 Base layout (Navbar with Bell, Footer)
-│   │   ├── home.html              # 🏠 Main Feed
-│   │   ├── about.html             # ℹ️ About Us page
-│   │   │
-│   │   ├── login.html             # 🔐 Login page
-│   │   ├── sign_up.html           # 📝 Sign-up page
-│   │   │
-│   │   ├── create_posts.html      # ✍️ Write new story
-│   │   ├── edit_post.html         # ✏️ Edit story
-│   │   ├── _posts.html            # 🔹 Reusable Post Card (Partial)
-│   │   │
-│   │   ├── profile.html           # 👤 User Profile (Bio, Stats, Deactivate)
-│   │   ├── followers.html         # 👥 Followers / Following List
-│   │   ├── notifications.html     # 🔔 ✅ NEW: All Notifications Page
-│   │   │
-│   │   ├── search.html            # 🔍 Search Results Page
-│   │   └── admin_dashboard.html   # 👑 Admin Panel (Manage users/content)
-│   │
-│   └── __pycache__/               # 🧠 Python bytecode cache
-│
-├── requirements.txt               # 📦 Python dependencies
-├── README.md                      # 📘 Project documentation
-└── .gitignore                     # 🚫 Ignored files (db, cache, secrets)
+└── website/
+    ├── __init__.py              # App setup + Mail Config
+    ├── auth.py                  # OTP Logic + Forgot Password
+    ├── models.py                # Database Models
+    ├── views.py                 # Routes + Image Compression    │
+    ├── static/
+    │   ├── styles.css
+    │   ├── index.js
+    │   ├── images/
+    │       └── logo.png
+    │
+    └── templates/
+        │
+        # --- AUTHENTICATION ---
+        ├── login.html
+        ├── signup.html          # Step 1: Email
+        ├── verify_otp.html      # Step 2: OTP
+        ├── finish_signup.html   # Step 3: Username
+        ├── reset_request.html   # (Logic for "Forgot Password" starts here)
+        ├── reset_token.html     # (Page to type new password)
+        ├── forgot_password.html # (likely an older file, replaced by reset_request.html)
+        │
+        # --- MAIN PAGES ---
+        ├── base.html            # Navbar & Footer
+        ├── home.html            # Main Feed
+        ├── about.html
+        ├── search.html
+        │
+        # --- POSTS & INCLUDES ---
+        ├── create_posts.html
+        ├── edit_post.html
+        ├── posts_div.html       # ✅ The shared layout for displaying posts
+        ├── _posts.html          # ✅ (Alternative shared layout if used)
+        ├── posts.html           # (Likely for viewing a single post)
+        │
+        # --- USER & SOCIAL ---
+        ├── profile.html
+        ├── notifications.html
+        ├── followers.html
+        │
+        # --- ADMIN ---
+        └── admin_dashboard.html
