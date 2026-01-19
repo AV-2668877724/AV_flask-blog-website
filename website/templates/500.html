@@ -1,0 +1,15 @@
+{% extends "base.html" %} 
+{% block title %}Server Error{% endblock %} 
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center" style="height: 60vh;">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold text-danger">500</h1>
+        <p class="fs-3">Internal Server Error</p>
+        <p class="lead">
+            Something went wrong on our end. We are working to fix it!
+        </p>
+        <a href="{{ url_for('views.home') }}" class="btn btn-outline-primary rounded-pill px-4 mt-2">Try Again</a>
+    </div>
+</div>
+{% endblock %}

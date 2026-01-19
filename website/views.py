@@ -696,6 +696,18 @@ def update_cover_pic():
         
     return redirect(url_for('views.profile', username=current_user.username))
 
+# =================================================
+# ERROR HANDLERS
+# =================================================
+
+@views.app_errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html', user=current_user), 404
+
+@views.app_errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html', user=current_user), 500
+
 @views.route('/about')
 def about():
     return render_template("about.html", user=current_user)
