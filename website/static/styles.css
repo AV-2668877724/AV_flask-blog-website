@@ -1,5 +1,5 @@
 /* =========================================
-   VARIABLES & THEME CONFIG
+   1. VARIABLES & THEME CONFIG (MERGED)
    ========================================= */
 :root {
   /* Typography */
@@ -7,41 +7,41 @@
   --font-serif: 'Playfair Display', Georgia, serif;
 
   /* Light Theme (Default) */
-  --bg-body: #F9FAFB;
-  --bg-card: #FFFFFF;
-  --bg-input: #F3F4F6;
-  --text-main: #111827;
-  --text-muted: #6B7280;
-  --border-color: #E5E7EB;
+  --primary: #2563eb;       /* Modern Royal Blue */
+  --primary-hover: #1d4ed8;
+  --bg-body: #f8fafc;       /* Very light slate */
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
   
-  /* Brand Colors */
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
-  --accent: #10B981;
-  --danger: #EF4444;
-
-  /* UI Elements */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  /* Modern UI Elements */
+  --border-radius: 16px;    /* Softer, larger curves */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Dark Theme Variables */
 body.dark-mode {
-  --bg-body: #111827;
-  --bg-card: #1F2937;
-  --bg-input: #374151;
-  --text-main: #F9FAFB;
-  --text-muted: #9CA3AF;
+  --bg-body: #0f172a;       /* Deep Slate */
+  --bg-card: #1e293b;       /* Lighter Slate */
+  --bg-input: #334155;
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
   --border-color: #374151;
   
-  --primary: #60A5FA;
-  --primary-hover: #93C5FD;
+  --primary: #60a5fa;
+  --primary-hover: #93c5fd;
+  
+  --glass-bg: rgba(30, 41, 59, 0.8);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* =========================================
-   GLOBAL RESET
+   2. GLOBAL RESET
    ========================================= */
 body {
   font-family: var(--font-sans);
@@ -49,6 +49,7 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
+  padding-bottom: 70px; /* Space for mobile nav */
 }
 
 h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
@@ -67,12 +68,21 @@ a:hover {
 }
 
 /* =========================================
-   NAVBAR
+   3. GLASSMORPHISM NAVBAR
    ========================================= */
 .navbar {
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: var(--glass-border);
+  box-shadow: var(--shadow-sm);
   padding: 0.75rem 0;
+}
+
+.nav-logo {
+  height: 32px;
+  width: auto;
+  border-radius: 6px;
 }
 
 .brand-text {
@@ -89,32 +99,134 @@ a:hover {
   color: var(--primary) !important;
 }
 
-.nav-logo {
-  height: 32px;
-  width: auto;
-  border-radius: 6px;
+/* Hide main navbar on mobile */
+@media (max-width: 768px) {
+    .navbar { display: none !important; }
 }
 
-/* Search Input */
-.search-input {
+/* =========================================
+   4. MOBILE BOTTOM NAV
+   ========================================= */
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1040;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+}
+
+.mobile-nav-item {
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.mobile-nav-item.active, .mobile-nav-item:hover {
+    color: var(--primary);
+}
+
+.mobile-nav-add {
+    background: var(--primary);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+    margin-bottom: 5px;
+}
+
+.mobile-nav-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.mobile-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 1px solid var(--bg-card);
+}
+
+/* =========================================
+   5. PREMIUM CARDS
+   ========================================= */
+.card {
+  background-color: var(--bg-card);
+  border: none;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 1.25rem;
+}
+
+.post-text {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text-main);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* =========================================
+   6. FORMS & INPUTS
+   ========================================= */
+.form-control, .form-select, .search-input {
   background-color: var(--bg-input);
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+}
+
+.form-control:focus, .search-input:focus {
+  background-color: var(--bg-card);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  color: var(--text-main);
+}
+
+/* Search Input Specifics */
+.search-input {
   border-radius: 20px;
   padding-left: 1rem;
   width: 240px;
 }
-.search-input:focus {
-  background-color: var(--bg-card);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-}
 
 /* =========================================
-   BUTTONS
+   7. BUTTONS
    ========================================= */
 .btn {
   font-weight: 500;
-  border-radius: var(--radius-md);
+  border-radius: 0.5rem;
   padding: 0.5rem 1rem;
 }
 
@@ -143,54 +255,100 @@ a:hover {
 }
 
 /* =========================================
-   CARDS & POSTS
+   8. MODERN PRELOADER (PULSE & FLOW)
    ========================================= */
-.card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 1.5rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+#preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-card); /* Adapts to theme */
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
-.card-header {
-  background-color: transparent;
-  border-bottom: 1px solid var(--border-color);
-  padding: 1rem 1.25rem;
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
 }
 
-.card-body {
-  padding: 1.25rem;
+.loader-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    animation: breathe 3s ease-in-out infinite;
 }
 
-/* Post Text Styling */
-.post-text {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: var(--text-main);
-  margin-bottom: 0.5rem;
-  white-space: pre-wrap;
+.loader-dots {
+    display: flex;
+    gap: 8px;
 }
 
-/* Truncation Overlay */
-.post-wrapper {
-  position: relative;
+.loader-dots span {
+    width: 10px;
+    height: 10px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    display: inline-block;
+    animation: wave 1.4s infinite ease-in-out both;
 }
-.fade-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(to bottom, transparent, var(--bg-card));
-  pointer-events: none;
-  display: none;
+
+.loader-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loader-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loader-dots span:nth-child(3) { animation-delay: 0s; }
+
+@keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.85; }
+}
+
+@keyframes wave {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.loader-hidden {
+    opacity: 0;
+    visibility: hidden;
 }
 
 /* =========================================
-   AVATARS
+   9. SKELETON LOADING
    ========================================= */
+.skeleton {
+    background: #e2e8f0;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+body.dark-mode .skeleton {
+    background: #334155;
+    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
+.skeleton-text { height: 12px; }
+.skeleton-img { width: 100%; height: 200px; border-radius: 8px; }
+
+/* =========================================
+   10. PAGE SPECIFIC & UTILITIES
+   ========================================= */
+
+/* Avatars */
 .user-avatar-xs {
   width: 32px;
   height: 32px;
@@ -204,459 +362,87 @@ a:hover {
   font-size: 0.85rem;
 }
 
-/* =========================================
-   HERO SECTION
-   ========================================= */
-.hero-section {
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-  padding: 4rem 0;
-  text-align: center;
-}
-
-.hero-section h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-.hero-section p {
-  color: var(--text-muted);
-  font-size: 1.25rem;
-  max-width: 600px;
-  margin: 0 auto 2rem auto;
-}
-
-/* =========================================
-   FORMS
-   ========================================= */
-.form-control, .form-select {
-  background-color: var(--bg-input);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
-}
-.form-control:focus {
-  background-color: var(--bg-card);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-  color: var(--text-main);
-}
-
-/* =========================================
-   UTILITIES
-   ========================================= */
-.text-muted {
-  color: var(--text-muted) !important;
-}
-.bg-light {
-  background-color: var(--bg-input) !important;
-}
-
-/* Authentication Pages */
-.auth-page .card {
-  box-shadow: var(--shadow-md);
-  border: none;
-}
-
-/* =========================================
-   DARK MODE OVERRIDES (FIXES)
-   ========================================= */
-/* Force bootstrap text utilities to adapt to theme */
-body.dark-mode .text-dark, 
-body.dark-mode .link-dark {
-    color: var(--text-main) !important;
-}
-
-/* Ensure white backgrounds turn dark in dark mode */
-body.dark-mode .bg-white {
-    background-color: var(--bg-card) !important;
-}
-
-/* Ensure borders are visible but subtle in dark mode */
-body.dark-mode .border-light {
-    border-color: var(--border-color) !important;
-}
-
-/* Fix for profile stats links hovering in dark mode */
-body.dark-mode a.text-decoration-none:hover {
-    color: var(--primary) !important;
-}
-
-/* Fix for dropdown menus in dark mode */
-body.dark-mode .dropdown-menu {
-    background-color: var(--bg-card);
-    border-color: var(--border-color);
-}
-body.dark-mode .dropdown-item {
-    color: var(--text-main);
-}
-body.dark-mode .dropdown-item:hover {
-    background-color: var(--bg-input);
-}
-
-/* Fix for List Groups (Search Results) */
-body.dark-mode .list-group-item {
-    background-color: var(--bg-card);
-    border-color: var(--border-color);
-    color: var(--text-main);
-}
-body.dark-mode .list-group-item-action:hover {
-    background-color: var(--bg-input);
-}
-
-/* =========================================
-   RICH TEXT CONTENT FIXES
-   ========================================= */
-
-/* Ensure new Rich Text posts handle margins correctly */
-.rich-text p {
-    margin-bottom: 0.8rem;
-    white-space: normal; /* Override the pre-wrap from old posts */
-}
-
-/* Headings inside posts */
-.rich-text h2, .rich-text h3 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
-    font-weight: 700;
-}
-
-/* Lists inside posts */
-.rich-text ul, .rich-text ol {
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-    white-space: normal;
-}
-
-/* Blockquotes */
-.rich-text blockquote {
-    border-left: 4px solid var(--primary);
-    padding-left: 1rem;
-    font-style: italic;
-    color: var(--text-muted);
-    background: transparent;
-}
-
-/* Fix for pre-existing plain text posts to still look okay */
-.post-text {
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-}
-
-/* =========================================
-   DARK MODE BUTTON FIXES
-   ========================================= */
-
-/* Inverts "Outline Dark" buttons (Github/X) to be White in Dark Mode */
-body.dark-mode .btn-outline-dark {
-    color: #F9FAFB;           /* White text */
-    border-color: #F9FAFB;    /* White border */
-}
-
-body.dark-mode .btn-outline-dark:hover {
-    background-color: #F9FAFB; /* White background on hover */
-    color: #111827;            /* Black text on hover */
-    border-color: #F9FAFB;
-}
-
-/* Ensure Primary (LinkedIn) and Danger (Email) pop more */
-body.dark-mode .btn-outline-primary {
-    color: #60A5FA;
-    border-color: #60A5FA;
-}
-body.dark-mode .btn-outline-danger {
-    color: #F87171;
-    border-color: #F87171;
-}
-
-/* =========================================
-   ABOUT PAGE & FEATURE CARDS
-   ========================================= */
-
-/* Hover Effect for Cards */
-.transition-hover:hover {
-    transform: translateY(-5px);
-    transition: transform 0.3s ease;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
-}
-
-/* Feature Cards */
-.feature-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid var(--border-color);
-}
-.feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-    border-color: var(--primary);
-}
-
-/* Tech Stack Badges */
-.tech-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background-color: var(--bg-input);
-    border-radius: 50px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    transition: all 0.2s;
-}
-.tech-badge:hover {
-    background-color: var(--primary);
-    color: white;
-}
-
-/* Creator Section */
-.creator-card {
-    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-input) 100%);
-    border: 1px solid var(--border-color);
-}
-
-/* Dark Mode Adjustments for About Page */
-body.dark-mode .feature-card {
-    background-color: var(--bg-card);
-    border-color: var(--border-color);
-}
-body.dark-mode .tech-badge {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-}
-body.dark-mode .creator-card {
-    background: var(--bg-card);
-}
-
-/* =========================================
-   NOTIFICATION DROPDOWN STYLES
-   ========================================= */
-.notif-dropdown-menu {
-    width: 350px;
-}
-
-.bg-blue-subtle {
-    background-color: #f0f9ff;
-}
-
-.badge-dot {
-    font-size: 0.6rem;
-}
-
-.avatar-sm {
-    width: 35px; 
-    height: 35px; 
-    object-fit: cover;
-}
-
-.wrap-text {
-    white-space: normal;
-}
-
-.small-text {
-    font-size: 0.7rem;
-}
-
-.unread-dot {
-    position: absolute; 
-    top: 50%; 
-    right: 0; 
-    transform: translateY(-50%); 
-    margin-right: 1rem; 
-    width: 6px; 
-    height: 6px; 
-    background-color: var(--primary); 
-    border-radius: 50%;
-}
-
-.user-avatar-nav {
-    width: 32px; 
-    height: 32px; 
-    object-fit: cover;
-}
-
-/* Dark Mode Overrides for Notifications */
-body.dark-mode .bg-blue-subtle {
-    background-color: #1e293b;
-}
-
-/* =========================================
-   SEARCH DROPDOWN FIXES
-   ========================================= */
+/* Search Dropdown */
 #searchResults {
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
-    z-index: 9999 !important; /* Force it to be on top */
-    background-color: white;
-    border: 1px solid #ddd;
+    z-index: 9999;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 0.375rem;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-md);
     max-height: 300px;
     overflow-y: auto;
-    display: none; /* Hidden by default */
+    display: none;
+}
+#searchResults.show { display: block; }
+#searchResults .dropdown-item { color: var(--text-main); }
+#searchResults .dropdown-item:hover { background-color: var(--bg-input); }
+
+/* Notifications */
+.notif-dropdown-menu { width: 350px; }
+.bg-blue-subtle { background-color: #f0f9ff; }
+.unread-dot {
+    position: absolute; top: 50%; right: 0; transform: translateY(-50%);
+    margin-right: 1rem; width: 6px; height: 6px;
+    background-color: var(--primary); border-radius: 50%;
 }
 
-#searchResults.show {
-    display: block;
-}
+/* Profile Bio (Dark Mode Fix) */
+.bio-text { color: #6c757d; }
+body.dark-mode .bio-text { color: #e0e0e0 !important; }
 
-/* Dark Mode support for dropdown */
-body.dark-mode #searchResults {
-    background-color: #1f2937;
-    border-color: #374151;
-}
-body.dark-mode #searchResults .dropdown-item {
-    color: #e5e7eb;
-}
-body.dark-mode #searchResults .dropdown-item:hover {
-    background-color: #374151;
-}
-
-/* =========================================
-   DARK MODE INPUT VISIBILITY FIX
-   ========================================= */
-
-/* 1. Make the input box stand out against the dark card */
-body.dark-mode .form-control, 
-body.dark-mode .form-select {
-    background-color: #374151;       /* Dark Grey (Lighter than background) */
-    border: 1px solid #4B5563;       /* Visible Lighter Border */
-    color: #F9FAFB;                  /* Bright White Text */
-}
-
-/* 2. When you click inside the box (Focus) */
-body.dark-mode .form-control:focus {
-    background-color: #4B5563;       /* Even lighter grey */
-    border-color: #60A5FA;           /* Bright Blue Border */
-    color: #FFFFFF;
-    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.25); /* Blue Glow */
-}
-
-/* 3. Make the "Write a comment..." text easier to read */
-body.dark-mode .form-control::placeholder {
-    color: #9CA3AF;                  /* Light Gray */
-    opacity: 1;
-}
-
-/* Hover effect for edit cover button */
-.hover-opacity-100:hover {
-    opacity: 1 !important;
+/* Truncation Overlay */
+.fade-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, var(--bg-card));
+  pointer-events: none;
+  display: none;
 }
 
 /* =========================================
-   MODERN "PULSE & FLOW" PRELOADER
+   11. DARK MODE FINAL OVERRIDES
    ========================================= */
-#preloader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    /* Clean white background */
-    background-color: #ffffff; 
-    z-index: 99999; 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* Smooth fade out */
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-}
+body.dark-mode .text-dark, 
+body.dark-mode .link-dark { color: var(--text-main) !important; }
+body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
+body.dark-mode .border-light { border-color: var(--border-color) !important; }
+body.dark-mode a.text-decoration-none:hover { color: var(--primary) !important; }
+body.dark-mode .bg-blue-subtle { background-color: #1e293b; }
 
-/* Container for Logo + Dots */
-.loader-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px; /* Space between logo and dots */
-}
-
-/* 1. The Logo (Breathing Effect) */
-.loader-logo {
-    width: 80px; /* Larger, more prominent */
-    height: 80px;
-    object-fit: contain;
-    /* Subtle drop shadow for depth */
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-    animation: breathe 3s ease-in-out infinite;
-}
-
-/* 2. The Dots (Wave Animation) */
-.loader-dots {
-    display: flex;
-    gap: 8px;
-}
-
-.loader-dots span {
-    width: 10px;
-    height: 10px;
-    background-color: #0d6efd; /* Primary Blue */
-    border-radius: 50%;
-    display: inline-block;
-    animation: wave 1.4s infinite ease-in-out both;
-}
-
-/* Stagger the animation for the "Wave" look */
-.loader-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loader-dots span:nth-child(2) { animation-delay: -0.16s; }
-.loader-dots span:nth-child(3) { animation-delay: 0s; }
-
-/* Dark Mode Overrides */
-body.dark-mode #preloader {
-    background-color: #0f0f0f; /* Premium Dark Gray */
-}
-body.dark-mode .loader-logo {
-    filter: drop-shadow(0 4px 10px rgba(255,255,255,0.1));
-}
-body.dark-mode .loader-dots span {
-    background-color: #3d8bfd; /* Lighter Blue */
-}
+/* Button Fixes */
+body.dark-mode .btn-outline-dark { color: #F9FAFB; border-color: #F9FAFB; }
+body.dark-mode .btn-outline-dark:hover { background-color: #F9FAFB; color: #111827; }
+body.dark-mode .btn-outline-primary { color: #60A5FA; border-color: #60A5FA; }
+body.dark-mode .btn-outline-danger { color: #F87171; border-color: #F87171; }
 
 /* =========================================
-   ANIMATIONS
+   12. DARK MODE NAVBAR FIX (IMPROVED)
    ========================================= */
-
-@keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.85; }
+/* Force Nav Links to be Bright in Dark Mode */
+body.dark-mode .nav-link {
+    color: #e2e8f0 !important; /* Bright light grey (almost white) */
+    font-weight: 500;
 }
 
-@keyframes wave {
-    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-    40% { transform: scale(1); opacity: 1; }
+/* Maintain the Blue color on Hover/Active */
+body.dark-mode .nav-link:hover,
+body.dark-mode .nav-link.active {
+    color: var(--primary) !important;
 }
 
-/* Utility to hide loader */
-.loader-hidden {
-    opacity: 0;
-    visibility: hidden;
+/* Make sure the Brand Text (AV Postory) is also bright */
+body.dark-mode .brand-text {
+    color: #ffffff !important;
 }
 
-/* =========================================
-   DARK MODE TEXT FIXES
-   ========================================= */
-
-/* Default (Light Mode) - Keep it dark gray */
-.bio-text {
-    color: #6c757d; /* Standard Bootstrap muted gray */
-}
-
-/* Dark Mode - Make it light gray */
-body.dark-mode .bio-text {
-    color: #e0e0e0 !important; /* Bright gray, almost white */
-}
-
-/* Optional: Fix other common text issues in dark mode */
-body.dark-mode .text-muted {
-    color: #adb5bd !important; /* Lighter gray for all muted text */
-}
-
-body.dark-mode h1, 
-body.dark-mode h2, 
-body.dark-mode h3, 
-body.dark-mode h4, 
-body.dark-mode h5, 
-body.dark-mode h6 {
-    color: #ffffff; /* Ensure all headings are white */
+/* Fix mobile toggle button (Hamburger icon) color */
+body.dark-mode .navbar-toggler-icon {
+    filter: invert(1) grayscale(100%) brightness(200%);
 }

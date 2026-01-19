@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <title>{% block title %}{% endblock %}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -150,7 +153,6 @@
                     >View All</a
                   >
                 </li>
-
                 {% if latest_notifs %} {% for n in latest_notifs %}
                 <li>
                   <a
@@ -167,7 +169,6 @@
                       {{ n.visitor.username[0]|upper }}
                     </div>
                     {% endif %}
-
                     <div class="lh-sm">
                       <p class="mb-0 small text-dark">
                         <strong>{{ n.visitor.username }}</strong>
@@ -181,7 +182,6 @@
                         >{{ n.date_created | timeago }}</small
                       >
                     </div>
-
                     {% if not n.is_read %}
                     <span class="unread-dot"></span>
                     {% endif %}
@@ -192,7 +192,6 @@
                   <p class="text-muted small mb-0">No new notifications.</p>
                 </li>
                 {% endif %}
-
                 <li class="p-2 text-center bg-light">
                   <a
                     href="{{ url_for('views.notifications') }}"
@@ -250,7 +249,6 @@
                 </li>
                 {% endif %}
                 <li><hr class="dropdown-divider" /></li>
-
                 <li>
                   <button
                     class="dropdown-item text-danger"
@@ -261,7 +259,6 @@
                     Account
                   </button>
                 </li>
-
                 <li>
                   <a
                     class="dropdown-item"
@@ -308,14 +305,59 @@
       {% block content %}{% endblock %}
     </div>
 
-    <footer class="py-4 mt-5 text-center text-muted border-top">
+    <footer
+      class="py-4 mt-5 text-center text-muted border-top d-none d-md-block"
+    >
       <small>&copy; 2026 AV Postory. All rights reserved.</small>
     </footer>
+
+    {% if current_user.is_authenticated %}
+    <nav class="mobile-nav d-md-none">
+      <a
+        href="{{ url_for('views.home') }}"
+        class="mobile-nav-item {% if is_home %}active{% endif %}"
+      >
+        <i class="bi bi-house-door-fill"></i>
+      </a>
+
+      <a href="{{ url_for('views.search') }}" class="mobile-nav-item">
+        <i class="bi bi-search"></i>
+      </a>
+
+      <a href="{{ url_for('views.create_post') }}" class="mobile-nav-add">
+        <i class="bi bi-plus-lg"></i>
+      </a>
+
+      <a
+        href="{{ url_for('views.notifications') }}"
+        class="mobile-nav-item position-relative"
+      >
+        <i class="bi bi-bell-fill"></i>
+        {% if unread_count and unread_count > 0 %}
+        <span class="mobile-badge"></span>
+        {% endif %}
+      </a>
+
+      <a
+        href="{{ url_for('views.profile', username=current_user.username) }}"
+        class="mobile-nav-item"
+      >
+        {% if current_user.profile_pic %}
+        <img
+          src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
+          class="mobile-nav-avatar"
+        />
+        {% else %}
+        <i class="bi bi-person-circle"></i>
+        {% endif %}
+      </a>
+    </nav>
+    {% endif %}
 
     <div
       class="toast-container position-fixed bottom-0 end-0 p-3"
       id="toastContainer"
-      style="z-index: 1090"
+      style="z-index: 1090; margin-bottom: 70px"
     >
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %} {% for category, message in messages %}
@@ -338,7 +380,6 @@
     </div>
 
     {% if current_user.is_authenticated %}
-
     <div class="modal fade" id="logoutModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
