@@ -1,51 +1,55 @@
 AV_Blog_website(Flask)/
 │
-├── .gitignore                   # Ignores uploads/ & database.db
-├── app.py                       # Runs the app
-├── update_db.py                 # Script to update DB columns
+├── .gitignore                   # Ignores database.db & uploads/
+├── app.py                       # Main entry point
+├── update_db.py                 # Script for DB migrations
 │
 └── website/
-    ├── __init__.py              # App setup
-    ├── auth.py                  # Signup (OTP) & Login logic
-    ├── models.py                # Database tables
-    ├── views.py                 # Routes + Error Handlers registered here
+    ├── __init__.py              # App Factory
+    ├── auth.py                  # Login/Signup Routes
+    ├── models.py                # Database Models
+    ├── views.py                 # Main Logic (Home, Posts, Profile)
     ├── database.db              # SQLite Database
     │
     ├── static/
-    │   ├── styles.css
-    │   ├── index.js
+    │   ├── styles.css           # ✅ Updated: Glassmorphism, Dark Mode Fixes
+    │   ├── index.js             # ✅ Updated: Infinite Scroll, Preloader Fix
     │   ├── images/
+    │   │   └── logo.png
     │
     └── templates/
         │
-        # --- ERROR PAGES (New) ---
-        ├── 404.html             # ✅ Page Not Found
-        ├── 500.html             # ✅ Server Error
+        # --- ERROR PAGES ---
+        ├── 404.html             # ✅ (New) Page Not Found
+        ├── 500.html             # ✅ (New) Server Error
         │
-        # --- AUTHENTICATION ---
-        ├── login.html
-        ├── signup.html          # Step 1: Email
-        ├── verify_otp.html      # Step 2: OTP
-        ├── finish_signup.html   # Step 3: Username
-        ├── reset_request.html   # Forgot Password (Email)
-        ├── reset_token.html     # Forgot Password (New Pass)
+        # --- COMPONENT PARTIALS ---
+        ├── _posts.html          # ✅ Infinite Scroll Loop (Just the cards)
+        ├── _skeleton_post.html  # ✅ (New) Ghost loading animation
         │
-        # --- MAIN PAGES ---
-        ├── base.html            # Navbar & Footer
-        ├── home.html            # Feed
+        # --- CORE LAYOUT ---
+        ├── base.html            # ✅ Updated: Preloader, Mobile Nav, Meta tags
+        ├── home.html            # ✅ Updated: Scroll Sentinel & Container
         ├── about.html
         ├── search.html
         │
-        # --- POSTS ---
+        # --- AUTHENTICATION ---
+        ├── login.html
+        ├── signup.html
+        ├── verify_otp.html
+        ├── finish_signup.html
+        ├── reset_request.html   # Forgot Password
+        ├── reset_token.html     # Reset Password
+        │
+        # --- POST MANAGEMENT ---
         ├── create_posts.html
         ├── edit_post.html
-        ├── _posts.html          # (Optional partial)
-        ├── posts_div.html       # Shared post layout
         │
-        # --- USER ---
-        ├── profile.html
+        # --- USER PROFILE ---
+        ├── profile.html         # ✅ Updated: Dark mode text visibility
         ├── notifications.html
         ├── followers.html
+        ├── following.html
         │
         # --- ADMIN ---
         └── admin_dashboard.html
