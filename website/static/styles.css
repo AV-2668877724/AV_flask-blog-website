@@ -632,3 +632,31 @@ body.dark-mode .loader-dots span {
     opacity: 0;
     visibility: hidden;
 }
+
+/* =========================================
+   DARK MODE TEXT FIXES
+   ========================================= */
+
+/* Default (Light Mode) - Keep it dark gray */
+.bio-text {
+    color: #6c757d; /* Standard Bootstrap muted gray */
+}
+
+/* Dark Mode - Make it light gray */
+body.dark-mode .bio-text {
+    color: #e0e0e0 !important; /* Bright gray, almost white */
+}
+
+/* Optional: Fix other common text issues in dark mode */
+body.dark-mode .text-muted {
+    color: #adb5bd !important; /* Lighter gray for all muted text */
+}
+
+body.dark-mode h1, 
+body.dark-mode h2, 
+body.dark-mode h3, 
+body.dark-mode h4, 
+body.dark-mode h5, 
+body.dark-mode h6 {
+    color: #ffffff; /* Ensure all headings are white */
+}

@@ -101,7 +101,9 @@ Profile{% endblock %} {% block content %}
 
     <div class="mt-4 mw-700">
       {% if profile_user.bio %}
-      <p class="text-main">{{ profile_user.bio }}</p>
+      <p class="bio-text" style="font-size: 1.05rem; line-height: 1.6">
+        {{ profile_user.bio }}
+      </p>
       {% else %}
       <p class="text-muted fst-italic small">No bio available.</p>
       {% endif %}
@@ -110,21 +112,19 @@ Profile{% endblock %} {% block content %}
     <div class="d-flex gap-4 mt-3 border-top pt-3">
       <a
         href="{{ url_for('views.followers_list', username=profile_user.username) }}"
-        class="text-decoration-none"
-        style="color: var(--text-main)"
+        class="text-decoration-none bio-text"
       >
         <span class="fw-bold">{{ followers_count }}</span>
         <span class="text-muted small">Followers</span>
       </a>
       <a
         href="{{ url_for('views.following_list', username=profile_user.username) }}"
-        class="text-decoration-none"
-        style="color: var(--text-main)"
+        class="text-decoration-none bio-text"
       >
         <span class="fw-bold">{{ following_count }}</span>
         <span class="text-muted small">Following</span>
       </a>
-      <div style="color: var(--text-main)">
+      <div class="bio-text">
         <span class="fw-bold">{{ total_posts }}</span>
         <span class="text-muted small">Posts</span>
       </div>
@@ -135,10 +135,10 @@ Profile{% endblock %} {% block content %}
 {% if current_user.id == profile_user.id %}
 <div class="collapse mb-4" id="editProfileSection">
   <div class="card card-body bg-light border-0">
-    <h5 class="fw-bold mb-3">Edit Profile</h5>
+    <h5 class="fw-bold mb-3 text-dark">Edit Profile</h5>
     <div class="row g-4">
       <div class="col-md-6">
-        <label class="form-label small fw-bold">Bio</label>
+        <label class="form-label small fw-bold text-dark">Bio</label>
         <form method="POST" action="{{ url_for('views.edit_bio') }}">
           <textarea
             name="bio"
@@ -153,7 +153,9 @@ Profile{% endblock %} {% block content %}
       </div>
 
       <div class="col-md-6">
-        <label class="form-label small fw-bold">Add Social Link</label>
+        <label class="form-label small fw-bold text-dark"
+          >Add Social Link</label
+        >
         <form
           method="POST"
           action="{{ url_for('views.add_social_link') }}"
@@ -169,7 +171,9 @@ Profile{% endblock %} {% block content %}
           <button class="btn btn-dark btn-sm">Add</button>
         </form>
 
-        <label class="form-label small fw-bold mt-3">Change Username</label>
+        <label class="form-label small fw-bold mt-3 text-dark"
+          >Change Username</label
+        >
         <div class="input-group">
           <input
             type="text"
@@ -208,7 +212,7 @@ Profile{% endblock %} {% block content %}
     <a
       href="{{ url }}"
       target="_blank"
-      class="btn btn-sm btn-outline-secondary bg-white"
+      class="btn btn-sm btn-outline-secondary bg-white text-dark"
     >
       <i
         class="{% if platform in ['link', 'website'] %}fas fa-link{% else %}fab fa-{{ platform }}{% endif %} me-1"
@@ -234,7 +238,10 @@ Profile{% endblock %} {% block content %}
 <h4 class="font-heading mb-3 border-bottom pb-2">Latest Posts</h4>
 <div class="profile-posts">
   {% if posts %} {% include "_posts.html" %} {% else %}
-  <div class="text-center py-5 bg-white rounded border border-light">
+  <div
+    class="text-center py-5 rounded border border-light"
+    style="background-color: rgba(255, 255, 255, 0.05)"
+  >
     <p class="text-muted mb-0">No posts published yet.</p>
   </div>
   {% endif %}
@@ -244,7 +251,7 @@ Profile{% endblock %} {% block content %}
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title fw-bold">Update Profile Picture</h5>
+        <h5 class="modal-title fw-bold text-dark">Update Profile Picture</h5>
         <button
           type="button"
           class="btn-close"
@@ -285,7 +292,7 @@ Profile{% endblock %} {% block content %}
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header border-0">
-        <h5 class="modal-title fw-bold">Update Cover Photo</h5>
+        <h5 class="modal-title fw-bold text-dark">Update Cover Photo</h5>
         <button
           type="button"
           class="btn-close"
