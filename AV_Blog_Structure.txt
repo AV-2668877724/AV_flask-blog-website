@@ -1,45 +1,48 @@
 AV_Blog_website(Flask)/
 │
-├── .gitignore                   # ✅ IGNORES uploads & database
-├── app.py                       # Entry point
-├── update_db.py                 # Script for database updates
+├── .gitignore                   # Ignores uploads/ & database.db
+├── app.py                       # Runs the app
+├── update_db.py                 # Script to update DB columns
 │
 └── website/
-    ├── __init__.py              # App setup + Mail Config
-    ├── auth.py                  # OTP Logic + Forgot Password
-    ├── models.py                # Database Models
-    ├── views.py                 # Routes + Image Compression    │
+    ├── __init__.py              # App setup
+    ├── auth.py                  # Signup (OTP) & Login logic
+    ├── models.py                # Database tables
+    ├── views.py                 # Routes + Error Handlers registered here
+    ├── database.db              # SQLite Database
+    │
     ├── static/
     │   ├── styles.css
     │   ├── index.js
     │   ├── images/
-    │       └── logo.png
     │
     └── templates/
+        │
+        # --- ERROR PAGES (New) ---
+        ├── 404.html             # ✅ Page Not Found
+        ├── 500.html             # ✅ Server Error
         │
         # --- AUTHENTICATION ---
         ├── login.html
         ├── signup.html          # Step 1: Email
         ├── verify_otp.html      # Step 2: OTP
         ├── finish_signup.html   # Step 3: Username
-        ├── reset_request.html   # (Logic for "Forgot Password" starts here)
-        ├── reset_token.html     # (Page to type new password)
-        ├── forgot_password.html # (likely an older file, replaced by reset_request.html)
+        ├── reset_request.html   # Forgot Password (Email)
+        ├── reset_token.html     # Forgot Password (New Pass)
         │
         # --- MAIN PAGES ---
         ├── base.html            # Navbar & Footer
-        ├── home.html            # Main Feed
+        ├── home.html            # Feed
         ├── about.html
         ├── search.html
         │
-        # --- POSTS & INCLUDES ---
+        # --- POSTS ---
         ├── create_posts.html
         ├── edit_post.html
-        ├── posts_div.html       # ✅ The shared layout for displaying posts
-        ├── _posts.html          # ✅ (Alternative shared layout if used)
-        ├── posts.html           # (Likely for viewing a single post)
+        ├── _posts.html          # (Optional partial)
+        ├── posts_div.html       # Shared post layout
         │
-        # --- USER & SOCIAL ---
+        # --- USER ---
         ├── profile.html
         ├── notifications.html
         ├── followers.html
