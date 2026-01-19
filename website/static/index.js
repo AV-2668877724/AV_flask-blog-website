@@ -612,3 +612,78 @@ document.addEventListener('click', function (e) {
         }
     }
 });
+
+// ==========================================
+//  INFINITE SCROLL LOGIC
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", function () {
+    const sentinel = document.getElementById('sentinel');
+    const container = document.getElementById('posts-container');
+    const spinner = document.getElementById('scroll-spinner');
+    const endMessage = document.getElementById('end-message');
+    
+    // Only run if the sentinel exists (i.e., there are posts)
+    if (sentinel) {
+        let isLoading = false;
+
+        const observer = new IntersectionObserver((entries) => {
+            // Read current state from DOM attributes
+            const hasNext = sentinel.getAttribute('data-has-next') === 'true';
+
+            if (entries[0].isIntersecting && hasNext && !isLoading) {
+                loadMorePosts();
+            } else if (!hasNext && endMessage) {
+                // If no more pages, show "Caught up" message immediately
+                endMessage.classList.remove('d-none');
+            }
+        }, { rootMargin: "200px" });
+
+        observer.observe(sentinel);
+
+        async function loadMorePosts() {
+            if (isLoading) return;
+            isLoading = true;
+
+            // Show spinner
+            spinner.style.display = 'inline-block';
+            
+            // Get current page and URL
+            let page = parseInt(sentinel.getAttribute('data-page'));
+            const baseUrl = sentinel.getAttribute('data-url');
+            const nextPage = page + 1;
+
+            try {
+                // Fetch next page
+                const response = await fetch(`${baseUrl}?page=${nextPage}&ajax=1`);
+                if (!response.ok) throw new Error('Failed to load');
+
+                const html = await response.text();
+
+                // If empty, we are done
+                if (html.trim().length === 0) {
+                    sentinel.setAttribute('data-has-next', 'false');
+                    endMessage.classList.remove('d-none');
+                    spinner.style.display = 'none';
+                    return;
+                }
+
+                // Append new posts
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                while (tempDiv.firstChild) {
+                    container.appendChild(tempDiv.firstChild);
+                }
+
+                // Update Page Count in DOM
+                sentinel.setAttribute('data-page', nextPage);
+
+            } catch (error) {
+                console.error("Scroll Error:", error);
+            } finally {
+                isLoading = false;
+                spinner.style.display = 'none';
+            }
+        }
+    }
+});

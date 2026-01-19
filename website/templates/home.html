@@ -1,91 +1,38 @@
-{% extends 'base.html'%} {% block title %} Home - AV Postory {% endblock %} {%
-block content %}
-
-<div class="row align-items-center mb-5 py-5 border-bottom">
-  <div class="col-lg-8 mx-auto text-center">
-    <h1
-      class="display-4 fw-bold mb-3 font-heading"
-      style="letter-spacing: -1px"
-    >
-      Turn Your Thoughts Into <span class="text-primary">Conversations.</span>
-    </h1>
-
-    <p class="lead text-muted mb-5" style="max-width: 650px; margin: 0 auto">
-      Escape the noise. AV Postory is a focused space for writers, thinkers, and
-      storytellers to share ideas that matter.
-    </p>
-
-    <div class="d-flex justify-content-center gap-3">
-      {% if not current_user.is_authenticated %}
-      <a
-        href="/sign-up"
-        class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm"
-      >
-        Start Writing
-      </a>
-      <a
-        href="/about"
-        class="btn btn-outline-secondary btn-lg px-5 rounded-pill"
-      >
-        Read More
-      </a>
-      {% else %}
-      <a
-        href="/create-post"
-        class="btn btn-primary btn-lg px-5 rounded-pill shadow-sm"
-      >
-        <i class="fas fa-pen-nib me-2"></i>Write a Story
-      </a>
+{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
+%}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-md-10 mx-auto">
+    <div id="posts-container" class="post-feed">
+      {% if posts %} {% include "_posts.html" %} {% else %}
+      <div class="text-center py-5">
+        <i class="bi bi-journal-text display-4 text-muted mb-3"></i>
+        <p class="lead text-muted">No stories found here yet.</p>
+      </div>
       {% endif %}
     </div>
-  </div>
-</div>
 
-<div class="row">
-  <div class="col-lg-8 mx-auto">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h4 class="font-heading mb-0 fw-bold">
-        {% if pagination and pagination.page == 1 %} Trending Stories {% else %}
-        Page {{ pagination.page }} {% endif %}
-      </h4>
+    {% if posts %}
+    <div
+      id="sentinel"
+      class="text-center py-4"
+      data-page="1"
+      data-has-next="{{ 'true' if pagination.has_next else 'false' }}"
+      data-url="{{ url_for('views.home') }}"
+    >
+      <div
+        id="scroll-spinner"
+        class="spinner-border text-primary"
+        role="status"
+        style="display: none; width: 1.5rem; height: 1.5rem"
+      >
+        <span class="visually-hidden">Loading...</span>
+      </div>
+
+      <p id="end-message" class="text-muted small d-none">
+        <i class="fas fa-check-circle me-1"></i> You're all caught up!
+      </p>
     </div>
-
-    {% include '_posts.html' %} {% if pagination and pagination.pages > 1 %}
-    <nav aria-label="Page navigation" class="mt-5">
-      <ul class="pagination justify-content-center">
-        <li
-          class="page-item {% if not pagination.has_prev %}disabled{% endif %}"
-        >
-          <a
-            class="page-link border-0 rounded-circle mx-1 d-flex align-items-center justify-content-center"
-            style="width: 40px; height: 40px"
-            href="{{ url_for('views.home', page=pagination.prev_num) }}"
-          >
-            <i class="bi bi-arrow-left"></i>
-          </a>
-        </li>
-
-        <li class="page-item disabled">
-          <span class="page-link border-0 bg-transparent text-muted fw-bold">
-            Page {{ pagination.page }} of {{ pagination.pages }}
-          </span>
-        </li>
-
-        <li
-          class="page-item {% if not pagination.has_next %}disabled{% endif %}"
-        >
-          <a
-            class="page-link border-0 rounded-circle mx-1 d-flex align-items-center justify-content-center"
-            style="width: 40px; height: 40px"
-            href="{{ url_for('views.home', page=pagination.next_num) }}"
-          >
-            <i class="bi bi-arrow-right"></i>
-          </a>
-        </li>
-      </ul>
-    </nav>
     {% endif %}
   </div>
 </div>
-
 {% endblock %}

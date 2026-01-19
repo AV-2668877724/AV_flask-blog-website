@@ -1,203 +1,199 @@
-<div class="post-feed">
-  {% if posts %} {% for post in posts %}
-
-  <article class="card mb-4 border-0 shadow-sm overflow-hidden">
-    <div
-      class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center pt-3 px-3"
-    >
-      <div class="d-flex align-items-center gap-2">
-        {% if post.user.profile_pic %}
-        <img
-          src="{{ url_for('static', filename='uploads/avatars/' + post.user.profile_pic) }}"
-          alt="Avatar"
-          class="rounded-circle shadow-sm"
-          style="width: 32px; height: 32px; object-fit: cover"
-        />
-        {% else %}
-        <div
-          class="user-avatar-xs"
-          style="background-color: #e5e7eb; color: #374151"
-        >
-          {{ post.user.username[0]|upper }}
-        </div>
-        {% endif %}
-
-        <div class="d-flex flex-column">
-          <a
-            href="/profile/{{ post.user.username }}"
-            class="fw-bold text-decoration-none lh-1"
-            style="color: var(--text-main)"
-          >
-            {{ post.user.username }}
-          </a>
-          <small class="text-muted" style="font-size: 0.75rem">
-            {{ post.date_created | timeago }}
-          </small>
-        </div>
-      </div>
-
-      {% if current_user.is_authenticated and current_user.id == post.author %}
-      <div class="dropdown">
-        <button
-          class="btn btn-sm btn-link text-muted p-0"
-          data-bs-toggle="dropdown"
-        >
-          <i class="bi bi-three-dots"></i>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
-          <li>
-            <a href="/edit-post/{{ post.id }}" class="dropdown-item">
-              <i class="bi bi-pencil me-2"></i>Edit
-            </a>
-          </li>
-          <li>
-            <a
-              href="/delete-post/{{ post.id }}"
-              class="dropdown-item text-danger"
-            >
-              <i class="bi bi-trash me-2"></i>Delete
-            </a>
-          </li>
-        </ul>
+{% for post in posts %}
+<article class="card mb-4 border-0 shadow-sm overflow-hidden post-card">
+  <div
+    class="card-header border-0 bg-transparent d-flex justify-content-between align-items-center pt-3 px-3"
+  >
+    <div class="d-flex align-items-center gap-2">
+      {% if post.user.profile_pic %}
+      <img
+        src="{{ url_for('static', filename='uploads/avatars/' + post.user.profile_pic) }}"
+        alt="Avatar"
+        class="rounded-circle shadow-sm"
+        style="width: 32px; height: 32px; object-fit: cover"
+      />
+      {% else %}
+      <div
+        class="user-avatar-xs"
+        style="background-color: #e5e7eb; color: #374151"
+      >
+        {{ post.user.username[0]|upper }}
       </div>
       {% endif %}
+
+      <div class="d-flex flex-column">
+        <a
+          href="/profile/{{ post.user.username }}"
+          class="fw-bold text-decoration-none lh-1"
+          style="color: var(--text-main)"
+        >
+          {{ post.user.username }}
+        </a>
+        <small class="text-muted" style="font-size: 0.75rem">
+          {{ post.date_created | timeago }}
+        </small>
+      </div>
     </div>
 
-    {% if post.cover_image %}
-    <div
-      class="w-100"
-      style="height: 240px; overflow: hidden; background-color: #f3f4f6"
-    >
-      <img
-        src="{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}"
-        alt="Cover Image"
-        style="width: 100%; height: 100%; object-fit: cover"
-      />
+    {% if current_user.is_authenticated and current_user.id == post.author %}
+    <div class="dropdown">
+      <button
+        class="btn btn-sm btn-link text-muted p-0"
+        data-bs-toggle="dropdown"
+      >
+        <i class="bi bi-three-dots"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+        <li>
+          <a href="/edit-post/{{ post.id }}" class="dropdown-item">
+            <i class="bi bi-pencil me-2"></i>Edit
+          </a>
+        </li>
+        <li>
+          <a
+            href="/delete-post/{{ post.id }}"
+            class="dropdown-item text-danger"
+          >
+            <i class="bi bi-trash me-2"></i>Delete
+          </a>
+        </li>
+      </ul>
     </div>
     {% endif %}
+  </div>
 
-    <div class="card-body pt-3">
-      <div class="post-wrapper" id="post-wrapper-{{ post.id }}">
-        <div
-          class="post-text rich-text font-serif"
-          id="post-text-{{ post.id }}"
-        >
-          {{ post.text | safe }}
-        </div>
-        <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
-      </div>
-
-      {% if post.text|length > 300 %}
-      <button
-        class="btn btn-link p-0 see-more-btn mt-2 text-decoration-none fw-bold"
-        data-post-id="{{ post.id }}"
-      >
-        Read More
-      </button>
-      {% endif %}
-    </div>
-
-    <div
-      class="card-footer bg-transparent border-top border-light d-flex align-items-center justify-content-between py-2"
-    >
-      <div class="d-flex align-items-center">
-        <button
-          class="btn btn-sm btn-icon border-0 {% if post.liked %}text-primary{% endif %}"
-          id="like-button-{{ post.id }}"
-          onclick="like('{{ post.id }}')"
-          style="width: auto; height: auto"
-        >
-          <i
-            class="{% if post.liked %}fas{% else %}far{% endif %} fa-thumbs-up me-1"
-          ></i>
-          <span id="likes-count-{{ post.id }}">{{ post.likes_count }}</span>
-        </button>
-      </div>
-
-      <button
-        class="btn btn-sm text-muted"
-        data-bs-toggle="collapse"
-        data-bs-target="#comments-{{ post.id }}"
-      >
-        <i class="far fa-comment me-1"></i>
-        {% set visible_comments = post.comments | selectattr('is_deleted',
-        'equalto', False) | list %} {{ visible_comments|length }} Comments
-      </button>
-    </div>
-
-    <div class="collapse bg-light border-top" id="comments-{{ post.id }}">
-      <div class="p-3">
-        {% if current_user.is_authenticated %}
-        <form method="POST" action="/create-comment/{{ post.id }}" class="mb-3">
-          <div class="input-group">
-            <input
-              type="text"
-              name="text"
-              class="form-control form-control-sm border-end-0"
-              placeholder="Add to the discussion..."
-              required
-            />
-            <button
-              class="btn btn-sm btn-outline-secondary border-start-0 bg-white text-primary"
-            >
-              Post
-            </button>
-          </div>
-        </form>
-        {% endif %}
-
-        <div class="comments-list">
-          {% for comment in visible_comments %}
-          <div class="d-flex gap-2 mb-3">
-            {% if comment.user.profile_pic %}
-            <img
-              src="{{ url_for('static', filename='uploads/avatars/' + comment.user.profile_pic) }}"
-              class="rounded-circle"
-              style="width: 24px; height: 24px; object-fit: cover"
-            />
-            {% else %}
-            <div
-              class="user-avatar-xs"
-              style="width: 24px; height: 24px; font-size: 0.7rem"
-            >
-              {{ comment.user.username[0]|upper }}
-            </div>
-            {% endif %}
-
-            <div class="flex-grow-1">
-              <div
-                class="bg-white p-2 rounded border shadow-sm position-relative"
-              >
-                <div
-                  class="d-flex justify-content-between align-items-center mb-1"
-                >
-                  <a
-                    href="/profile/{{ comment.user.username }}"
-                    class="fw-bold text-decoration-none small"
-                    style="color: #111827"
-                  >
-                    {{ comment.user.username }}
-                  </a>
-                  <small class="text-muted" style="font-size: 0.7rem"
-                    >{{ comment.date_created | timeago }}</small
-                  >
-                </div>
-                <p class="mb-0 small text-secondary">
-                  {{ comment.text | trim }}
-                </p>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </article>
-
-  {% endfor %} {% else %}
-  <div class="text-center py-5">
-    <i class="bi bi-journal-text display-4 text-muted mb-3"></i>
-    <p class="lead text-muted">No stories found here yet.</p>
+  {% if post.cover_image %}
+  <div
+    class="w-100"
+    style="height: 240px; overflow: hidden; background-color: #f3f4f6"
+  >
+    <img
+      src="{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}"
+      alt="Cover Image"
+      style="width: 100%; height: 100%; object-fit: cover; cursor: pointer"
+      onclick="viewFullSize(this.src)"
+    />
   </div>
   {% endif %}
-</div>
+
+  <div class="card-body pt-3">
+    <div class="post-wrapper" id="post-wrapper-{{ post.id }}">
+      <div class="post-text rich-text font-serif" id="post-text-{{ post.id }}">
+        {{ post.text | safe }}
+      </div>
+      <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
+    </div>
+
+    {% if post.text|length > 300 %}
+    <button
+      class="btn btn-link p-0 see-more-btn mt-2 text-decoration-none fw-bold"
+      data-post-id="{{ post.id }}"
+    >
+      Read More
+    </button>
+    {% endif %}
+  </div>
+
+  <div
+    class="card-footer bg-transparent border-top border-light d-flex align-items-center justify-content-between py-2"
+  >
+    <div class="d-flex align-items-center">
+      <button
+        class="btn btn-sm btn-icon border-0 {% if post.liked %}text-primary{% endif %}"
+        id="like-button-{{ post.id }}"
+        onclick="like('{{ post.id }}')"
+        style="width: auto; height: auto"
+      >
+        <i
+          class="{% if post.liked %}fas{% else %}far{% endif %} fa-thumbs-up me-1"
+        ></i>
+        <span id="likes-count-{{ post.id }}">{{ post.likes_count }}</span>
+      </button>
+    </div>
+
+    <button
+      class="btn btn-sm text-muted"
+      data-bs-toggle="collapse"
+      data-bs-target="#comments-{{ post.id }}"
+    >
+      <i class="far fa-comment me-1"></i>
+      {% set visible_comments = post.comments | selectattr('is_deleted',
+      'equalto', False) | list %} {{ visible_comments|length }} Comments
+    </button>
+  </div>
+
+  <div class="collapse bg-light border-top" id="comments-{{ post.id }}">
+    <div class="p-3">
+      {% if current_user.is_authenticated %}
+      <form method="POST" action="/create-comment/{{ post.id }}" class="mb-3">
+        <div class="input-group">
+          <input
+            type="text"
+            name="text"
+            class="form-control form-control-sm border-end-0"
+            placeholder="Add to the discussion..."
+            required
+          />
+          <button
+            class="btn btn-sm btn-outline-secondary border-start-0 bg-white text-primary"
+          >
+            Post
+          </button>
+        </div>
+      </form>
+      {% endif %}
+
+      <div class="comments-list">
+        {% for comment in visible_comments %}
+        <div class="d-flex gap-2 mb-3">
+          {% if comment.user.profile_pic %}
+          <img
+            src="{{ url_for('static', filename='uploads/avatars/' + comment.user.profile_pic) }}"
+            class="rounded-circle"
+            style="width: 24px; height: 24px; object-fit: cover"
+          />
+          {% else %}
+          <div
+            class="user-avatar-xs"
+            style="width: 24px; height: 24px; font-size: 0.7rem"
+          >
+            {{ comment.user.username[0]|upper }}
+          </div>
+          {% endif %}
+
+          <div class="flex-grow-1">
+            <div
+              class="bg-white p-2 rounded border shadow-sm position-relative"
+            >
+              <div
+                class="d-flex justify-content-between align-items-center mb-1"
+              >
+                <a
+                  href="/profile/{{ comment.user.username }}"
+                  class="fw-bold text-decoration-none small"
+                  style="color: #111827"
+                >
+                  {{ comment.user.username }}
+                </a>
+                <small class="text-muted" style="font-size: 0.7rem"
+                  >{{ comment.date_created | timeago }}</small
+                >
+              </div>
+              <p class="mb-0 small text-secondary">{{ comment.text | trim }}</p>
+
+              {% if current_user.id == comment.author or current_user.id ==
+              post.author %}
+              <a
+                href="/delete-comment/{{ comment.id }}"
+                class="position-absolute top-0 end-0 p-2 text-danger small text-decoration-none"
+                >&times;</a
+              >
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</article>
+{% endfor %}

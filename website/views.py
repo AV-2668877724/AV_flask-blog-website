@@ -132,18 +132,23 @@ def detect_platform(url: str) -> str:
 @views.route("/home", methods=['GET'])
 def home():
     page = request.args.get('page', 1, type=int)
-    per_page = 5
+    per_page = 10  # ✅ Load 10 posts at a time
     
     pagination = Post.query.order_by(Post.date_created.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
     posts = enrich_posts(pagination.items)
 
+
+    # Handle AJAX request for infinite scrolling
+    if request.args.get('ajax'):
+        return render_template("_posts.html", posts=posts, user=current_user)
+
     return render_template(
         "home.html", 
         user=current_user, 
         posts=posts, 
-        pagination=pagination,
+        pagination=pagination, # We pass this to know how many pages exist
         is_home=True
     )
 
