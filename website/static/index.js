@@ -563,3 +563,52 @@ function viewFullSize(src) {
     myModal.show();
   }
 }
+
+// ==========================================
+//  PRELOADER LOGIC
+// ==========================================
+
+const loader = document.getElementById("preloader");
+
+// 1. Hide Loader when page is fully loaded
+window.addEventListener("load", function () {
+    // Add a slight delay for smoothness
+    setTimeout(() => {
+        loader.classList.add("loader-hidden");
+    }, 300); 
+});
+
+// 2. Show Loader when navigating to a new page
+// We select all links that are NOT:
+// - Internal anchors (#)
+// - Open in new tab (_blank)
+// - Modals or Dropdowns
+document.addEventListener('click', function (e) {
+    const target = e.target.closest('a'); // Find the closest anchor tag
+    
+    if (target) {
+        const href = target.getAttribute('href');
+        const targetAttr = target.getAttribute('target');
+        const toggleAttr = target.getAttribute('data-bs-toggle');
+
+        // Check valid link
+        if (href && 
+            !href.startsWith('#') && 
+            !href.startsWith('javascript') && 
+            targetAttr !== '_blank' && 
+            !toggleAttr) {
+            
+            // Remove the hidden class to show loader immediately
+            loader.classList.remove("loader-hidden");
+        }
+    }
+    
+    // Also handle form submissions (like Login/Signup)
+    const form = e.target.closest('form');
+    if (form) {
+        // Only show if the form is actually submitting
+        if (form.checkValidity()) { 
+             loader.classList.remove("loader-hidden");
+        }
+    }
+});

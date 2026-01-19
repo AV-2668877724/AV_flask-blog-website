@@ -544,3 +544,91 @@ body.dark-mode .form-control::placeholder {
 .hover-opacity-100:hover {
     opacity: 1 !important;
 }
+
+/* =========================================
+   MODERN "PULSE & FLOW" PRELOADER
+   ========================================= */
+#preloader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Clean white background */
+    background-color: #ffffff; 
+    z-index: 99999; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Smooth fade out */
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+/* Container for Logo + Dots */
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px; /* Space between logo and dots */
+}
+
+/* 1. The Logo (Breathing Effect) */
+.loader-logo {
+    width: 80px; /* Larger, more prominent */
+    height: 80px;
+    object-fit: contain;
+    /* Subtle drop shadow for depth */
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    animation: breathe 3s ease-in-out infinite;
+}
+
+/* 2. The Dots (Wave Animation) */
+.loader-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.loader-dots span {
+    width: 10px;
+    height: 10px;
+    background-color: #0d6efd; /* Primary Blue */
+    border-radius: 50%;
+    display: inline-block;
+    animation: wave 1.4s infinite ease-in-out both;
+}
+
+/* Stagger the animation for the "Wave" look */
+.loader-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loader-dots span:nth-child(2) { animation-delay: -0.16s; }
+.loader-dots span:nth-child(3) { animation-delay: 0s; }
+
+/* Dark Mode Overrides */
+body.dark-mode #preloader {
+    background-color: #0f0f0f; /* Premium Dark Gray */
+}
+body.dark-mode .loader-logo {
+    filter: drop-shadow(0 4px 10px rgba(255,255,255,0.1));
+}
+body.dark-mode .loader-dots span {
+    background-color: #3d8bfd; /* Lighter Blue */
+}
+
+/* =========================================
+   ANIMATIONS
+   ========================================= */
+
+@keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.85; }
+}
+
+@keyframes wave {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* Utility to hide loader */
+.loader-hidden {
+    opacity: 0;
+    visibility: hidden;
+}
