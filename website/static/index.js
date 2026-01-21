@@ -1,3 +1,24 @@
+/* =========================
+     GLOBAL CONFIG & HELPER FUNCTIONS
+   ========================== */
+const TRUNCATE_HEIGHT = 400; // ✅ Your preferred height
+
+// 1. Truncate posts (Global function so Infinite Scroll can use it)
+function truncatePosts() {
+  document.querySelectorAll(".post-text").forEach((el) => {
+    // Only truncate if we haven't already processed it
+    if (el.dataset.processed) return;
+
+    const overlay = el.parentElement.querySelector(".fade-overlay");
+    if (el.scrollHeight > TRUNCATE_HEIGHT) {
+      if (overlay) overlay.style.display = "block";
+      el.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
+      el.style.overflow = "hidden";
+    }
+    el.dataset.processed = "true"; // Mark as done
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================
        DARK MODE
@@ -27,46 +48,44 @@ document.addEventListener("DOMContentLoaded", () => {
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
   /* =========================
-       POST TRUNCATION
+       POST TRUNCATION (ON LOAD)
     ========================== */
-  document.querySelectorAll(".post-text").forEach((el) => {
-    const overlay = el.parentElement.querySelector(".fade-overlay");
-    if (el.scrollHeight > 150) {
-      if (overlay) overlay.style.display = "block";
-      el.style.maxHeight = "150px";
-      el.style.overflow = "hidden";
-    }
-  });
+  // Run on startup for existing posts
+  truncatePosts();
 
   /* =========================
-       SEE MORE / SEE LESS
+       READ MORE / READ LESS (EVENT DELEGATION)
     ========================== */
-  document.querySelectorAll(".see-more-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
+  document.addEventListener("click", function (e) {
+    // Check if the clicked element is our button
+    if (e.target && e.target.classList.contains("see-more-btn")) {
+      const btn = e.target;
       const postId = btn.dataset.postId;
       const postText = document.getElementById(`post-text-${postId}`);
       const overlay = document.getElementById(`fade-overlay-${postId}`);
 
       if (!postText) return;
 
-      if (btn.innerText === "See More") {
+      // ✅ FIX: Check for "Read More" (matches your HTML), not "See More"
+      if (btn.innerText.trim() === "Read More") {
         postText.style.maxHeight = "none";
         postText.style.overflow = "visible";
-        btn.innerText = "See Less";
+        btn.innerText = "Read Less";
         if (overlay) overlay.style.display = "none";
       } else {
-        postText.style.maxHeight = "150px";
+        postText.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
         postText.style.overflow = "hidden";
-        btn.innerText = "See More";
+        btn.innerText = "Read More";
         if (overlay) overlay.style.display = "block";
 
+        // Scroll back up slightly so user isn't lost
         const rect = btn.getBoundingClientRect();
         window.scrollTo({
           top: window.scrollY + rect.top - 100,
           behavior: "smooth",
         });
       }
-    });
+    }
   });
 
   /* =========================
@@ -81,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         // 2. Backend Sync
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err),
+          console.error("Error marking read:", err)
         );
       }
     });
@@ -690,6 +709,9 @@ document.addEventListener("DOMContentLoaded", function () {
         while (tempDiv.firstChild) {
           container.appendChild(tempDiv.firstChild);
         }
+
+        // ✅ FIX: Apply truncation to newly loaded posts
+        truncatePosts();
 
         sentinel.setAttribute("data-page", nextPage);
       } catch (error) {
