@@ -49,9 +49,7 @@ class User(db.Model, UserMixin):
     bio = db.Column(db.String(300), default="")
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     is_verified = db.Column(db.Boolean, default=False)
-    # 🔐 Security question hashes
-    dob_hash = db.Column(db.String(150))
-    fav_person_hash = db.Column(db.String(150))
+    
 
     social_links = db.Column(JSON, default=dict)
 
@@ -75,7 +73,7 @@ class Post(db.Model):
     cover_image = db.Column(db.String(150), nullable=True)
     
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
-
+    is_deleted = db.Column(db.Boolean, default=False)
     author = db.Column(
         db.Integer,
         db.ForeignKey('user.id', ondelete='CASCADE'),

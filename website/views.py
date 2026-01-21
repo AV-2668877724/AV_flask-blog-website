@@ -132,15 +132,15 @@ def detect_platform(url: str) -> str:
 @views.route("/home", methods=['GET'])
 def home():
     page = request.args.get('page', 1, type=int)
-    per_page = 10  # ✅ Load 10 posts at a time
+    per_page = 10
     
-    pagination = Post.query.order_by(Post.date_created.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
+    # ✅ UPDATE: Only show non-deleted posts
+    pagination = Post.query.filter_by(is_deleted=False)\
+        .order_by(Post.date_created.desc())\
+        .paginate(page=page, per_page=per_page, error_out=False)
+        
     posts = enrich_posts(pagination.items)
 
-
-    # Handle AJAX request for infinite scrolling
     if request.args.get('ajax'):
         return render_template("_posts.html", posts=posts, user=current_user)
 
@@ -148,10 +148,10 @@ def home():
         "home.html", 
         user=current_user, 
         posts=posts, 
-        pagination=pagination, # We pass this to know how many pages exist
+        pagination=pagination,
         is_home=True
     )
-
+    
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
 def create_post():
@@ -203,20 +203,42 @@ def edit_post(id):
 
     return render_template("edit_post.html", user=current_user, post=post)
 
+@views.route("/posts/<username>")
+@login_required
+def posts(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    
+    pagination = Post.query.filter_by(author=user.id, is_deleted=False)\
+        .order_by(Post.date_created.desc())\
+        .paginate(page=page, per_page=10, error_out=False)
+        
+    posts = enrich_posts(pagination.items)
+    
+    return render_template(
+        "posts.html",
+        user=current_user,
+        posts=posts,
+        pagination=pagination,
+        username=username
+    )
+
 @views.route("/delete-post/<id>")
 @login_required
 def delete_post(id):
     post = Post.query.filter_by(id=id).first()
+    
     if not post:
         flash("Post does not exist.", category='error')
     elif current_user.id != post.author and not current_user.is_admin:
         flash("You do not have permission to delete this post.", category='error')
     else:
-        db.session.delete(post)
+        # ✅ UPDATE: Soft Delete
+        post.is_deleted = True
         db.session.commit()
-        flash('Post deleted.', category='success')
+        flash('Post moved to trash.', category='success')
 
-    return redirect(url_for('views.home'))
+    return redirect(request.referrer or url_for('views.home'))
 
 # =================================================
 # COMMENTS & LIKES
@@ -428,9 +450,12 @@ def admin_dashboard():
     if not current_user.is_admin:
         abort(403)
     users = User.query.all()
-    active_posts = Post.query.all()
+    
+    # ✅ Separated Active vs Deleted Posts
+    active_posts = Post.query.filter_by(is_deleted=False).all()
+    deleted_posts = Post.query.filter_by(is_deleted=True).all()
+    
     comments = Comment.query.order_by(Comment.date_created.desc()).limit(50).all()
-    deleted_posts = []
 
     return render_template(
         "admin_dashboard.html",
@@ -536,6 +561,22 @@ def admin_restore_comment(comment_id):
         comment.is_deleted = False
         db.session.commit()
         flash("Comment restored.", category='success')
+    return redirect(url_for('views.admin_dashboard'))
+
+@views.route('/admin/restore-post/<int:post_id>', methods=['POST'])
+@login_required
+def admin_restore_post(post_id):
+    if not current_user.is_admin: abort(403)
+    pwd = request.form.get('admin_password')
+    if pwd != ADMIN_ACTION_PASSWORD:
+        flash("Incorrect password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+        
+    post = Post.query.get(post_id)
+    if post:
+        post.is_deleted = False
+        db.session.commit()
+        flash("Post restored.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
 # =================================================

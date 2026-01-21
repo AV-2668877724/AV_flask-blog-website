@@ -131,7 +131,6 @@ block content %}
                 <td>{{ u.date_created.strftime('%Y-%m-%d') }}</td>
                 <td class="text-end pe-4">
                   {% if u.id != current_user.id %}
-
                   <form
                     method="POST"
                     action="{{ url_for('views.admin_toggle_user_status', user_id=u.id) }}"
@@ -145,7 +144,6 @@ block content %}
                       style="width: 100px"
                       required
                     />
-
                     {% if u.is_active %}
                     <button
                       class="btn btn-warning btn-sm text-white"
@@ -162,11 +160,12 @@ block content %}
                     </button>
                     {% endif %}
                   </form>
-
                   <form
                     method="POST"
                     action="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
-                    onsubmit="return confirm('WARNING: Permanently delete user?');"
+                    onsubmit="
+                      return confirm('WARNING: Permanently delete user?');
+                    "
                     class="d-inline-flex ms-2"
                   >
                     <input
@@ -178,7 +177,6 @@ block content %}
                       <i class="bi bi-trash"></i>
                     </button>
                   </form>
-
                   {% else %}
                   <span class="badge bg-secondary">You</span>
                   {% endif %}
@@ -219,7 +217,7 @@ block content %}
               <td class="ps-4 fw-bold">{{ p.user.username }}</td>
               <td style="max-width: 300px">
                 <span class="text-truncate d-block text-muted"
-                  >{{ p.text[:60] }}...</span
+                  >{{ p.text[:60] | striptags }}...</span
                 >
               </td>
               <td><small>{{ p.date_created | timeago }}</small></td>
@@ -227,7 +225,7 @@ block content %}
                 <form
                   method="POST"
                   action="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
-                  onsubmit="return confirm('Delete post?');"
+                  onsubmit="return confirm('Move post to trash?');"
                   class="d-inline-flex gap-2"
                 >
                   <input
@@ -263,12 +261,52 @@ block content %}
         <h5 class="fw-bold mb-0">Trash (Deleted Posts)</h5>
       </div>
       <div class="card-body p-0">
-        <div class="p-4 text-center text-muted">
-          <p class="mb-0">
-            Note: Currently using hard-delete for posts. Implement soft-delete
-            in models to see items here.
-          </p>
-        </div>
+        <table class="table align-middle mb-0">
+          <thead class="bg-light">
+            <tr>
+              <th class="ps-4">Author</th>
+              <th>Content Snippet</th>
+              <th>Original Date</th>
+              <th class="text-end pe-4">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in deleted_posts %}
+            <tr>
+              <td class="ps-4 fw-bold">{{ p.user.username }}</td>
+              <td style="max-width: 300px">
+                <span class="text-truncate d-block text-muted"
+                  >{{ p.text[:60] | striptags }}...</span
+                >
+              </td>
+              <td><small>{{ p.date_created | timeago }}</small></td>
+              <td class="text-end pe-4">
+                <form
+                  method="POST"
+                  action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
+                  class="d-inline-flex gap-2"
+                >
+                  <input
+                    type="password"
+                    name="admin_password"
+                    class="form-control form-control-sm"
+                    placeholder="Admin Pass"
+                    style="width: 120px"
+                    required
+                  />
+                  <button class="btn btn-success btn-sm">Restore</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">
+                No deleted posts found.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -296,7 +334,7 @@ block content %}
                 <span class="text-truncate d-block text-muted"
                   >{{ c.text }}</span
                 >
-                <small class="text-muted" style="font-size: 0.75rem"
+                <small class="text-muted d-block" style="font-size: 0.75rem"
                   >On post #{{ c.post_id }}</small
                 >
               </td>

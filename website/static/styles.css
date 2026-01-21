@@ -12,7 +12,7 @@
   --bg-body: #f8fafc;       /* Very light slate */
   --bg-card: #ffffff;
   --bg-input: #f1f5f9;
-  --text-main: #1e293b;
+  --text-main: #1e293b;     /* Dark Slate Blue (High Contrast) */
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   
@@ -49,7 +49,7 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
-  padding-bottom: 70px;
+  padding-bottom: 70px; /* Space for mobile nav */
 }
 
 h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
@@ -185,14 +185,6 @@ a:hover {
   background-color: transparent;
   border-bottom: 1px solid var(--border-color);
   padding: 1rem 1.25rem;
-}
-
-.post-text {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: var(--text-main);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
 }
 
 /* =========================================
@@ -399,7 +391,53 @@ body.dark-mode .bio-text { color: #e0e0e0 !important; }
 }
 
 /* =========================================
-   11. DARK MODE GLOBAL OVERRIDES
+   11. ✅ CRITICAL: POST TEXT CONTRAST FIX
+   ========================================= */
+.post-text {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* Force text to match theme color (Overrides Quill/Editor Defaults) */
+.post-text, 
+.post-text * {
+  color: var(--text-main) !important;
+  opacity: 1 !important;
+  background-color: transparent !important;
+}
+
+/* Make headers bold and spaced */
+.post-text h1, .post-text h2, .post-text h3 {
+    font-weight: 700;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Ensure links stand out */
+.post-text a {
+  color: var(--primary) !important;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+/* List spacing */
+.post-text ul, .post-text ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Blockquote styling */
+.post-text blockquote {
+    border-left: 4px solid var(--primary);
+    padding-left: 1rem;
+    font-style: italic;
+    color: var(--text-muted) !important;
+}
+
+/* =========================================
+   12. DARK MODE GLOBAL OVERRIDES
    ========================================= */
 body.dark-mode .text-dark, 
 body.dark-mode .link-dark { color: var(--text-main) !important; }
@@ -414,161 +452,85 @@ body.dark-mode .btn-outline-dark:hover { background-color: #F9FAFB; color: #1118
 body.dark-mode .btn-outline-primary { color: #60A5FA; border-color: #60A5FA; }
 body.dark-mode .btn-outline-danger { color: #F87171; border-color: #F87171; }
 
-/* =========================================
-   12. DARK MODE NAVBAR FIX
-   ========================================= */
-body.dark-mode .nav-link {
-    color: #e2e8f0 !important;
-    font-weight: 500;
-}
+/* Navbar Fix */
+body.dark-mode .nav-link { color: #e2e8f0 !important; font-weight: 500; }
 body.dark-mode .nav-link:hover,
-body.dark-mode .nav-link.active {
-    color: var(--primary) !important;
-}
-body.dark-mode .brand-text {
-    color: #ffffff !important;
-}
-body.dark-mode .navbar-toggler-icon {
-    filter: invert(1) grayscale(100%) brightness(200%);
-}
+body.dark-mode .nav-link.active { color: var(--primary) !important; }
+body.dark-mode .brand-text { color: #ffffff !important; }
+body.dark-mode .navbar-toggler-icon { filter: invert(1) grayscale(100%) brightness(200%); }
 
-/* =========================================
-   13. DARK MODE LISTS & STATS FIX (NEW)
-   ========================================= */
-
-/* 1. Fix Profile Stats (Followers/Following Count & Label) */
+/* Stats & Lists */
 body.dark-mode .bio-text,
 body.dark-mode .bio-text a,
 body.dark-mode .bio-text span,
-body.dark-mode .fw-bold {
-    color: #f1f5f9 !important; /* Bright White */
-}
-/* Ensure the "Followers" label specifically is readable */
-body.dark-mode .bio-text .text-muted {
-    color: #cbd5e1 !important; /* Light Grey for labels */
-}
-
-/* 2. Fix Followers/Following LISTS (Usernames in lists) */
-/* This handles the list items on the dedicated pages */
+body.dark-mode .fw-bold { color: #f1f5f9 !important; }
+body.dark-mode .bio-text .text-muted { color: #cbd5e1 !important; }
 body.dark-mode .list-group-item {
     background-color: var(--bg-card) !important;
     border-color: var(--border-color) !important;
     color: var(--text-main) !important;
 }
-
-/* Make usernames in lists bright white */
 body.dark-mode .list-group-item a,
 body.dark-mode .list-group-item strong,
-body.dark-mode .list-group-item .fw-bold {
-    color: #ffffff !important;
-}
+body.dark-mode .list-group-item .fw-bold { color: #ffffff !important; }
 
-/* 3. Fix Input Placeholders (Search/Write Post) */
-body.dark-mode ::placeholder {
-    color: #94a3b8 !important;
-    opacity: 1;
-}
+/* Inputs */
+body.dark-mode ::placeholder { color: #94a3b8 !important; opacity: 1; }
+body.dark-mode textarea { color: #ffffff !important; }
 
-/* 4. Fix "Write" Text Area Text */
-body.dark-mode textarea {
-    color: #ffffff !important;
-}
-
-/* =========================================
-   14. DARK MODE HEADERS & EMPTY STATE FIX
-   ========================================= */
-
-/* 1. Fix "No followers yet", "No posts", etc. */
+/* Headers & Empty States */
 body.dark-mode .text-muted, 
-body.dark-mode .lead {
-    color: #cbd5e1 !important; /* Bright Light Grey */
-}
-
-/* 2. Fix Page Titles (e.g., "anannay#001") */
+body.dark-mode .lead { color: #cbd5e1 !important; }
 body.dark-mode h1, 
 body.dark-mode h2, 
 body.dark-mode h3, 
 body.dark-mode h4, 
 body.dark-mode h5,
-body.dark-mode .font-heading {
-    color: #ffffff !important; /* Pure White */
-}
+body.dark-mode .font-heading { color: #ffffff !important; }
+body.dark-mode .display-4 { color: #94a3b8 !important; }
 
-/* 3. Fix Icons in Empty States (like the big book icon) */
-body.dark-mode .display-4 {
-    color: #94a3b8 !important; /* Lighter Grey for big icons */
-}
-
-/* =========================================
-   15. DARK MODE DROPDOWN FIX (NOTIFICATIONS)
-   ========================================= */
-
-/* 1. Turn the Dropdown Box Dark */
+/* Dropdowns & Notifications */
 body.dark-mode .dropdown-menu {
-    background-color: #1e293b !important; /* Dark Slate */
+    background-color: #1e293b !important;
     border: 1px solid #374151;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
-
-/* 2. Turn the Items White */
-body.dark-mode .dropdown-item {
-    color: #f1f5f9 !important; /* Bright White */
-}
-
-/* 3. Hover Effect (Lighter Grey) */
+body.dark-mode .dropdown-item { color: #f1f5f9 !important; }
 body.dark-mode .dropdown-item:hover,
 body.dark-mode .dropdown-item:focus {
     background-color: #334155 !important;
-    color: #60a5fa !important; /* Light Blue Text on Hover */
+    color: #60a5fa !important;
 }
-
-/* 4. Fix "Recent Activity" Header */
 body.dark-mode .dropdown-header, 
-body.dark-mode .notif-dropdown-menu h6 {
-    color: #cbd5e1 !important; /* Light Grey */
-}
+body.dark-mode .notif-dropdown-menu h6 { color: #cbd5e1 !important; }
+body.dark-mode .dropdown-menu a { color: #f1f5f9; }
+body.dark-mode .notif-dropdown-menu .text-muted { color: #94a3b8 !important; }
+body.dark-mode .notif-dropdown-menu strong { color: #ffffff !important; }
 
-/* 5. Fix "See All History" Link */
-body.dark-mode .dropdown-menu a {
-    color: #f1f5f9;
+/* Fix Notification "White Squares" */
+body.dark-mode .notif-dropdown-menu .bg-light {
+    background-color: #1e293b !important;
+    border-color: #374151 !important;
 }
+body.dark-mode .notif-dropdown-menu a.small { color: #60a5fa !important; font-weight: 600; }
+body.dark-mode .notif-dropdown-menu h6 { color: #ffffff !important; }
+body.dark-mode .notif-dropdown-menu .border-bottom { border-bottom: 1px solid #374151 !important; }
+body.dark-mode .notif-dropdown-menu li:hover { background-color: #334155 !important; }
 
-/* 6. Fix "No new notifications" text */
-body.dark-mode .notif-dropdown-menu .text-muted {
-    color: #94a3b8 !important;
-}
-
-/* 7. Ensure Notification Text (Usernames) stands out */
-body.dark-mode .notif-dropdown-menu strong {
-    color: #ffffff !important;
-}
 /* =========================================
-   16. FIX NOTIFICATION "WHITE SQUARES"
+   18. FIX: NAV BAR IMAGE SIZE
    ========================================= */
 
-/* 1. Turn the 'bg-light' header/footer DARK */
-body.dark-mode .notif-dropdown-menu .bg-light {
-    background-color: #1e293b !important; /* Matches Dark Card BG */
-    border-color: #374151 !important;     /* Dark Border */
+/* This shrinks the profile picture so it fits in the top menu */
+.user-avatar-nav {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
-/* 2. Fix the "View All" link color */
-body.dark-mode .notif-dropdown-menu a.small {
-    color: #60a5fa !important; /* Bright Blue */
-    font-weight: 600;
-}
-
-/* 3. Fix the "Recent Activity" Title */
-body.dark-mode .notif-dropdown-menu h6 {
-    color: #ffffff !important; /* Pure White */
-}
-
-/* 4. Fix Borders inside the list */
-body.dark-mode .notif-dropdown-menu .border-bottom {
-    border-bottom: 1px solid #374151 !important;
-}
-
-/* 5. Hover State for these items */
-body.dark-mode .notif-dropdown-menu li:hover {
-    background-color: #334155 !important; /* Slightly lighter on hover */
+/* This ensures no other images accidentally cover the screen */
+img {
+  max-width: 100%;
+  height: auto;
 }
