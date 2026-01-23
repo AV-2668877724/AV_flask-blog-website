@@ -12,7 +12,7 @@
   --bg-body: #f8fafc;       /* Very light slate */
   --bg-card: #ffffff;
   --bg-input: #f1f5f9;
-  --text-main: #1e293b;     /* Dark Slate Blue (High Contrast) */
+  --text-main: #1e293b;     /* Dark Slate Blue */
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   
@@ -49,7 +49,8 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
-  padding-bottom: 70px; /* Space for mobile nav */
+  padding-bottom: 70px;
+  overflow-x: hidden; /* Prevents side-scrolling bugs */
 }
 
 h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
@@ -77,6 +78,9 @@ a:hover {
   border-bottom: var(--glass-border);
   box-shadow: var(--shadow-sm);
   padding: 0.75rem 0;
+  position: sticky; /* Keeps navbar at top */
+  top: 0;
+  z-index: 1020;
 }
 
 .nav-logo {
@@ -97,6 +101,14 @@ a:hover {
 }
 .nav-link:hover, .nav-link.active {
   color: var(--primary) !important;
+}
+
+/* ✅ FIX: Prevents Profile Pic from Exploding */
+.user-avatar-nav {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 @media (max-width: 768px) {
@@ -145,24 +157,6 @@ a:hover {
     font-size: 1.5rem;
     box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
     margin-bottom: 5px;
-}
-
-.mobile-nav-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.mobile-badge {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 8px;
-    height: 8px;
-    background: #ef4444;
-    border-radius: 50%;
-    border: 1px solid var(--bg-card);
 }
 
 /* =========================================
@@ -245,7 +239,7 @@ a:hover {
 }
 
 /* =========================================
-   8. MODERN PRELOADER
+   8. MODERN PRELOADER & SKELETON
    ========================================= */
 #preloader {
     position: fixed;
@@ -261,107 +255,55 @@ a:hover {
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
 
-.loader-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
 .loader-logo {
-    width: 80px;
-    height: 80px;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    width: 80px; height: 80px;
     animation: breathe 3s ease-in-out infinite;
 }
 
-.loader-dots {
-    display: flex;
-    gap: 8px;
-}
-
 .loader-dots span {
-    width: 10px;
-    height: 10px;
-    background-color: var(--primary);
-    border-radius: 50%;
-    display: inline-block;
+    width: 10px; height: 10px; background-color: var(--primary);
+    border-radius: 50%; display: inline-block;
     animation: wave 1.4s infinite ease-in-out both;
 }
-
 .loader-dots span:nth-child(1) { animation-delay: -0.32s; }
 .loader-dots span:nth-child(2) { animation-delay: -0.16s; }
-.loader-dots span:nth-child(3) { animation-delay: 0s; }
+
+.loader-hidden { opacity: 0; visibility: hidden; }
 
 @keyframes breathe {
     0%, 100% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.05); opacity: 0.85; }
 }
-
 @keyframes wave {
     0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
     40% { transform: scale(1); opacity: 1; }
 }
 
-.loader-hidden {
-    opacity: 0;
-    visibility: hidden;
-}
-
-/* =========================================
-   9. SKELETON LOADING
-   ========================================= */
 .skeleton {
-    background: #e2e8f0;
     background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     border-radius: 4px;
 }
-
 body.dark-mode .skeleton {
-    background: #334155;
     background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
 }
-
-@keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-.skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
-.skeleton-text { height: 12px; }
-.skeleton-img { width: 100%; height: 200px; border-radius: 8px; }
+@keyframes shimmer { 100% { background-position: -200% 0; } }
 
 /* =========================================
-   10. PAGE SPECIFIC UTILITIES
+   9. PAGE UTILITIES
    ========================================= */
 .user-avatar-xs {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.85rem;
+  width: 32px; height: 32px; border-radius: 50%;
+  background-color: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
 }
 
 #searchResults {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 9999;
-    background-color: var(--bg-card);
+    position: absolute; top: 100%; left: 0; right: 0;
+    z-index: 9999; background-color: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 0.375rem;
-    box-shadow: var(--shadow-md);
-    max-height: 300px;
-    overflow-y: auto;
+    border-radius: 0.375rem; box-shadow: var(--shadow-md);
     display: none;
 }
 #searchResults.show { display: block; }
@@ -379,158 +321,119 @@ body.dark-mode .skeleton {
 .bio-text { color: #6c757d; }
 body.dark-mode .bio-text { color: #e0e0e0 !important; }
 
-.fade-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  background: linear-gradient(to bottom, transparent, var(--bg-card));
-  pointer-events: none;
-  display: none;
-}
-
 /* =========================================
-   11. ✅ CRITICAL: POST TEXT CONTRAST FIX
+   10. POST TEXT CONTRAST FIX
    ========================================= */
 .post-text {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
+  font-size: 1.05rem; line-height: 1.7;
+  white-space: pre-wrap; overflow-wrap: break-word;
 }
-
-/* Force text to match theme color (Overrides Quill/Editor Defaults) */
-.post-text, 
-.post-text * {
+.post-text, .post-text * {
   color: var(--text-main) !important;
-  opacity: 1 !important;
-  background-color: transparent !important;
+  opacity: 1 !important; background-color: transparent !important;
 }
-
-/* Make headers bold and spaced */
-.post-text h1, .post-text h2, .post-text h3 {
-    font-weight: 700;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-/* Ensure links stand out */
-.post-text a {
-  color: var(--primary) !important;
-  text-decoration: underline;
-  font-weight: 500;
-}
-
-/* List spacing */
-.post-text ul, .post-text ol {
-    padding-left: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-/* Blockquote styling */
+.post-text a { color: var(--primary) !important; text-decoration: underline; }
 .post-text blockquote {
-    border-left: 4px solid var(--primary);
-    padding-left: 1rem;
-    font-style: italic;
+    border-left: 4px solid var(--primary); padding-left: 1rem;
     color: var(--text-muted) !important;
 }
 
 /* =========================================
-   12. DARK MODE GLOBAL OVERRIDES
+   11. DARK MODE OVERRIDES (GENERAL)
    ========================================= */
-body.dark-mode .text-dark, 
-body.dark-mode .link-dark { color: var(--text-main) !important; }
+body.dark-mode .text-dark, body.dark-mode .link-dark { color: var(--text-main) !important; }
 body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
 body.dark-mode .border-light { border-color: var(--border-color) !important; }
 body.dark-mode a.text-decoration-none:hover { color: var(--primary) !important; }
 body.dark-mode .bg-blue-subtle { background-color: #1e293b; }
 
-/* Button Fixes */
+/* Buttons */
 body.dark-mode .btn-outline-dark { color: #F9FAFB; border-color: #F9FAFB; }
 body.dark-mode .btn-outline-dark:hover { background-color: #F9FAFB; color: #111827; }
-body.dark-mode .btn-outline-primary { color: #60A5FA; border-color: #60A5FA; }
-body.dark-mode .btn-outline-danger { color: #F87171; border-color: #F87171; }
 
-/* Navbar Fix */
-body.dark-mode .nav-link { color: #e2e8f0 !important; font-weight: 500; }
-body.dark-mode .nav-link:hover,
-body.dark-mode .nav-link.active { color: var(--primary) !important; }
+/* Navbar */
+body.dark-mode .nav-link { color: #e2e8f0 !important; }
+body.dark-mode .nav-link:hover, body.dark-mode .nav-link.active { color: var(--primary) !important; }
 body.dark-mode .brand-text { color: #ffffff !important; }
 body.dark-mode .navbar-toggler-icon { filter: invert(1) grayscale(100%) brightness(200%); }
 
-/* Stats & Lists */
-body.dark-mode .bio-text,
-body.dark-mode .bio-text a,
-body.dark-mode .bio-text span,
-body.dark-mode .fw-bold { color: #f1f5f9 !important; }
-body.dark-mode .bio-text .text-muted { color: #cbd5e1 !important; }
+/* Lists & Inputs */
 body.dark-mode .list-group-item {
     background-color: var(--bg-card) !important;
     border-color: var(--border-color) !important;
     color: var(--text-main) !important;
 }
-body.dark-mode .list-group-item a,
-body.dark-mode .list-group-item strong,
-body.dark-mode .list-group-item .fw-bold { color: #ffffff !important; }
-
-/* Inputs */
 body.dark-mode ::placeholder { color: #94a3b8 !important; opacity: 1; }
-body.dark-mode textarea { color: #ffffff !important; }
 
-/* Headers & Empty States */
-body.dark-mode .text-muted, 
-body.dark-mode .lead { color: #cbd5e1 !important; }
-body.dark-mode h1, 
-body.dark-mode h2, 
-body.dark-mode h3, 
-body.dark-mode h4, 
-body.dark-mode h5,
-body.dark-mode .font-heading { color: #ffffff !important; }
-body.dark-mode .display-4 { color: #94a3b8 !important; }
+/* Headings */
+body.dark-mode .text-muted, body.dark-mode .lead { color: #cbd5e1 !important; }
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode h5, body.dark-mode .font-heading { color: #ffffff !important; }
 
-/* Dropdowns & Notifications */
+/* Dropdowns */
 body.dark-mode .dropdown-menu {
     background-color: #1e293b !important;
     border: 1px solid #374151;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 body.dark-mode .dropdown-item { color: #f1f5f9 !important; }
-body.dark-mode .dropdown-item:hover,
-body.dark-mode .dropdown-item:focus {
-    background-color: #334155 !important;
-    color: #60a5fa !important;
-}
-body.dark-mode .dropdown-header, 
-body.dark-mode .notif-dropdown-menu h6 { color: #cbd5e1 !important; }
-body.dark-mode .dropdown-menu a { color: #f1f5f9; }
+body.dark-mode .dropdown-item:hover { background-color: #334155 !important; color: #60a5fa !important; }
+body.dark-mode .dropdown-header, body.dark-mode .notif-dropdown-menu h6 { color: #cbd5e1 !important; }
+
+/* Notifications Fix */
+body.dark-mode .notif-dropdown-menu .bg-light { background-color: #1e293b !important; border-color: #374151 !important; }
+body.dark-mode .notif-dropdown-menu a.small { color: #60a5fa !important; }
 body.dark-mode .notif-dropdown-menu .text-muted { color: #94a3b8 !important; }
 body.dark-mode .notif-dropdown-menu strong { color: #ffffff !important; }
 
-/* Fix Notification "White Squares" */
-body.dark-mode .notif-dropdown-menu .bg-light {
-    background-color: #1e293b !important;
-    border-color: #374151 !important;
-}
-body.dark-mode .notif-dropdown-menu a.small { color: #60a5fa !important; font-weight: 600; }
-body.dark-mode .notif-dropdown-menu h6 { color: #ffffff !important; }
-body.dark-mode .notif-dropdown-menu .border-bottom { border-bottom: 1px solid #374151 !important; }
-body.dark-mode .notif-dropdown-menu li:hover { background-color: #334155 !important; }
-
 /* =========================================
-   18. FIX: NAV BAR IMAGE SIZE
+   22. NUCLEAR FIX: EDIT PROFILE MODAL
    ========================================= */
 
-/* This shrinks the profile picture so it fits in the top menu */
-.user-avatar-nav {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 50%;
+/* 1. Force Modal Background to DARK (Overriding Bootstrap .bg-white) */
+body.dark-mode .modal-content,
+body.dark-mode .modal-content.bg-white {
+    background-color: #1e293b !important; /* Dark Slate */
+    color: #ffffff !important;
 }
 
-/* This ensures no other images accidentally cover the screen */
-img {
-  max-width: 100%;
-  height: auto;
+/* 2. FORCE "Bio" (Labels) to be White */
+body.dark-mode .modal-body label,
+body.dark-mode .modal-body .form-label,
+body.dark-mode .modal-body .fw-bold {
+    color: #ffffff !important;
+    opacity: 1 !important;
+}
+
+/* 3. FORCE "Add Social" / "Change Username" (Links) to be Blue/Visible */
+body.dark-mode .modal-body a,
+body.dark-mode .modal-body a.text-decoration-none {
+    color: #60a5fa !important; /* Bright Blue */
+}
+body.dark-mode .modal-body a:hover {
+    color: #93c5fd !important; /* Lighter Blue on hover */
+}
+
+/* 4. FORCE "Text Muted" (Instructions) to be Light Grey */
+body.dark-mode .modal-body .text-muted,
+body.dark-mode .modal-body small {
+    color: #cbd5e1 !important; /* Readable Grey */
+}
+
+/* 5. FIX INPUTS (Make them Dark with White Text) */
+body.dark-mode .modal-body input, 
+body.dark-mode .modal-body textarea, 
+body.dark-mode .modal-body select {
+    background-color: #334155 !important;
+    border: 1px solid #475569 !important;
+    color: #ffffff !important;
+}
+
+/* 6. FIX INPUT PLACEHOLDERS */
+body.dark-mode .modal-body input::placeholder,
+body.dark-mode .modal-body textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* 7. FIX CLOSE BUTTON */
+body.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
 }

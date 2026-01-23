@@ -399,6 +399,31 @@ def edit_bio():
         flash('Bio updated!', category='success')
     return redirect(url_for('views.profile', username=current_user.username))
 
+@views.route('/check-username', methods=['POST'])
+def check_username():
+    """API called by JavaScript to check availability"""
+    data = request.get_json()
+    username = data.get('username')
+    
+    if not username:
+        return jsonify({'available': False, 'message': 'Please enter a username'})
+    
+    # Remove spaces and check length
+    username = username.strip()
+    if len(username) < 3:
+         return jsonify({'available': False, 'message': 'Too short (min 3 chars)'})
+
+    # Check database
+    user = User.query.filter_by(username=username).first()
+    
+    if user:
+        if current_user.is_authenticated and user.id == current_user.id:
+             return jsonify({'available': True, 'message': 'Current username'})
+        return jsonify({'available': False, 'message': 'Username taken'})
+    
+    return jsonify({'available': True, 'message': 'Username available'})
+
+
 @views.route('/change-username', methods=['POST'])
 @login_required
 def change_username():

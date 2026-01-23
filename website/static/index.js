@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         // 2. Backend Sync
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err)
+          console.error("Error marking read:", err),
         );
       }
     });
@@ -186,6 +186,26 @@ document.addEventListener("DOMContentLoaded", () => {
       ) {
         searchResults.classList.remove("show");
         searchResults.style.display = "none";
+      }
+    });
+  }
+
+  /* =======================================================
+     ✅ CRITICAL FIX: RESET UPDATE BUTTON ON TYPING
+     ======================================================= */
+  const newUsernameInput = document.getElementById("newUsername");
+  const submitUsernameBtn = document.getElementById("submitUsernameBtn");
+  const usernameStatus = document.getElementById("usernameStatus");
+
+  if (newUsernameInput && submitUsernameBtn) {
+    newUsernameInput.addEventListener("input", function () {
+      // 1. Immediately Disable the button if user types anything
+      submitUsernameBtn.disabled = true;
+
+      // 2. Clear the "Available" message so user knows they must check again
+      if (usernameStatus) {
+        usernameStatus.textContent = "";
+        usernameStatus.className = "";
       }
     });
   }
