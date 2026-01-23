@@ -222,6 +222,15 @@
                 <li><hr class="dropdown-divider" /></li>
                 <li>
                   <a
+                    class="dropdown-item text-danger"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deactivateModal"
+                    >Deactivate Account</a
+                  >
+                </li>
+                <li>
+                  <a
                     class="dropdown-item"
                     href="#"
                     data-bs-toggle="modal"
@@ -342,6 +351,42 @@
               class="btn btn-outline-secondary px-4 rounded-pill"
               >Yes, Log Out</a
             >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="deactivateModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+          <div class="modal-header bg-danger-subtle text-danger border-0">
+            <h5 class="modal-title fw-bold">Final Confirmation</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body text-center py-4">
+            <p class="fw-bold mb-1">This action cannot be undone by you.</p>
+            <p class="text-muted small">
+              Only an administrator can restore your account.
+            </p>
+            <form method="POST" action="/deactivate-account">
+              <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-danger btn-lg">
+                  Confirm Deactivation
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer border-0 justify-content-center">
+            <button
+              class="btn btn-link text-muted text-decoration-none"
+              data-bs-dismiss="modal"
+            >
+              I changed my mind
+            </button>
           </div>
         </div>
       </div>

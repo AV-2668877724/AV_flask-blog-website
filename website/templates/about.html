@@ -23,7 +23,7 @@
 
 <div class="row justify-content-center mb-5">
   <div class="col-lg-10">
-    <div class="card border-0 shadow-sm p-4 p-md-5 bg-white">
+    <div class="card border-0 shadow-sm p-4 p-md-5">
       <div class="row align-items-center g-5">
         <div class="col-md-6">
           <h3 class="fw-bold font-heading mb-3">Our Story</h3>
@@ -38,14 +38,21 @@
             for your intellectual journey.
           </p>
         </div>
+
         <div class="col-md-6">
-          <div class="p-4 bg-light rounded-3 text-center border">
+          <div
+            class="p-4 rounded-3 text-center border shadow-sm h-100 d-flex flex-column justify-content-center"
+            style="background-color: var(--bg-input)"
+          >
             <i class="fas fa-quote-left text-primary mb-3 fa-2x"></i>
-            <p class="fst-italic fs-5 text-dark">
+            <p
+              class="fst-italic fs-5"
+              style="color: var(--text-main); font-weight: 500"
+            >
               "The goal isn't just to build a website, but to build a space
               where knowledge flows freely."
             </p>
-            <small class="fw-bold text-uppercase text-muted"
+            <small class="fw-bold text-uppercase text-primary"
               >- Anannay Varshney, Creator</small
             >
           </div>
@@ -58,36 +65,37 @@
 <div class="row justify-content-center mb-5">
   <div class="col-12 text-center mb-4">
     <h3 class="fw-bold font-heading">Why Write Here?</h3>
+    <p class="text-muted">Explore the features that make AV Postory unique.</p>
   </div>
 
-  <div class="col-md-4 mb-3">
-    <div class="feature-card p-4 rounded-3 h-100 text-center bg-white">
+  <div class="col-md-4 mb-4">
+    <div class="card border-0 shadow-sm p-4 h-100 text-center">
       <div class="mb-3 text-primary">
         <i class="fas fa-pen-nib fa-2x"></i>
       </div>
       <h5 class="fw-bold">Rich Writing Experience</h5>
       <p class="text-muted small">
-        Our new rich-text editor allows you to format your thoughts with
-        headings, lists, and bold text effortlessly.
+        Our editor allows you to format thoughts with headings, lists, code
+        blocks, and bold text effortlessly.
       </p>
     </div>
   </div>
 
-  <div class="col-md-4 mb-3">
-    <div class="feature-card p-4 rounded-3 h-100 text-center bg-white">
+  <div class="col-md-4 mb-4">
+    <div class="card border-0 shadow-sm p-4 h-100 text-center">
       <div class="mb-3 text-success">
         <i class="fas fa-shield-alt fa-2x"></i>
       </div>
       <h5 class="fw-bold">Privacy First</h5>
       <p class="text-muted small">
-        We respect your data. With secure authentication and private profile
-        options, you are in control.
+        You control your data. Edit, delete, or hide your posts anytime. Secure
+        authentication keeps you safe.
       </p>
     </div>
   </div>
 
-  <div class="col-md-4 mb-3">
-    <div class="feature-card p-4 rounded-3 h-100 text-center bg-white">
+  <div class="col-md-4 mb-4">
+    <div class="card border-0 shadow-sm p-4 h-100 text-center">
       <div class="mb-3 text-warning">
         <i class="fas fa-users fa-2x"></i>
       </div>
@@ -96,6 +104,81 @@
         Connect with like-minded individuals through our Follow system, Likes,
         and real-time Comments.
       </p>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+      <div class="mb-3 text-info">
+        <i class="fas fa-moon fa-2x"></i>
+      </div>
+      <h5 class="fw-bold">Dark Mode</h5>
+      <p class="text-muted small">
+        Read comfortably at night. Our seamless Dark Mode protects your eyes and
+        looks stunning.
+      </p>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+      <div class="mb-3 text-danger">
+        <i class="fas fa-id-card fa-2x"></i>
+      </div>
+      <h5 class="fw-bold">Custom Profiles</h5>
+      <p class="text-muted small">
+        Make it yours. Add a bio, cover photo, avatar, and link your social
+        media profiles.
+      </p>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+      <div class="mb-3 text-primary">
+        <i class="fas fa-search fa-2x"></i>
+      </div>
+      <h5 class="fw-bold">Smart Search</h5>
+      <p class="text-muted small">
+        Find users and content instantly with our live search feature. Never
+        lose track of a friend.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="row justify-content-center mb-5">
+  <div class="col-lg-10">
+    <div class="card border-0 shadow-sm bg-primary text-white overflow-hidden">
+      <div class="card-body p-5 text-center position-relative">
+        <div
+          class="position-absolute top-0 start-0 w-100 h-100"
+          style="background: rgba(0, 0, 0, 0.1); pointer-events: none"
+        ></div>
+
+        <h3 class="fw-bold mb-3 position-relative font-heading">
+          Account Support & Reactivation
+        </h3>
+        <p
+          class="mb-4 position-relative opacity-90"
+          style="max-width: 700px; margin: 0 auto; font-size: 1.1rem"
+        >
+          Did you deactivate your account and want to return? We'd love to have
+          you back! For security reasons, deactivated accounts are hidden. To
+          reactivate, simply send us an email.
+        </p>
+
+        <a
+          href="mailto:support@avpostory.com"
+          class="btn btn-light text-primary fw-bold px-4 py-2 shadow-sm position-relative"
+        >
+          <i class="fas fa-envelope me-2"></i> Email Support to Reactivate
+        </a>
+
+        <p class="small mt-3 mb-0 position-relative opacity-75">
+          Please email us from your registered email address for verification.
+        </p>
+      </div>
     </div>
   </div>
 </div>

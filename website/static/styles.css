@@ -50,7 +50,7 @@ body {
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
   padding-bottom: 70px;
-  overflow-x: hidden; /* Prevents side-scrolling bugs */
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
@@ -78,7 +78,7 @@ a:hover {
   border-bottom: var(--glass-border);
   box-shadow: var(--shadow-sm);
   padding: 0.75rem 0;
-  position: sticky; /* Keeps navbar at top */
+  position: sticky;
   top: 0;
   z-index: 1020;
 }
@@ -384,11 +384,16 @@ body.dark-mode .notif-dropdown-menu a.small { color: #60a5fa !important; }
 body.dark-mode .notif-dropdown-menu .text-muted { color: #94a3b8 !important; }
 body.dark-mode .notif-dropdown-menu strong { color: #ffffff !important; }
 
+/* ✅ FIX: Force Deactivate Link to be RED in Dark Mode */
+body.dark-mode .dropdown-item.text-danger {
+    color: #ef4444 !important; /* Bright Red */
+}
+
 /* =========================================
-   22. NUCLEAR FIX: EDIT PROFILE MODAL
+   12. NUCLEAR FIX: EDIT PROFILE & DEACTIVATE MODAL
    ========================================= */
 
-/* 1. Force Modal Background to DARK (Overriding Bootstrap .bg-white) */
+/* 1. Force Modal Background to DARK */
 body.dark-mode .modal-content,
 body.dark-mode .modal-content.bg-white {
     background-color: #1e293b !important; /* Dark Slate */
@@ -436,4 +441,16 @@ body.dark-mode .modal-body textarea::placeholder {
 /* 7. FIX CLOSE BUTTON */
 body.dark-mode .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+/* ✅ 8. FIX DEACTIVATE MODAL HEADER IN DARK MODE */
+/* Transforms the light pink header into a Dark Red header with Light Red text */
+body.dark-mode .modal-header.bg-danger-subtle {
+    background-color: #3f0e0e !important; /* Deep Dark Red */
+    border-bottom: 1px solid #7f1d1d !important;
+}
+
+body.dark-mode .modal-header.bg-danger-subtle .modal-title,
+body.dark-mode .modal-header.bg-danger-subtle .text-danger {
+    color: #fca5a5 !important; /* Soft Light Red (Easily visible) */
 }
