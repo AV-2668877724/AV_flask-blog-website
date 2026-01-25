@@ -665,10 +665,21 @@ def following_list(username):
 @views.route('/deactivate-account', methods=['POST'])
 @login_required
 def deactivate_account():
+    # 1. Get the reason from the form
+    reason = request.form.get('reason')
+    details = request.form.get('details')
+    
+    # 2. Combine them into a single string
+    full_reason = f"Reason: {reason} | Details: {details}" if details else reason
+    
+    # 3. Save to database
+    current_user.deactivation_reason = full_reason
     current_user.is_active = False
+    
     db.session.commit()
     logout_user() 
-    flash('Your account has been deactivated. Goodbye!', category='success')
+    
+    flash('Your account has been deactivated. We hope to see you again!', category='success')
     return redirect(url_for('auth.login'))
 
 # =================================================

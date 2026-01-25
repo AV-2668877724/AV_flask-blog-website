@@ -49,7 +49,7 @@ class User(db.Model, UserMixin):
     bio = db.Column(db.String(300), default="")
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     is_verified = db.Column(db.Boolean, default=False)
-    
+    deactivation_reason = db.Column(db.String(500), nullable=True)
 
     social_links = db.Column(JSON, default=dict)
 

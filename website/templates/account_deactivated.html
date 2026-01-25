@@ -1,0 +1,64 @@
+{% extends "base.html" %} {% block title %}Account Deactivated{% endblock %} {%
+block content %}
+<div
+  class="container d-flex flex-column justify-content-center align-items-center"
+  style="min-height: 70vh"
+>
+  <div
+    class="card border-0 shadow-lg p-5 text-center"
+    style="max-width: 600px; background-color: var(--bg-card)"
+  >
+    <div class="mb-4 text-danger">
+      <i class="fas fa-user-lock fa-4x"></i>
+    </div>
+
+    <h2 class="fw-bold font-heading mb-3" style="color: var(--text-main)">
+      Account Deactivated
+    </h2>
+
+    <p class="text-muted mb-4 lead">
+      Your account is currently disabled. <br />
+      <strong>Only an Administrator can restore your access.</strong>
+    </p>
+
+    <div
+      class="alert alert-light border text-start mb-4 bg-opacity-10"
+      role="alert"
+    >
+      <p class="mb-2 small fw-bold text-uppercase text-muted">
+        Please email us with these details:
+      </p>
+      <ul class="mb-0 small text-secondary">
+        <li><strong>Username:</strong> {{ username }}</li>
+        <li><strong>Email:</strong> {{ email }}</li>
+      </ul>
+    </div>
+
+    <div class="d-grid gap-3">
+      <a
+        href="https://mail.google.com/mail/?view=cm&fs=1&to=varshneyanurag888@gmail.com&su=Account Restoration Request: {{ username }}&body=Hello Admin,%0D%0A%0D%0AI would like to request the restoration of my account.%0D%0A%0D%0AUsername: {{ username }}%0D%0AEmail: {{ email }}%0D%0A%0D%0AReason:"
+        target="_blank"
+        class="btn btn-danger btn-lg rounded-pill px-4 shadow-sm text-start d-flex align-items-center justify-content-center gap-2"
+      >
+        <i class="fab fa-google fa-lg"></i>
+        <span>Contact via <strong>Gmail</strong></span>
+      </a>
+
+      <a
+        href="https://mail.zoho.com/zm/#compose/to:anuragvarshney@zohomail.com/subject:Account Restoration Request: {{ username }}/content:Hello Admin,<br><br>I would like to request account restoration.<br><br>Username: {{ username }}<br>Email: {{ email }}"
+        target="_blank"
+        class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm text-start d-flex align-items-center justify-content-center gap-2"
+      >
+        <i class="fas fa-envelope fa-lg"></i>
+        <span>Contact via <strong>Zoho Mail</strong></span>
+      </a>
+    </div>
+
+    <div class="mt-4">
+      <a href="/login" class="text-decoration-none text-muted small"
+        >Back to Login</a
+      >
+    </div>
+  </div>
+</div>
+{% endblock %}

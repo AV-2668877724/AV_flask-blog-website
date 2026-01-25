@@ -180,13 +180,21 @@ def login():
         password = request.form.get('password')
 
         user = User.query.filter_by(email=email).first()
+        
         if user:
             if check_password_hash(user.password, password):
-                # Check verification status
+                
+                # ✅ 1. CHECK DEACTIVATION STATUS FIRST
+                # If the account is deactivated, stop here and show the specific page.
+                if user.is_active is False:
+                    return render_template("account_deactivated.html", username=user.username, email=user.email)
+
+                # ✅ 2. CHECK EMAIL VERIFICATION
                 if not user.is_verified:
                     flash('Please verify your email first.', category='error')
                     return render_template("login.html", user=current_user)
 
+                # ✅ 3. LOG IN SUCCESS
                 login_user(user, remember=True)
                 flash('Logged in successfully!', category='success')
                 return redirect(url_for('views.home'))
