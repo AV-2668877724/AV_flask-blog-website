@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         // 2. Backend Sync
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err)
+          console.error("Error marking read:", err),
         );
       }
     });
@@ -198,10 +198,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const usernameStatus = document.getElementById("usernameStatus");
 
   if (newUsernameInput && submitUsernameBtn) {
-    newUsernameInput.addEventListener("input", function() {
+    newUsernameInput.addEventListener("input", function () {
       // 1. Immediately Disable the button if user types anything
       submitUsernameBtn.disabled = true;
-      
+
       // 2. Clear the "Available" message so user knows they must check again
       if (usernameStatus) {
         usernameStatus.textContent = "";
@@ -261,7 +261,7 @@ function likePost(postId, btn) {
 function like(postId) {
   const countEl = document.getElementById(`likes-count-${postId}`);
   const btn = document.getElementById(`like-button-${postId}`);
-  const icon = btn ? (btn.querySelector("i") || btn) : null;
+  const icon = btn ? btn.querySelector("i") || btn : null;
 
   if (!countEl || !btn) return;
 
@@ -276,18 +276,17 @@ function like(postId) {
   if (isFar) {
     // 1. User is LIKING the post
     countEl.innerText = current + 1;
-    
+
     icon.classList.remove("far");
     icon.classList.add("fas", "text-danger"); // Use Red for Heart
-    
+
     // 🔥 TRIGGER ANIMATION (Confetti + Pop)
     btn.classList.add("like-anim");
-    
+
     // Remove animation class after it finishes so it can play again later
     setTimeout(() => {
       btn.classList.remove("like-anim");
     }, 600);
-
   } else {
     // 2. User is UNLIKING
     countEl.innerText = Math.max(0, current - 1);
@@ -315,19 +314,19 @@ function like(postId) {
 /* =========================
    💬 COMMENT RIPPLE HANDLER
 ========================== */
-document.addEventListener("click", function(e) {
-    // Look for comment buttons (or links that look like buttons)
-    const btn = e.target.closest(".btn-comment, .comment-btn-trigger");
-    
-    if (btn) {
-        // Add ripple effect classes
-        btn.classList.add("ripple-effect", "ripple-active");
-        
-        // Remove after animation triggers
-        setTimeout(() => {
-            btn.classList.remove("ripple-active");
-        }, 500);
-    }
+document.addEventListener("click", function (e) {
+  // Look for comment buttons (or links that look like buttons)
+  const btn = e.target.closest(".btn-comment, .comment-btn-trigger");
+
+  if (btn) {
+    // Add ripple effect classes
+    btn.classList.add("ripple-effect", "ripple-active");
+
+    // Remove after animation triggers
+    setTimeout(() => {
+      btn.classList.remove("ripple-active");
+    }, 500);
+  }
 });
 
 /* =========================
@@ -637,19 +636,56 @@ function viewFullSize(src) {
 }
 
 // ==========================================
-//  PRELOADER LOGIC (FIXED)
+//  PRELOADER LOGIC (With 8s Safety Timer)
 // ==========================================
 
 const loader = document.getElementById("preloader");
+let safetyTimer = null;
 
-// 1. Hide Loader when page is fully loaded
+// Helper to safely hide loader
+function hideLoader() {
+  if (loader) {
+    loader.classList.add("loader-hidden");
+    // Clear the safety timer so we don't redirect unnecessarily
+    if (safetyTimer) clearTimeout(safetyTimer);
+  }
+}
+
+// Helper to show loader with 8s failsafe
+function showLoader() {
+  if (loader) {
+    loader.classList.remove("loader-hidden");
+
+    // 🛑 START 8-SECOND SAFETY TIMER
+    if (safetyTimer) clearTimeout(safetyTimer);
+    safetyTimer = setTimeout(() => {
+      // If the loader is still visible after 8 seconds, force redirect home
+      if (!loader.classList.contains("loader-hidden")) {
+        console.warn("Loading took too long. Redirecting home...");
+        window.location.href = "/";
+      }
+    }, 8000); // 8000ms = 8 seconds
+  }
+}
+
+// 1. Hide Loader when page is fully loaded (Standard load)
 window.addEventListener("load", function () {
-  setTimeout(() => {
-    if (loader) loader.classList.add("loader-hidden");
-  }, 300);
+  setTimeout(hideLoader, 300);
 });
 
-// 2. Show Loader when navigating to a new page (Links only)
+// 2. ✅ CRITICAL FIX: Handle "Back" Button Navigation (bfcache)
+// This event fires when the page is shown, even if loaded from cache (Back button)
+window.addEventListener("pageshow", function (event) {
+  // If page was loaded from cache (event.persisted) or via Back button (nav type 2)
+  if (
+    event.persisted ||
+    (window.performance && window.performance.navigation.type === 2)
+  ) {
+    hideLoader();
+  }
+});
+
+// 3. Show Loader when navigating to a new page (Links only)
 document.addEventListener("click", function (e) {
   const target = e.target.closest("a");
 
@@ -658,6 +694,7 @@ document.addEventListener("click", function (e) {
     const targetAttr = target.getAttribute("target");
     const toggleAttr = target.getAttribute("data-bs-toggle");
     const dismissAttr = target.getAttribute("data-bs-dismiss");
+    const actionAttr = target.getAttribute("onclick"); // Avoid JS links
 
     // Check valid link
     if (
@@ -666,20 +703,20 @@ document.addEventListener("click", function (e) {
       !href.startsWith("javascript") &&
       targetAttr !== "_blank" &&
       !toggleAttr &&
-      !dismissAttr
+      !dismissAttr &&
+      !actionAttr
     ) {
-      if (loader) loader.classList.remove("loader-hidden");
+      showLoader();
     }
   }
 });
 
-// 3. Show Loader ONLY on Form SUBMIT (Not just clicking inside)
-// ✅ This prevents the loader from showing when typing
+// 4. Show Loader on Form Submit
 document.addEventListener("submit", function (e) {
   const form = e.target;
-  // Only show if the form is valid
+  // Only show if the form is valid (prevent getting stuck on validation errors)
   if (form.checkValidity()) {
-    if (loader) loader.classList.remove("loader-hidden");
+    showLoader();
   }
 });
 
@@ -779,11 +816,11 @@ function likeComment(commentId, btn) {
     icon.classList.remove("far");
     icon.classList.add("fas", "text-danger");
     countSpan.innerText = currentCount + 1;
-    
+
     // Pop Animation
     icon.style.transform = "scale(1.3)";
     icon.style.transition = "transform 0.2s";
-    setTimeout(() => icon.style.transform = "scale(1)", 200);
+    setTimeout(() => (icon.style.transform = "scale(1)"), 200);
   }
 
   // 2. Server Request

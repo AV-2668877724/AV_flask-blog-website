@@ -1,62 +1,86 @@
-{% extends "base.html" %} {% block title %}{{ title }} · {{
-profile_user.username }}{% endblock %} {% block content %}
-
-<div class="container">
-  <!-- ================= PAGE HEADER ================= -->
-  <div class="text-center mb-4">
-    <h2 class="fw-bold">{{ title }}</h2>
-    <p class="text-muted">{{ profile_user.username }}</p>
-  </div>
-
-  <!-- ================= USER LIST ================= -->
-  {% if users %}
-  <div class="list-group mx-auto" style="max-width: 520px">
-    {% for user in users %}
-    <div
-      class="list-group-item d-flex align-items-center justify-content-between"
-    >
-      <!-- USER LINK -->
+{% extends "base.html" %} {% block title %} {{ title }} - {{
+profile_user.username }} {% endblock %} {% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="d-flex align-items-center mb-4">
       <a
-        href="{{ url_for('views.profile', username=user.username) }}"
-        class="d-flex align-items-center gap-3 text-decoration-none text-dark"
+        href="{{ url_for('views.profile', username=profile_user.username) }}"
+        class="btn btn-icon btn-light me-3"
       >
-        <div class="profile-avatar-sm">{{ user.username[0]|upper }}</div>
-        <strong>{{ user.username }}</strong>
+        <i class="fas fa-arrow-left"></i>
       </a>
-
-      <!-- FOLLOW / UNFOLLOW -->
-      {% if user.id != current_user.id %} {% if user.id in following_ids %}
-      <!-- ✅ MUST HAVE unfollow-btn -->
-      <button
-        class="btn btn-sm btn-outline-danger unfollow-btn"
-        data-user-id="{{ user.id }}"
-      >
-        Unfollow
-      </button>
-      {% else %}
-      <button
-        class="btn btn-sm btn-primary follow-btn"
-        data-user-id="{{ user.id }}"
-      >
-        Follow
-      </button>
-      {% endif %} {% endif %}
+      <h4 class="mb-0 fw-bold font-heading">
+        {{ title }}
+        <span class="text-muted fs-6 ms-2">({{ users|length }})</span>
+      </h4>
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="text-center text-muted mt-4">No {{ title|lower }} yet.</p>
-  {% endif %}
 
-  <!-- ================= BACK BUTTON ================= -->
-  <div class="text-center mt-4">
-    <a
-      href="{{ url_for('views.profile', username=profile_user.username) }}"
-      class="btn btn-outline-primary btn-sm"
-    >
-      ← Back to Profile
-    </a>
+    <div class="card border-0 shadow-sm">
+      <div class="list-group list-group-flush">
+        {% if users %} {% for u in users %}
+        <div
+          class="list-group-item p-3 d-flex align-items-center justify-content-between"
+        >
+          <a
+            href="{{ url_for('views.profile', username=u.username) }}"
+            class="d-flex align-items-center text-decoration-none text-dark gap-3"
+          >
+            {% if u.profile_pic %}
+            <img
+              src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
+              class="rounded-circle border"
+              style="width: 50px; height: 50px; object-fit: cover"
+            />
+            {% else %}
+            <div
+              class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle"
+              style="
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+                font-weight: bold;
+              "
+            >
+              {{ u.username[0]|upper }}
+            </div>
+            {% endif %}
+
+            <div class="lh-sm">
+              <h6 class="mb-0 fw-bold">{{ u.username }}</h6>
+            </div>
+          </a>
+
+          {% if current_user.is_authenticated and u.id != current_user.id %}
+          <div>
+            {% if u.id in following_ids %}
+            <button
+              class="btn btn-sm btn-outline-secondary rounded-pill px-3 unfollow-btn"
+              data-user-id="{{ u.id }}"
+            >
+              Following
+            </button>
+            {% else %}
+            <button
+              class="btn btn-sm btn-primary rounded-pill px-3 follow-btn"
+              data-user-id="{{ u.id }}"
+            >
+              Follow
+            </button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %} {% else %}
+        <div class="text-center py-5">
+          <div class="text-muted mb-3">
+            <i class="fas fa-users-slash fa-3x"></i>
+          </div>
+          <h5 class="fw-bold">No users found</h5>
+          <p class="text-muted small">This list is currently empty.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
-
 {% endblock %}

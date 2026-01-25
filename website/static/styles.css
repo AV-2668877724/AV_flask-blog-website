@@ -590,3 +590,20 @@ body.dark-mode .comment-like-btn {
 body.dark-mode .comment-like-btn i.text-danger {
     color: #ef4444 !important; /* Bright Red */
 }
+
+/* =========================================
+   25. DARK MODE: FORM HELP TEXT FIX
+   ========================================= */
+
+/* Fixes "Supported: JPG..." and other small form hints */
+body.dark-mode .form-text, 
+body.dark-mode .text-muted, 
+body.dark-mode small.text-secondary {
+    color: #cbd5e1 !important; /* Light Readable Grey */
+    opacity: 1 !important;
+}
+
+/* Specifically for the File Upload Area hint */
+body.dark-mode .upload-area small {
+    color: #94a3b8 !important; /* Slightly distinct grey for upload box */
+}
