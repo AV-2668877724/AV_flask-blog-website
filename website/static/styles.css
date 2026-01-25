@@ -454,3 +454,97 @@ body.dark-mode .modal-header.bg-danger-subtle .modal-title,
 body.dark-mode .modal-header.bg-danger-subtle .text-danger {
     color: #fca5a5 !important; /* Soft Light Red (Easily visible) */
 }
+
+/* =========================================
+   23. MODERN ANIMATIONS (LIKE & COMMENT)
+   ========================================= */
+
+/* --- 1. THE HEART EXPLOSION --- */
+
+/* The Heart Icon itself popping */
+.like-anim i {
+  animation: heart-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+/* The Confetti Particles (Using Pseudo-element) */
+.like-anim i::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: transparent;
+  transform: translate(-50%, -50%);
+  z-index: -1; /* Behind the heart */
+  animation: confetti 0.6s ease-out forwards;
+}
+
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); } /* Pop big */
+  100% { transform: scale(1); }  /* Return to normal */
+}
+
+@keyframes confetti {
+  0% {
+    opacity: 1;
+    box-shadow: 0 0 0 #e11d48; /* Start at center */
+  }
+  100% {
+    opacity: 0;
+    /* 8 particles moving outwards */
+    box-shadow: 
+      -15px -15px 0 #ef4444,   /* Top Left */
+       15px -15px 0 #f472b6,   /* Top Right */
+      -15px  15px 0 #ef4444,   /* Bottom Left */
+       15px  15px 0 #f472b6,   /* Bottom Right */
+       0    -20px 0 #ef4444,   /* Top */
+       0     20px 0 #f472b6,   /* Bottom */
+      -20px  0    0 #ef4444,   /* Left */
+       20px  0    0 #f472b6;   /* Right */
+  }
+}
+
+/* --- 2. THE COMMENT RIPPLE --- */
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden; /* Contains the ripple inside the button */
+}
+
+.ripple-effect::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: rgba(37, 99, 235, 0.3); /* Blue transparent ripple */
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+}
+
+/* Class added by JS to trigger animation */
+.ripple-active::after {
+  animation: ripple-anim 0.5s linear;
+}
+
+@keyframes ripple-anim {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(20); /* Expands huge */
+    opacity: 0;
+  }
+}
+
+/* Ensure the Like Button can contain the absolute particles */
+.btn-like {
+    position: relative; 
+    z-index: 1;
+}

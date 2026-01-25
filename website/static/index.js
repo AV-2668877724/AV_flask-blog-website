@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         // 2. Backend Sync
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err),
+          console.error("Error marking read:", err)
         );
       }
     });
@@ -198,10 +198,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const usernameStatus = document.getElementById("usernameStatus");
 
   if (newUsernameInput && submitUsernameBtn) {
-    newUsernameInput.addEventListener("input", function () {
+    newUsernameInput.addEventListener("input", function() {
       // 1. Immediately Disable the button if user types anything
       submitUsernameBtn.disabled = true;
-
+      
       // 2. Clear the "Available" message so user knows they must check again
       if (usernameStatus) {
         usernameStatus.textContent = "";
@@ -252,71 +252,83 @@ function showToast(message, isError = false) {
 }
 
 /* =========================
-   👍 LIKE HANDLER (SAFE)
+   👍 LIKE HANDLER (WITH ANIMATION)
 ========================== */
 function likePost(postId, btn) {
-  // Note: Replaced 'like' with 'likePost' to match HTML calls if you updated base.html
-  // If your HTML calls "like()", rename this function back to "like"
   like(postId);
 }
 
 function like(postId) {
   const countEl = document.getElementById(`likes-count-${postId}`);
   const btn = document.getElementById(`like-button-${postId}`);
-  // Try to find button by the icon inside if passed element is different
-  const iconBtn = document.querySelector(`#like-button-${postId} i`) || btn;
+  const icon = btn ? (btn.querySelector("i") || btn) : null;
 
   if (!countEl || !btn) return;
 
   if (btn.dataset.loading === "true") return;
   btn.dataset.loading = "true";
 
-  // Check if liked based on icon class
-  const isFar = btn.querySelector(".fa-thumbs-up")
-    ? btn.querySelector(".fa-thumbs-up").classList.contains("far")
-    : btn.classList.contains("far");
+  // Check state
+  const isFar = icon.classList.contains("far"); // currently empty (unliked)
   const current = parseInt(countEl.innerText, 10) || 0;
 
-  // Optimistic UI Update
-  // If it was 'far' (empty), we are liking it -> +1
-  // If it was 'fas' (solid), we are unliking it -> -1
+  // --- OPTIMISTIC UI UPDATE ---
   if (isFar) {
+    // 1. User is LIKING the post
     countEl.innerText = current + 1;
-    // Update Icon
-    const icon = btn.querySelector("i") || btn;
+    
     icon.classList.remove("far");
-    icon.classList.add("fas", "text-primary");
-    btn.classList.add("text-primary");
+    icon.classList.add("fas", "text-danger"); // Use Red for Heart
+    
+    // 🔥 TRIGGER ANIMATION (Confetti + Pop)
+    btn.classList.add("like-anim");
+    
+    // Remove animation class after it finishes so it can play again later
+    setTimeout(() => {
+      btn.classList.remove("like-anim");
+    }, 600);
+
   } else {
+    // 2. User is UNLIKING
     countEl.innerText = Math.max(0, current - 1);
-    const icon = btn.querySelector("i") || btn;
-    icon.classList.remove("fas", "text-primary");
+    icon.classList.remove("fas", "text-danger");
     icon.classList.add("far");
-    btn.classList.remove("text-primary");
   }
 
-  fetch(`/like-post/${postId}`, {
-    method: "POST",
-  })
+  // --- SEND TO SERVER ---
+  fetch(`/like-post/${postId}`, { method: "POST" })
     .then((res) => res.json())
     .then((data) => {
-      // Server Confirmation
       countEl.innerText = data.likes;
-      const icon = btn.querySelector("i") || btn;
-
       if (data.liked) {
-        icon.classList.add("fas");
+        icon.classList.add("fas", "text-danger");
         icon.classList.remove("far");
-        btn.classList.add("text-primary");
       } else {
         icon.classList.add("far");
-        icon.classList.remove("fas");
-        btn.classList.remove("text-primary");
+        icon.classList.remove("fas", "text-danger");
       }
     })
     .catch(() => showToast("Network error", true))
     .finally(() => (btn.dataset.loading = "false"));
 }
+
+/* =========================
+   💬 COMMENT RIPPLE HANDLER
+========================== */
+document.addEventListener("click", function(e) {
+    // Look for comment buttons (or links that look like buttons)
+    const btn = e.target.closest(".btn-comment, .comment-btn-trigger");
+    
+    if (btn) {
+        // Add ripple effect classes
+        btn.classList.add("ripple-effect", "ripple-active");
+        
+        // Remove after animation triggers
+        setTimeout(() => {
+            btn.classList.remove("ripple-active");
+        }, 500);
+    }
+});
 
 /* =========================
   TIME AGO SUPPORT

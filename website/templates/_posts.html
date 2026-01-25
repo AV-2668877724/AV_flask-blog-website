@@ -98,20 +98,20 @@
   >
     <div class="d-flex align-items-center">
       <button
-        class="btn btn-sm btn-icon border-0 {% if post.liked %}text-primary{% endif %}"
+        class="btn btn-sm btn-icon border-0 {% if post.liked %}text-danger{% endif %}"
         id="like-button-{{ post.id }}"
         onclick="like('{{ post.id }}')"
         style="width: auto; height: auto"
       >
         <i
-          class="{% if post.liked %}fas{% else %}far{% endif %} fa-thumbs-up me-1"
+          class="{% if post.liked %}fas{% else %}far{% endif %} fa-heart me-1"
         ></i>
         <span id="likes-count-{{ post.id }}">{{ post.likes_count }}</span>
       </button>
     </div>
 
     <button
-      class="btn btn-sm text-muted"
+      class="btn btn-sm text-muted btn-comment"
       data-bs-toggle="collapse"
       data-bs-target="#comments-{{ post.id }}"
     >
