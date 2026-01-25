@@ -2,16 +2,24 @@
 content %}
 <div class="row justify-content-center">
   <div class="col-lg-8">
-    <h3 class="font-heading fw-bold mb-4">
+    <h3 class="font-heading fw-bold mb-4" style="color: var(--text-main)">
       Results for "<span class="text-primary">{{ query }}</span>"
     </h3>
 
     {% if users %}
-    <h5 class="text-muted fw-bold mb-3 small text-uppercase">People Found</h5>
+    <h5
+      class="fw-bold mb-3 small text-uppercase"
+      style="color: var(--text-muted)"
+    >
+      People Found
+    </h5>
     <div class="row g-3 mb-5">
       {% for u in users %}
       <div class="col-md-6">
-        <div class="card border-0 shadow-sm h-100">
+        <div
+          class="card border-0 shadow-sm h-100"
+          style="background-color: var(--bg-card)"
+        >
           <div class="card-body d-flex align-items-center gap-3">
             <a href="/profile/{{ u.username }}">
               {% if u.profile_pic %}
@@ -22,8 +30,13 @@ content %}
               />
               {% else %}
               <div
-                class="rounded-circle bg-light d-flex align-items-center justify-content-center fw-bold text-secondary"
-                style="width: 50px; height: 50px; font-size: 1.2rem"
+                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary"
+                style="
+                  width: 50px;
+                  height: 50px;
+                  font-size: 1.2rem;
+                  background-color: var(--bg-input);
+                "
               >
                 {{ u.username[0]|upper }}
               </div>
@@ -32,10 +45,11 @@ content %}
             <div>
               <a
                 href="/profile/{{ u.username }}"
-                class="text-decoration-none text-dark fw-bold d-block"
+                class="text-decoration-none fw-bold d-block"
+                style="color: var(--text-main)"
                 >{{ u.username }}</a
               >
-              <small class="text-muted"
+              <small style="color: var(--text-muted)"
                 >Joined {{ u.date_created.strftime('%b %Y') }}</small
               >
             </div>
@@ -52,20 +66,33 @@ content %}
       {% endfor %}
     </div>
     {% endif %} {% if not users and suggestions %}
-    <div class="alert alert-light border shadow-sm mb-4">
-      <i class="bi bi-info-circle me-2 text-primary"></i>
+    <div
+      class="alert border shadow-sm mb-4"
+      style="
+        background-color: var(--bg-input);
+        color: var(--text-main);
+        border-color: var(--border-color);
+      "
+    >
+      <i class="fas fa-info-circle me-2 text-primary"></i>
       We couldn't find an exact match for "<strong>{{ query }}</strong>", but
       here are some suggestions:
     </div>
 
-    <h5 class="text-muted fw-bold mb-3 small text-uppercase">
+    <h5
+      class="fw-bold mb-3 small text-uppercase"
+      style="color: var(--text-muted)"
+    >
       Suggested People
     </h5>
     <div class="row g-3 mb-5">
       {% for u in suggestions %}
       <div class="col-md-6">
-        <div class="card border-0 shadow-sm h-100 bg-light">
-          <div class="card-body d-flex align-items-center gap-3 opacity-75">
+        <div
+          class="card border-0 shadow-sm h-100"
+          style="background-color: var(--bg-card)"
+        >
+          <div class="card-body d-flex align-items-center gap-3">
             <a href="/profile/{{ u.username }}">
               {% if u.profile_pic %}
               <img
@@ -75,8 +102,13 @@ content %}
               />
               {% else %}
               <div
-                class="rounded-circle bg-white d-flex align-items-center justify-content-center fw-bold text-secondary"
-                style="width: 50px; height: 50px; font-size: 1.2rem"
+                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary"
+                style="
+                  width: 50px;
+                  height: 50px;
+                  font-size: 1.2rem;
+                  background-color: var(--bg-input);
+                "
               >
                 {{ u.username[0]|upper }}
               </div>
@@ -85,10 +117,13 @@ content %}
             <div>
               <a
                 href="/profile/{{ u.username }}"
-                class="text-decoration-none text-dark fw-bold d-block"
+                class="text-decoration-none fw-bold d-block"
+                style="color: var(--text-main)"
                 >{{ u.username }}</a
               >
-              <small class="text-muted">You might know them</small>
+              <small style="color: var(--text-muted)"
+                >You might know them</small
+              >
             </div>
             <div class="ms-auto">
               <a
@@ -104,11 +139,16 @@ content %}
     </div>
     {% endif %}
 
-    <h5 class="text-muted fw-bold mb-3 small text-uppercase mt-4">
+    <h5
+      class="fw-bold mb-3 small text-uppercase mt-4"
+      style="color: var(--text-muted)"
+    >
       Stories Found
     </h5>
     {% if posts %} {% include "_posts.html" %} {% else %}
-    <p class="text-muted fst-italic">No stories found matching your query.</p>
+    <p class="fst-italic" style="color: var(--text-muted)">
+      No stories found matching your query.
+    </p>
     {% endif %}
   </div>
 </div>
