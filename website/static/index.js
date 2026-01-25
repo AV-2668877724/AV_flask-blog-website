@@ -755,3 +755,51 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 });
+
+/* =========================
+   ❤️ LIKE COMMENT HANDLER
+========================== */
+function likeComment(commentId, btn) {
+  if (btn.dataset.loading === "true") return;
+  btn.dataset.loading = "true";
+
+  const icon = btn.querySelector("i");
+  const countSpan = btn.querySelector(".like-count");
+  const currentCount = parseInt(countSpan.innerText, 10) || 0;
+  const isLiked = icon.classList.contains("fas"); // Solid heart means liked
+
+  // 1. Optimistic UI Update
+  if (isLiked) {
+    // Unlike
+    icon.classList.remove("fas", "text-danger");
+    icon.classList.add("far");
+    countSpan.innerText = Math.max(0, currentCount - 1);
+  } else {
+    // Like
+    icon.classList.remove("far");
+    icon.classList.add("fas", "text-danger");
+    countSpan.innerText = currentCount + 1;
+    
+    // Pop Animation
+    icon.style.transform = "scale(1.3)";
+    icon.style.transition = "transform 0.2s";
+    setTimeout(() => icon.style.transform = "scale(1)", 200);
+  }
+
+  // 2. Server Request
+  fetch(`/like-comment/${commentId}`, { method: "POST" })
+    .then((res) => res.json())
+    .then((data) => {
+      countSpan.innerText = data.likes;
+      // Sync state just in case
+      if (data.liked) {
+        icon.classList.add("fas", "text-danger");
+        icon.classList.remove("far");
+      } else {
+        icon.classList.add("far");
+        icon.classList.remove("fas", "text-danger");
+      }
+    })
+    .catch(() => console.error("Error liking comment"))
+    .finally(() => (btn.dataset.loading = "false"));
+}

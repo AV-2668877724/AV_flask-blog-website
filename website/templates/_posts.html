@@ -170,7 +170,7 @@
                 <a
                   href="/profile/{{ comment.user.username }}"
                   class="fw-bold text-decoration-none small"
-                  style="color: #111827"
+                  style="color: inherit"
                 >
                   {{ comment.user.username }}
                 </a>
@@ -178,16 +178,35 @@
                   >{{ comment.date_created | timeago }}</small
                 >
               </div>
-              <p class="mb-0 small text-secondary">{{ comment.text | trim }}</p>
 
-              {% if current_user.id == comment.author or current_user.id ==
-              post.author %}
-              <a
-                href="/delete-comment/{{ comment.id }}"
-                class="position-absolute top-0 end-0 p-2 text-danger small text-decoration-none"
-                >&times;</a
-              >
-              {% endif %}
+              <p class="mb-1 small text-secondary">{{ comment.text | trim }}</p>
+
+              <div class="d-flex align-items-center gap-3 mt-1">
+                <button
+                  class="btn btn-link p-0 text-decoration-none d-flex align-items-center gap-1 comment-like-btn"
+                  style="
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                    box-shadow: none;
+                  "
+                  onclick="likeComment('{{ comment.id }}', this)"
+                >
+                  <i
+                    class="{% if comment.liked %}fas text-danger{% else %}far{% endif %} fa-heart"
+                  ></i>
+                  <span class="like-count">{{ comment.likes_count }}</span>
+                </button>
+
+                {% if current_user.id == comment.author or current_user.id ==
+                post.author %}
+                <a
+                  href="/delete-comment/{{ comment.id }}"
+                  class="text-danger text-decoration-none small"
+                  style="font-size: 0.75rem"
+                  >&times; Delete</a
+                >
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>

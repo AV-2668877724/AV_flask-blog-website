@@ -548,3 +548,45 @@ body.dark-mode .modal-header.bg-danger-subtle .text-danger {
     position: relative; 
     z-index: 1;
 }
+
+/* =========================================
+   24. DARK MODE: COMMENTS FIX & LIKES
+   ========================================= */
+
+/* 1. Comment Container Background */
+body.dark-mode .collapse.bg-light {
+    background-color: #0f172a !important; /* Very Dark Slate */
+    border-top: 1px solid #334155 !important;
+}
+
+/* 2. Individual Comment Bubble */
+body.dark-mode .comments-list .bg-white {
+    background-color: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* 3. Input Field Fix */
+body.dark-mode .input-group .form-control {
+    background-color: #334155 !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+}
+body.dark-mode .input-group .form-control::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* 4. Post Button Fix */
+body.dark-mode .input-group .btn-outline-secondary {
+    background-color: #334155 !important;
+    border-color: #475569 !important;
+    color: #60a5fa !important;
+}
+
+/* 5. Like Button Colors in Dark Mode */
+body.dark-mode .comment-like-btn {
+    color: #94a3b8 !important;
+}
+body.dark-mode .comment-like-btn i.text-danger {
+    color: #ef4444 !important; /* Bright Red */
+}

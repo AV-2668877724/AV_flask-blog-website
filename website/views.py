@@ -4,7 +4,7 @@ from flask import (
     flash, redirect, url_for, abort, jsonify, current_app
 )
 from flask_login import login_required, current_user, logout_user
-from .models import User, Post, Comment, Like, Follow, Notification
+from .models import User, Post, Comment, Like, Follow, Notification, CommentLike
 from sqlalchemy.exc import IntegrityError
 from . import db
 from sqlalchemy import func
@@ -70,12 +70,19 @@ def compress_image(form_picture, folder, width=None, height=None):
     return picture_fn
 
 def enrich_posts(posts):
-    """Adds auxiliary data (like count, user liked status) to posts."""
     for post in posts:
+        # Post Likes
         post.likes_count = len(post.likes)
         post.liked = False
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
+        
+        # ✅ NEW: Comment Likes
+        for comment in post.comments:
+            comment.likes_count = len(comment.likes)
+            comment.liked = False
+            if current_user.is_authenticated:
+                comment.liked = any(l.author == current_user.id for l in comment.likes)
     return posts
 
 def create_notification(visitor_id, recipient_id, action, post_id=None):
@@ -777,6 +784,28 @@ def update_cover_pic():
         flash('Invalid file type.', category='error')
         
     return redirect(url_for('views.profile', username=current_user.username))
+
+@views.route("/like-comment/<comment_id>", methods=['POST'])
+@login_required
+def like_comment(comment_id):
+    comment = Comment.query.filter_by(id=comment_id).first()
+    if not comment:
+        return jsonify({'error': 'Comment not found'}), 404
+
+    like = CommentLike.query.filter_by(author=current_user.id, comment_id=comment_id).first()
+    liked = False
+
+    if like:
+        db.session.delete(like)
+        liked = False
+    else:
+        like = CommentLike(author=current_user.id, comment_id=comment_id)
+        db.session.add(like)
+        liked = True
+
+    db.session.commit()
+    
+    return jsonify({"likes": len(comment.likes), "liked": liked})
 
 # =================================================
 # ERROR HANDLERS
