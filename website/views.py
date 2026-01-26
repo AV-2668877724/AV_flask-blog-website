@@ -14,11 +14,10 @@ from PIL import Image
 import secrets
 from datetime import datetime
 
-
 views = Blueprint('views', __name__)
 
-# Security: Password required to perform Admin actions
-ADMIN_ACTION_PASSWORD = "adminready777"
+# Security: Password is now loaded from .env file
+# Removed hardcoded ADMIN_ACTION_PASSWORD
 
 # Allowed Image Extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
@@ -79,7 +78,7 @@ def enrich_posts(posts):
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
         
-        # ✅ NEW: Comment Likes
+        # Comment Likes
         for comment in post.comments:
             comment.likes_count = len(comment.likes)
             comment.liked = False
@@ -143,7 +142,7 @@ def home():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     
-    # ✅ UPDATE: Only show non-deleted posts
+    # Only show non-deleted posts
     pagination = Post.query.filter_by(is_deleted=False)\
         .order_by(Post.date_created.desc())\
         .paginate(page=page, per_page=per_page, error_out=False)
@@ -202,7 +201,6 @@ def edit_post(id):
         else:
             post.text = text
             if cover_image_file and allowed_file(cover_image_file.filename):
-                # ✅ UPDATED: Use compress_image
                 new_filename = compress_image(cover_image_file, 'posts', width=1080)
                 post.cover_image = new_filename
                 
@@ -242,7 +240,7 @@ def delete_post(id):
     elif current_user.id != post.author and not current_user.is_admin:
         flash("You do not have permission to delete this post.", category='error')
     else:
-        # ✅ UPDATE: Soft Delete
+        # Soft Delete
         post.is_deleted = True
         db.session.commit()
         flash('Post moved to trash.', category='success')
@@ -371,7 +369,7 @@ def profile(username):
         total_posts=posts_pagination.total,
         is_following=is_following,
         pagination=posts_pagination,
-        now=datetime.now()  # ✅ ADDED THIS LINE
+        now=datetime.now()  # ✅ Time for "Online" status
     )
 
 @views.route('/update-profile-pic', methods=['POST'])
@@ -387,7 +385,7 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # ✅ UPDATED: Use compress_image, strictly 300x300
+        # Use compress_image, strictly 300x300
         filename = compress_image(file, 'avatars', width=300, height=300)
         current_user.profile_pic = filename
         db.session.commit()
@@ -486,7 +484,7 @@ def admin_dashboard():
         abort(403)
     users = User.query.all()
     
-    # ✅ Separated Active vs Deleted Posts
+    # Separated Active vs Deleted Posts
     active_posts = Post.query.filter_by(is_deleted=False).all()
     deleted_posts = Post.query.filter_by(is_deleted=True).all()
     
@@ -506,8 +504,10 @@ def admin_dashboard():
 def admin_delete_user(user_id):
     if not current_user.is_admin:
         abort(403)
+    
+    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
+    if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
@@ -528,8 +528,10 @@ def admin_delete_user(user_id):
 def admin_toggle_user_status(user_id):
     if not current_user.is_admin:
         abort(403)
+        
+    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
+    if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
 
@@ -555,10 +557,13 @@ def admin_toggle_user_status(user_id):
 def admin_delete_post(post_id):
     if not current_user.is_admin:
         abort(403)
+        
+    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
+    if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
+        
     post = Post.query.get(post_id)
     if post:
         db.session.delete(post)
@@ -571,10 +576,13 @@ def admin_delete_post(post_id):
 def admin_delete_comment(comment_id):
     if not current_user.is_admin:
         abort(403)
+        
+    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
+    if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
+        
     comment = Comment.query.get(comment_id)
     if comment:
         comment.is_deleted = True
@@ -587,10 +595,13 @@ def admin_delete_comment(comment_id):
 def admin_restore_comment(comment_id):
     if not current_user.is_admin:
         abort(403)
+        
+    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
+    if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
+        
     comment = Comment.query.get(comment_id)
     if comment:
         comment.is_deleted = False
@@ -602,8 +613,10 @@ def admin_restore_comment(comment_id):
 @login_required
 def admin_restore_post(post_id):
     if not current_user.is_admin: abort(403)
+    
+    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
-    if pwd != ADMIN_ACTION_PASSWORD:
+    if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
@@ -633,7 +646,7 @@ def follow_user(user_id):
         db.session.add(new_follow)
         db.session.commit()
         
-        # ✅ Notify User
+        # Notify User
         create_notification(current_user.id, user_id, 'follow')
         
         return jsonify({'success': True, 'action': 'followed'})
@@ -777,7 +790,7 @@ def update_cover_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # ✅ UPDATED: Use compress_image, width=1080
+        # Use compress_image, width=1080
         filename = compress_image(file, 'posts', width=1080, height=600)
         
         current_user.cover_pic = filename

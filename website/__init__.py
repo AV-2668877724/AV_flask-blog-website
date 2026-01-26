@@ -4,6 +4,7 @@ from os import path, makedirs
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 from datetime import datetime
+import os
 
 db = SQLAlchemy()
 mail = Mail()
@@ -11,7 +12,7 @@ DB_NAME = "database.db"
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'CCAV@129'
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -21,8 +22,8 @@ def create_app():
     app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = 'varshneyanurag888@gmail.com'  
-    app.config['MAIL_PASSWORD'] = 'nfhpqltxdmpxacoe'    
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')    
     
     mail.init_app(app)
 

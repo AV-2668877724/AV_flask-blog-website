@@ -8,6 +8,7 @@ from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import random
 import string
 from flask import session
+import os
 
 auth = Blueprint('auth', __name__)
 
@@ -21,9 +22,11 @@ def send_verification_email(user_email):
     token = s.dumps(user_email, salt='email-confirm')
     link = url_for('auth.confirm_email', token=token, _external=True)
     
-    # ✅ Using your real Gmail to prevent errors
+    # ✅ Securely get email
+    sender_email = os.getenv('MAIL_USERNAME')
+    
     msg = Message('Confirm Your Email - AV Postory', 
-                  sender='varshneyanurag888@gmail.com', 
+                  sender=sender_email, 
                   recipients=[user_email])
     
     msg.body = f'Your link is: {link}\n\nThis link expires in 1 hour.'
@@ -33,15 +36,15 @@ def send_reset_email(user_email):
     token = s.dumps(user_email, salt='password-reset')
     link = url_for('auth.reset_token', token=token, _external=True)
     
-    # ✅ Using your real Gmail to prevent errors
+    # ✅ Securely get email
+    sender_email = os.getenv('MAIL_USERNAME')
+    
     msg = Message('Password Reset Request', 
-                  sender='varshneyanurag888@gmail.com', 
+                  sender=sender_email, 
                   recipients=[user_email])
     
     msg.body = f'To reset your password, click the following link: {link}'
     mail.send(msg)
-
-
 
 
 # ==========================================
@@ -67,9 +70,14 @@ def sign_up():
         
         # 4. Send Email
         try:
+            # ✅ FIX 1: Define sender_email here
+            sender_email = os.getenv('MAIL_USERNAME')
+
+            # ✅ FIX 2: Correct Subject Line (Was "Password Reset")
             msg = Message('Your Verification Code - AV Postory', 
-                          sender='varshneyanurag888@gmail.com', 
-                          recipients=[email])
+                  sender=sender_email, 
+                  recipients=[email])
+            
             msg.body = f'Your verification code is: {otp}\n\nDo not share this code.'
             mail.send(msg)
             
