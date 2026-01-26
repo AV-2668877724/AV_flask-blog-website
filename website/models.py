@@ -50,7 +50,7 @@ class User(db.Model, UserMixin):
     date_created = db.Column(db.DateTime(timezone=True), default=func.now())
     is_verified = db.Column(db.Boolean, default=False)
     deactivation_reason = db.Column(db.String(500), nullable=True)
-
+    last_login = db.Column(db.DateTime(timezone=True), default=func.now())
     social_links = db.Column(JSON, default=dict)
 
     # Relationships

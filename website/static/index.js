@@ -1,5 +1,5 @@
 /* =========================
-     GLOBAL CONFIG & HELPER FUNCTIONS
+   GLOBAL CONFIG & HELPER FUNCTIONS
    ========================== */
 const TRUNCATE_HEIGHT = 400; // ✅ Your preferred height
 
@@ -330,7 +330,7 @@ document.addEventListener("click", function (e) {
 });
 
 /* =========================
-  TIME AGO SUPPORT
+   TIME AGO SUPPORT
 ========================== */
 function timeAgoFromISO(isoString) {
   const now = new Date();
@@ -519,120 +519,6 @@ function checkSignupUsername() {
         signupUsernameValid = false;
       }
     });
-}
-
-// ================= SOCIAL LINK REMOVE (AJAX) =================
-document.addEventListener("click", function (e) {
-  const btn = e.target.closest(".remove-social-btn");
-  if (!btn) return;
-
-  const url = btn.dataset.url;
-  if (!url) return;
-
-  if (!confirm("Remove this link?")) return;
-
-  fetch("/profile/remove-social", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    body: JSON.stringify({
-      url,
-    }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        const wrapper = btn.closest(".btn-group");
-        if (wrapper) wrapper.remove();
-      } else {
-        alert(data.message || "Failed to remove link.");
-      }
-    })
-    .catch(() => {
-      alert("Network error. Please try again.");
-    });
-});
-// ================= FOLLOW BUTTON (LIST PAGES) =================
-document.addEventListener("click", function (e) {
-  const btn = e.target.closest(".follow-btn");
-  if (!btn) return;
-
-  const userId = btn.dataset.userId;
-  if (!userId) return;
-
-  btn.disabled = true;
-
-  fetch(`/follow/${userId}`, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        btn.textContent = "Following";
-        btn.classList.remove("btn-primary");
-        btn.classList.add("btn-outline-secondary");
-      } else {
-        btn.disabled = false;
-      }
-    })
-    .catch(() => {
-      btn.disabled = false;
-      alert("Network error");
-    });
-});
-
-// ================= UNFOLLOW BUTTON =================
-document.addEventListener("click", function (e) {
-  const btn = e.target.closest(".unfollow-btn");
-  if (!btn) return;
-
-  const userId = btn.dataset.userId;
-  if (!userId) return;
-
-  if (!confirm("Unfollow this user?")) return;
-
-  btn.disabled = true;
-
-  fetch(`/unfollow/${userId}`, {
-    method: "POST",
-    headers: {
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        btn.textContent = "Follow";
-        btn.classList.remove("btn-outline-danger", "unfollow-btn");
-        btn.classList.add("btn-primary", "follow-btn");
-        btn.disabled = false;
-      } else {
-        btn.disabled = false;
-      }
-    })
-    .catch(() => {
-      btn.disabled = false;
-      alert("Network error");
-    });
-});
-
-/* =========================================
-   PROFILE IMAGE VIEWER (LIGHTBOX)
-   ========================================= */
-function viewFullSize(src) {
-  const imgElement = document.getElementById("fullSizeImage");
-  const modalElement = document.getElementById("imageViewModal");
-
-  if (imgElement && modalElement) {
-    imgElement.src = src;
-    const myModal = new bootstrap.Modal(modalElement);
-    myModal.show();
-  }
 }
 
 // ==========================================
@@ -839,4 +725,64 @@ function likeComment(commentId, btn) {
     })
     .catch(() => console.error("Error liking comment"))
     .finally(() => (btn.dataset.loading = "false"));
+}
+
+/* =========================================
+   PROFILE IMAGE VIEWER (LIGHTBOX)
+   ========================================= */
+function viewFullSize(src) {
+  const modal = new bootstrap.Modal(document.getElementById("imageViewModal"));
+  const img = document.getElementById("fullSizeImage");
+  img.src = src;
+  modal.show();
+}
+
+/* =========================================
+   PROFILE ACTIONS (Follow & Socials)
+   ========================================= */
+
+function toggleFollow(userId) {
+  const btn = document.getElementById("followBtn");
+  // Determine current state based on button text
+  const isFollowing = btn.innerText.trim() === "Following";
+
+  // Toggle URL
+  const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
+
+  fetch(url, { method: "POST" })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        if (isFollowing) {
+          // Changed to NOT following
+          btn.innerText = "Follow";
+          btn.classList.replace("btn-outline-secondary", "btn-primary");
+        } else {
+          // Changed to FOLLOWING
+          btn.innerText = "Following";
+          btn.classList.replace("btn-primary", "btn-outline-secondary");
+        }
+
+        // Reload to update numbers (Followers Count)
+        setTimeout(() => location.reload(), 500);
+      } else {
+        alert(data.message || "Something went wrong");
+      }
+    })
+    .catch((err) => console.error(err));
+}
+
+function removeSocial(linkUrl) {
+  if (!confirm("Remove this link?")) return;
+
+  fetch("/profile/remove-social", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: linkUrl }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) location.reload();
+      else alert("Could not remove link.");
+    });
 }

@@ -184,17 +184,21 @@ def login():
         if user:
             if check_password_hash(user.password, password):
                 
-                # ✅ 1. CHECK DEACTIVATION STATUS FIRST
-                # If the account is deactivated, stop here and show the specific page.
+                # 1. Check Deactivation
                 if user.is_active is False:
                     return render_template("account_deactivated.html", username=user.username, email=user.email)
 
-                # ✅ 2. CHECK EMAIL VERIFICATION
+                # 2. Check Verification
                 if not user.is_verified:
                     flash('Please verify your email first.', category='error')
                     return render_template("login.html", user=current_user)
 
-                # ✅ 3. LOG IN SUCCESS
+                # ✅ 3. UPDATE LAST LOGIN TIME (Add this part)
+                from sqlalchemy.sql import func # Ensure func is imported
+                user.last_login = func.now()
+                db.session.commit()
+
+                # 4. Log in
                 login_user(user, remember=True)
                 flash('Logged in successfully!', category='success')
                 return redirect(url_for('views.home'))

@@ -12,6 +12,8 @@ import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
 import secrets
+from datetime import datetime
+
 
 views = Blueprint('views', __name__)
 
@@ -368,7 +370,8 @@ def profile(username):
         following_count=following_count,
         total_posts=posts_pagination.total,
         is_following=is_following,
-        pagination=posts_pagination
+        pagination=posts_pagination,
+        now=datetime.now()  # ✅ ADDED THIS LINE
     )
 
 @views.route('/update-profile-pic', methods=['POST'])
