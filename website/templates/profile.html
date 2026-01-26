@@ -90,7 +90,7 @@ Profile{% endblock %} {% block content %}
           <button
             class="btn btn-outline-secondary rounded-pill px-4"
             id="followBtn"
-            onclick="toggleFollow({{ profile_user.id }})"
+            onclick="toggleFollow('{{ profile_user.id }}')"
           >
             Following
           </button>
@@ -98,7 +98,7 @@ Profile{% endblock %} {% block content %}
           <button
             class="btn btn-primary rounded-pill px-4"
             id="followBtn"
-            onclick="toggleFollow({{ profile_user.id }})"
+            onclick="toggleFollow('{{ profile_user.id }}')"
           >
             Follow
           </button>
