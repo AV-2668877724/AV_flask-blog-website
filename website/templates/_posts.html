@@ -22,7 +22,7 @@
 
       <div class="d-flex flex-column">
         <a
-          href="/profile/{{ post.user.username }}"
+          href="{{ url_for('views.profile', username=post.user.username) }}"
           class="fw-bold text-decoration-none lh-1"
           style="color: var(--text-main)"
         >
@@ -168,7 +168,7 @@
                 class="d-flex justify-content-between align-items-center mb-1"
               >
                 <a
-                  href="/profile/{{ comment.user.username }}"
+                  href="{{ url_for('views.profile', username=post.user.username) }}"
                   class="fw-bold text-decoration-none small"
                   style="color: inherit"
                 >

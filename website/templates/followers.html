@@ -9,21 +9,31 @@ profile_user.username }} {% endblock %} {% block content %}
       >
         <i class="fas fa-arrow-left"></i>
       </a>
-      <h4 class="mb-0 fw-bold font-heading">
+      <h4 class="mb-0 fw-bold font-heading" style="color: var(--text-main)">
         {{ title }}
-        <span class="text-muted fs-6 ms-2">({{ users|length }})</span>
+        <span class="fs-6 ms-2" style="color: var(--text-muted)"
+          >({{ users|length }})</span
+        >
       </h4>
     </div>
 
-    <div class="card border-0 shadow-sm">
+    <div
+      class="card border-0 shadow-sm"
+      style="background-color: var(--bg-card)"
+    >
       <div class="list-group list-group-flush">
         {% if users %} {% for u in users %}
         <div
           class="list-group-item p-3 d-flex align-items-center justify-content-between"
+          style="
+            background-color: var(--bg-card);
+            border-color: var(--border-color);
+          "
         >
           <a
             href="{{ url_for('views.profile', username=u.username) }}"
-            class="d-flex align-items-center text-decoration-none text-dark gap-3"
+            class="d-flex align-items-center text-decoration-none gap-3"
+            style="color: var(--text-main)"
           >
             {% if u.profile_pic %}
             <img
@@ -72,11 +82,15 @@ profile_user.username }} {% endblock %} {% block content %}
         </div>
         {% endfor %} {% else %}
         <div class="text-center py-5">
-          <div class="text-muted mb-3">
+          <div class="mb-3" style="color: var(--text-muted)">
             <i class="fas fa-users-slash fa-3x"></i>
           </div>
-          <h5 class="fw-bold">No users found</h5>
-          <p class="text-muted small">This list is currently empty.</p>
+          <h5 class="fw-bold" style="color: var(--text-main)">
+            No users found
+          </h5>
+          <p class="small" style="color: var(--text-muted)">
+            This list is currently empty.
+          </p>
         </div>
         {% endif %}
       </div>

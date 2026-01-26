@@ -21,7 +21,7 @@ content %}
           style="background-color: var(--bg-card)"
         >
           <div class="card-body d-flex align-items-center gap-3">
-            <a href="/profile/{{ u.username }}">
+            <a href="{{ url_for('views.profile', username=u.username) }}">
               {% if u.profile_pic %}
               <img
                 src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
@@ -44,7 +44,7 @@ content %}
             </a>
             <div>
               <a
-                href="/profile/{{ u.username }}"
+                href="{{ url_for('views.profile', username=u.username) }}"
                 class="text-decoration-none fw-bold d-block"
                 style="color: var(--text-main)"
                 >{{ u.username }}</a
@@ -55,7 +55,7 @@ content %}
             </div>
             <div class="ms-auto">
               <a
-                href="/profile/{{ u.username }}"
+                href="{{ url_for('views.profile', username=u.username) }}"
                 class="btn btn-sm btn-outline-primary rounded-pill"
                 >View</a
               >
@@ -93,7 +93,7 @@ content %}
           style="background-color: var(--bg-card)"
         >
           <div class="card-body d-flex align-items-center gap-3">
-            <a href="/profile/{{ u.username }}">
+            <a href="{{ url_for('views.profile', username=u.username) }}">
               {% if u.profile_pic %}
               <img
                 src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
@@ -116,7 +116,7 @@ content %}
             </a>
             <div>
               <a
-                href="/profile/{{ u.username }}"
+                href="{{ url_for('views.profile', username=u.username) }}"
                 class="text-decoration-none fw-bold d-block"
                 style="color: var(--text-main)"
                 >{{ u.username }}</a
@@ -127,7 +127,7 @@ content %}
             </div>
             <div class="ms-auto">
               <a
-                href="/profile/{{ u.username }}"
+                href="{{ url_for('views.profile', username=u.username) }}"
                 class="btn btn-sm btn-outline-secondary rounded-pill"
                 >View</a
               >
