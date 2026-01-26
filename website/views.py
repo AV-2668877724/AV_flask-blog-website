@@ -416,21 +416,22 @@ def check_username():
     if not username:
         return jsonify({'available': False, 'message': 'Please enter a username'})
     
-    # Remove spaces and check length
     username = username.strip()
     if len(username) < 3:
          return jsonify({'available': False, 'message': 'Too short (min 3 chars)'})
 
-    # Check database
     user = User.query.filter_by(username=username).first()
     
     if user:
+        # Case 1: User typed their own existing name
         if current_user.is_authenticated and user.id == current_user.id:
-             return jsonify({'available': True, 'message': 'Current username'})
-        return jsonify({'available': False, 'message': 'Username taken'})
+             return jsonify({'available': False, 'message': 'This username is already owned by you.'})
+        
+        # Case 2: Someone else has it
+        return jsonify({'available': False, 'message': 'This username already exists.'})
     
-    return jsonify({'available': True, 'message': 'Username available'})
-
+    # Case 3: It is free
+    return jsonify({'available': True, 'message': 'This username is unique and you can take it.'})
 
 @views.route('/change-username', methods=['POST'])
 @login_required
@@ -837,4 +838,4 @@ def internal_server_error(e):
 
 @views.route('/about')
 def about():
-    return render_template("about.html", user=current_user)
+    return render_template("about.html", user=current_user)     

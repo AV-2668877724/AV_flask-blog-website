@@ -150,7 +150,7 @@ Profile{% endblock %} {% block content %}
             {{ profile_user.bio }}
           </p>
 
-          <div class="d-flex gap-4 mb-3">
+          <div class="d-flex align-items-center mb-3 gap-4">
             <a
               href="{{ url_for('views.followers_list', username=profile_user.username) }}"
               class="text-decoration-none text-muted hover-underline"
@@ -160,7 +160,7 @@ Profile{% endblock %} {% block content %}
                 style="color: var(--text-main) !important"
                 >{{ followers_count }}</span
               >
-              Followers
+              <span class="ms-1">Followers</span>
             </a>
             <a
               href="{{ url_for('views.following_list', username=profile_user.username) }}"
@@ -171,15 +171,15 @@ Profile{% endblock %} {% block content %}
                 style="color: var(--text-main) !important"
                 >{{ following_count }}</span
               >
-              Following
+              <span class="ms-1">Following</span>
             </a>
-            <span class="text-muted">
+            <span class="text-muted d-flex align-items-center">
               <span
                 class="fw-bold text-dark"
                 style="color: var(--text-main) !important"
                 >{{ total_posts }}</span
               >
-              Posts
+              <span class="ms-1">Posts</span>
             </span>
           </div>
 
@@ -336,23 +336,41 @@ Profile{% endblock %} {% block content %}
               <label class="form-label text-muted small fw-bold"
                 >New Username</label
               >
+
               <div class="input-group mb-2">
                 <span class="input-group-text bg-white text-muted">@</span>
                 <input
                   type="text"
+                  id="newUsername"
                   name="username"
                   class="form-control"
                   value="{{ user.username }}"
                   minlength="3"
                   required
                 />
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  onclick="checkUsername()"
+                >
+                  Check
+                </button>
               </div>
+
+              <small id="usernameStatus" class="fw-bold d-block mb-2"></small>
+
               <div class="alert alert-warning py-2 px-3 small">
                 <i class="fas fa-exclamation-triangle me-1"></i> Changing this
                 will log you out.
               </div>
+
               <div class="text-end">
-                <button type="submit" class="btn btn-primary rounded-pill px-4">
+                <button
+                  type="submit"
+                  id="submitUsernameBtn"
+                  class="btn btn-primary rounded-pill px-4"
+                  disabled
+                >
                   Change Username
                 </button>
               </div>
