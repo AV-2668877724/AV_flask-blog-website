@@ -43,7 +43,8 @@
         </div>
       </div>
 
-      {% if user.id == post.author or user.is_admin %}
+      {% if user.is_authenticated and (user.id == post.author or user.is_admin)
+      %}
       <div class="dropdown ms-auto">
         <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
           <i class="fas fa-ellipsis-v"></i>
@@ -113,7 +114,18 @@
         <button
           class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-1 {{ 'text-danger' if post.liked else 'text-muted' }}"
           id="like-button-{{ post.id }}"
+          {%
+          if
+          user.is_authenticated
+          %}
           onclick="likePost('{{ post.id }}', this)"
+          {%
+          else
+          %}
+          onclick="window.location.href = '/login'"
+          {%
+          endif
+          %}
         >
           <i
             class="{{ 'fas' if post.liked else 'far' }} fa-heart fa-lg transition-transform"
@@ -146,6 +158,7 @@
       id="comments-{{ post.id }}"
     >
       <div class="p-3">
+        {% if user.is_authenticated %}
         <form
           action="{{ url_for('views.create_comment', post_id=post.id) }}"
           method="POST"
@@ -183,6 +196,13 @@
             <i class="fas fa-paper-plane"></i>
           </button>
         </form>
+        {% else %}
+        <div class="text-center mb-3">
+          <small class="text-muted">
+            <a href="/login">Log in</a> to write a comment.
+          </small>
+        </div>
+        {% endif %}
 
         <div class="d-flex flex-column gap-3">
           {% for comment in post.comments %}
@@ -227,14 +247,27 @@
               <div class="d-flex align-items-center gap-3 mt-1">
                 <button
                   class="btn btn-link p-0 text-decoration-none small {{ 'text-danger' if comment.liked else 'text-muted' }}"
+                  {%
+                  if
+                  user.is_authenticated
+                  %}
                   onclick="likeComment('{{ comment.id }}', this)"
+                  {%
+                  else
+                  %}
+                  onclick="window.location.href = '/login'"
+                  {%
+                  endif
+                  %}
                 >
                   <i
                     class="{{ 'fas' if comment.liked else 'far' }} fa-heart"
                   ></i>
                   <span class="like-count">{{ comment.likes_count }}</span>
                 </button>
-                {% if user.id == comment.author or user.id == post.author %}
+
+                {% if user.is_authenticated and (user.id == comment.author or
+                user.id == post.author) %}
                 <a
                   href="{{ url_for('views.delete_comment', comment_id=comment.id) }}"
                   class="text-danger text-decoration-none small"
