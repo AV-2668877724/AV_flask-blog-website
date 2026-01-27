@@ -824,6 +824,25 @@ def like_comment(comment_id):
     
     return jsonify({"likes": len(comment.likes), "liked": liked})
 
+@views.route("/post/<id>")
+def post_view(id):
+    post = Post.query.get(id)
+    
+    if not post:
+        flash('Post does not exist.', category='error')
+        return redirect(url_for('views.home'))
+    
+    # We must treat this single post as a list so _posts.html can read it
+    posts = enrich_posts([post])
+    
+    return render_template(
+        "posts.html", 
+        user=current_user, 
+        posts=posts, 
+        username=post.user.username,
+        pagination=None # Hide pagination for single post
+    )
+
 # =================================================
 # ERROR HANDLERS
 # =================================================
