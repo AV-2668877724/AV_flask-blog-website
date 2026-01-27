@@ -71,30 +71,33 @@ def create_app():
     
     @app.context_processor
     def inject_notifications():
-        """
-        Injects 'unread_count' and 'latest_notifs' into every template.
-        Includes logic to prevent circular imports.
-        """
-        unread_count = 0
+        unread_notifs = 0
+        unread_messages = 0 # ✅ New Variable
         latest_notifs = []
         
         if current_user.is_authenticated:
-            # ✅ SAFE IMPORT: Import inside function to prevent crash
-            from .models import Notification
+            from .models import Notification, Message # ✅ Import Message
             
-            # 1. Get Count of Unread
-            unread_count = Notification.query.filter_by(
+            # 1. Notification Count
+            unread_notifs = Notification.query.filter_by(
                 recipient_id=current_user.id, 
                 is_read=False
             ).count()
             
-            # 2. Get the actual latest 5 notifications for the dropdown
+            # 2. ✅ Message Count (The Red Dot)
+            unread_messages = Message.query.filter_by(
+                recipient_id=current_user.id,
+                is_read=False
+            ).count()
+            
+            # 3. Notification Dropdown Data
             latest_notifs = Notification.query.filter_by(recipient_id=current_user.id)\
                 .order_by(Notification.date_created.desc())\
                 .limit(5)\
                 .all()
                 
-        return dict(unread_count=unread_count, latest_notifs=latest_notifs)
+        # ✅ Return both counts
+        return dict(unread_count=unread_notifs, unread_messages=unread_messages, latest_notifs=latest_notifs)
 
     @app.context_processor
     def inject_global_user():

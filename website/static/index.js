@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         // 2. Backend Sync
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err),
+          console.error("Error marking read:", err)
         );
       }
     });
@@ -191,8 +191,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =======================================================
-     ✅ CRITICAL FIX: RESET UPDATE BUTTON ON TYPING
-     ======================================================= */
+       ✅ CRITICAL FIX: RESET UPDATE BUTTON ON TYPING
+       ======================================================= */
   const newUsernameInput = document.getElementById("newUsername");
   const submitUsernameBtn = document.getElementById("submitUsernameBtn");
   const usernameStatus = document.getElementById("usernameStatus");
@@ -522,7 +522,7 @@ function checkSignupUsername() {
 }
 
 // ==========================================
-//  PRELOADER LOGIC (With 8s Safety Timer)
+//  PRELOADER LOGIC (With 8s Safety Timer)
 // ==========================================
 
 const loader = document.getElementById("preloader");
@@ -600,6 +600,10 @@ document.addEventListener("click", function (e) {
 // 4. Show Loader on Form Submit
 document.addEventListener("submit", function (e) {
   const form = e.target;
+
+  // ✅ CRITICAL FIX: IF it's the chat form, DO NOT show loader (ajax handles it)
+  if (form.id === "chatForm") return;
+
   // Only show if the form is valid (prevent getting stuck on validation errors)
   if (form.checkValidity()) {
     showLoader();
@@ -607,7 +611,7 @@ document.addEventListener("submit", function (e) {
 });
 
 // ==========================================
-//  INFINITE SCROLL LOGIC
+//  INFINITE SCROLL LOGIC
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -631,7 +635,7 @@ document.addEventListener("DOMContentLoaded", function () {
           endMessage.classList.remove("d-none");
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     );
 
     observer.observe(sentinel);
@@ -786,3 +790,64 @@ function removeSocial(linkUrl) {
       else alert("Could not remove link.");
     });
 }
+
+/* =========================================
+   CHAT SYSTEM LOGIC
+   ========================================= */
+document.addEventListener("DOMContentLoaded", function () {
+  const chatForm = document.getElementById("chatForm");
+  const chatBox = document.getElementById("chat-box");
+
+  // Only run this code if we are on the Chat Page
+  if (chatForm && chatBox) {
+    console.log("✅ Chat System Loaded"); // Debugging
+
+    // 1. Auto-scroll to bottom on load
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // 2. Handle Message Sending
+    chatForm.addEventListener("submit", function (e) {
+      e.preventDefault(); // 🛑 STOP PAGE RELOAD
+      console.log("📨 Sending message...");
+
+      const messageInput = document.getElementById("messageInput");
+      const text = messageInput.value.trim();
+      const recipient = chatForm.dataset.recipient;
+
+      if (!text) return;
+
+      // Send to Backend
+      fetch("/api/send-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipient: recipient, text: text }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            console.log("✅ Message sent!");
+
+            // Create HTML for my new message
+            const myMsgHtml = `
+              <div class="d-flex justify-content-end">
+                <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+                  ${data.text}
+                  <div class="text-end" style="font-size: 0.65rem; opacity: 0.7;">
+                    ${data.time}
+                  </div>
+                </div>
+              </div>
+            `;
+
+            // Append and Scroll
+            chatBox.insertAdjacentHTML("beforeend", myMsgHtml);
+            messageInput.value = "";
+            chatBox.scrollTop = chatBox.scrollHeight;
+          } else {
+            console.error("❌ Failed to send message:", data.error);
+          }
+        })
+        .catch((error) => console.error("❌ Error:", error));
+    });
+  }
+});

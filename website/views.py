@@ -4,10 +4,10 @@ from flask import (
     flash, redirect, url_for, abort, jsonify, current_app
 )
 from flask_login import login_required, current_user, logout_user
-from .models import User, Post, Comment, Like, Follow, Notification, CommentLike
+from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message
 from sqlalchemy.exc import IntegrityError
 from . import db
-from sqlalchemy import func
+from sqlalchemy import func, or_, desc
 import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
@@ -843,6 +843,88 @@ def post_view(id):
         pagination=None # Hide pagination for single post
     )
 
+# =================================================
+# MESSAGING SYSTEM (Inbox & Chat)
+# =================================================
+
+@views.route('/inbox')
+@login_required
+def inbox():
+    # 1. Get all messages where I am Sender OR Recipient
+    messages = Message.query.filter(
+        or_(Message.sender_id == current_user.id, Message.recipient_id == current_user.id)
+    ).order_by(Message.date_created.desc()).all()
+    
+    # 2. Group by "Conversation Partner"
+    conversations = {}
+    
+    for msg in messages:
+        # Determine who the other person is
+        partner = msg.recipient if msg.sender_id == current_user.id else msg.sender
+        
+        # Only store the LATEST message for each partner
+        if partner.id not in conversations:
+            conversations[partner.id] = {
+                'user': partner,
+                'last_message': msg,
+                'unread': (not msg.is_read and msg.recipient_id == current_user.id)
+            }
+    
+    # Convert dict to list
+    chats = list(conversations.values())
+    
+    return render_template("inbox.html", user=current_user, chats=chats)
+
+@views.route('/api/send-message', methods=['POST'])
+@login_required
+def api_send_message():
+    data = request.get_json()
+    recipient_username = data.get('recipient')
+    text = data.get('text')
+    
+    recipient = User.query.filter_by(username=recipient_username).first()
+    if not recipient:
+        return jsonify({'error': 'User not found'}), 404
+        
+    msg = Message(sender_id=current_user.id, recipient_id=recipient.id, text=text)
+    db.session.add(msg)
+    db.session.commit()
+    
+    return jsonify({
+        'success': True,
+        'text': msg.text,
+        'time': msg.date_created.strftime('%H:%M'),
+        'sender_pic': current_user.profile_pic
+    })
+
+@views.route('/chat/<username>', methods=['GET']) # ⚠️ methods=['GET'] is CRITICAL
+@login_required
+def chat(username):
+    recipient = User.query.filter_by(username=username).first_or_404()
+    
+    if recipient.id == current_user.id:
+        return redirect(url_for('views.inbox'))
+
+    # Check Follow Logic
+    is_following = Follow.query.filter_by(follower_id=current_user.id, following_id=recipient.id).first()
+    if not is_following:
+        flash(f"You must follow {recipient.username} to message them.", category='error')
+        return redirect(url_for('views.profile', username=username))
+
+    # Mark messages as Read
+    unread_msgs = Message.query.filter_by(sender_id=recipient.id, recipient_id=current_user.id, is_read=False).all()
+    for msg in unread_msgs:
+        msg.is_read = True
+    db.session.commit()
+
+    messages = Message.query.filter(
+        or_(
+            (Message.sender_id == current_user.id) & (Message.recipient_id == recipient.id),
+            (Message.sender_id == recipient.id) & (Message.recipient_id == current_user.id)
+        )
+    ).order_by(Message.date_created.asc()).all()
+
+    return render_template("chat.html", user=current_user, recipient=recipient, messages=messages)
 # =================================================
 # ERROR HANDLERS
 # =================================================
