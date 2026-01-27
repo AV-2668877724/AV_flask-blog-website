@@ -892,11 +892,12 @@ def api_send_message():
     
     return jsonify({
         'success': True,
+        'id': msg.id,  # ✅ ADDED: Send the ID back!
         'text': msg.text,
         'time': msg.date_created.strftime('%H:%M'),
         'sender_pic': current_user.profile_pic
     })
-
+    
 @views.route('/chat/<username>', methods=['GET']) # ⚠️ methods=['GET'] is CRITICAL
 @login_required
 def chat(username):
@@ -925,6 +926,26 @@ def chat(username):
     ).order_by(Message.date_created.asc()).all()
 
     return render_template("chat.html", user=current_user, recipient=recipient, messages=messages)
+
+# Add this inside website/views.py
+
+@views.route('/api/delete-message/<int:id>', methods=['POST'])
+@login_required
+def delete_message(id):
+    msg = Message.query.get(id)
+    
+    if not msg:
+        return jsonify({'error': 'Message not found'}), 404
+        
+    # Security Check: Only the sender can delete
+    if msg.sender_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    db.session.delete(msg)
+    db.session.commit()
+    
+    return jsonify({'success': True})
+
 # =================================================
 # ERROR HANDLERS
 # =================================================

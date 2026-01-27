@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         // 2. Backend Sync
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err)
+          console.error("Error marking read:", err),
         );
       }
     });
@@ -635,7 +635,7 @@ document.addEventListener("DOMContentLoaded", function () {
           endMessage.classList.remove("d-none");
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(sentinel);
@@ -800,7 +800,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Only run this code if we are on the Chat Page
   if (chatForm && chatBox) {
-    console.log("✅ Chat System Loaded"); // Debugging
+    console.log("✅ Chat System Loaded");
 
     // 1. Auto-scroll to bottom on load
     chatBox.scrollTop = chatBox.scrollHeight;
@@ -808,7 +808,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // 2. Handle Message Sending
     chatForm.addEventListener("submit", function (e) {
       e.preventDefault(); // 🛑 STOP PAGE RELOAD
-      console.log("📨 Sending message...");
 
       const messageInput = document.getElementById("messageInput");
       const text = messageInput.value.trim();
@@ -825,17 +824,25 @@ document.addEventListener("DOMContentLoaded", function () {
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
-            console.log("✅ Message sent!");
-
-            // Create HTML for my new message
+            // ✅ UPDATED: HTML now includes the Delete Button structure
             const myMsgHtml = `
-              <div class="d-flex justify-content-end">
-                <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+              <div class="d-flex justify-content-end align-items-end mb-2">
+                
+                <div class="me-2 mb-2">
+                  <button class="btn btn-sm btn-link text-muted p-0 opacity-50 hover-opacity-100" 
+                          onclick="deleteMessage('${data.id}', this)" 
+                          title="Delete for everyone">
+                    <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                  </button>
+                </div>
+
+                <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm position-relative" style="max-width: 75%;">
                   ${data.text}
-                  <div class="text-end" style="font-size: 0.65rem; opacity: 0.7;">
+                  <div class="text-white-50 text-end" style="font-size: 0.65rem; opacity: 0.7;">
                     ${data.time}
                   </div>
                 </div>
+
               </div>
             `;
 
@@ -851,3 +858,29 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+
+/* =========================================
+   DELETE MESSAGE LOGIC
+   ========================================= */
+function deleteMessage(msgId, btnElement) {
+  if (!confirm("Are you sure you want to delete this message for everyone?")) {
+    return;
+  }
+
+  fetch(`/api/delete-message/${msgId}`, { method: "POST" })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        // Find the parent container (d-flex) and remove it from the DOM
+        const messageRow = btnElement.closest(".d-flex");
+        if (messageRow) {
+          messageRow.style.transition = "opacity 0.3s";
+          messageRow.style.opacity = "0";
+          setTimeout(() => messageRow.remove(), 300);
+        }
+      } else {
+        alert("Error deleting message: " + (data.error || "Unknown error"));
+      }
+    })
+    .catch((err) => console.error(err));
+}

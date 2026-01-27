@@ -50,14 +50,29 @@ endblock %} {% block content %}
       >
         {% for msg in messages %}
         <div
-          class="d-flex {{ 'justify-content-end' if msg.sender_id == user.id else 'justify-content-start' }}"
+          class="d-flex {{ 'justify-content-end' if msg.sender_id == user.id else 'justify-content-start' }} align-items-end mb-2"
         >
+          {% if msg.sender_id == user.id %}
+          <div class="me-2 mb-2">
+            <button
+              class="btn btn-sm btn-link text-muted p-0 opacity-50 hover-opacity-100"
+              onclick="deleteMessage('{{ msg.id }}', this)"
+              title="Delete for everyone"
+            >
+              <i class="fas fa-trash-alt" style="font-size: 0.8rem"></i>
+            </button>
+          </div>
+          {% endif %}
+
           <div
-            class="{{ 'bg-primary text-white' if msg.sender_id == user.id else 'bg-white border text-dark' }} rounded-3 px-3 py-2 shadow-sm"
+            class="{{ 'bg-primary text-white' if msg.sender_id == user.id else 'bg-white border text-dark' }} rounded-3 px-3 py-2 shadow-sm position-relative"
             style="max-width: 75%"
           >
             {{ msg.text }}
-            <div class="text-end" style="font-size: 0.65rem; opacity: 0.7">
+            <div
+              class="{{ 'text-white-50' if msg.sender_id == user.id else 'text-muted' }} text-end"
+              style="font-size: 0.65rem; opacity: 0.7"
+            >
               {{ msg.date_created.strftime('%H:%M') }}
             </div>
           </div>

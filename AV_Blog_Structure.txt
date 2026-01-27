@@ -1,42 +1,44 @@
 AV_Postory/
 │
 ├── app.py                   # Entry point (Runs the app)
-├── upgrade_db.py            # (Temporary) Script used to add columns to DB
+├── update_db.py             # (Temporary) Script used to add Message table to DB
 │
 ├── instance/
 │   └── database.db          # SQLite Database file
 │
 └── website/
-    ├── __init__.py          # App initialization & DB setup
-    ├── auth.py              # Login/Signup logic (Updated: Login Check)
-    ├── models.py            # Database Tables (Updated: User column added)
-    ├── views.py             # Main Routes (Updated: Deactivate & Username Check)
+    ├── __init__.py          # ⚡ UPDATED: Added unread_messages count to navbar context
+    ├── auth.py              # Login/Signup logic
+    ├── models.py            # ⚡ UPDATED: Added 'Message' class (Database Table)
+    ├── views.py             # ⚡ UPDATED: Added routes for Inbox, Chat API, and Delete Message
     │
     ├── static/
-    │   ├── styles.css       # Global Styles (Updated: Dark Mode fixes)
-    │   ├── index.js         # JavaScript (Updated: Username check reset)
+    │   ├── styles.css       # Global Styles
+    │   ├── index.js         # ⚡ UPDATED: Added Chat AJAX, Preloader Fix, Delete Logic
     │   │
-    │   ├── images/          # Logo and static assets
-    │   │   └── logo.png
-    │   
+    │   └── images/          # Logo and static assets
+    │       └── logo.png
     │
     └── templates/
-        ├── base.html              # Main Layout (Updated: Navbar & Deactivate Modal)
-        ├── home.html              # Homepage / Feed
-        ├── login.html             # Login Page
-        ├── sign_up.html           # Signup Page
-        ├── profile.html           # Profile Page (Updated: Edit Profile Modal)
-        ├── about.html             # About Us Page (Updated: New Content)
-        ├── account_deactivated.html  # ✅ NEW: Deactivation Landing Page
+        ├── base.html        # ⚡ UPDATED: Added Inbox Icon, Red Dot Badge, & v=3 for JS cache busting
+        ├── home.html        # Homepage / Feed
+        ├── login.html       # Login Page
+        ├── sign_up.html     # Signup Page
+        ├── profile.html     # ⚡ UPDATED: Message button now links to Chat
+        ├── about.html       # About Us Page
+        ├── account_deactivated.html # Deactivation Landing Page
         │
-        ├── create_posts.html      # Create Post Page
-        ├── edit_post.html         # Edit Post Page
-        ├── _posts.html            # Partial template for posts loop
+        ├── chat.html        # ✅ NEW: The Chat Interface (AJAX, Delete Button)
+        ├── inbox.html       # ✅ NEW: List of recent conversations
         │
-        ├── admin_dashboard.html   # Admin Panel
-        ├── search.html            # Search Results Page
-        ├── notifications.html     # Notifications Page
-        ├── followers.html         # Followers/Following List
+        ├── create_posts.html # Create Post Page
+        ├── edit_post.html    # Edit Post Page
+        ├── _posts.html       # Partial template for posts loop
         │
-        ├── 404.html               # Error Page
-        └── 500.html               # Error Page
+        ├── admin_dashboard.html # Admin Panel
+        ├── search.html          # Search Results Page
+        ├── notifications.html   # Notifications Page
+        ├── followers.html       # Followers/Following List
+        │
+        ├── 404.html          # Error Page
+        └── 500.html          # Error Page
