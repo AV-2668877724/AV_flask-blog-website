@@ -68,13 +68,13 @@ block content %}
   </li>
   <li class="nav-item" role="presentation">
     <button
-      class="nav-link fw-bold"
+      class="nav-link fw-bold text-danger"
       id="deleted-tab"
       data-bs-toggle="pill"
       data-bs-target="#pills-deleted"
       type="button"
     >
-      Deleted Posts
+      <i class="fas fa-trash-alt me-1"></i> Trash
     </button>
   </li>
   <li class="nav-item" role="presentation">
@@ -169,9 +169,12 @@ block content %}
                     class="d-inline-flex ms-2"
                   >
                     <input
-                      type="hidden"
+                      type="password"
                       name="admin_password"
-                      value="adminready777"
+                      class="form-control form-control-sm"
+                      placeholder="Admin Pass"
+                      style="width: 100px"
+                      required
                     />
                     <button class="btn btn-outline-danger btn-sm border-0">
                       <i class="bi bi-trash"></i>
@@ -256,9 +259,9 @@ block content %}
   </div>
 
   <div class="tab-pane fade" id="pills-deleted">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm border-danger border-start border-4">
       <div class="card-header bg-white py-3">
-        <h5 class="fw-bold mb-0">Trash (Deleted Posts)</h5>
+        <h5 class="fw-bold mb-0 text-danger">Trash (Deleted Posts)</h5>
       </div>
       <div class="card-body p-0">
         <table class="table align-middle mb-0">
@@ -276,32 +279,60 @@ block content %}
               <td class="ps-4 fw-bold">{{ p.user.username }}</td>
               <td style="max-width: 300px">
                 <span class="text-truncate d-block text-muted"
-                  >{{ p.text[:60] | striptags }}...</span
+                  ><del>{{ p.text[:60] | striptags }}...</del></span
                 >
               </td>
               <td><small>{{ p.date_created | timeago }}</small></td>
               <td class="text-end pe-4">
-                <form
-                  method="POST"
-                  action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
-                  class="d-inline-flex gap-2"
-                >
-                  <input
-                    type="password"
-                    name="admin_password"
-                    class="form-control form-control-sm"
-                    placeholder="Admin Pass"
-                    style="width: 120px"
-                    required
-                  />
-                  <button class="btn btn-success btn-sm">Restore</button>
-                </form>
+                <div class="d-inline-flex gap-2">
+                  <form
+                    method="POST"
+                    action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
+                    class="d-inline-flex gap-2"
+                  >
+                    <input
+                      type="password"
+                      name="admin_password"
+                      class="form-control form-control-sm"
+                      placeholder="Admin Pass"
+                      style="width: 100px"
+                      required
+                    />
+                    <button class="btn btn-success btn-sm">Restore</button>
+                  </form>
+
+                  <form
+                    method="POST"
+                    action="{{ url_for('views.admin_permanent_delete_post', post_id=p.id) }}"
+                    onsubmit="
+                      return confirm(
+                        'WARNING: This cannot be undone. Delete permanently?',
+                      );
+                    "
+                    class="d-inline-flex gap-2"
+                  >
+                    <input
+                      type="password"
+                      name="admin_password"
+                      class="form-control form-control-sm"
+                      placeholder="Admin Pass"
+                      style="width: 100px"
+                      required
+                    />
+                    <button
+                      class="btn btn-danger btn-sm"
+                      title="Delete Forever"
+                    >
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
               </td>
             </tr>
             {% else %}
             <tr>
               <td colspan="4" class="text-center py-4 text-muted">
-                No deleted posts found.
+                Trash is empty.
               </td>
             </tr>
             {% endfor %}

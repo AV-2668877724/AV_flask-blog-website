@@ -16,9 +16,6 @@ from datetime import datetime
 
 views = Blueprint('views', __name__)
 
-# Security: Password is now loaded from .env file
-# Removed hardcoded ADMIN_ACTION_PASSWORD
-
 # Allowed Image Extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
@@ -32,53 +29,36 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def compress_image(form_picture, folder, width=None, height=None):
-    """
-    Saves, resizes, and compresses an image.
-    :param form_picture: The file object from the form
-    :param folder: 'avatars' or 'posts' (subfolder in static/uploads)
-    :param width: Max width (optional)
-    :param height: Max height (optional)
-    :return: The new filename
-    """
-    # 1. Generate a random name
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
     
-    # 2. Create the save path
     app = current_app
     upload_path = os.path.join(app.root_path, 'static/uploads', folder, picture_fn)
 
-    # Ensure directory exists
     if not os.path.exists(os.path.dirname(upload_path)):
         os.makedirs(os.path.dirname(upload_path))
 
-    # 3. Open the image using Pillow
     i = Image.open(form_picture)
 
-    # 4. Resize logic (Maintain Aspect Ratio)
     if width and height:
         i.thumbnail((width, height))
     elif width:
-         # Calculate height based on aspect ratio
         w_percent = (width / float(i.size[0]))
         h_size = int((float(i.size[1]) * float(w_percent)))
         i = i.resize((width, h_size), Image.Resampling.LANCZOS)
     
-    # 5. Save with Compression
     i.save(upload_path, optimize=True, quality=85)
 
     return picture_fn
 
 def enrich_posts(posts):
     for post in posts:
-        # Post Likes
         post.likes_count = len(post.likes)
         post.liked = False
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
         
-        # Comment Likes
         for comment in post.comments:
             comment.likes_count = len(comment.likes)
             comment.liked = False
@@ -87,7 +67,6 @@ def enrich_posts(posts):
     return posts
 
 def create_notification(visitor_id, recipient_id, action, post_id=None):
-    """Creates a notification only if the visitor is not the recipient."""
     if visitor_id == recipient_id:
         return 
         
@@ -104,7 +83,9 @@ def create_notification(visitor_id, recipient_id, action, post_id=None):
             visitor_id=visitor_id, 
             recipient_id=recipient_id, 
             action=action, 
-            post_id=post_id
+            post_id=post_id,
+            # ✅ FIX: Use Local Time
+            date_created=datetime.now()
         )
         db.session.add(notif)
         db.session.commit()
@@ -142,7 +123,6 @@ def home():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     
-    # Only show non-deleted posts
     pagination = Post.query.filter_by(is_deleted=False)\
         .order_by(Post.date_created.desc())\
         .paginate(page=page, per_page=per_page, error_out=False)
@@ -172,10 +152,16 @@ def create_post():
             flash('Post content cannot be empty!', category='error')
         else:
             if cover_image_file and cover_image_file.filename != '':
-                # Limit post images to 1080px width
                 cover_image_name = compress_image(cover_image_file, 'posts', width=1080)
             
-            post = Post(text=text, author=current_user.id, cover_image=cover_image_name)
+            # ✅ FIX: Use datetime.now() (Local Time) to match your PC clock
+            post = Post(
+                text=text, 
+                author=current_user.id, 
+                cover_image=cover_image_name,
+                date_created=datetime.now() 
+            )
+            
             db.session.add(post)
             db.session.commit()
             flash('Post created successfully!', category='success')
@@ -233,14 +219,13 @@ def posts(username):
 @views.route("/delete-post/<id>")
 @login_required
 def delete_post(id):
-    post = Post.query.filter_by(id=id).first()
+    post = Post.query.get(id)
     
     if not post:
         flash("Post does not exist.", category='error')
     elif current_user.id != post.author and not current_user.is_admin:
         flash("You do not have permission to delete this post.", category='error')
     else:
-        # Soft Delete
         post.is_deleted = True
         db.session.commit()
         flash('Post moved to trash.', category='success')
@@ -261,7 +246,14 @@ def create_comment(post_id):
     else:
         post = Post.query.filter_by(id=post_id).first()
         if post:
-            comment = Comment(text=text, author=current_user.id, post_id=post_id)
+            # ✅ FIX: Use datetime.now() (Local Time)
+            comment = Comment(
+                text=text, 
+                author=current_user.id, 
+                post_id=post_id,
+                date_created=datetime.now()
+            )
+            
             db.session.add(comment)
             db.session.commit()
             create_notification(current_user.id, post.author, 'comment', post.id)
@@ -300,7 +292,8 @@ def like(post_id):
         db.session.delete(like)
         db.session.commit()
     else:
-        like = Like(author=current_user.id, post_id=post_id)
+        # ✅ FIX: Use datetime.now() (Local Time)
+        like = Like(author=current_user.id, post_id=post_id, date_created=datetime.now())
         db.session.add(like)
         db.session.commit()
         liked = True
@@ -336,42 +329,41 @@ def mark_notifications_read():
 @login_required
 def profile(username):
     user = User.query.filter_by(username=username).first()
+    
     if not user:
-        flash('User not found.', category='error')
+        flash('No user with that username exists.', category='error')
         return redirect(url_for('views.home'))
 
     page = request.args.get('page', 1, type=int)
     per_page = 5
-    
-    posts_pagination = Post.query.filter_by(author=user.id)\
+
+    pagination = Post.query.filter_by(author=user.id, is_deleted=False)\
         .order_by(Post.date_created.desc())\
         .paginate(page=page, per_page=per_page, error_out=False)
-        
-    posts = enrich_posts(posts_pagination.items)
 
+    posts = enrich_posts(pagination.items)
+    
     followers_count = Follow.query.filter_by(following_id=user.id).count()
     following_count = Follow.query.filter_by(follower_id=user.id).count()
+    total_posts = Post.query.filter_by(author=user.id, is_deleted=False).count()
     
-    is_following = False
-    if current_user.is_authenticated:
-        is_following = Follow.query.filter_by(
-            follower_id=current_user.id, 
-            following_id=user.id
-        ).first()
+    is_following = Follow.query.filter_by(
+        follower_id=current_user.id, 
+        following_id=user.id
+    ).first()
 
     return render_template(
         "profile.html", 
-        user=current_user,
-        profile_user=user,
-        posts=posts,
+        user=current_user, 
+        profile_user=user, 
+        posts=posts, 
+        pagination=pagination,
         followers_count=followers_count,
         following_count=following_count,
-        total_posts=posts_pagination.total,
-        is_following=is_following,
-        pagination=posts_pagination,
-        now=datetime.now()  # ✅ Time for "Online" status
+        total_posts=total_posts,
+        is_following=is_following
     )
-
+    
 @views.route('/update-profile-pic', methods=['POST'])
 @login_required
 def update_profile_pic():
@@ -385,7 +377,6 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # Use compress_image, strictly 300x300
         filename = compress_image(file, 'avatars', width=300, height=300)
         current_user.profile_pic = filename
         db.session.commit()
@@ -409,7 +400,6 @@ def edit_bio():
 
 @views.route('/check-username', methods=['POST'])
 def check_username():
-    """API called by JavaScript to check availability"""
     data = request.get_json()
     username = data.get('username')
     
@@ -423,14 +413,10 @@ def check_username():
     user = User.query.filter_by(username=username).first()
     
     if user:
-        # Case 1: User typed their own existing name
         if current_user.is_authenticated and user.id == current_user.id:
              return jsonify({'available': False, 'message': 'This username is already owned by you.'})
-        
-        # Case 2: Someone else has it
         return jsonify({'available': False, 'message': 'This username already exists.'})
     
-    # Case 3: It is free
     return jsonify({'available': True, 'message': 'This username is unique and you can take it.'})
 
 @views.route('/change-username', methods=['POST'])
@@ -439,7 +425,6 @@ def change_username():
     new_username = request.form.get('username')
     if not new_username or len(new_username) < 3:
         flash("Username too short.", category='error')
-    # Prevent spaces in usernames to avoid URL issues
     elif not re.match("^[a-zA-Z0-9_.]+$", new_username):
         flash("Username can only contain letters, numbers, dots, and underscores (No spaces).", category='error')
     else:
@@ -483,10 +468,13 @@ def add_social_link():
 def admin_dashboard():
     if not current_user.is_admin:
         abort(403)
+        
     users = User.query.all()
     
-    # Separated Active vs Deleted Posts
-    active_posts = Post.query.filter_by(is_deleted=False).all()
+    active_posts = Post.query.filter(
+        or_(Post.is_deleted == False, Post.is_deleted == None)
+    ).all()
+    
     deleted_posts = Post.query.filter_by(is_deleted=True).all()
     
     comments = Comment.query.order_by(Comment.date_created.desc()).limit(50).all()
@@ -499,14 +487,13 @@ def admin_dashboard():
         comments=comments,
         user=current_user
     )
-
+    
 @views.route('/admin/delete-user/<int:user_id>', methods=['POST'])
 @login_required
 def admin_delete_user(user_id):
     if not current_user.is_admin:
         abort(403)
     
-    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
     if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
@@ -524,13 +511,28 @@ def admin_delete_user(user_id):
         flash("User not found", category='error')
     return redirect(url_for('views.admin_dashboard'))
 
+@views.route("/restore-post/<id>")
+@login_required
+def restore_post(id):
+    post = Post.query.get(id)
+    
+    if not post:
+        flash("Post does not exist.", category='error')
+    elif not current_user.is_admin:
+        flash("Only Admins can restore posts.", category='error')
+    else:
+        post.is_deleted = False
+        db.session.commit()
+        flash('Post restored successfully!', category='success')
+
+    return redirect(request.referrer or url_for('views.admin_dashboard'))
+
 @views.route('/admin/toggle-user-status/<int:user_id>', methods=['POST'])
 @login_required
 def admin_toggle_user_status(user_id):
     if not current_user.is_admin:
         abort(403)
         
-    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
     if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
@@ -545,7 +547,6 @@ def admin_toggle_user_status(user_id):
         flash('Cannot deactivate an admin.', category='error')
         return redirect(url_for('views.admin_dashboard'))
 
-    # Toggle status
     user.is_active = not user.is_active
     db.session.commit()
     
@@ -553,13 +554,13 @@ def admin_toggle_user_status(user_id):
     flash(f"User {user.username} is now {status}.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
+# 1. UPDATE THIS: Make the standard delete 'Soft' (Move to Trash)
 @views.route('/admin/delete-post/<int:post_id>', methods=['POST'])
 @login_required
 def admin_delete_post(post_id):
     if not current_user.is_admin:
         abort(403)
         
-    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
     if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
@@ -567,9 +568,30 @@ def admin_delete_post(post_id):
         
     post = Post.query.get(post_id)
     if post:
+        # ✅ CHANGE: Soft Delete (Move to Trash)
+        post.is_deleted = True
+        db.session.commit()
+        flash("Post moved to trash.", category='success')
+    return redirect(url_for('views.admin_dashboard'))
+
+# 2. ADD THIS: New route for Permanent Delete
+@views.route('/admin/permanent-delete-post/<int:post_id>', methods=['POST'])
+@login_required
+def admin_permanent_delete_post(post_id):
+    if not current_user.is_admin:
+        abort(403)
+        
+    pwd = request.form.get('admin_password')
+    if pwd != os.getenv('ADMIN_PASSWORD'):
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+        
+    post = Post.query.get(post_id)
+    if post:
+        # ✅ CHANGE: Hard Delete (Remove from DB)
         db.session.delete(post)
         db.session.commit()
-        flash("Post deleted.", category='success')
+        flash("Post permanently deleted.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin/delete-comment/<int:comment_id>', methods=['POST'])
@@ -578,7 +600,6 @@ def admin_delete_comment(comment_id):
     if not current_user.is_admin:
         abort(403)
         
-    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
     if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
@@ -597,7 +618,6 @@ def admin_restore_comment(comment_id):
     if not current_user.is_admin:
         abort(403)
         
-    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
     if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect admin password", category='error')
@@ -615,7 +635,6 @@ def admin_restore_comment(comment_id):
 def admin_restore_post(post_id):
     if not current_user.is_admin: abort(403)
     
-    # ✅ SECURITY FIX: Get password from .env
     pwd = request.form.get('admin_password')
     if pwd != os.getenv('ADMIN_PASSWORD'):
         flash("Incorrect password", category='error')
@@ -643,11 +662,10 @@ def follow_user(user_id):
         
     existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
     if not existing:
-        new_follow = Follow(follower_id=current_user.id, following_id=user_id)
+        # ✅ FIX: Use Local Time
+        new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.now())
         db.session.add(new_follow)
         db.session.commit()
-        
-        # Notify User
         create_notification(current_user.id, user_id, 'follow')
         
         return jsonify({'success': True, 'action': 'followed'})
@@ -689,14 +707,10 @@ def following_list(username):
 @views.route('/deactivate-account', methods=['POST'])
 @login_required
 def deactivate_account():
-    # 1. Get the reason from the form
     reason = request.form.get('reason')
     details = request.form.get('details')
-    
-    # 2. Combine them into a single string
     full_reason = f"Reason: {reason} | Details: {details}" if details else reason
     
-    # 3. Save to database
     current_user.deactivation_reason = full_reason
     current_user.is_active = False
     
@@ -791,9 +805,7 @@ def update_cover_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # Use compress_image, width=1080
         filename = compress_image(file, 'posts', width=1080, height=600)
-        
         current_user.cover_pic = filename
         db.session.commit()
         flash('Cover photo updated!', category='success')
@@ -816,12 +828,12 @@ def like_comment(comment_id):
         db.session.delete(like)
         liked = False
     else:
-        like = CommentLike(author=current_user.id, comment_id=comment_id)
+        # ✅ FIX: Use Local Time
+        like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.now())
         db.session.add(like)
         liked = True
 
     db.session.commit()
-    
     return jsonify({"likes": len(comment.likes), "liked": liked})
 
 @views.route("/post/<id>")
@@ -832,7 +844,6 @@ def post_view(id):
         flash('Post does not exist.', category='error')
         return redirect(url_for('views.home'))
     
-    # We must treat this single post as a list so _posts.html can read it
     posts = enrich_posts([post])
     
     return render_template(
@@ -840,7 +851,7 @@ def post_view(id):
         user=current_user, 
         posts=posts, 
         username=post.user.username,
-        pagination=None # Hide pagination for single post
+        pagination=None 
     )
 
 # =================================================
@@ -850,19 +861,14 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    # 1. Get all messages where I am Sender OR Recipient
     messages = Message.query.filter(
         or_(Message.sender_id == current_user.id, Message.recipient_id == current_user.id)
     ).order_by(Message.date_created.desc()).all()
     
-    # 2. Group by "Conversation Partner"
     conversations = {}
     
     for msg in messages:
-        # Determine who the other person is
         partner = msg.recipient if msg.sender_id == current_user.id else msg.sender
-        
-        # Only store the LATEST message for each partner
         if partner.id not in conversations:
             conversations[partner.id] = {
                 'user': partner,
@@ -870,9 +876,7 @@ def inbox():
                 'unread': (not msg.is_read and msg.recipient_id == current_user.id)
             }
     
-    # Convert dict to list
     chats = list(conversations.values())
-    
     return render_template("inbox.html", user=current_user, chats=chats)
 
 @views.route('/api/send-message', methods=['POST'])
@@ -886,19 +890,25 @@ def api_send_message():
     if not recipient:
         return jsonify({'error': 'User not found'}), 404
         
-    msg = Message(sender_id=current_user.id, recipient_id=recipient.id, text=text)
+    # ✅ FIX: Use Local Time
+    msg = Message(
+        sender_id=current_user.id, 
+        recipient_id=recipient.id, 
+        text=text,
+        date_created=datetime.now()
+    )
     db.session.add(msg)
     db.session.commit()
     
     return jsonify({
         'success': True,
-        'id': msg.id,  # ✅ ADDED: Send the ID back!
+        'id': msg.id,
         'text': msg.text,
         'time': msg.date_created.strftime('%H:%M'),
         'sender_pic': current_user.profile_pic
     })
     
-@views.route('/chat/<username>', methods=['GET']) # ⚠️ methods=['GET'] is CRITICAL
+@views.route('/chat/<username>', methods=['GET']) 
 @login_required
 def chat(username):
     recipient = User.query.filter_by(username=username).first_or_404()
@@ -906,13 +916,11 @@ def chat(username):
     if recipient.id == current_user.id:
         return redirect(url_for('views.inbox'))
 
-    # Check Follow Logic
     is_following = Follow.query.filter_by(follower_id=current_user.id, following_id=recipient.id).first()
     if not is_following:
         flash(f"You must follow {recipient.username} to message them.", category='error')
         return redirect(url_for('views.profile', username=username))
 
-    # Mark messages as Read
     unread_msgs = Message.query.filter_by(sender_id=recipient.id, recipient_id=current_user.id, is_read=False).all()
     for msg in unread_msgs:
         msg.is_read = True
@@ -927,8 +935,6 @@ def chat(username):
 
     return render_template("chat.html", user=current_user, recipient=recipient, messages=messages)
 
-# Add this inside website/views.py
-
 @views.route('/api/delete-message/<int:id>', methods=['POST'])
 @login_required
 def delete_message(id):
@@ -937,7 +943,6 @@ def delete_message(id):
     if not msg:
         return jsonify({'error': 'Message not found'}), 404
         
-    # Security Check: Only the sender can delete
     if msg.sender_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
     
@@ -960,4 +965,4 @@ def internal_server_error(e):
 
 @views.route('/about')
 def about():
-    return render_template("about.html", user=current_user)     
+    return render_template("about.html", user=current_user)
