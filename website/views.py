@@ -180,21 +180,29 @@ def edit_post(id):
 
     if request.method == "POST":
         text = request.form.get('text')
-        cover_image_file = request.files.get('cover_image')
+        file = request.files.get('cover_image') 
         
         if not text:
             flash("Post content cannot be empty.", category='error')
         else:
             post.text = text
-            if cover_image_file and allowed_file(cover_image_file.filename):
-                new_filename = compress_image(cover_image_file, 'posts', width=1080)
+            if file and file.filename != '' and allowed_file(file.filename):
+                new_filename = compress_image(file, 'posts', width=1080)
                 post.cover_image = new_filename
                 
             db.session.commit()
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
 
-    return render_template("edit_post.html", user=current_user, post=post)
+    # ✅ THE FIX:
+    # If the text has new lines (\n) but doesn't look like rich HTML (no <p> or <br>),
+    # we manually convert the new lines to <br> so the Editor sees them.
+    content_to_edit = post.text
+    if '\n' in content_to_edit and '<p>' not in content_to_edit and '<br>' not in content_to_edit:
+        content_to_edit = content_to_edit.replace('\n', '<br>')
+
+    # We pass 'content_to_edit' separately so we don't mess up the actual database object yet
+    return render_template("edit_post.html", user=current_user, post=post, content_to_edit=content_to_edit)
 
 @views.route("/posts/<username>")
 @login_required

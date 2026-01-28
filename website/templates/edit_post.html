@@ -1,78 +1,129 @@
-{% extends 'base.html' %} {% block title %}Edit Story{% endblock %} {% block
+{% extends "base.html" %} {% block title %}Edit Post{% endblock %} {% block
 content %}
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+
+<style>
+  /* Dark Mode Support */
+  body.dark-mode .form-label,
+  body.dark-mode .card-header h5,
+  body.dark-mode .text-adaptive {
+    color: #ffffff !important;
+    opacity: 1 !important;
+  }
+  body.dark-mode .border-dashed {
+    border-color: #ffffff50 !important;
+  }
+  /* CKEditor Dark Mode */
+  body.dark-mode .ck-editor__editable_inline {
+    background-color: #2b2b2b !important;
+    color: #ffffff !important;
+    border-color: #444 !important;
+  }
+  body.dark-mode .ck-toolbar {
+    background-color: #1f1f1f !important;
+    border-color: #444 !important;
+  }
+  body.dark-mode .ck-button {
+    color: #e0e0e0 !important;
+  }
+  body.dark-mode .ck-button:hover {
+    background-color: #333 !important;
+  }
+  .ck-editor__editable {
+    min-height: 300px;
+  }
+</style>
 
 <div class="row justify-content-center">
-  <div class="col-lg-8">
-    <h2 class="font-heading fw-bold mb-4">Edit your story</h2>
-    <div class="card border-0 shadow-sm p-4">
-      <form method="POST" id="postForm" onsubmit="return validatePostForm()">
-        <input type="hidden" name="text" id="hiddenInput" />
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white py-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <h5 class="fw-bold mb-0">Edit Post</h5>
+          <a href="{{ url_for('views.home') }}" class="btn-close"></a>
+        </div>
+      </div>
 
-        <div class="mb-3">
-          <div
-            id="editor-container"
-            style="
-              min-height: 300px;
-              font-family: 'Inter', sans-serif;
-              font-size: 1.1rem;
-            "
-          >
-            {{ post.text | safe }}
+      <div class="card-body p-4">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-adaptive"
+              >Post Content</label
+            >
+
+            <textarea name="text" id="editor">
+{{ content_to_edit | safe }}</textarea
+            >
           </div>
-        </div>
 
-        <div class="d-flex justify-content-end gap-2 border-top pt-3">
-          <a href="/home" class="btn btn-outline-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary px-4">Update</button>
-        </div>
-      </form>
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-adaptive"
+              >Current Image</label
+            >
+            <div class="p-3 rounded-3 text-center border border-dashed">
+              {% if post.cover_image %}
+              <img
+                src="{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}"
+                class="img-fluid rounded shadow-sm"
+                style="max-height: 200px; object-fit: cover"
+                alt="Current Post Image"
+              />
+              <div class="small mt-2 text-adaptive">
+                Uploading a new image will replace this one.
+              </div>
+              {% else %}
+              <p class="mb-0 text-adaptive fw-bold">
+                No image currently attached.
+              </p>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-adaptive"
+              >Upload New Image</label
+            >
+            <input
+              type="file"
+              name="cover_image"
+              class="form-control"
+              accept="image/*"
+            />
+          </div>
+
+          <div class="d-grid">
+            <button
+              type="submit"
+              class="btn btn-primary rounded-pill fw-bold py-2"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
 <script>
-  var quill = new Quill("#editor-container", {
-    theme: "snow",
-    placeholder: "Tell your story...",
-    modules: {
+  document.addEventListener("DOMContentLoaded", function () {
+    ClassicEditor.create(document.querySelector("#editor"), {
       toolbar: [
-        [{ header: [2, 3, false] }],
-        ["bold", "italic", "underline", "link", "blockquote"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["clean"],
+        "heading",
+        "|",
+        "bold",
+        "italic",
+        "underline",
+        "link",
+        "bulletedList",
+        "numberedList",
+        "blockQuote",
       ],
-    },
+      placeholder: "What's on your mind?",
+    }).catch((error) => {
+      console.error(error);
+    });
   });
-
-  function validatePostForm() {
-    var html = quill.root.innerHTML;
-    var text = quill.getText().trim();
-
-    if (text.length === 0) {
-      alert("Content cannot be empty");
-      return false;
-    }
-    document.getElementById("hiddenInput").value = html;
-    return true;
-  }
 </script>
 
-<style>
-  .ql-toolbar.ql-snow {
-    border-color: #e5e7eb;
-    border-top-left-radius: 0.5rem;
-    border-top-right-radius: 0.5rem;
-    background-color: #f9fafb;
-  }
-  .ql-container.ql-snow {
-    border-color: #e5e7eb;
-    border-bottom-left-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
-  }
-  .ql-editor {
-    color: var(--text-main);
-  }
-</style>
 {% endblock %}
