@@ -423,11 +423,25 @@ def check_username():
 @login_required
 def change_username():
     new_username = request.form.get('username')
-    if not new_username or len(new_username) < 3:
-        flash("Username too short.", category='error')
+    
+    if not new_username:
+        flash("Username cannot be empty.", category='error')
+        return redirect(url_for('views.profile', username=current_user.username))
+
+    # 1. Strip whitespace
+    new_username = new_username.strip()
+
+    # 2. Check Length
+    if len(new_username) < 3:
+        flash("Username must be at least 3 characters.", category='error')
+    
+    # 3. STRICT VALIDATION: Only a-z, A-Z, 0-9, dot(.), underscore(_)
+    # If it contains spaces, #, $, @, it will fail this check.
     elif not re.match("^[a-zA-Z0-9_.]+$", new_username):
-        flash("Username can only contain letters, numbers, dots, and underscores (No spaces).", category='error')
+        flash("Invalid format! Usernames can only contain letters, numbers, dots (.), and underscores (_). No spaces or special symbols.", category='error')
+    
     else:
+        # 4. Check if taken
         existing = User.query.filter_by(username=new_username).first()
         if existing:
             flash("Username already taken.", category='error')
@@ -436,6 +450,7 @@ def change_username():
             db.session.commit()
             flash("Username updated! Please login again.", category='success')
             return redirect(url_for('auth.logout'))
+            
     return redirect(url_for('views.profile', username=current_user.username))
 
 @views.route('/add-social-link', methods=['POST'])

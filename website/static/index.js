@@ -1,6 +1,6 @@
-/* =========================
+/* =========================================
    GLOBAL CONFIG & HELPER FUNCTIONS
-   ========================== */
+   ========================================= */
 const TRUNCATE_HEIGHT = 400; // ✅ Your preferred height
 
 // 1. Truncate posts (Global function so Infinite Scroll can use it)
@@ -19,45 +19,35 @@ function truncatePosts() {
   });
 }
 
+/* =========================================
+   MAIN DOM LOAD LOGIC
+   ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  /* =========================
-       DARK MODE
-    ========================== */
+  /* --- DARK MODE --- */
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
 
-  // Auth-only dark mode button safety
   if (darkToggle) {
     setDarkMode(saved);
-
     darkToggle.addEventListener("click", () => {
       const enabled = document.body.classList.toggle("dark-mode");
       localStorage.setItem("darkMode", enabled);
       setDarkMode(enabled);
     });
   } else {
-    // Force light mode on auth pages
     document.body.classList.remove("dark-mode");
   }
 
-  /* =========================
-       AUTO TOAST SHOW (FLASH)
-    ========================== */
+  /* --- AUTO TOAST SHOW --- */
   document
     .querySelectorAll("#toastContainer .toast")
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
-  /* =========================
-       POST TRUNCATION (ON LOAD)
-    ========================== */
-  // Run on startup for existing posts
+  /* --- INITIAL POST TRUNCATION --- */
   truncatePosts();
 
-  /* =========================
-       READ MORE / READ LESS (EVENT DELEGATION)
-    ========================== */
+  /* --- READ MORE / READ LESS DELEGATION --- */
   document.addEventListener("click", function (e) {
-    // Check if the clicked element is our button
     if (e.target && e.target.classList.contains("see-more-btn")) {
       const btn = e.target;
       const postId = btn.dataset.postId;
@@ -66,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!postText) return;
 
-      // ✅ FIX: Check for "Read More" (matches your HTML), not "See More"
       if (btn.innerText.trim() === "Read More") {
         postText.style.maxHeight = "none";
         postText.style.overflow = "visible";
@@ -78,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.innerText = "Read More";
         if (overlay) overlay.style.display = "block";
 
-        // Scroll back up slightly so user isn't lost
         const rect = btn.getBoundingClientRect();
         window.scrollTo({
           top: window.scrollY + rect.top - 100,
@@ -88,64 +76,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  /* =========================
-       NOTIFICATION BADGE LOGIC
-    ========================== */
+  /* --- NOTIFICATION BADGE --- */
   const notifBtn = document.getElementById("notifDropdown");
   if (notifBtn) {
     notifBtn.addEventListener("click", () => {
       const badge = document.getElementById("notifBadge");
       if (badge) {
-        // 1. Visual Hide
         badge.style.display = "none";
-        // 2. Backend Sync
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err),
+          console.error("Error marking read:", err)
         );
       }
     });
   }
 
-  /* =========================
-       TIMESTAMP REFRESH
-    ========================== */
+  /* --- TIMESTAMP REFRESH --- */
   refreshTimestamps();
   setInterval(refreshTimestamps, 60000);
 
-  /* =========================
-       LIVE SEARCH (AUTOCOMPLETE)
-    ========================== */
+  /* --- LIVE SEARCH (AUTOCOMPLETE) --- */
   const searchInput = document.getElementById("searchInput");
   const searchResults = document.getElementById("searchResults");
 
   if (searchInput && searchResults) {
-    // 1. Listen for typing (Live Dropdown)
     searchInput.addEventListener("input", async function () {
       const query = this.value.trim();
 
-      // If empty, hide dropdown
       if (query.length < 1) {
         searchResults.classList.remove("show");
         return;
       }
 
       try {
-        // 2. Fetch data from Python API
         const response = await fetch(`/api/search-users?q=${query}`);
         const users = await response.json();
-
-        // 3. Clear previous results
         searchResults.innerHTML = "";
 
         if (users.length > 0) {
-          // 4. Create Dropdown Items
           users.forEach((user) => {
             const item = document.createElement("a");
-            item.className =
-              "dropdown-item d-flex align-items-center gap-2 py-2";
-            item.href = `/profile/${user.username}`; // Link to profile
+            item.className = "dropdown-item d-flex align-items-center gap-2 py-2";
+            item.href = `/profile/${user.username}`;
 
-            // Handle Avatar
             let avatarHtml = "";
             if (user.profile_pic) {
               avatarHtml = `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">`;
@@ -157,8 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
             item.innerHTML = `${avatarHtml} <span>${user.username}</span>`;
             searchResults.appendChild(item);
           });
-
-          // Show the dropdown
           searchResults.classList.add("show");
           searchResults.style.display = "block";
         } else {
@@ -170,7 +140,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 5. Handle "Enter" key to go to full search page
     searchInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -178,42 +147,46 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    // 6. Hide dropdown when clicking outside
     document.addEventListener("click", function (e) {
-      if (
-        !searchInput.contains(e.target) &&
-        !searchResults.contains(e.target)
-      ) {
+      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
         searchResults.classList.remove("show");
         searchResults.style.display = "none";
       }
     });
   }
 
-  /* =======================================================
-       ✅ CRITICAL FIX: RESET UPDATE BUTTON ON TYPING
-       ======================================================= */
+  /* --- USERNAME RESET ON TYPING --- */
   const newUsernameInput = document.getElementById("newUsername");
   const submitUsernameBtn = document.getElementById("submitUsernameBtn");
   const usernameStatus = document.getElementById("usernameStatus");
 
   if (newUsernameInput && submitUsernameBtn) {
     newUsernameInput.addEventListener("input", function () {
-      // 1. Immediately Disable the button if user types anything
       submitUsernameBtn.disabled = true;
-
-      // 2. Clear the "Available" message so user knows they must check again
       if (usernameStatus) {
         usernameStatus.textContent = "";
         usernameStatus.className = "";
       }
     });
   }
+
+  /* --- GLOBAL USERNAME INPUT VALIDATION (No Special Chars) --- */
+  const usernameInputs = document.querySelectorAll('input[name="username"]');
+  usernameInputs.forEach(input => {
+      input.addEventListener('keypress', function(e) {
+          // Allow: a-z, A-Z, 0-9, dot(.), underscore(_)
+          const regex = /[a-zA-Z0-9_.]/;
+          // If the key pressed doesn't match regex, block it
+          if (!regex.test(e.key)) {
+              e.preventDefault();
+          }
+      });
+  });
 });
 
-/* =========================
-   DARK MODE HELPER
-========================== */
+/* =========================================
+   UI HELPERS (Dark Mode, Toasts, Time)
+   ========================================= */
 function setDarkMode(enabled) {
   const icon = document.querySelector("#darkToggle i");
   if (enabled) {
@@ -225,9 +198,6 @@ function setDarkMode(enabled) {
   }
 }
 
-/* =========================
-   TOAST HELPER
-========================== */
 function showToast(message, isError = false) {
   const container = document.getElementById("toastContainer");
   if (!container) return;
@@ -239,21 +209,18 @@ function showToast(message, isError = false) {
   toast.innerHTML = `
     <div class="d-flex">
       <div class="toast-body">${message}</div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto"
-              data-bs-dismiss="toast"></button>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>`;
   container.appendChild(toast);
 
-  const bsToast = new bootstrap.Toast(toast, {
-    delay: 3000,
-  });
+  const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
   bsToast.show();
   toast.addEventListener("hidden.bs.toast", () => toast.remove());
 }
 
-/* =========================
-   👍 LIKE HANDLER (WITH ANIMATION)
-========================== */
+/* =========================================
+   LIKE POST LOGIC
+   ========================================= */
 function likePost(postId, btn) {
   like(postId);
 }
@@ -264,37 +231,25 @@ function like(postId) {
   const icon = btn ? btn.querySelector("i") || btn : null;
 
   if (!countEl || !btn) return;
-
   if (btn.dataset.loading === "true") return;
   btn.dataset.loading = "true";
 
-  // Check state
-  const isFar = icon.classList.contains("far"); // currently empty (unliked)
+  const isFar = icon.classList.contains("far");
   const current = parseInt(countEl.innerText, 10) || 0;
 
-  // --- OPTIMISTIC UI UPDATE ---
+  // Optimistic UI Update
   if (isFar) {
-    // 1. User is LIKING the post
     countEl.innerText = current + 1;
-
     icon.classList.remove("far");
-    icon.classList.add("fas", "text-danger"); // Use Red for Heart
-
-    // 🔥 TRIGGER ANIMATION (Confetti + Pop)
+    icon.classList.add("fas", "text-danger");
     btn.classList.add("like-anim");
-
-    // Remove animation class after it finishes so it can play again later
-    setTimeout(() => {
-      btn.classList.remove("like-anim");
-    }, 600);
+    setTimeout(() => btn.classList.remove("like-anim"), 600);
   } else {
-    // 2. User is UNLIKING
     countEl.innerText = Math.max(0, current - 1);
     icon.classList.remove("fas", "text-danger");
     icon.classList.add("far");
   }
 
-  // --- SEND TO SERVER ---
   fetch(`/like-post/${postId}`, { method: "POST" })
     .then((res) => res.json())
     .then((data) => {
@@ -311,49 +266,74 @@ function like(postId) {
     .finally(() => (btn.dataset.loading = "false"));
 }
 
-/* =========================
-   💬 COMMENT RIPPLE HANDLER
-========================== */
+/* =========================================
+   LIKE COMMENT LOGIC
+   ========================================= */
 document.addEventListener("click", function (e) {
-  // Look for comment buttons (or links that look like buttons)
   const btn = e.target.closest(".btn-comment, .comment-btn-trigger");
-
   if (btn) {
-    // Add ripple effect classes
     btn.classList.add("ripple-effect", "ripple-active");
-
-    // Remove after animation triggers
-    setTimeout(() => {
-      btn.classList.remove("ripple-active");
-    }, 500);
+    setTimeout(() => btn.classList.remove("ripple-active"), 500);
   }
 });
 
-/* =========================
-   TIME AGO SUPPORT
-========================== */
+function likeComment(commentId, btn) {
+  if (btn.dataset.loading === "true") return;
+  btn.dataset.loading = "true";
+
+  const icon = btn.querySelector("i");
+  const countSpan = btn.querySelector(".like-count");
+  const currentCount = parseInt(countSpan.innerText, 10) || 0;
+  const isLiked = icon.classList.contains("fas");
+
+  if (isLiked) {
+    icon.classList.remove("fas", "text-danger");
+    icon.classList.add("far");
+    countSpan.innerText = Math.max(0, currentCount - 1);
+  } else {
+    icon.classList.remove("far");
+    icon.classList.add("fas", "text-danger");
+    countSpan.innerText = currentCount + 1;
+    icon.style.transform = "scale(1.3)";
+    icon.style.transition = "transform 0.2s";
+    setTimeout(() => (icon.style.transform = "scale(1)"), 200);
+  }
+
+  fetch(`/like-comment/${commentId}`, { method: "POST" })
+    .then((res) => res.json())
+    .then((data) => {
+      countSpan.innerText = data.likes;
+      if (data.liked) {
+        icon.classList.add("fas", "text-danger");
+        icon.classList.remove("far");
+      } else {
+        icon.classList.add("far");
+        icon.classList.remove("fas", "text-danger");
+      }
+    })
+    .catch(() => console.error("Error liking comment"))
+    .finally(() => (btn.dataset.loading = "false"));
+}
+
+/* =========================================
+   TIME AGO FORMATTER
+   ========================================= */
 function timeAgoFromISO(isoString) {
   const now = new Date();
   const then = new Date(isoString);
   const diffSeconds = Math.floor((now - then) / 1000);
 
   if (diffSeconds < 60) return "just now";
-
   const minutes = Math.floor(diffSeconds / 60);
   if (minutes < 60) return `${minutes} min ago`;
-
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
-
   const days = Math.floor(hours / 24);
   if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
-
   const weeks = Math.floor(days / 7);
   if (weeks < 4) return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
-
   const months = Math.floor(days / 30);
   if (months < 12) return `${months} month${months > 1 ? "s" : ""} ago`;
-
   const years = Math.floor(days / 365);
   return `${years} year${years > 1 ? "s" : ""} ago`;
 }
@@ -365,23 +345,18 @@ function refreshTimestamps() {
   });
 }
 
-// * ADMIN DASHBOARD SEARCH
-
-// Expose to HTML inline handlers
+/* =========================================
+   ADMIN DASHBOARD HELPERS
+   ========================================= */
 window.handleEnterSearch = function (event, sectionId, value) {
   const section = document.getElementById(sectionId);
-  const info = document.getElementById(sectionId + "-info");
   if (!section) return;
 
   if (event.key === "Enter") {
     event.preventDefault();
-
     if (!section.classList.contains("show")) {
-      new bootstrap.Collapse(section, {
-        show: true,
-      });
+      new bootstrap.Collapse(section, { show: true });
     }
-
     applyAdminFilter(sectionId, value);
   }
 
@@ -403,46 +378,41 @@ function applyAdminFilter(sectionId, query) {
   }
 
   let count = 0;
-
   section.querySelectorAll(".admin-row").forEach((row) => {
     const item = row.querySelector(".admin-item");
     let match = false;
-
     if (item.dataset.username) {
       match = item.dataset.username.toLowerCase() === query;
     } else {
       match = item.dataset.search.toLowerCase().includes(query);
     }
-
     row.classList.toggle("d-none", !match);
     if (match) count++;
   });
 
   if (info) {
-    info.textContent = count
-      ? `${count} result${count > 1 ? "s" : ""} found`
-      : "No results found";
+    info.textContent = count ? `${count} result${count > 1 ? "s" : ""} found` : "No results found";
   }
 }
 
 function resetAdminFilter(sectionId) {
   const section = document.getElementById(sectionId);
   const info = document.getElementById(sectionId + "-info");
-
   section.querySelectorAll(".admin-row").forEach((row) => {
     row.classList.remove("d-none");
   });
-
   if (info) info.textContent = "";
 }
 
+/* =========================================
+   USERNAME AVAILABILITY CHECKER
+   ========================================= */
 let allowUsernameSubmit = false;
 
 function checkUsername() {
   const input = document.getElementById("newUsername");
   const status = document.getElementById("usernameStatus");
   const submitBtn = document.getElementById("submitUsernameBtn");
-
   const username = input.value.trim();
 
   if (!username) {
@@ -455,17 +425,12 @@ function checkUsername() {
 
   fetch("/check-username", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      username,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
   })
     .then((res) => res.json())
     .then((data) => {
       status.textContent = data.message;
-
       if (data.available) {
         status.className = "text-success";
         submitBtn.disabled = false;
@@ -485,7 +450,6 @@ function checkSignupUsername() {
   const input = document.getElementById("signupUsername");
   const status = document.getElementById("signupUsernameStatus");
   const submitBtn = document.getElementById("signupSubmitBtn");
-
   const username = input.value.trim();
 
   if (!username) {
@@ -498,17 +462,12 @@ function checkSignupUsername() {
 
   fetch("/check-username-signup", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      username,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
   })
     .then((res) => res.json())
     .then((data) => {
       status.textContent = data.message;
-
       if (data.available) {
         status.className = "text-success";
         submitBtn.disabled = false;
@@ -521,121 +480,86 @@ function checkSignupUsername() {
     });
 }
 
-// ==========================================
-//  PRELOADER LOGIC (With 8s Safety Timer)
-// ==========================================
-
+/* =========================================
+   PRELOADER SYSTEM
+   ========================================= */
 const loader = document.getElementById("preloader");
 let safetyTimer = null;
 
-// Helper to safely hide loader
 function hideLoader() {
   if (loader) {
     loader.classList.add("loader-hidden");
-    // Clear the safety timer so we don't redirect unnecessarily
     if (safetyTimer) clearTimeout(safetyTimer);
   }
 }
 
-// Helper to show loader with 8s failsafe
 function showLoader() {
   if (loader) {
     loader.classList.remove("loader-hidden");
-
-    // 🛑 START 8-SECOND SAFETY TIMER
     if (safetyTimer) clearTimeout(safetyTimer);
     safetyTimer = setTimeout(() => {
-      // If the loader is still visible after 8 seconds, force redirect home
       if (!loader.classList.contains("loader-hidden")) {
         console.warn("Loading took too long. Redirecting home...");
         window.location.href = "/";
       }
-    }, 8000); // 8000ms = 8 seconds
+    }, 8000);
   }
 }
 
-// 1. Hide Loader when page is fully loaded (Standard load)
 window.addEventListener("load", function () {
   setTimeout(hideLoader, 300);
 });
 
-// 2. ✅ CRITICAL FIX: Handle "Back" Button Navigation (bfcache)
-// This event fires when the page is shown, even if loaded from cache (Back button)
 window.addEventListener("pageshow", function (event) {
-  // If page was loaded from cache (event.persisted) or via Back button (nav type 2)
-  if (
-    event.persisted ||
-    (window.performance && window.performance.navigation.type === 2)
-  ) {
+  if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
     hideLoader();
   }
 });
 
-// 3. Show Loader when navigating to a new page (Links only)
 document.addEventListener("click", function (e) {
   const target = e.target.closest("a");
-
   if (target) {
     const href = target.getAttribute("href");
     const targetAttr = target.getAttribute("target");
     const toggleAttr = target.getAttribute("data-bs-toggle");
     const dismissAttr = target.getAttribute("data-bs-dismiss");
-    const actionAttr = target.getAttribute("onclick"); // Avoid JS links
+    const actionAttr = target.getAttribute("onclick");
 
-    // Check valid link
-    if (
-      href &&
-      !href.startsWith("#") &&
-      !href.startsWith("javascript") &&
-      targetAttr !== "_blank" &&
-      !toggleAttr &&
-      !dismissAttr &&
-      !actionAttr
-    ) {
+    if (href && !href.startsWith("#") && !href.startsWith("javascript") && targetAttr !== "_blank" && !toggleAttr && !dismissAttr && !actionAttr) {
       showLoader();
     }
   }
 });
 
-// 4. Show Loader on Form Submit
 document.addEventListener("submit", function (e) {
   const form = e.target;
-
-  // ✅ CRITICAL FIX: IF it's the chat form, DO NOT show loader (ajax handles it)
   if (form.id === "chatForm") return;
-
-  // Only show if the form is valid (prevent getting stuck on validation errors)
   if (form.checkValidity()) {
     showLoader();
   }
 });
 
-// ==========================================
-//  INFINITE SCROLL LOGIC
-// ==========================================
-
+/* =========================================
+   INFINITE SCROLL
+   ========================================= */
 document.addEventListener("DOMContentLoaded", function () {
   const sentinel = document.getElementById("sentinel");
   const container = document.getElementById("posts-container");
-  const spinner = document.getElementById("scroll-spinner");
   const endMessage = document.getElementById("end-message");
+  const spinner = document.getElementById("scroll-spinner");
 
-  // Only run if the sentinel exists (i.e., there are posts)
   if (sentinel) {
     let isLoading = false;
-
     const observer = new IntersectionObserver(
       (entries) => {
-        // Read current state from DOM attributes
         const hasNext = sentinel.getAttribute("data-has-next") === "true";
-
         if (entries[0].isIntersecting && hasNext && !isLoading) {
           loadMorePosts();
         } else if (!hasNext && endMessage) {
           endMessage.classList.remove("d-none");
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: "200px" }
     );
 
     observer.observe(sentinel);
@@ -643,7 +567,6 @@ document.addEventListener("DOMContentLoaded", function () {
     async function loadMorePosts() {
       if (isLoading) return;
       isLoading = true;
-
       spinner.style.display = "inline-block";
 
       let page = parseInt(sentinel.getAttribute("data-page"));
@@ -653,7 +576,6 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         const response = await fetch(`${baseUrl}?page=${nextPage}&ajax=1`);
         if (!response.ok) throw new Error("Failed to load");
-
         const html = await response.text();
 
         if (html.trim().length === 0) {
@@ -668,10 +590,7 @@ document.addEventListener("DOMContentLoaded", function () {
         while (tempDiv.firstChild) {
           container.appendChild(tempDiv.firstChild);
         }
-
-        // ✅ FIX: Apply truncation to newly loaded posts
         truncatePosts();
-
         sentinel.setAttribute("data-page", nextPage);
       } catch (error) {
         console.error("Scroll Error:", error);
@@ -683,139 +602,24 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-/* =========================
-   ❤️ LIKE COMMENT HANDLER
-========================== */
-function likeComment(commentId, btn) {
-  if (btn.dataset.loading === "true") return;
-  btn.dataset.loading = "true";
-
-  const icon = btn.querySelector("i");
-  const countSpan = btn.querySelector(".like-count");
-  const currentCount = parseInt(countSpan.innerText, 10) || 0;
-  const isLiked = icon.classList.contains("fas"); // Solid heart means liked
-
-  // 1. Optimistic UI Update
-  if (isLiked) {
-    // Unlike
-    icon.classList.remove("fas", "text-danger");
-    icon.classList.add("far");
-    countSpan.innerText = Math.max(0, currentCount - 1);
-  } else {
-    // Like
-    icon.classList.remove("far");
-    icon.classList.add("fas", "text-danger");
-    countSpan.innerText = currentCount + 1;
-
-    // Pop Animation
-    icon.style.transform = "scale(1.3)";
-    icon.style.transition = "transform 0.2s";
-    setTimeout(() => (icon.style.transform = "scale(1)"), 200);
-  }
-
-  // 2. Server Request
-  fetch(`/like-comment/${commentId}`, { method: "POST" })
-    .then((res) => res.json())
-    .then((data) => {
-      countSpan.innerText = data.likes;
-      // Sync state just in case
-      if (data.liked) {
-        icon.classList.add("fas", "text-danger");
-        icon.classList.remove("far");
-      } else {
-        icon.classList.add("far");
-        icon.classList.remove("fas", "text-danger");
-      }
-    })
-    .catch(() => console.error("Error liking comment"))
-    .finally(() => (btn.dataset.loading = "false"));
-}
-
 /* =========================================
-   PROFILE IMAGE VIEWER (LIGHTBOX)
-   ========================================= */
-function viewFullSize(src) {
-  const modal = new bootstrap.Modal(document.getElementById("imageViewModal"));
-  const img = document.getElementById("fullSizeImage");
-  img.src = src;
-  modal.show();
-}
-
-/* =========================================
-   PROFILE ACTIONS (Follow & Socials)
-   ========================================= */
-
-function toggleFollow(userId) {
-  const btn = document.getElementById("followBtn");
-  // Determine current state based on button text
-  const isFollowing = btn.innerText.trim() === "Following";
-
-  // Toggle URL
-  const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
-
-  fetch(url, { method: "POST" })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        if (isFollowing) {
-          // Changed to NOT following
-          btn.innerText = "Follow";
-          btn.classList.replace("btn-outline-secondary", "btn-primary");
-        } else {
-          // Changed to FOLLOWING
-          btn.innerText = "Following";
-          btn.classList.replace("btn-primary", "btn-outline-secondary");
-        }
-
-        // Reload to update numbers (Followers Count)
-        setTimeout(() => location.reload(), 500);
-      } else {
-        alert(data.message || "Something went wrong");
-      }
-    })
-    .catch((err) => console.error(err));
-}
-
-function removeSocial(linkUrl) {
-  if (!confirm("Remove this link?")) return;
-
-  fetch("/profile/remove-social", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: linkUrl }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) location.reload();
-      else alert("Could not remove link.");
-    });
-}
-
-/* =========================================
-   CHAT SYSTEM LOGIC
+   CHAT SYSTEM
    ========================================= */
 document.addEventListener("DOMContentLoaded", function () {
   const chatForm = document.getElementById("chatForm");
   const chatBox = document.getElementById("chat-box");
 
-  // Only run this code if we are on the Chat Page
   if (chatForm && chatBox) {
-    console.log("✅ Chat System Loaded");
-
-    // 1. Auto-scroll to bottom on load
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 2. Handle Message Sending
     chatForm.addEventListener("submit", function (e) {
-      e.preventDefault(); // 🛑 STOP PAGE RELOAD
-
+      e.preventDefault();
       const messageInput = document.getElementById("messageInput");
       const text = messageInput.value.trim();
       const recipient = chatForm.dataset.recipient;
 
       if (!text) return;
 
-      // Send to Backend
       fetch("/api/send-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -824,10 +628,8 @@ document.addEventListener("DOMContentLoaded", function () {
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
-            // ✅ UPDATED: HTML now includes the Delete Button structure
             const myMsgHtml = `
               <div class="d-flex justify-content-end align-items-end mb-2">
-                
                 <div class="me-2 mb-2">
                   <button class="btn btn-sm btn-link text-muted p-0 opacity-50 hover-opacity-100" 
                           onclick="deleteMessage('${data.id}', this)" 
@@ -835,33 +637,23 @@ document.addEventListener("DOMContentLoaded", function () {
                     <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
                   </button>
                 </div>
-
                 <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm position-relative" style="max-width: 75%;">
                   ${data.text}
                   <div class="text-white-50 text-end" style="font-size: 0.65rem; opacity: 0.7;">
                     ${data.time}
                   </div>
                 </div>
-
-              </div>
-            `;
-
-            // Append and Scroll
+              </div>`;
             chatBox.insertAdjacentHTML("beforeend", myMsgHtml);
             messageInput.value = "";
             chatBox.scrollTop = chatBox.scrollHeight;
-          } else {
-            console.error("❌ Failed to send message:", data.error);
           }
         })
-        .catch((error) => console.error("❌ Error:", error));
+        .catch((error) => console.error("Error:", error));
     });
   }
 });
 
-/* =========================================
-   DELETE MESSAGE LOGIC
-   ========================================= */
 function deleteMessage(msgId, btnElement) {
   if (!confirm("Are you sure you want to delete this message for everyone?")) {
     return;
@@ -871,7 +663,6 @@ function deleteMessage(msgId, btnElement) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        // Find the parent container (d-flex) and remove it from the DOM
         const messageRow = btnElement.closest(".d-flex");
         if (messageRow) {
           messageRow.style.transition = "opacity 0.3s";
@@ -883,4 +674,73 @@ function deleteMessage(msgId, btnElement) {
       }
     })
     .catch((err) => console.error(err));
+}
+
+/* =========================================
+   PROFILE PAGE (Follow, Avatar, Socials)
+   ========================================= */
+
+// 1. Image Preview
+function previewImage(input, imgId) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = document.getElementById(imgId);
+      if (img) {
+        img.src = e.target.result;
+        img.classList.remove("d-none");
+      }
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+// 2. Full Size Viewer
+function viewFullSize(src) {
+  const modal = new bootstrap.Modal(document.getElementById("imageViewModal"));
+  const img = document.getElementById("fullSizeImage");
+  img.src = src;
+  modal.show();
+}
+
+// 3. Remove Social Link
+function removeSocialLink(url) {
+  if (!confirm("Remove this link?")) return;
+
+  fetch("/profile/remove-social", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url: url }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) location.reload();
+      else alert(data.message);
+    })
+    .catch((err) => console.error("Error:", err));
+}
+
+// 4. Toggle Follow
+function toggleFollow(userId, btn) {
+  const isFollowing = btn.innerText.trim() === "Following";
+  const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
+
+  fetch(url, { method: "POST" })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        if (data.action === "followed") {
+          btn.innerText = "Following";
+          btn.classList.remove("btn-primary");
+          btn.classList.add("btn-outline-secondary");
+        } else {
+          btn.innerText = "Follow";
+          btn.classList.remove("btn-outline-secondary");
+          btn.classList.add("btn-primary");
+        }
+      } else {
+        alert(data.message || "Error processing request");
+      }
+    })
+    .catch((err) => console.error("Error:", err));
 }

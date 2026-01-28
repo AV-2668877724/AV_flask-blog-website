@@ -9,6 +9,8 @@ import random
 import string
 from flask import session
 import os
+import re # ✅ Added Regex for username validation
+from datetime import datetime # ✅ Added for Local Time login tracking
 
 auth = Blueprint('auth', __name__)
 
@@ -22,7 +24,6 @@ def send_verification_email(user_email):
     token = s.dumps(user_email, salt='email-confirm')
     link = url_for('auth.confirm_email', token=token, _external=True)
     
-    # ✅ Securely get email
     sender_email = os.getenv('MAIL_USERNAME')
     
     msg = Message('Confirm Your Email - AV Postory', 
@@ -36,7 +37,6 @@ def send_reset_email(user_email):
     token = s.dumps(user_email, salt='password-reset')
     link = url_for('auth.reset_token', token=token, _external=True)
     
-    # ✅ Securely get email
     sender_email = os.getenv('MAIL_USERNAME')
     
     msg = Message('Password Reset Request', 
@@ -64,16 +64,13 @@ def sign_up():
         # 2. Generate 6-digit OTP
         otp = ''.join(random.choices(string.digits, k=6))
         
-        # 3. Store in Session (Temporary memory)
+        # 3. Store in Session
         session['signup_email'] = email
         session['signup_otp'] = otp
         
         # 4. Send Email
         try:
-            # ✅ FIX 1: Define sender_email here
             sender_email = os.getenv('MAIL_USERNAME')
-
-            # ✅ FIX 2: Correct Subject Line (Was "Password Reset")
             msg = Message('Your Verification Code - AV Postory', 
                   sender=sender_email, 
                   recipients=[email])
@@ -95,7 +92,6 @@ def sign_up():
 # ==========================================
 @auth.route('/sign-up/verify', methods=['GET', 'POST'])
 def verify_otp():
-    # Security: If no email in session, kick them back to start
     if 'signup_email' not in session:
         return redirect(url_for('auth.sign_up'))
         
@@ -104,7 +100,6 @@ def verify_otp():
         generated_otp = session.get('signup_otp')
         
         if user_otp == generated_otp:
-            # OTP Matches! Mark as verified
             session['email_verified'] = True
             flash('Email verified successfully!', category='success')
             return redirect(url_for('auth.finish_signup'))
@@ -118,7 +113,6 @@ def verify_otp():
 # ==========================================
 @auth.route('/sign-up/finish', methods=['GET', 'POST'])
 def finish_signup():
-    # Security: Ensure email is actually verified
     if not session.get('email_verified'):
         return redirect(url_for('auth.sign_up'))
         
@@ -131,23 +125,26 @@ def finish_signup():
         # Validations
         if len(username) < 2:
             flash('Username must be greater than 1 character.', category='error')
+        
+        # ✅ NEW STRICT VALIDATION: No spaces or special chars
+        elif not re.match("^[a-zA-Z0-9_.]+$", username):
+            flash("Username can only contain letters, numbers, dots (.), and underscores (_). No spaces.", category='error')
+            
         elif password != confirm_password:
             flash('Passwords don\'t match.', category='error')
         elif len(password) < 7:
             flash('Password must be at least 7 characters.', category='error')
         else:
-            # Create User (Already Verified)
             new_user = User(email=email, username=username, 
                             password=generate_password_hash(password, method='scrypt'), 
-                            is_verified=True) # ✅ True because they used OTP
+                            is_verified=True,
+                            date_created=datetime.now()) # Use Local Time
             
             db.session.add(new_user)
             db.session.commit()
             
-            # Login immediately
             login_user(new_user, remember=True)
             
-            # Clear session data
             session.pop('signup_email', None)
             session.pop('signup_otp', None)
             session.pop('email_verified', None)
@@ -192,21 +189,17 @@ def login():
         if user:
             if check_password_hash(user.password, password):
                 
-                # 1. Check Deactivation
                 if user.is_active is False:
                     return render_template("account_deactivated.html", username=user.username, email=user.email)
 
-                # 2. Check Verification
                 if not user.is_verified:
                     flash('Please verify your email first.', category='error')
                     return render_template("login.html", user=current_user)
 
-                # ✅ 3. UPDATE LAST LOGIN TIME (Add this part)
-                from sqlalchemy.sql import func # Ensure func is imported
-                user.last_login = func.now()
+                # ✅ FIX: Use Local Time for Last Login (matches views.py)
+                user.last_login = datetime.now()
                 db.session.commit()
 
-                # 4. Log in
                 login_user(user, remember=True)
                 flash('Logged in successfully!', category='success')
                 return redirect(url_for('views.home'))

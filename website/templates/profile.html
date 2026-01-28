@@ -2,252 +2,245 @@
 Profile{% endblock %} {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-8">
-    <div
-      class="card border-0 shadow-sm overflow-hidden mb-4"
-      style="background-color: var(--bg-card)"
-    >
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
       <div
         class="position-relative"
-        style="height: 200px; background-color: #cbd5e1"
+        style="height: 200px; background-color: #f0f2f5"
       >
         {% if profile_user.cover_pic %}
         <img
           src="{{ url_for('static', filename='uploads/posts/' + profile_user.cover_pic) }}"
           class="w-100 h-100 object-fit-cover"
           alt="Cover Photo"
-          onclick="viewFullSize(this.src)"
-          style="cursor: pointer"
         />
         {% else %}
-        <div
-          class="w-100 h-100"
-          style="background: linear-gradient(135deg, #60a5fa, #2563eb)"
-        ></div>
+        <div class="w-100 h-100 bg-secondary bg-gradient"></div>
         {% endif %} {% if user.id == profile_user.id %}
         <button
-          class="btn btn-sm btn-light position-absolute bottom-0 end-0 m-3 shadow-sm"
+          class="btn btn-sm btn-light position-absolute top-0 end-0 m-3 shadow-sm rounded-circle p-2"
           data-bs-toggle="modal"
-          data-bs-target="#editCoverModal"
+          data-bs-target="#coverPicModal"
+          title="Edit Cover Photo"
         >
-          <i class="fas fa-camera me-1"></i> Edit Cover
+          <i class="fas fa-camera"></i>
         </button>
         {% endif %}
       </div>
 
-      <div class="card-body position-relative pt-0">
+      <div class="card-body pt-0 position-relative">
         <div
-          class="position-absolute translate-middle-y start-0 ms-4"
-          style="top: 0"
+          class="d-flex flex-column flex-md-row align-items-start gap-3"
+          style="margin-top: -50px"
         >
           <div class="position-relative">
             {% if profile_user.profile_pic %}
             <img
               src="{{ url_for('static', filename='uploads/avatars/' + profile_user.profile_pic) }}"
               class="rounded-circle border border-4 border-white shadow-sm bg-white"
-              style="
-                width: 120px;
-                height: 120px;
-                object-fit: cover;
-                cursor: pointer;
-              "
-              onclick="viewFullSize(this.src)"
+              width="120"
+              height="120"
+              style="object-fit: cover"
             />
             {% else %}
             <div
-              class="rounded-circle border border-4 border-white shadow-sm d-flex align-items-center justify-content-center text-white fw-bold"
-              style="
-                width: 120px;
-                height: 120px;
-                background-color: var(--primary);
-                font-size: 3rem;
-              "
+              class="rounded-circle border border-4 border-white shadow-sm bg-secondary text-white d-flex align-items-center justify-content-center fw-bold display-4"
+              style="width: 120px; height: 120px"
             >
               {{ profile_user.username[0]|upper }}
             </div>
             {% endif %} {% if user.id == profile_user.id %}
             <button
-              class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 border border-2 border-white"
-              style="width: 32px; height: 32px; padding: 0"
+              class="btn btn-primary rounded-circle position-absolute border border-2 border-white shadow-sm d-flex align-items-center justify-content-center"
               data-bs-toggle="modal"
-              data-bs-target="#editProfilePicModal"
+              data-bs-target="#profilePicModal"
+              style="
+                width: 32px;
+                height: 32px;
+                bottom: 5px;
+                right: 5px;
+                padding: 0;
+              "
             >
-              <i class="fas fa-pencil-alt small"></i>
+              <i class="fas fa-camera" style="font-size: 0.8rem"></i>
             </button>
             {% endif %}
           </div>
-        </div>
 
-        <div class="d-flex justify-content-end pt-3 gap-2">
-          {% if user.id == profile_user.id %}
-          <button
-            class="btn btn-outline-secondary rounded-pill px-4"
-            data-bs-toggle="modal"
-            data-bs-target="#editProfileModal"
-          >
-            Edit Profile
-          </button>
-          {% elif user.is_authenticated %} {% if is_following %}
-          <button
-            class="btn btn-outline-secondary rounded-pill px-4"
-            id="followBtn"
-            onclick="toggleFollow('{{ profile_user.id }}')"
-          >
-            Following
-          </button>
-          {% else %}
-          <button
-            class="btn btn-primary rounded-pill px-4"
-            id="followBtn"
-            onclick="toggleFollow('{{ profile_user.id }}')"
-          >
-            Follow
-          </button>
-          {% endif %}
+          <div class="flex-grow-1 mt-md-5 pt-md-2 w-100">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h3 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                  {{ profile_user.username }} {% if profile_user.is_verified %}
+                  <i
+                    class="fas fa-check-circle text-primary"
+                    style="font-size: 1rem"
+                    title="Verified"
+                  ></i>
+                  {% endif %}
+                </h3>
 
-          <a
-            href="{{ url_for('views.chat', username=profile_user.username) }}"
-            class="btn btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center text-decoration-none"
-            title="Message"
-            style="width: 38px; height: 38px"
-          >
-            <i class="far fa-envelope"></i>
-          </a>
+                <p class="mt-2 mb-2 text-secondary" style="font-size: 0.95rem">
+                  {{ profile_user.bio or "No bio yet." }}
+                </p>
 
-          {% endif %}
-        </div>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  {% for key, link in profile_user.social_links.items() %} {% if
+                  user.id == profile_user.id %}
+                  <div
+                    class="badge bg-light text-dark border d-flex align-items-center gap-2 px-3 py-2 fw-normal"
+                  >
+                    {% if 'github' in key %} <i class="fab fa-github"></i> {%
+                    elif 'twitter' in key %}
+                    <i class="fab fa-twitter text-info"></i> {% elif 'linkedin'
+                    in key %} <i class="fab fa-linkedin text-primary"></i> {%
+                    elif 'instagram' in key %}
+                    <i class="fab fa-instagram text-danger"></i> {% elif
+                    'facebook' in key %}
+                    <i class="fab fa-facebook text-primary"></i> {% else %}
+                    <i class="fas fa-link"></i> {% endif %}
 
-        <div class="mt-4 pt-2">
-          <h3 class="fw-bold mb-1" style="color: var(--text-main)">
-            {{ profile_user.username }}
-          </h3>
+                    <a
+                      href="{{ link }}"
+                      target="_blank"
+                      class="text-dark text-decoration-none text-truncate"
+                      style="max-width: 100px"
+                      >Link</a
+                    >
 
-          <div class="mb-3">
-            {% if profile_user.last_login %} {% set time_diff = (now -
-            profile_user.last_login).total_seconds() / 60 %} {% if time_diff < 5
-            %}
-            <span
-              class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2"
-            >
-              <i
-                class="fas fa-circle me-1"
-                style="font-size: 8px; vertical-align: middle"
-              ></i>
-              Online Now
-            </span>
-            {% else %}
-            <span
-              class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2"
-            >
-              Active {{ profile_user.last_login | timeago }}
-            </span>
-            {% endif %} {% else %}
-            <span class="badge bg-light text-muted border rounded-pill px-2"
-              >Offline</span
-            >
-            {% endif %}
-          </div>
+                    <button
+                      onclick="removeSocialLink('{{ link }}')"
+                      class="btn btn-link text-danger p-0 ms-1"
+                      style="font-size: 0.8rem"
+                    >
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  {% else %}
+                  <a
+                    href="{{ link }}"
+                    target="_blank"
+                    class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 rounded-pill"
+                  >
+                    {% if 'github' in key %} <i class="fab fa-github"></i> {%
+                    elif 'twitter' in key %} <i class="fab fa-twitter"></i> {%
+                    elif 'linkedin' in key %} <i class="fab fa-linkedin"></i> {%
+                    else %} <i class="fas fa-link"></i> {% endif %} Social
+                  </a>
+                  {% endif %} {% endfor %} {% if user.id == profile_user.id %}
+                  <button
+                    class="btn btn-sm btn-outline-primary rounded-pill border-dashed"
+                    data-bs-toggle="modal"
+                    data-bs-target="#socialLinkModal"
+                  >
+                    <i class="fas fa-plus"></i> Add Link
+                  </button>
+                  {% endif %}
+                </div>
 
-          <p
-            class="mb-3"
-            style="color: var(--text-main); white-space: pre-wrap"
-          >
-            {{ profile_user.bio }}
-          </p>
+                <div class="d-flex gap-4 text-muted small">
+                  <a
+                    href="{{ url_for('views.followers_list', username=profile_user.username) }}"
+                    class="text-decoration-none text-muted"
+                  >
+                    <span class="fw-bold text-dark">{{ followers_count }}</span>
+                    Followers
+                  </a>
+                  <a
+                    href="{{ url_for('views.following_list', username=profile_user.username) }}"
+                    class="text-decoration-none text-muted"
+                  >
+                    <span class="fw-bold text-dark">{{ following_count }}</span>
+                    Following
+                  </a>
+                  <span
+                    ><span class="fw-bold text-dark">{{ total_posts }}</span>
+                    Posts</span
+                  >
+                </div>
+              </div>
 
-          <div class="d-flex align-items-center mb-3">
-            <a
-              href="{{ url_for('views.followers_list', username=profile_user.username) }}"
-              class="text-decoration-none text-muted hover-underline me-4"
-            >
-              <span
-                class="fw-bold text-dark"
-                style="color: var(--text-main) !important"
-                >{{ followers_count }}</span
-              >
-              <span class="ms-1">Followers</span>
-            </a>
-            <a
-              href="{{ url_for('views.following_list', username=profile_user.username) }}"
-              class="text-decoration-none text-muted hover-underline me-4"
-            >
-              <span
-                class="fw-bold text-dark"
-                style="color: var(--text-main) !important"
-                >{{ following_count }}</span
-              >
-              <span class="ms-1">Following</span>
-            </a>
-            <span class="text-muted d-flex align-items-center">
-              <span
-                class="fw-bold text-dark"
-                style="color: var(--text-main) !important"
-                >{{ total_posts }}</span
-              >
-              <span class="ms-1">Posts</span>
-            </span>
-          </div>
+              <div class="d-flex gap-2">
+                {% if user.id == profile_user.id %}
+                <div class="dropdown">
+                  <button
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="fas fa-cog"></i>
+                  </button>
 
-          {% if profile_user.social_links %}
-          <div class="d-flex flex-wrap gap-2 mt-3">
-            {% for key, link in profile_user.social_links.items() %}
-            <div class="btn-group">
-              <a
-                href="{{ link }}"
-                target="_blank"
-                class="btn btn-sm btn-light border rounded-pill d-flex align-items-center gap-2 px-3"
-              >
-                {% if 'github' in key %}<i class="fab fa-github"></i> {% elif
-                'twitter' in key %}<i class="fab fa-twitter"></i> {% elif
-                'linkedin' in key %}<i class="fab fa-linkedin"></i> {% elif
-                'youtube' in key %}<i class="fab fa-youtube text-danger"></i> {%
-                elif 'instagram' in key %}<i
-                  class="fab fa-instagram text-danger"
-                ></i>
-                {% else %}<i class="fas fa-link"></i>{% endif %}
-                <span class="small">{{ key|title }}</span>
-              </a>
-              {% if user.id == profile_user.id %}
-              <button
-                class="btn btn-sm btn-light border rounded-circle ms-1"
-                onclick="removeSocial('{{ link }}')"
-                title="Remove"
-              >
-                <i class="fas fa-times small text-danger"></i>
-              </button>
-              {% endif %}
+                  <ul
+                    class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                  >
+                    <li>
+                      <a
+                        class="dropdown-item"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editProfileModal"
+                      >
+                        Edit Bio
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        class="dropdown-item"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#changeUsernameModal"
+                      >
+                        Change Username
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                {% else %} {% if is_following %}
+                <button
+                  class="btn btn-outline-secondary btn-sm rounded-pill px-3"
+                  onclick="toggleFollow('{{ profile_user.id }}', this)"
+                >
+                  Following
+                </button>
+                {% else %}
+                <button
+                  class="btn btn-primary btn-sm rounded-pill px-3"
+                  onclick="toggleFollow('{{ profile_user.id }}', this)"
+                >
+                  Follow
+                </button>
+                {% endif %}
+
+                <a
+                  href="{{ url_for('views.chat', username=profile_user.username) }}"
+                  class="btn btn-light btn-sm rounded-pill px-3 border"
+                >
+                  <i class="far fa-comment-dots"></i>
+                </a>
+                {% endif %}
+              </div>
             </div>
-            {% endfor %}
           </div>
-          {% endif %}
         </div>
       </div>
     </div>
 
-    <h5 class="fw-bold mb-3" style="color: var(--text-main)">Posts</h5>
+    <h5 class="fw-bold mb-3">Posts</h5>
+    {% if posts %} {% include "_posts.html" %}
 
-    {% if posts %} {% include "_posts.html" %} {% if pagination.pages > 1 %}
-    <nav class="my-4">
+    <nav class="mt-4">
       <ul class="pagination justify-content-center">
         {% if pagination.has_prev %}
         <li class="page-item">
           <a
-            class="page-link rounded-start-pill border-0 shadow-sm"
+            class="page-link rounded-pill border-0 shadow-sm mx-1"
             href="{{ url_for('views.profile', username=profile_user.username, page=pagination.prev_num) }}"
             >Previous</a
           >
         </li>
-        {% endif %}
-
-        <li class="page-item disabled">
-          <span class="page-link border-0 bg-transparent text-muted"
-            >Page {{ pagination.page }} of {{ pagination.pages }}</span
-          >
-        </li>
-
-        {% if pagination.has_next %}
+        {% endif %} {% if pagination.has_next %}
         <li class="page-item">
           <a
-            class="page-link rounded-end-pill border-0 shadow-sm"
+            class="page-link rounded-pill border-0 shadow-sm mx-1"
             href="{{ url_for('views.profile', username=profile_user.username, page=pagination.next_num) }}"
             >Next</a
           >
@@ -255,198 +248,184 @@ Profile{% endblock %} {% block content %}
         {% endif %}
       </ul>
     </nav>
-    {% endif %} {% else %}
-    <div class="text-center py-5">
-      <div class="text-muted mb-3"><i class="fas fa-camera fa-3x"></i></div>
-      <h5 class="fw-bold" style="color: var(--text-main)">No posts yet</h5>
-      <p class="text-muted">
-        When {{ profile_user.username }} shares photos or stories, they'll
-        appear here.
-      </p>
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="far fa-folder-open fa-3x mb-3 opacity-50"></i>
+      <p>No posts yet.</p>
     </div>
     {% endif %}
   </div>
 </div>
 
-{% if user.id == profile_user.id %}
-
 <div class="modal fade" id="editProfileModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Edit Profile</h5>
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Edit Bio</h5>
         <button
           type="button"
           class="btn-close"
           data-bs-dismiss="modal"
         ></button>
       </div>
-      <div class="modal-body">
-        <ul
-          class="nav nav-pills nav-fill mb-3 bg-light p-1 rounded"
-          role="tablist"
-        >
-          <li class="nav-item">
-            <a
-              class="nav-link active rounded py-1"
-              data-bs-toggle="pill"
-              href="#tab-bio"
-              >Bio</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
-              class="nav-link rounded py-1"
-              data-bs-toggle="pill"
-              href="#tab-username"
-              >Username</a
-            >
-          </li>
-          <li class="nav-item">
-            <a
-              class="nav-link rounded py-1"
-              data-bs-toggle="pill"
-              href="#tab-social"
-              >Social Links</a
-            >
-          </li>
-        </ul>
-
-        <div class="tab-content">
-          <div id="tab-bio" class="tab-pane fade show active">
-            <form action="{{ url_for('views.edit_bio') }}" method="POST">
-              <label class="form-label text-muted small fw-bold"
-                >About You</label
-              >
-              <textarea
-                name="bio"
-                class="form-control"
-                rows="4"
-                maxlength="300"
-              >
+      <form action="{{ url_for('views.edit_bio') }}" method="POST">
+        <div class="modal-body">
+          <textarea
+            name="bio"
+            class="form-control bg-light border-0"
+            rows="4"
+            maxlength="300"
+            placeholder="Tell us about yourself..."
+          >
 {{ user.bio }}</textarea
-              >
-              <div class="text-end mt-2">
-                <button type="submit" class="btn btn-primary rounded-pill px-4">
-                  Save Bio
-                </button>
-              </div>
-            </form>
-          </div>
+          >
+          <div class="text-end text-muted small mt-1">Max 300 characters</div>
+        </div>
+        <div class="modal-footer border-0">
+          <button
+            type="button"
+            class="btn btn-light rounded-pill"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-dark rounded-pill px-4">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-          <div id="tab-username" class="tab-pane fade">
-            <form action="{{ url_for('views.change_username') }}" method="POST">
-              <label class="form-label text-muted small fw-bold"
-                >New Username</label
+<div class="modal fade" id="changeUsernameModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Change Username</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form action="{{ url_for('views.change_username') }}" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-muted small fw-bold"
+              >New Username</label
+            >
+            <div class="input-group">
+              <span class="input-group-text bg-light border-0">@</span>
+              <input
+                type="text"
+                class="form-control bg-light border-0"
+                id="newUsername"
+                name="username"
+                placeholder="Enter new username"
+                required
+                pattern="[a-zA-Z0-9_.]+"
+                title="Only letters, numbers, dots, and underscores allowed."
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                onclick="checkUsername()"
               >
-              <div class="input-group mb-2">
-                <span class="input-group-text bg-white text-muted">@</span>
-                <input
-                  type="text"
-                  id="newUsername"
-                  name="username"
-                  class="form-control"
-                  value="{{ user.username }}"
-                  minlength="3"
-                  required
-                />
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  onclick="checkUsername()"
-                >
-                  Check
-                </button>
-              </div>
-              <small id="usernameStatus" class="fw-bold d-block mb-2"></small>
-              <div class="alert alert-warning py-2 px-3 small">
-                <i class="fas fa-exclamation-triangle me-1"></i> Changing this
-                will log you out.
-              </div>
-              <div class="text-end">
-                <button
-                  type="submit"
-                  id="submitUsernameBtn"
-                  class="btn btn-primary rounded-pill px-4"
-                  disabled
-                >
-                  Change Username
-                </button>
-              </div>
-            </form>
+                Check
+              </button>
+            </div>
+            <div id="usernameStatus" class="form-text mt-2 fw-bold"></div>
+            <div class="form-text text-muted">
+              Only letters, numbers, dots (.), and underscores (_) allowed. No
+              spaces.
+            </div>
           </div>
-
-          <div id="tab-social" class="tab-pane fade">
-            <form action="{{ url_for('views.add_social_link') }}" method="POST">
-              <label class="form-label text-muted small fw-bold"
-                >Add Link</label
-              >
-              <div class="input-group mb-2">
-                <span class="input-group-text bg-white"
-                  ><i class="fas fa-link"></i
-                ></span>
-                <input
-                  type="url"
-                  name="new_link"
-                  class="form-control"
-                  placeholder="https://instagram.com/..."
-                  required
-                />
-              </div>
-              <div class="text-end">
-                <button type="submit" class="btn btn-primary rounded-pill px-4">
-                  Add Link
-                </button>
-              </div>
-            </form>
+          <div
+            class="alert alert-warning small border-0 d-flex align-items-center gap-2"
+          >
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>Changing your username will log you out.</div>
           </div>
         </div>
-      </div>
+        <div class="modal-footer border-0">
+          <button
+            type="button"
+            class="btn btn-light rounded-pill"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            id="submitUsernameBtn"
+            class="btn btn-dark rounded-pill px-4"
+            disabled
+          >
+            Update
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="editProfilePicModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
-    <div class="modal-content">
+<div class="modal fade" id="profilePicModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
       <div class="modal-header border-0">
-        <h5 class="modal-title fw-bold fs-6">Update Profile Picture</h5>
+        <h5 class="modal-title fw-bold">Update Profile Picture</h5>
         <button
           type="button"
           class="btn-close"
           data-bs-dismiss="modal"
         ></button>
       </div>
-      <div class="modal-body pt-0">
-        <form
-          action="{{ url_for('views.update_profile_pic') }}"
-          method="POST"
-          enctype="multipart/form-data"
-        >
+      <form
+        action="{{ url_for('views.update_profile_pic') }}"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div class="modal-body text-center">
           <div
-            class="upload-area border-2 border-dashed rounded-3 text-center py-4 mb-3 position-relative bg-light"
+            class="upload-area p-4 border border-2 border-dashed rounded-3 bg-light mb-3"
+            onclick="document.getElementById('avatarInput').click()"
+            style="cursor: pointer"
           >
-            <i class="fas fa-cloud-upload-alt text-muted fa-2x mb-2"></i>
-            <p class="small text-muted mb-0">Tap to select image</p>
-            <input
-              type="file"
-              name="profile_pic"
-              class="position-absolute top-0 start-0 w-100 h-100 opacity-0"
-              style="cursor: pointer"
-              accept="image/*"
-              required
-              onchange="this.form.submit()"
-            />
+            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+            <p class="mb-0 text-muted small">Click to upload image</p>
           </div>
-        </form>
-      </div>
+          <input
+            type="file"
+            name="profile_pic"
+            id="avatarInput"
+            class="d-none"
+            accept="image/*"
+            onchange="previewImage(this, 'avatarPreview')"
+          />
+          <img
+            id="avatarPreview"
+            src="#"
+            class="rounded-circle d-none mx-auto mt-3 border"
+            width="100"
+            height="100"
+            style="object-fit: cover"
+          />
+        </div>
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-primary rounded-pill w-100">
+            Upload
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="editCoverModal" tabindex="-1">
+<div class="modal fade" id="coverPicModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
+    <div class="modal-content border-0 shadow">
       <div class="modal-header border-0">
         <h5 class="modal-title fw-bold">Update Cover Photo</h5>
         <button
@@ -455,31 +434,148 @@ Profile{% endblock %} {% block content %}
           data-bs-dismiss="modal"
         ></button>
       </div>
-      <div class="modal-body pt-0">
-        <form
-          action="{{ url_for('views.update_cover_pic') }}"
-          method="POST"
-          enctype="multipart/form-data"
-        >
-          <div
-            class="upload-area border-2 border-dashed rounded-3 text-center py-5 mb-3 position-relative bg-light"
-          >
-            <i class="fas fa-image text-muted fa-2x mb-2"></i>
-            <p class="text-muted mb-0">Drag & drop or click to upload</p>
-            <input
-              type="file"
-              name="cover_pic"
-              class="position-absolute top-0 start-0 w-100 h-100 opacity-0"
-              style="cursor: pointer"
-              accept="image/*"
-              required
-              onchange="this.form.submit()"
-            />
-          </div>
-        </form>
-      </div>
+      <form
+        action="{{ url_for('views.update_cover_pic') }}"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <div class="modal-body">
+          <input
+            type="file"
+            name="cover_pic"
+            class="form-control"
+            accept="image/*"
+            required
+          />
+          <div class="form-text">Recommended size: 1080x400 pixels</div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-primary rounded-pill">
+            Upload
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-{% endif %} {% endblock %}
+<div class="modal fade" id="socialLinkModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">Add Social Link</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form action="{{ url_for('views.add_social_link') }}" method="POST">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label text-muted small fw-bold">URL</label>
+            <input
+              type="url"
+              name="new_link"
+              class="form-control bg-light border-0"
+              placeholder="https://..."
+              required
+            />
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-dark rounded-pill px-4">
+            Add
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 text-danger">
+        <h5 class="modal-title fw-bold">
+          <i class="fas fa-exclamation-circle me-2"></i>Deactivate Account
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <form action="{{ url_for('views.deactivate_account') }}" method="POST">
+        <div class="modal-body">
+          <p class="text-muted">
+            We're sorry to see you go. Please tell us why:
+          </p>
+
+          <div class="mb-3">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reason"
+                value="Taking a break"
+                checked
+              />
+              <label class="form-check-label"
+                >I'm taking a temporary break</label
+              >
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reason"
+                value="Privacy concerns"
+              />
+              <label class="form-check-label">Privacy concerns</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reason"
+                value="Created a second account"
+              />
+              <label class="form-check-label">I created a second account</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="reason"
+                value="Other"
+              />
+              <label class="form-check-label">Other</label>
+            </div>
+          </div>
+
+          <textarea
+            name="details"
+            class="form-control bg-light"
+            rows="2"
+            placeholder="Optional details..."
+          ></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button
+            type="button"
+            class="btn btn-light rounded-pill"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-danger rounded-pill px-4">
+            Deactivate
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
