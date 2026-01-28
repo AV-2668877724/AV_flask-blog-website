@@ -7,7 +7,7 @@ from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message
 from sqlalchemy.exc import IntegrityError
 from . import db
-from sqlalchemy import func, or_, desc
+from sqlalchemy import func, or_, desc, and_
 import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
@@ -902,77 +902,111 @@ def inbox():
     chats = list(conversations.values())
     return render_template("inbox.html", user=current_user, chats=chats)
 
-@views.route('/api/send-message', methods=['POST'])
-@login_required
-def api_send_message():
-    data = request.get_json()
-    recipient_username = data.get('recipient')
-    text = data.get('text')
-    
-    recipient = User.query.filter_by(username=recipient_username).first()
-    if not recipient:
-        return jsonify({'error': 'User not found'}), 404
-        
-    # ✅ FIX: Use Local Time
-    msg = Message(
-        sender_id=current_user.id, 
-        recipient_id=recipient.id, 
-        text=text,
-        date_created=datetime.now()
-    )
-    db.session.add(msg)
-    db.session.commit()
-    
-    return jsonify({
-        'success': True,
-        'id': msg.id,
-        'text': msg.text,
-        'time': msg.date_created.strftime('%H:%M'),
-        'sender_pic': current_user.profile_pic
-    })
-    
-@views.route('/chat/<username>', methods=['GET']) 
+
+
+# ---------------------------------------------
+# REPLACEMENT FOR CHAT FUNCTIONS IN views.py
+# ---------------------------------------------
+
+# 1. Chat Page Route
+@views.route('/chat/<username>')
 @login_required
 def chat(username):
-    recipient = User.query.filter_by(username=username).first_or_404()
+    recipient = User.query.filter_by(username=username).first()
     
-    if recipient.id == current_user.id:
-        return redirect(url_for('views.inbox'))
+    if not recipient:
+        flash('User not found.', category='error')
+        return redirect(url_for('views.home'))
 
-    is_following = Follow.query.filter_by(follower_id=current_user.id, following_id=recipient.id).first()
-    if not is_following:
-        flash(f"You must follow {recipient.username} to message them.", category='error')
-        return redirect(url_for('views.profile', username=username))
-
-    unread_msgs = Message.query.filter_by(sender_id=recipient.id, recipient_id=current_user.id, is_read=False).all()
-    for msg in unread_msgs:
-        msg.is_read = True
-    db.session.commit()
-
+    # ✅ FIX: Changed Message.date -> Message.date_created
     messages = Message.query.filter(
         or_(
-            (Message.sender_id == current_user.id) & (Message.recipient_id == recipient.id),
-            (Message.sender_id == recipient.id) & (Message.recipient_id == current_user.id)
+            and_(
+                Message.sender_id == current_user.id,
+                Message.recipient_id == recipient.id,
+                Message.visible_to_sender == True 
+            ),
+            and_(
+                Message.sender_id == recipient.id,
+                Message.recipient_id == current_user.id,
+                Message.visible_to_recipient == True 
+            )
         )
-    ).order_by(Message.date_created.asc()).all()
+    ).order_by(Message.date_created.asc()).all() 
 
     return render_template("chat.html", user=current_user, recipient=recipient, messages=messages)
 
-@views.route('/api/delete-message/<int:id>', methods=['POST'])
+# 2. Delete Message API
+@views.route('/api/delete-message/<id>', methods=['POST'])
 @login_required
 def delete_message(id):
     msg = Message.query.get(id)
-    
     if not msg:
         return jsonify({'error': 'Message not found'}), 404
-        
-    if msg.sender_id != current_user.id:
+
+    if msg.sender_id == current_user.id:
+        msg.visible_to_sender = False 
+    elif msg.recipient_id == current_user.id:
+        msg.visible_to_recipient = False 
+    else:
         return jsonify({'error': 'Unauthorized'}), 403
+
+    db.session.commit()
+    return jsonify({'success': True})
+
+# 3. New Messages API
+@views.route('/api/get-messages/<int:recipient_id>')
+@login_required
+def get_new_messages(recipient_id):
+    last_id = request.args.get('last_id', 0, type=int)
+
+    # ✅ FIX: Changed Message.date -> Message.date_created
+    new_messages = Message.query.filter(
+        or_(
+            and_(
+                Message.sender_id == current_user.id, 
+                Message.recipient_id == recipient_id,
+                Message.visible_to_sender == True
+            ),
+            and_(
+                Message.sender_id == recipient_id, 
+                Message.recipient_id == current_user.id,
+                Message.visible_to_recipient == True
+            )
+        )
+    ).filter(Message.id > last_id).order_by(Message.date_created.asc()).all()
+
+    data = []
+    for msg in new_messages:
+        data.append({
+            'id': msg.id,
+            'text': msg.text,
+            'sender_id': msg.sender_id,
+            # ✅ FIX: Changed msg.date -> msg.date_created
+            'time': msg.date_created.strftime("%H:%M") 
+        })
     
-    db.session.delete(msg)
+    return jsonify(data)
+
+# 4. Send Message API
+@views.route('/api/send-message', methods=['POST'])
+@login_required
+def send_message():
+    data = request.json
+    recipient_id = data.get('recipient')
+    text = data.get('text')
+    
+    new_message = Message(text=text, sender_id=current_user.id, recipient_id=recipient_id)
+    db.session.add(new_message)
     db.session.commit()
     
-    return jsonify({'success': True})
+    return jsonify({
+        'success': True, 
+        'id': new_message.id, 
+        'text': new_message.text, 
+        # ✅ FIX: Changed new_message.date -> new_message.date_created
+        'time': new_message.date_created.strftime("%H:%M") 
+    })
 
 # =================================================
 # ERROR HANDLERS

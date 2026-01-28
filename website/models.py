@@ -99,7 +99,11 @@ class Message(db.Model):
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
 
-
+    # ✅ NEW FIELDS: Manage visibility for "Delete for Me"
+    visible_to_sender = db.Column(db.Boolean, default=True)
+    visible_to_recipient = db.Column(db.Boolean, default=True)
+    
+    
 class Comment(db.Model):
     __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key=True)

@@ -6,7 +6,6 @@ const TRUNCATE_HEIGHT = 400; // ✅ Your preferred height
 // 1. Truncate posts (Global function so Infinite Scroll can use it)
 function truncatePosts() {
   document.querySelectorAll(".post-text").forEach((el) => {
-    // Only truncate if we haven't already processed it
     if (el.dataset.processed) return;
 
     const overlay = el.parentElement.querySelector(".fade-overlay");
@@ -15,7 +14,7 @@ function truncatePosts() {
       el.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
       el.style.overflow = "hidden";
     }
-    el.dataset.processed = "true"; // Mark as done
+    el.dataset.processed = "true";
   });
 }
 
@@ -84,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (badge) {
         badge.style.display = "none";
         fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
-          console.error("Error marking read:", err)
+          console.error("Error marking read:", err),
         );
       }
     });
@@ -115,7 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (users.length > 0) {
           users.forEach((user) => {
             const item = document.createElement("a");
-            item.className = "dropdown-item d-flex align-items-center gap-2 py-2";
+            item.className =
+              "dropdown-item d-flex align-items-center gap-2 py-2";
             item.href = `/profile/${user.username}`;
 
             let avatarHtml = "";
@@ -148,7 +148,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.addEventListener("click", function (e) {
-      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      if (
+        !searchInput.contains(e.target) &&
+        !searchResults.contains(e.target)
+      ) {
         searchResults.classList.remove("show");
         searchResults.style.display = "none";
       }
@@ -170,22 +173,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* --- GLOBAL USERNAME INPUT VALIDATION (No Special Chars) --- */
+  /* --- GLOBAL USERNAME INPUT VALIDATION --- */
   const usernameInputs = document.querySelectorAll('input[name="username"]');
-  usernameInputs.forEach(input => {
-      input.addEventListener('keypress', function(e) {
-          // Allow: a-z, A-Z, 0-9, dot(.), underscore(_)
-          const regex = /[a-zA-Z0-9_.]/;
-          // If the key pressed doesn't match regex, block it
-          if (!regex.test(e.key)) {
-              e.preventDefault();
-          }
-      });
+  usernameInputs.forEach((input) => {
+    input.addEventListener("keypress", function (e) {
+      const regex = /[a-zA-Z0-9_.]/;
+      if (!regex.test(e.key)) {
+        e.preventDefault();
+      }
+    });
   });
 });
 
 /* =========================================
-   UI HELPERS (Dark Mode, Toasts, Time)
+   UI HELPERS
    ========================================= */
 function setDarkMode(enabled) {
   const icon = document.querySelector("#darkToggle i");
@@ -219,7 +220,7 @@ function showToast(message, isError = false) {
 }
 
 /* =========================================
-   LIKE POST LOGIC
+   LIKE POST & COMMENT LOGIC
    ========================================= */
 function likePost(postId, btn) {
   like(postId);
@@ -237,7 +238,6 @@ function like(postId) {
   const isFar = icon.classList.contains("far");
   const current = parseInt(countEl.innerText, 10) || 0;
 
-  // Optimistic UI Update
   if (isFar) {
     countEl.innerText = current + 1;
     icon.classList.remove("far");
@@ -266,9 +266,6 @@ function like(postId) {
     .finally(() => (btn.dataset.loading = "false"));
 }
 
-/* =========================================
-   LIKE COMMENT LOGIC
-   ========================================= */
 document.addEventListener("click", function (e) {
   const btn = e.target.closest(".btn-comment, .comment-btn-trigger");
   if (btn) {
@@ -391,7 +388,9 @@ function applyAdminFilter(sectionId, query) {
   });
 
   if (info) {
-    info.textContent = count ? `${count} result${count > 1 ? "s" : ""} found` : "No results found";
+    info.textContent = count
+      ? `${count} result${count > 1 ? "s" : ""} found`
+      : "No results found";
   }
 }
 
@@ -511,7 +510,10 @@ window.addEventListener("load", function () {
 });
 
 window.addEventListener("pageshow", function (event) {
-  if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+  if (
+    event.persisted ||
+    (window.performance && window.performance.navigation.type === 2)
+  ) {
     hideLoader();
   }
 });
@@ -525,7 +527,15 @@ document.addEventListener("click", function (e) {
     const dismissAttr = target.getAttribute("data-bs-dismiss");
     const actionAttr = target.getAttribute("onclick");
 
-    if (href && !href.startsWith("#") && !href.startsWith("javascript") && targetAttr !== "_blank" && !toggleAttr && !dismissAttr && !actionAttr) {
+    if (
+      href &&
+      !href.startsWith("#") &&
+      !href.startsWith("javascript") &&
+      targetAttr !== "_blank" &&
+      !toggleAttr &&
+      !dismissAttr &&
+      !actionAttr
+    ) {
       showLoader();
     }
   }
@@ -559,7 +569,7 @@ document.addEventListener("DOMContentLoaded", function () {
           endMessage.classList.remove("d-none");
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(sentinel);
@@ -603,48 +613,117 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* =========================================
-   CHAT SYSTEM
+   CHAT SYSTEM LOGIC (With Auto-Update)
    ========================================= */
 document.addEventListener("DOMContentLoaded", function () {
   const chatForm = document.getElementById("chatForm");
   const chatBox = document.getElementById("chat-box");
 
   if (chatForm && chatBox) {
+    // 1. Auto-scroll to bottom on load
     chatBox.scrollTop = chatBox.scrollHeight;
 
+    // Get Recipient ID from the HTML
+    const recipientId = chatForm.dataset.recipient;
+
+    // ------------------------------------
+    //  AUTO-UPDATE (POLLING) FUNCTION
+    // ------------------------------------
+    function fetchNewMessages() {
+      // Find the last message ID currently in the DOM
+      const messages = document.querySelectorAll(".message-row");
+      let lastId = 0;
+      if (messages.length > 0) {
+        lastId = messages[messages.length - 1].dataset.msgId;
+      }
+
+      // Fetch newer messages from server
+      fetch(`/api/get-messages/${recipientId}?last_id=${lastId}`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.length > 0) {
+            data.forEach((msg) => {
+              appendMessageToChat(msg);
+            });
+            // Scroll to bottom if new messages arrived
+            chatBox.scrollTop = chatBox.scrollHeight;
+          }
+        })
+        .catch((err) => console.error("Polling error:", err));
+    }
+
+    // Run Polling every 2 seconds
+    setInterval(fetchNewMessages, 2000);
+
+    // ------------------------------------
+    //  HELPER: Append Message HTML
+    // ------------------------------------
+    function appendMessageToChat(msg) {
+      // Check if message is mine or theirs
+      // Since we are in a 1-on-1 chat, if sender_id != recipientId (the person I'm chatting with),
+      // then the sender MUST be me.
+      const isMe = msg.sender_id != recipientId;
+
+      let html = "";
+      if (isMe) {
+        // My Message Structure
+        html = `
+            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-end" data-msg-id="${msg.id}">
+                <div class="d-flex align-items-end justify-content-end w-100">
+                    <button class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn" 
+                            onclick="deleteMessage('${msg.id}', this)"
+                            title="Delete for me">
+                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                    </button>
+                    <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+                        ${msg.text}
+                        <div class="text-white-50 text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                    </div>
+                </div>
+            </div>`;
+      } else {
+        // Their Message Structure
+        html = `
+            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-start" data-msg-id="${msg.id}">
+                <div class="d-flex align-items-end justify-content-start w-100">
+                    <div class="bg-white text-dark border rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+                        ${msg.text}
+                        <div class="text-muted text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                    </div>
+                    <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" 
+                            onclick="deleteMessage('${msg.id}', this)"
+                            title="Delete for me">
+                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                    </button>
+                </div>
+            </div>`;
+      }
+      chatBox.insertAdjacentHTML("beforeend", html);
+    }
+
+    // 2. Handle Message Sending
     chatForm.addEventListener("submit", function (e) {
       e.preventDefault();
       const messageInput = document.getElementById("messageInput");
       const text = messageInput.value.trim();
-      const recipient = chatForm.dataset.recipient;
 
       if (!text) return;
 
       fetch("/api/send-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient: recipient, text: text }),
+        body: JSON.stringify({ recipient: recipientId, text: text }),
       })
         .then((response) => response.json())
         .then((data) => {
           if (data.success) {
-            const myMsgHtml = `
-              <div class="d-flex justify-content-end align-items-end mb-2">
-                <div class="me-2 mb-2">
-                  <button class="btn btn-sm btn-link text-muted p-0 opacity-50 hover-opacity-100" 
-                          onclick="deleteMessage('${data.id}', this)" 
-                          title="Delete for everyone">
-                    <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
-                  </button>
-                </div>
-                <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm position-relative" style="max-width: 75%;">
-                  ${data.text}
-                  <div class="text-white-50 text-end" style="font-size: 0.65rem; opacity: 0.7;">
-                    ${data.time}
-                  </div>
-                </div>
-              </div>`;
-            chatBox.insertAdjacentHTML("beforeend", myMsgHtml);
+            // Add my message immediately (Optimistic UI)
+            appendMessageToChat({
+              id: data.id,
+              text: data.text,
+              sender_id: -1, // Dummy ID to force "My Message" style
+              time: data.time,
+            });
             messageInput.value = "";
             chatBox.scrollTop = chatBox.scrollHeight;
           }
@@ -655,7 +734,8 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function deleteMessage(msgId, btnElement) {
-  if (!confirm("Are you sure you want to delete this message for everyone?")) {
+  // Updated prompt to reflect soft-delete functionality
+  if (!confirm("Delete this message for me?")) {
     return;
   }
 
