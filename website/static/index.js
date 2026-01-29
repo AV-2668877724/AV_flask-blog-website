@@ -859,33 +859,51 @@ document.addEventListener("DOMContentLoaded", function () {
       messageInput.value = "";
     });
 
-    // Helper: Append Message (Same as before)
+    // ------------------------------------
+    //  HELPER: Append Message HTML
+    // ------------------------------------
     function appendMessageToChat(msg) {
-      // ... (Use the same append function you already have) ...
-      // I am omitting the HTML string here to save space,
-      // but keep your existing appendMessageToChat logic!
+      
+      
+      // Check if a message with this ID already exists in the HTML
+      // If it exists, stop right here. Do not add it again.
+      if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`)) {
+        return; 
+      }
+
       const isMe = msg.sender_id != recipientId;
       let html = "";
-      // ... Paste your HTML template logic here ...
-      // (Simplified for brevity, ensure you keep your Delete Button HTML)
+
       if (isMe) {
-        html = `<div class="d-flex w-100 mb-3 align-items-end justify-content-end message-row" data-msg-id="${msg.id}">
-                  <div class="d-flex align-items-end justify-content-end w-100">
-                    <button class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn" onclick="deleteMessage('${msg.id}', this)"><i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i></button>
+        // My Message
+        html = `
+            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-end" data-msg-id="${msg.id}">
+                <div class="d-flex align-items-end justify-content-end w-100">
+                    <button class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn" 
+                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
+                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                    </button>
                     <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
-                        ${msg.text}<div class="text-white-50 text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                        ${msg.text}
+                        <div class="text-white-50 text-end" style="font-size: 0.65rem;">${msg.time}</div>
                     </div>
-                  </div>
-                </div>`;
+                </div>
+            </div>`;
       } else {
-        html = `<div class="d-flex w-100 mb-3 align-items-end justify-content-start message-row" data-msg-id="${msg.id}">
-                  <div class="d-flex align-items-end justify-content-start w-100">
+        // Their Message
+        html = `
+            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-start" data-msg-id="${msg.id}">
+                <div class="d-flex align-items-end justify-content-start w-100">
                     <div class="bg-white text-dark border rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
-                        ${msg.text}<div class="text-muted text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                        ${msg.text}
+                        <div class="text-muted text-end" style="font-size: 0.65rem;">${msg.time}</div>
                     </div>
-                    <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" onclick="deleteMessage('${msg.id}', this)"><i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i></button>
-                  </div>
-                </div>`;
+                    <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" 
+                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
+                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
+                    </button>
+                </div>
+            </div>`;
       }
       chatBox.insertAdjacentHTML("beforeend", html);
     }

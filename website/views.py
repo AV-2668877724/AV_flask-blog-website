@@ -919,7 +919,21 @@ def chat(username):
         flash('User not found.', category='error')
         return redirect(url_for('views.home'))
 
-    # ✅ FIX: Changed Message.date -> Message.date_created
+    # ✅ MARK AS READ LOGIC
+    # Find unread messages specifically from THIS recipient to ME
+    unread_msgs = Message.query.filter_by(
+        sender_id=recipient.id, 
+        recipient_id=current_user.id, 
+        is_read=False
+    ).all()
+
+    # Only commit if there are actually messages to update
+    if unread_msgs:
+        for msg in unread_msgs:
+            msg.is_read = True
+        db.session.commit()
+
+    # Fetch chat history (Standard Logic)
     messages = Message.query.filter(
         or_(
             and_(
