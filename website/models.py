@@ -52,11 +52,15 @@ class User(db.Model, UserMixin):
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
     last_login = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
     
+    # Online Status
+    is_online = db.Column(db.Boolean, default=False)
+    last_seen = db.Column(db.DateTime(timezone=True), default=func.now())
+    
     # Relationships (Cascade ensures data cleanup)
     posts = db.relationship('Post', backref='user', passive_deletes=True)
     comments = db.relationship('Comment', backref='user', passive_deletes=True)
     likes = db.relationship('Like', backref='user', passive_deletes=True)
-
+    
 
 # =====================================================
 # Post Model

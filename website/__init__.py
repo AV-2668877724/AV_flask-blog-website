@@ -4,11 +4,13 @@ from os import path, makedirs
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 import os
-from datetime import datetime # ✅ Standard import
+from datetime import datetime
+from flask_socketio import SocketIO
 
 db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
+socketio = SocketIO() # ✅ Global instance
 
 def create_app():
     app = Flask(__name__)
@@ -16,9 +18,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # =================================================
     # EMAIL CONFIGURATION
-    # =================================================
     app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
     app.config['MAIL_PORT'] = 587
     app.config['MAIL_USE_TLS'] = True
@@ -27,9 +27,7 @@ def create_app():
     
     mail.init_app(app)
 
-    # =================================================
     # UPLOAD FOLDER
-    # =================================================
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     
@@ -37,25 +35,20 @@ def create_app():
         makedirs(UPLOAD_FOLDER)
 
     db.init_app(app)
+    socketio.init_app(app)  # ✅ Initialize SocketIO with app
 
-    # =================================================
     # BLUEPRINTS
-    # =================================================
     from .views import views
     from .auth import auth
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    # =================================================
     # DB CREATION
-    # =================================================
     from .models import User, Post, Comment, Like, Notification, Follow, Message
     create_database(app)
 
-    # =================================================
     # LOGIN MANAGER
-    # =================================================
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
@@ -64,10 +57,7 @@ def create_app():
     def load_user(id):
         return User.query.get(int(id))
 
-    # =================================================
     # CONTEXT PROCESSORS
-    # =================================================
-    
     @app.context_processor
     def inject_notifications():
         unread_notifs = 0
@@ -75,25 +65,16 @@ def create_app():
         latest_notifs = []
         
         if current_user.is_authenticated:
-            # 1. Notifications
-            unread_notifs = Notification.query.filter_by(
-                recipient_id=current_user.id, 
-                is_read=False
-            ).count()
-            
-            # 2. Messages
-            unread_messages = Message.query.filter_by(
-                recipient_id=current_user.id,
-                is_read=False
-            ).count()
-            
-            # 3. Dropdown Data
-            latest_notifs = Notification.query.filter_by(recipient_id=current_user.id)\
-                .order_by(Notification.date_created.desc())\
-                .limit(5)\
-                .all()
+            try:
+                unread_notifs = Notification.query.filter_by(
+                    recipient_id=current_user.id, is_read=False).count()
+                unread_messages = Message.query.filter_by(
+                    recipient_id=current_user.id, is_read=False).count()
+                latest_notifs = Notification.query.filter_by(recipient_id=current_user.id)\
+                    .order_by(Notification.date_created.desc()).limit(5).all()
+            except:
+                pass # Prevent crash if DB isn't ready
         
-        # ✅ FIX 1: Pass UTC time to templates so calculations match DB time
         return dict(
             unread_count=unread_notifs, 
             unread_messages=unread_messages, 
@@ -112,28 +93,18 @@ def create_app():
             is_admin = getattr(current_user, "is_admin", False)
         return dict(is_admin=is_admin)
 
-    # =================================================
     # JINJA FILTERS
-    # =================================================
-    # ... inside website/__init__.py ...
-
     @app.template_filter('timeago')
     def timeago(dt):
         if dt is None: return ""
-        
-        # Get current time in UTC
         now = datetime.now()
-        
-        # If the DB datetime has timezone info, strip it for comparison with utcnow()
         if dt.tzinfo is not None:
             dt = dt.replace(tzinfo=None)
         
         diff = now - dt
         seconds = diff.total_seconds()
         
-        # Debugging: If you are seeing negative numbers (future posts), fix it here
-        if seconds < 0:
-            return "just now" # Handle slight clock skews
+        if seconds < 0: return "just now"
 
         minutes = seconds // 60
         hours = minutes // 60
@@ -152,6 +123,9 @@ def create_app():
         else:
             return dt.strftime('%Y-%m-%d')
 
+    # ✅ IMPORT EVENTS LAST (To avoid circular imports)
+    from . import events
+    
     return app
 
 def create_database(app):

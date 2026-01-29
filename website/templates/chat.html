@@ -1,5 +1,47 @@
 {% extends "base.html" %} {% block title %}Chat with {{ recipient.username }}{%
 endblock %} {% block content %}
+
+<style>
+  /* 1. Fix the Delete (Dustbin) Icon visibility in Dark Mode */
+  body.dark-mode .delete-btn {
+    color: #e0e0e0 !important; /* White/Light Gray */
+    opacity: 0.8 !important; /* High Visibility */
+  }
+  body.dark-mode .delete-btn:hover {
+    color: #ff6b6b !important; /* Red on Hover */
+    opacity: 1 !important;
+  }
+
+  /* 2. General Dark Mode Chat Styling */
+  body.dark-mode .card {
+    background-color: #2b2b2b !important;
+    border-color: #444 !important;
+  }
+  body.dark-mode .card-header,
+  body.dark-mode .card-footer {
+    background-color: #1f1f1f !important;
+    border-color: #444 !important;
+    color: white !important;
+  }
+  body.dark-mode #chat-box {
+    background-color: #121212 !important; /* Very dark background for message area */
+  }
+  body.dark-mode #messageInput {
+    color: white !important;
+    background-color: transparent !important;
+  }
+  body.dark-mode #messageInput::placeholder {
+    color: #aaa !important;
+  }
+  body.dark-mode .input-group {
+    background-color: #2b2b2b !important;
+    border-color: #555 !important;
+  }
+  body.dark-mode .text-muted {
+    color: #b0b0b0 !important; /* Lighter gray text for timestamps */
+  }
+</style>
+
 <div class="row justify-content-center">
   <div class="col-md-8 col-lg-6">
     <div class="card border-0 shadow-sm" style="height: 80vh">
@@ -33,10 +75,20 @@ endblock %} {% block content %}
 
         <div>
           <h6 class="fw-bold mb-0">{{ recipient.username }}</h6>
-          <small class="text-muted"
-            ><i class="fas fa-circle text-success" style="font-size: 8px"></i>
-            Online</small
-          >
+
+          <small class="text-muted" id="status-container-{{ recipient.id }}">
+            {% if recipient.is_online %}
+            <i class="fas fa-circle text-success" style="font-size: 8px"></i>
+            <span id="status-text-{{ recipient.id }}">Online</span>
+            {% else %}
+            <i class="fas fa-circle text-secondary" style="font-size: 8px"></i>
+            <span id="status-text-{{ recipient.id }}">
+              {% if recipient.last_seen %} Last seen {{
+              recipient.last_seen.strftime('%H:%M') }} {% else %} Offline {%
+              endif %}
+            </span>
+            {% endif %}
+          </small>
         </div>
       </div>
 
@@ -67,7 +119,7 @@ endblock %} {% block content %}
             >
               {{ msg.text }}
               <div class="text-white-50 text-end" style="font-size: 0.65rem">
-                {{ msg.date.strftime('%H:%M') }}
+                {{ msg.date_created.strftime('%H:%M') }}
               </div>
             </div>
           </div>
@@ -80,7 +132,7 @@ endblock %} {% block content %}
             >
               {{ msg.text }}
               <div class="text-muted text-end" style="font-size: 0.65rem">
-                {{ msg.date.strftime('%H:%M') }}
+                {{ msg.date_created.strftime('%H:%M') }}
               </div>
             </div>
 

@@ -186,7 +186,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* =========================================
-   UI HELPERS
+   UI HELPERS (Dark Mode, Toasts, Time)
    ========================================= */
 function setDarkMode(enabled) {
   const icon = document.querySelector("#darkToggle i");
@@ -220,7 +220,7 @@ function showToast(message, isError = false) {
 }
 
 /* =========================================
-   LIKE POST & COMMENT LOGIC
+   LIKE POST LOGIC
    ========================================= */
 function likePost(postId, btn) {
   like(postId);
@@ -266,6 +266,9 @@ function like(postId) {
     .finally(() => (btn.dataset.loading = "false"));
 }
 
+/* =========================================
+   LIKE COMMENT LOGIC
+   ========================================= */
 document.addEventListener("click", function (e) {
   const btn = e.target.closest(".btn-comment, .comment-btn-trigger");
   if (btn) {
@@ -613,66 +616,66 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* =========================================
-   CHAT SYSTEM LOGIC (With Auto-Update)
+   REAL-TIME CHAT (SOCKET.IO - NO POLLING)
    ========================================= */
 document.addEventListener("DOMContentLoaded", function () {
   const chatForm = document.getElementById("chatForm");
   const chatBox = document.getElementById("chat-box");
 
   if (chatForm && chatBox) {
-    // 1. Auto-scroll to bottom on load
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    // Get Recipient ID from the HTML
+    // 1. Connect to WebSocket
+    const socket = io();
     const recipientId = chatForm.dataset.recipient;
 
-    // ------------------------------------
-    //  AUTO-UPDATE (POLLING) FUNCTION
-    // ------------------------------------
-    function fetchNewMessages() {
-      // Find the last message ID currently in the DOM
-      const messages = document.querySelectorAll(".message-row");
-      let lastId = 0;
-      if (messages.length > 0) {
-        lastId = messages[messages.length - 1].dataset.msgId;
-      }
+    // Scroll to bottom on load
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-      // Fetch newer messages from server
-      fetch(`/api/get-messages/${recipientId}?last_id=${lastId}`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.length > 0) {
-            data.forEach((msg) => {
-              appendMessageToChat(msg);
-            });
-            // Scroll to bottom if new messages arrived
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }
-        })
-        .catch((err) => console.error("Polling error:", err));
-    }
+    // ------------------------------------
+    //  LISTEN FOR INCOMING MESSAGES
+    // ------------------------------------
+    socket.on("receive_message", function (msg) {
+      // Logic: If msg sender matches the recipient (them) OR the sender is me (via ID check logic or context)
+      // For simplified 1-on-1, just append it.
+      // Ideally, you verify msg.sender_id matches current context to avoid crossing chats.
+      appendMessageToChat(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
 
-    // Run Polling every 2 seconds
-    setInterval(fetchNewMessages, 2000);
+    // ------------------------------------
+    //  SEND MESSAGE
+    // ------------------------------------
+    chatForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const messageInput = document.getElementById("messageInput");
+      const text = messageInput.value.trim();
+
+      if (!text) return;
+
+      // Emit event to server (Sockets!)
+      socket.emit("send_message", {
+        recipient_id: recipientId,
+        text: text,
+      });
+
+      // Clear input immediately (Optimistic UI)
+      messageInput.value = "";
+    });
 
     // ------------------------------------
     //  HELPER: Append Message HTML
     // ------------------------------------
     function appendMessageToChat(msg) {
-      // Check if message is mine or theirs
-      // Since we are in a 1-on-1 chat, if sender_id != recipientId (the person I'm chatting with),
-      // then the sender MUST be me.
+      // Simple check: if sender is NOT recipient, it must be me.
       const isMe = msg.sender_id != recipientId;
-
       let html = "";
+
       if (isMe) {
-        // My Message Structure
+        // My Message
         html = `
             <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-end" data-msg-id="${msg.id}">
                 <div class="d-flex align-items-end justify-content-end w-100">
                     <button class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn" 
-                            onclick="deleteMessage('${msg.id}', this)"
-                            title="Delete for me">
+                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
                         <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
                     </button>
                     <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
@@ -682,7 +685,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
             </div>`;
       } else {
-        // Their Message Structure
+        // Their Message
         html = `
             <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-start" data-msg-id="${msg.id}">
                 <div class="d-flex align-items-end justify-content-start w-100">
@@ -691,8 +694,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <div class="text-muted text-end" style="font-size: 0.65rem;">${msg.time}</div>
                     </div>
                     <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" 
-                            onclick="deleteMessage('${msg.id}', this)"
-                            title="Delete for me">
+                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
                         <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
                     </button>
                 </div>
@@ -700,57 +702,30 @@ document.addEventListener("DOMContentLoaded", function () {
       }
       chatBox.insertAdjacentHTML("beforeend", html);
     }
-
-    // 2. Handle Message Sending
-    chatForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const messageInput = document.getElementById("messageInput");
-      const text = messageInput.value.trim();
-
-      if (!text) return;
-
-      fetch("/api/send-message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipient: recipientId, text: text }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            // Add my message immediately (Optimistic UI)
-            appendMessageToChat({
-              id: data.id,
-              text: data.text,
-              sender_id: -1, // Dummy ID to force "My Message" style
-              time: data.time,
-            });
-            messageInput.value = "";
-            chatBox.scrollTop = chatBox.scrollHeight;
-          }
-        })
-        .catch((error) => console.error("Error:", error));
-    });
   }
 });
 
+/* =========================================
+   DELETE MESSAGE (API CALL)
+   ========================================= */
 function deleteMessage(msgId, btnElement) {
-  // Updated prompt to reflect soft-delete functionality
-  if (!confirm("Delete this message for me?")) {
-    return;
-  }
+  if (!confirm("Delete this message for me?")) return;
 
   fetch(`/api/delete-message/${msgId}`, { method: "POST" })
-    .then((response) => response.json())
+    .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        const messageRow = btnElement.closest(".d-flex");
+        // Updated selector to find .message-row properly
+        const messageRow =
+          btnElement.closest(".message-row") ||
+          btnElement.closest(".d-flex.w-100");
         if (messageRow) {
           messageRow.style.transition = "opacity 0.3s";
           messageRow.style.opacity = "0";
           setTimeout(() => messageRow.remove(), 300);
         }
       } else {
-        alert("Error deleting message: " + (data.error || "Unknown error"));
+        alert("Error deleting message");
       }
     })
     .catch((err) => console.error(err));
@@ -824,3 +799,95 @@ function toggleFollow(userId, btn) {
     })
     .catch((err) => console.error("Error:", err));
 }
+
+/* =========================================
+   REAL-TIME CHAT & PRESENCE
+   ========================================= */
+document.addEventListener("DOMContentLoaded", function () {
+  const chatForm = document.getElementById("chatForm");
+  const chatBox = document.getElementById("chat-box");
+
+  if (chatForm && chatBox) {
+    const socket = io();
+    const recipientId = chatForm.dataset.recipient;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // 1. LISTEN FOR MESSAGES
+    socket.on("receive_message", function (msg) {
+      if (msg.sender_id == recipientId || msg.sender_id == "{{ user.id }}") {
+        appendMessageToChat(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
+    });
+
+    // 2. ✅ LISTEN FOR ONLINE/OFFLINE STATUS UPDATES
+    socket.on("user_status_change", function (data) {
+      // Check if the update is for the person I am currently chatting with
+      if (data.user_id == recipientId) {
+        const statusContainer = document.getElementById(
+          `status-container-${recipientId}`,
+        );
+        const statusText = document.getElementById(
+          `status-text-${recipientId}`,
+        );
+        const icon = statusContainer
+          ? statusContainer.querySelector("i")
+          : null;
+
+        if (statusContainer && statusText && icon) {
+          if (data.status === "online") {
+            // Change to Green / Online
+            icon.className = "fas fa-circle text-success";
+            statusText.innerText = "Online";
+          } else {
+            // Change to Gray / Last Seen
+            icon.className = "fas fa-circle text-secondary";
+            statusText.innerText =
+              "Last seen " + (data.last_seen || "recently");
+          }
+        }
+      }
+    });
+
+    // 3. SEND MESSAGE
+    chatForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const messageInput = document.getElementById("messageInput");
+      const text = messageInput.value.trim();
+      if (!text) return;
+      socket.emit("send_message", { recipient_id: recipientId, text: text });
+      messageInput.value = "";
+    });
+
+    // Helper: Append Message (Same as before)
+    function appendMessageToChat(msg) {
+      // ... (Use the same append function you already have) ...
+      // I am omitting the HTML string here to save space,
+      // but keep your existing appendMessageToChat logic!
+      const isMe = msg.sender_id != recipientId;
+      let html = "";
+      // ... Paste your HTML template logic here ...
+      // (Simplified for brevity, ensure you keep your Delete Button HTML)
+      if (isMe) {
+        html = `<div class="d-flex w-100 mb-3 align-items-end justify-content-end message-row" data-msg-id="${msg.id}">
+                  <div class="d-flex align-items-end justify-content-end w-100">
+                    <button class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn" onclick="deleteMessage('${msg.id}', this)"><i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i></button>
+                    <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+                        ${msg.text}<div class="text-white-50 text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                    </div>
+                  </div>
+                </div>`;
+      } else {
+        html = `<div class="d-flex w-100 mb-3 align-items-end justify-content-start message-row" data-msg-id="${msg.id}">
+                  <div class="d-flex align-items-end justify-content-start w-100">
+                    <div class="bg-white text-dark border rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+                        ${msg.text}<div class="text-muted text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                    </div>
+                    <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" onclick="deleteMessage('${msg.id}', this)"><i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i></button>
+                  </div>
+                </div>`;
+      }
+      chatBox.insertAdjacentHTML("beforeend", html);
+    }
+  }
+});

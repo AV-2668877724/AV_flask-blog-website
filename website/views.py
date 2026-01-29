@@ -13,6 +13,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
 import secrets
 from datetime import datetime
+from flask_socketio import emit, join_room, leave_room
 
 views = Blueprint('views', __name__)
 
