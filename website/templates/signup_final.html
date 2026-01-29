@@ -1,0 +1,99 @@
+{% extends "base.html" %} {% block title %}Complete Registration{% endblock %}
+{% block content %}
+<div
+  class="row justify-content-center align-items-center"
+  style="min-height: 70vh"
+>
+  <div class="col-md-5">
+    <div class="card shadow border-0 auth-card">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-4">
+          <h2 class="fw-bold font-heading">Final Step</h2>
+          <p class="text-muted small">Set your unique identity</p>
+        </div>
+
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">Username</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="fas fa-user text-muted"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control border-start-0 border-end-0 ps-0 bg-light"
+                name="username"
+                id="signupUsername"
+                placeholder="Choose a unique username"
+                required
+                autocomplete="off"
+                pattern="[a-zA-Z0-9_.]+"
+                title="Letters, numbers, dots, and underscores only."
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                onclick="checkSignupUsername()"
+              >
+                Check
+              </button>
+            </div>
+
+            <div
+              id="signupUsernameStatus"
+              class="form-text small mt-1 fw-bold"
+            ></div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-muted">Password</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="fas fa-lock text-muted"></i>
+              </span>
+              <input
+                type="password"
+                class="form-control border-start-0 ps-0 bg-light"
+                name="password"
+                placeholder="Create a password"
+                required
+                minlength="6"
+              />
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-muted"
+              >Confirm Password</label
+            >
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="fas fa-lock text-muted"></i>
+              </span>
+              <input
+                type="password"
+                class="form-control border-start-0 ps-0 bg-light"
+                name="password_confirm"
+                placeholder="Repeat password"
+                required
+                minlength="6"
+              />
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button
+              type="submit"
+              id="signupSubmitBtn"
+              class="btn btn-primary btn-lg rounded-pill fw-bold"
+              disabled
+            >
+              Create Account
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

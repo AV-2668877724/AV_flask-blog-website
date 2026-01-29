@@ -1,44 +1,54 @@
 AV_Postory/
 │
-├── app.py                   # Entry point (Runs the app)
-├── update_db.py             # (Temporary) Script used to add Message table to DB
+├── app.py                   # Entry point (Initializes SocketIO & App)
+├── reset_badges.py          # 🔧 UTILITY: Script to force-reset notification counts to 0
+├── update_read_db.py        # 🔧 UTILITY: Script to add 'is_read' column
+├── update_status_db.py      # 🔧 UTILITY: Script to add 'is_online' & 'last_seen' columns
 │
 ├── instance/
 │   └── database.db          # SQLite Database file
 │
 └── website/
-    ├── __init__.py          # ⚡ UPDATED: Added unread_messages count to navbar context
-    ├── auth.py              # Login/Signup logic
-    ├── models.py            # ⚡ UPDATED: Added 'Message' class (Database Table)
-    ├── views.py             # ⚡ UPDATED: Added routes for Inbox, Chat API, and Delete Message
+    ├── __init__.py          # ⚡ UPDATED: initialized SocketIO, added context processors
+    ├── auth.py              # ⚡ UPDATED: Added '/check-username-signup' route
+    ├── events.py            # ✅ NEW: Handles Socket.IO events (Connect/Disconnect/Message)
+    ├── models.py            # ⚡ UPDATED: Added 'is_online', 'last_seen', 'is_read' cols
+    ├── views.py             # ⚡ UPDATED: Chat route marks messages as read
     │
     ├── static/
-    │   ├── styles.css       # Global Styles
-    │   ├── index.js         # ⚡ UPDATED: Added Chat AJAX, Preloader Fix, Delete Logic
+    │   ├── styles.css       # ⚡ UPDATED: Dark mode fixes for Chat & Profile links
+    │   ├── index.js         # ⚡ UPDATED: Socket.IO logic, Duplicate msg check, Back button reload
     │   │
-    │   └── images/          # Logo and static assets
-    │       └── logo.png
+    │   ├── images/          # Logo and assets
+    │   │   └── logo.png
+    │   │
+    │   └── uploads/         # User uploaded content
+    │       ├── avatars/
+    │       └── posts/
     │
     └── templates/
-        ├── base.html        # ⚡ UPDATED: Added Inbox Icon, Red Dot Badge, & v=3 for JS cache busting
+        ├── base.html        # ⚡ UPDATED: Auto-reload script, Badge clearing logic
         ├── home.html        # Homepage / Feed
         ├── login.html       # Login Page
-        ├── sign_up.html     # Signup Page
-        ├── profile.html     # ⚡ UPDATED: Message button now links to Chat
+        │
+        ├── sign_up.html        # ⚡ UPDATED: Step 1 (Email & OTP only)
+        ├── signup_final.html   # ✅ NEW: Step 3 (Username Check, Password creation)
+        │
+        ├── profile.html     # ⚡ UPDATED: Social links logic fixed (.items), Dark mode fixed
         ├── about.html       # About Us Page
-        ├── account_deactivated.html # Deactivation Landing Page
+        ├── account_deactivated.html 
         │
-        ├── chat.html        # ✅ NEW: The Chat Interface (AJAX, Delete Button)
-        ├── inbox.html       # ✅ NEW: List of recent conversations
+        ├── chat.html        # ⚡ UPDATED: Real-time Online/Offline status, Delete buttons
+        ├── inbox.html       # List of conversations
         │
-        ├── create_posts.html # Create Post Page
-        ├── edit_post.html    # Edit Post Page
-        ├── _posts.html       # Partial template for posts loop
+        ├── create_posts.html 
+        ├── edit_post.html    
+        ├── _posts.html      
         │
-        ├── admin_dashboard.html # Admin Panel
-        ├── search.html          # Search Results Page
-        ├── notifications.html   # Notifications Page
-        ├── followers.html       # Followers/Following List
+        ├── admin_dashboard.html 
+        ├── search.html      
+        ├── notifications.html   
+        ├── followers.html       
         │
-        ├── 404.html          # Error Page
-        └── 500.html          # Error Page
+        ├── 404.html         
+        └── 500.html
