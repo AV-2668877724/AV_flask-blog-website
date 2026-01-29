@@ -1,5 +1,59 @@
 {% extends "base.html" %} {% block title %}{{ profile_user.username }}'s
 Profile{% endblock %} {% block content %}
+
+<style>
+  /* 1. Make Links Light Blue in Dark Mode */
+  body.dark-mode a {
+    color: #6ea8fe;
+  }
+  body.dark-mode a:hover {
+    color: #9ec5fe;
+  }
+
+  /* 2. Dark Mode Cards & Modals */
+  body.dark-mode .card,
+  body.dark-mode .modal-content {
+    background-color: #2b2b2b !important;
+    border-color: #444 !important;
+    color: white !important;
+  }
+
+  /* 3. Text Colors */
+  body.dark-mode .text-dark {
+    color: #e0e0e0 !important;
+  }
+  body.dark-mode .text-muted {
+    color: #b0b0b0 !important;
+  }
+  body.dark-mode .bg-light {
+    background-color: #1f1f1f !important;
+  }
+
+  /* 4. Form Inputs */
+  body.dark-mode .form-control {
+    background-color: #1f1f1f;
+    border-color: #555;
+    color: white;
+  }
+  body.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
+
+  /* 5. Specific Social Brand Colors (Overrides for visibility) */
+  body.dark-mode .text-primary {
+    color: #6ea8fe !important;
+  }
+  body.dark-mode .text-danger {
+    color: #ff6b6b !important;
+  }
+  body.dark-mode .text-info {
+    color: #3dd5f3 !important;
+  }
+  body.dark-mode .text-success {
+    color: #75b798 !important;
+  }
+</style>
+
 <div class="row justify-content-center">
   <div class="col-lg-8">
     <div class="card border-0 shadow-sm mb-4 overflow-hidden">
@@ -12,6 +66,8 @@ Profile{% endblock %} {% block content %}
           src="{{ url_for('static', filename='uploads/posts/' + profile_user.cover_pic) }}"
           class="w-100 h-100 object-fit-cover"
           alt="Cover Photo"
+          onclick="viewFullSize(this.src)"
+          style="cursor: pointer"
         />
         {% else %}
         <div class="w-100 h-100 bg-secondary bg-gradient"></div>
@@ -39,7 +95,8 @@ Profile{% endblock %} {% block content %}
               class="rounded-circle border border-4 border-white shadow-sm bg-white"
               width="120"
               height="120"
-              style="object-fit: cover"
+              style="object-fit: cover; cursor: pointer"
+              onclick="viewFullSize(this.src)"
             />
             {% else %}
             <div
@@ -69,7 +126,9 @@ Profile{% endblock %} {% block content %}
           <div class="flex-grow-1 mt-md-5 pt-md-2 w-100">
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <h3 class="fw-bold mb-0 d-flex align-items-center gap-2">
+                <h3
+                  class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark"
+                >
                   {{ profile_user.username }} {% if profile_user.is_verified %}
                   <i
                     class="fas fa-check-circle text-primary"
@@ -84,49 +143,51 @@ Profile{% endblock %} {% block content %}
                 </p>
 
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                  {% for key, link in profile_user.social_links.items() %} {% if
-                  user.id == profile_user.id %}
-                  <div
-                    class="badge bg-light text-dark border d-flex align-items-center gap-2 px-3 py-2 fw-normal"
-                  >
-                    {% if 'github' in key %} <i class="fab fa-github"></i> {%
-                    elif 'twitter' in key %}
-                    <i class="fab fa-twitter text-info"></i> {% elif 'linkedin'
-                    in key %} <i class="fab fa-linkedin text-primary"></i> {%
-                    elif 'instagram' in key %}
-                    <i class="fab fa-instagram text-danger"></i> {% elif
-                    'facebook' in key %}
-                    <i class="fab fa-facebook text-primary"></i> {% else %}
-                    <i class="fas fa-link"></i> {% endif %}
+                  {% if profile_user.social_links %} {% for key, link in
+                  profile_user.social_links.items() %} {% if link %} {% set icon
+                  = 'fas fa-link' %} {% set color = '' %} {% set label = 'Link'
+                  %} {% if 'github' in link %} {% set icon = 'fab fa-github' %}
+                  {% set label = 'GitHub' %} {% elif 'linkedin' in link %} {%
+                  set icon = 'fab fa-linkedin' %} {% set color = 'text-primary'
+                  %} {% set label = 'LinkedIn' %} {% elif 'twitter' in link or
+                  'x.com' in link %} {% set icon = 'fab fa-twitter' %} {% set
+                  color = 'text-info' %} {% set label = 'Twitter' %} {% elif
+                  'instagram' in link %} {% set icon = 'fab fa-instagram' %} {%
+                  set color = 'text-danger' %} {% set label = 'Instagram' %} {%
+                  elif 'facebook' in link %} {% set icon = 'fab fa-facebook' %}
+                  {% set color = 'text-primary' %} {% set label = 'Facebook' %}
+                  {% elif 'youtube' in link %} {% set icon = 'fab fa-youtube' %}
+                  {% set color = 'text-danger' %} {% set label = 'YouTube' %} {%
+                  elif 'whatsapp' in link %} {% set icon = 'fab fa-whatsapp' %}
+                  {% set color = 'text-success' %} {% set label = 'WhatsApp' %}
+                  {% endif %}
 
+                  <div
+                    class="d-inline-flex align-items-center bg-light border rounded-pill px-3 py-1"
+                  >
                     <a
                       href="{{ link }}"
                       target="_blank"
-                      class="text-dark text-decoration-none text-truncate"
-                      style="max-width: 100px"
-                      >Link</a
+                      class="text-decoration-none d-flex align-items-center gap-2 {{ color }}"
                     >
+                      <i class="{{ icon }}"></i>
+                      <span class="small fw-bold text-dark">{{ label }}</span>
+                    </a>
 
+                    {% if user.id == profile_user.id %}
+                    <div class="vr mx-2"></div>
                     <button
                       onclick="removeSocialLink('{{ link }}')"
-                      class="btn btn-link text-danger p-0 ms-1"
+                      class="btn btn-link p-0 text-secondary"
                       style="font-size: 0.8rem"
                     >
                       <i class="fas fa-times"></i>
                     </button>
+                    {% endif %}
                   </div>
-                  {% else %}
-                  <a
-                    href="{{ link }}"
-                    target="_blank"
-                    class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2 rounded-pill"
-                  >
-                    {% if 'github' in key %} <i class="fab fa-github"></i> {%
-                    elif 'twitter' in key %} <i class="fab fa-twitter"></i> {%
-                    elif 'linkedin' in key %} <i class="fab fa-linkedin"></i> {%
-                    else %} <i class="fas fa-link"></i> {% endif %} Social
-                  </a>
-                  {% endif %} {% endfor %} {% if user.id == profile_user.id %}
+
+                  {% endif %} {% endfor %} {% endif %} {% if user.id ==
+                  profile_user.id %}
                   <button
                     class="btn btn-sm btn-outline-primary rounded-pill border-dashed"
                     data-bs-toggle="modal"
@@ -168,7 +229,6 @@ Profile{% endblock %} {% block content %}
                   >
                     <i class="fas fa-cog"></i>
                   </button>
-
                   <ul
                     class="dropdown-menu dropdown-menu-end shadow-sm border-0"
                   >
@@ -178,9 +238,8 @@ Profile{% endblock %} {% block content %}
                         href="#"
                         data-bs-toggle="modal"
                         data-bs-target="#editProfileModal"
+                        >Edit Bio</a
                       >
-                        Edit Bio
-                      </a>
                     </li>
                     <li>
                       <a
@@ -188,9 +247,8 @@ Profile{% endblock %} {% block content %}
                         href="#"
                         data-bs-toggle="modal"
                         data-bs-target="#changeUsernameModal"
+                        >Change Username</a
                       >
-                        Change Username
-                      </a>
                     </li>
                   </ul>
                 </div>
@@ -224,7 +282,7 @@ Profile{% endblock %} {% block content %}
       </div>
     </div>
 
-    <h5 class="fw-bold mb-3">Posts</h5>
+    <h5 class="fw-bold mb-3 text-dark">Posts</h5>
     {% if posts %} {% include "_posts.html" %}
 
     <nav class="mt-4">
@@ -337,10 +395,6 @@ Profile{% endblock %} {% block content %}
               </button>
             </div>
             <div id="usernameStatus" class="form-text mt-2 fw-bold"></div>
-            <div class="form-text text-muted">
-              Only letters, numbers, dots (.), and underscores (_) allowed. No
-              spaces.
-            </div>
           </div>
           <div
             class="alert alert-warning small border-0 d-flex align-items-center gap-2"
@@ -482,6 +536,32 @@ Profile{% endblock %} {% block content %}
               required
             />
           </div>
+
+          {% if user.social_links %}
+          <div class="mt-3">
+            <label class="form-label text-muted small fw-bold"
+              >Your Existing Links</label
+            >
+            <div class="d-flex flex-column gap-2">
+              {% for key, link in user.social_links.items() %} {% if link %}
+              <div
+                class="d-flex justify-content-between align-items-center bg-light p-2 rounded border"
+              >
+                <span class="text-truncate small" style="max-width: 250px"
+                  >{{ link }}</span
+                >
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger border-0"
+                  onclick="removeSocialLink('{{ link }}')"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              {% endif %} {% endfor %}
+            </div>
+          </div>
+          {% endif %}
         </div>
         <div class="modal-footer border-0">
           <button type="submit" class="btn btn-dark rounded-pill px-4">
@@ -511,7 +591,6 @@ Profile{% endblock %} {% block content %}
           <p class="text-muted">
             We're sorry to see you go. Please tell us why:
           </p>
-
           <div class="mb-3">
             <div class="form-check">
               <input
@@ -520,8 +599,7 @@ Profile{% endblock %} {% block content %}
                 name="reason"
                 value="Taking a break"
                 checked
-              />
-              <label class="form-check-label"
+              /><label class="form-check-label"
                 >I'm taking a temporary break</label
               >
             </div>
@@ -531,17 +609,7 @@ Profile{% endblock %} {% block content %}
                 type="radio"
                 name="reason"
                 value="Privacy concerns"
-              />
-              <label class="form-check-label">Privacy concerns</label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="reason"
-                value="Created a second account"
-              />
-              <label class="form-check-label">I created a second account</label>
+              /><label class="form-check-label">Privacy concerns</label>
             </div>
             <div class="form-check">
               <input
@@ -549,11 +617,9 @@ Profile{% endblock %} {% block content %}
                 type="radio"
                 name="reason"
                 value="Other"
-              />
-              <label class="form-check-label">Other</label>
+              /><label class="form-check-label">Other</label>
             </div>
           </div>
-
           <textarea
             name="details"
             class="form-control bg-light"

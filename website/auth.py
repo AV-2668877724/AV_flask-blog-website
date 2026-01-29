@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, mail
@@ -107,6 +107,28 @@ def verify_otp():
             flash('Invalid OTP. Please try again.', category='error')
             
     return render_template("verify_otp.html", email=session['signup_email'], user=current_user)
+
+
+
+#Check Username Availability for Sign Up
+@auth.route('/check-username-signup', methods=['POST'])
+def check_username_signup():
+    data = request.json
+    username = data.get('username', '').strip()
+
+    if not username:
+        return jsonify({'available': False, 'message': 'Username cannot be empty.'})
+
+    if len(username) < 3:
+        return jsonify({'available': False, 'message': 'Username must be at least 3 characters.'})
+
+    # Check database
+    user = User.query.filter_by(username=username).first()
+
+    if user:
+        return jsonify({'available': False, 'message': 'Username is already taken.'})
+    else:
+        return jsonify({'available': True, 'message': 'Username is available!'})
 
 # ==========================================
 #  STEP 3: CREATE USERNAME & PASSWORD
