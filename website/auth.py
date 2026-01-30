@@ -17,6 +17,15 @@ auth = Blueprint('auth', __name__)
 # Setup Token Serializer
 s = URLSafeTimedSerializer('CCAV@129') 
 
+RESERVED_USERNAMES = {
+    'home', 'login', 'logout', 'sign-up', 'signup', 'register',
+    'inbox', 'chat', 'messages', 'notifications', 'search', 'explore',
+    'admin', 'dashboard', 'settings', 'profile', 'user', 'users',
+    'static', 'assets', 'uploads', 'images', 'css', 'js',
+    'api', 'about', 'contact', 'help', 'support', 'terms', 'privacy',
+    'create-post', 'edit-post', 'delete', 'update', 'deactivate'
+}
+
 # ==========================================
 #  HELPER: SEND EMAILS
 # ==========================================
@@ -110,26 +119,38 @@ def verify_otp():
 
 
 
-#Check Username Availability for Sign Up
+# ✅ UPDATED: Check Username Availability (For Sign Up)
+# =========================================================
 @auth.route('/check-username-signup', methods=['POST'])
 def check_username_signup():
     data = request.json
-    username = data.get('username', '').strip()
+    username = data.get('username', '').strip().lower() # Convert to lowercase for check
 
+    # 1. Check Empty
     if not username:
         return jsonify({'available': False, 'message': 'Username cannot be empty.'})
 
+    # 2. Check Length
     if len(username) < 3:
-        return jsonify({'available': False, 'message': 'Username must be at least 3 characters.'})
+        return jsonify({'available': False, 'message': 'Too short (min 3 chars).'})
 
-    # Check database
+    # 3. Check Restricted Characters (Regex)
+    # Only allow a-z, 0-9, dot(.), and underscore(_)
+    if not re.match("^[a-z0-9_.]+$", username):
+         return jsonify({'available': False, 'message': 'Use only letters, numbers, . and _'})
+
+    # 4. 🚫 CHECK RESERVED WORDS (The Fix)
+    if username in RESERVED_USERNAMES:
+        return jsonify({'available': False, 'message': 'This username is reserved by the system.'})
+
+    # 5. Check Database (Is it already taken?)
     user = User.query.filter_by(username=username).first()
 
     if user:
         return jsonify({'available': False, 'message': 'Username is already taken.'})
     else:
         return jsonify({'available': True, 'message': 'Username is available!'})
-
+    
 # ==========================================
 #  STEP 3: CREATE USERNAME & PASSWORD
 # ==========================================

@@ -428,6 +428,15 @@ def check_username():
     
     return jsonify({'available': True, 'message': 'This username is unique and you can take it.'})
 
+RESERVED_USERNAMES = {
+    'home', 'login', 'logout', 'sign-up', 'signup', 'register',
+    'inbox', 'chat', 'messages', 'notifications', 'search', 'explore',
+    'admin', 'dashboard', 'settings', 'profile', 'user', 'users',
+    'static', 'assets', 'uploads', 'images', 'css', 'js',
+    'api', 'about', 'contact', 'help', 'support', 'terms', 'privacy',
+    'create-post', 'edit-post', 'delete', 'update', 'deactivate'
+}
+
 @views.route('/change-username', methods=['POST'])
 @login_required
 def change_username():
@@ -439,7 +448,10 @@ def change_username():
 
     # 1. Strip whitespace
     new_username = new_username.strip()
-
+    if new_username in RESERVED_USERNAMES:
+        flash('That username is reserved by the system.', category='error')
+        return redirect(url_for('views.profile', username=current_user.username))
+    
     # 2. Check Length
     if len(new_username) < 3:
         flash("Username must be at least 3 characters.", category='error')
