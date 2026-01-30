@@ -407,18 +407,43 @@ def edit_bio():
         flash('Bio updated!', category='success')
     return redirect(url_for('views.profile', username=current_user.username))
 
+
+# =========================================================
+# 🚫 RESERVED USERNAME LIST (Global)
+# =========================================================
+RESERVED_USERNAMES = {
+    'avpostory','av_postory','home', 'login', 'logout', 'sign-up', 'signup', 'register',
+    'inbox', 'chat', 'messages', 'notifications', 'search', 'explore',
+    'admin', 'dashboard', 'settings', 'profile', 'user', 'users',
+    'static', 'assets', 'uploads', 'images', 'css', 'js',
+    'api', 'about', 'contact', 'help', 'support', 'terms', 'privacy',
+    'create-post', 'edit-post', 'delete', 'update', 'deactivate'
+}
+
 @views.route('/check-username', methods=['POST'])
 def check_username():
     data = request.get_json()
     username = data.get('username')
     
+    # 1. Basic Empty Check
     if not username:
         return jsonify({'available': False, 'message': 'Please enter a username'})
     
     username = username.strip()
+    
+    # 2. Check Length
     if len(username) < 3:
          return jsonify({'available': False, 'message': 'Too short (min 3 chars)'})
 
+    # 3. Check Regex (Consistency with change_username)
+    if not re.match("^[a-zA-Z0-9_.]+$", username):
+         return jsonify({'available': False, 'message': 'Invalid characters. Use letters, numbers, . and _'})
+
+    # 4. 🚫 CHECK RESERVED WORDS
+    if username.lower() in RESERVED_USERNAMES:
+        return jsonify({'available': False, 'message': 'This username is reserved by the system.'})
+
+    # 5. Check Database
     user = User.query.filter_by(username=username).first()
     
     if user:
@@ -428,14 +453,6 @@ def check_username():
     
     return jsonify({'available': True, 'message': 'This username is unique and you can take it.'})
 
-RESERVED_USERNAMES = {
-    'home', 'login', 'logout', 'sign-up', 'signup', 'register',
-    'inbox', 'chat', 'messages', 'notifications', 'search', 'explore',
-    'admin', 'dashboard', 'settings', 'profile', 'user', 'users',
-    'static', 'assets', 'uploads', 'images', 'css', 'js',
-    'api', 'about', 'contact', 'help', 'support', 'terms', 'privacy',
-    'create-post', 'edit-post', 'delete', 'update', 'deactivate'
-}
 
 @views.route('/change-username', methods=['POST'])
 @login_required
@@ -448,21 +465,21 @@ def change_username():
 
     # 1. Strip whitespace
     new_username = new_username.strip()
-    if new_username in RESERVED_USERNAMES:
-        flash('That username is reserved by the system.', category='error')
-        return redirect(url_for('views.profile', username=current_user.username))
-    
+
     # 2. Check Length
     if len(new_username) < 3:
         flash("Username must be at least 3 characters.", category='error')
     
     # 3. STRICT VALIDATION: Only a-z, A-Z, 0-9, dot(.), underscore(_)
-    # If it contains spaces, #, $, @, it will fail this check.
     elif not re.match("^[a-zA-Z0-9_.]+$", new_username):
         flash("Invalid format! Usernames can only contain letters, numbers, dots (.), and underscores (_). No spaces or special symbols.", category='error')
     
+    # 4. 🚫 CHECK RESERVED WORDS
+    elif new_username.lower() in RESERVED_USERNAMES:
+        flash("This username is reserved by the system.", category='error')
+
     else:
-        # 4. Check if taken
+        # 5. Check if taken
         existing = User.query.filter_by(username=new_username).first()
         if existing:
             flash("Username already taken.", category='error')
@@ -473,7 +490,6 @@ def change_username():
             return redirect(url_for('auth.logout'))
             
     return redirect(url_for('views.profile', username=current_user.username))
-
 @views.route('/add-social-link', methods=['POST'])
 @login_required
 def add_social_link():

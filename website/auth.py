@@ -18,7 +18,7 @@ auth = Blueprint('auth', __name__)
 s = URLSafeTimedSerializer('CCAV@129') 
 
 RESERVED_USERNAMES = {
-    'home', 'login', 'logout', 'sign-up', 'signup', 'register',
+    'avpostory','av_postory','home', 'login', 'logout', 'sign-up', 'signup', 'register',
     'inbox', 'chat', 'messages', 'notifications', 'search', 'explore',
     'admin', 'dashboard', 'settings', 'profile', 'user', 'users',
     'static', 'assets', 'uploads', 'images', 'css', 'js',
