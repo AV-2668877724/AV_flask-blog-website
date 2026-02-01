@@ -11,3 +11,4 @@ Flask-Mail==0.9.1
 Flask-SocketIO==5.3.6
 eventlet==0.35.1
 email_validator==2.1.0.post1
+Flask-Compress==1.13.1

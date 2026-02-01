@@ -8,12 +8,15 @@ from .models import User, Post, Comment, Like, Follow, Notification, CommentLike
 from sqlalchemy.exc import IntegrityError
 from . import db
 from sqlalchemy import func, or_, desc, and_
+# ✅ NEW: Imports for Speed Optimization
+from sqlalchemy.orm import joinedload, subqueryload 
 import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
 from PIL import Image
 import secrets
 from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
+from sqlalchemy.orm import joinedload, subqueryload
 
 views = Blueprint('views', __name__)
 
@@ -25,14 +28,14 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 # =================================================
 
 def allowed_file(filename):
-    """Check if the file has a valid extension."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def compress_image(form_picture, folder, width=None, height=None):
     random_hex = secrets.token_hex(8)
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
+    
+    # ✅ STEP 1: Force the extension to .webp (Modern, fast format)
+    picture_fn = random_hex + ".webp"
     
     app = current_app
     upload_path = os.path.join(app.root_path, 'static/uploads', folder, picture_fn)
@@ -42,18 +45,28 @@ def compress_image(form_picture, folder, width=None, height=None):
 
     i = Image.open(form_picture)
 
+    # ✅ STEP 2: Handle Transparency (Important for PNGs)
+    # If the image is Paletted (P) or has Transparency (RGBA), keep it.
+    if i.mode in ('P', 'RGBA'):
+        i = i.convert('RGBA')
+
+    # ✅ STEP 3: Smart Resizing
     if width and height:
         i.thumbnail((width, height))
     elif width:
+        # Calculate height to keep aspect ratio
         w_percent = (width / float(i.size[0]))
         h_size = int((float(i.size[1]) * float(w_percent)))
         i = i.resize((width, h_size), Image.Resampling.LANCZOS)
     
-    i.save(upload_path, optimize=True, quality=85)
+    # ✅ STEP 4: Save as WebP with Optimization
+    # Quality 80 is the sweet spot for web (indistinguishable from 100 but half the size)
+    i.save(upload_path, 'WEBP', quality=80, optimize=True)
 
     return picture_fn
 
 def enrich_posts(posts):
+    # This function is now much faster because data is pre-loaded via 'subqueryload'
     for post in posts:
         post.likes_count = len(post.likes)
         post.liked = False
@@ -85,7 +98,6 @@ def create_notification(visitor_id, recipient_id, action, post_id=None):
             recipient_id=recipient_id, 
             action=action, 
             post_id=post_id,
-            # ✅ FIX: Use Local Time
             date_created=datetime.now()
         )
         db.session.add(notif)
@@ -124,9 +136,14 @@ def home():
     page = request.args.get('page', 1, type=int)
     per_page = 10
     
-    pagination = Post.query.filter_by(is_deleted=False)\
-        .order_by(Post.date_created.desc())\
-        .paginate(page=page, per_page=per_page, error_out=False)
+    # ✅ OPTIMIZED QUERY: Pre-load User, Likes, and Comments
+    pagination = Post.query.options(
+        joinedload(Post.user),       
+        subqueryload(Post.likes),    
+        subqueryload(Post.comments).joinedload(Comment.user) 
+    ).filter_by(is_deleted=False)\
+    .order_by(Post.date_created.desc())\
+    .paginate(page=page, per_page=per_page, error_out=False)
         
     posts = enrich_posts(pagination.items)
 
@@ -155,7 +172,6 @@ def create_post():
             if cover_image_file and cover_image_file.filename != '':
                 cover_image_name = compress_image(cover_image_file, 'posts', width=1080)
             
-            # ✅ FIX: Use datetime.now() (Local Time) to match your PC clock
             post = Post(
                 text=text, 
                 author=current_user.id, 
@@ -195,14 +211,10 @@ def edit_post(id):
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
 
-    # ✅ THE FIX:
-    # If the text has new lines (\n) but doesn't look like rich HTML (no <p> or <br>),
-    # we manually convert the new lines to <br> so the Editor sees them.
     content_to_edit = post.text
     if '\n' in content_to_edit and '<p>' not in content_to_edit and '<br>' not in content_to_edit:
         content_to_edit = content_to_edit.replace('\n', '<br>')
 
-    # We pass 'content_to_edit' separately so we don't mess up the actual database object yet
     return render_template("edit_post.html", user=current_user, post=post, content_to_edit=content_to_edit)
 
 @views.route("/posts/<username>")
@@ -211,9 +223,14 @@ def posts(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
     
-    pagination = Post.query.filter_by(author=user.id, is_deleted=False)\
-        .order_by(Post.date_created.desc())\
-        .paginate(page=page, per_page=10, error_out=False)
+    # ✅ OPTIMIZED QUERY
+    pagination = Post.query.options(
+        joinedload(Post.user),
+        subqueryload(Post.likes),
+        subqueryload(Post.comments).joinedload(Comment.user)
+    ).filter_by(author=user.id, is_deleted=False)\
+    .order_by(Post.date_created.desc())\
+    .paginate(page=page, per_page=10, error_out=False)
         
     posts = enrich_posts(pagination.items)
     
@@ -255,7 +272,6 @@ def create_comment(post_id):
     else:
         post = Post.query.filter_by(id=post_id).first()
         if post:
-            # ✅ FIX: Use datetime.now() (Local Time)
             comment = Comment(
                 text=text, 
                 author=current_user.id, 
@@ -301,7 +317,6 @@ def like(post_id):
         db.session.delete(like)
         db.session.commit()
     else:
-        # ✅ FIX: Use datetime.now() (Local Time)
         like = Like(author=current_user.id, post_id=post_id, date_created=datetime.now())
         db.session.add(like)
         db.session.commit()
@@ -317,7 +332,9 @@ def like(post_id):
 @views.route('/notifications')
 @login_required
 def notifications():
-    notifs = Notification.query.filter_by(recipient_id=current_user.id)\
+    # ✅ OPTIMIZED: Load the 'visitor' (User who triggered notif) immediately
+    notifs = Notification.query.options(joinedload(Notification.visitor))\
+        .filter_by(recipient_id=current_user.id)\
         .order_by(Notification.date_created.desc()).limit(50).all()
     return render_template("notifications.html", user=current_user, notifications=notifs)
 
@@ -346,9 +363,14 @@ def profile(username):
     page = request.args.get('page', 1, type=int)
     per_page = 5
 
-    pagination = Post.query.filter_by(author=user.id, is_deleted=False)\
-        .order_by(Post.date_created.desc())\
-        .paginate(page=page, per_page=per_page, error_out=False)
+    # ✅ OPTIMIZED QUERY
+    pagination = Post.query.options(
+        joinedload(Post.user),
+        subqueryload(Post.likes),
+        subqueryload(Post.comments).joinedload(Comment.user)
+    ).filter_by(author=user.id, is_deleted=False)\
+    .order_by(Post.date_created.desc())\
+    .paginate(page=page, per_page=per_page, error_out=False)
 
     posts = enrich_posts(pagination.items)
     
@@ -386,6 +408,7 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
+        # Resize to 300x300 for avatars to save space
         filename = compress_image(file, 'avatars', width=300, height=300)
         current_user.profile_pic = filename
         db.session.commit()
@@ -425,25 +448,20 @@ def check_username():
     data = request.get_json()
     username = data.get('username')
     
-    # 1. Basic Empty Check
     if not username:
         return jsonify({'available': False, 'message': 'Please enter a username'})
     
     username = username.strip()
     
-    # 2. Check Length
     if len(username) < 3:
          return jsonify({'available': False, 'message': 'Too short (min 3 chars)'})
 
-    # 3. Check Regex (Consistency with change_username)
     if not re.match("^[a-zA-Z0-9_.]+$", username):
          return jsonify({'available': False, 'message': 'Invalid characters. Use letters, numbers, . and _'})
 
-    # 4. 🚫 CHECK RESERVED WORDS
     if username.lower() in RESERVED_USERNAMES:
         return jsonify({'available': False, 'message': 'This username is reserved by the system.'})
 
-    # 5. Check Database
     user = User.query.filter_by(username=username).first()
     
     if user:
@@ -463,23 +481,18 @@ def change_username():
         flash("Username cannot be empty.", category='error')
         return redirect(url_for('views.profile', username=current_user.username))
 
-    # 1. Strip whitespace
     new_username = new_username.strip()
 
-    # 2. Check Length
     if len(new_username) < 3:
         flash("Username must be at least 3 characters.", category='error')
     
-    # 3. STRICT VALIDATION: Only a-z, A-Z, 0-9, dot(.), underscore(_)
     elif not re.match("^[a-zA-Z0-9_.]+$", new_username):
-        flash("Invalid format! Usernames can only contain letters, numbers, dots (.), and underscores (_). No spaces or special symbols.", category='error')
+        flash("Invalid format! Use letters, numbers, dots (.), and underscores (_).", category='error')
     
-    # 4. 🚫 CHECK RESERVED WORDS
     elif new_username.lower() in RESERVED_USERNAMES:
         flash("This username is reserved by the system.", category='error')
 
     else:
-        # 5. Check if taken
         existing = User.query.filter_by(username=new_username).first()
         if existing:
             flash("Username already taken.", category='error')
@@ -490,6 +503,7 @@ def change_username():
             return redirect(url_for('auth.logout'))
             
     return redirect(url_for('views.profile', username=current_user.username))
+
 @views.route('/add-social-link', methods=['POST'])
 @login_required
 def add_social_link():
@@ -606,7 +620,6 @@ def admin_toggle_user_status(user_id):
     flash(f"User {user.username} is now {status}.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
-# 1. UPDATE THIS: Make the standard delete 'Soft' (Move to Trash)
 @views.route('/admin/delete-post/<int:post_id>', methods=['POST'])
 @login_required
 def admin_delete_post(post_id):
@@ -620,13 +633,11 @@ def admin_delete_post(post_id):
         
     post = Post.query.get(post_id)
     if post:
-        # ✅ CHANGE: Soft Delete (Move to Trash)
         post.is_deleted = True
         db.session.commit()
         flash("Post moved to trash.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
-# 2. ADD THIS: New route for Permanent Delete
 @views.route('/admin/permanent-delete-post/<int:post_id>', methods=['POST'])
 @login_required
 def admin_permanent_delete_post(post_id):
@@ -640,7 +651,6 @@ def admin_permanent_delete_post(post_id):
         
     post = Post.query.get(post_id)
     if post:
-        # ✅ CHANGE: Hard Delete (Remove from DB)
         db.session.delete(post)
         db.session.commit()
         flash("Post permanently deleted.", category='success')
@@ -714,7 +724,6 @@ def follow_user(user_id):
         
     existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
     if not existing:
-        # ✅ FIX: Use Local Time
         new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.now())
         db.session.add(new_follow)
         db.session.commit()
@@ -880,7 +889,6 @@ def like_comment(comment_id):
         db.session.delete(like)
         liked = False
     else:
-        # ✅ FIX: Use Local Time
         like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.now())
         db.session.add(like)
         liked = True
@@ -890,7 +898,12 @@ def like_comment(comment_id):
 
 @views.route("/post/<id>")
 def post_view(id):
-    post = Post.query.get(id)
+    # ✅ OPTIMIZED: Preload data for single post view
+    post = Post.query.options(
+        joinedload(Post.user),
+        subqueryload(Post.likes),
+        subqueryload(Post.comments).joinedload(Comment.user)
+    ).get(id)
     
     if not post:
         flash('Post does not exist.', category='error')
@@ -913,7 +926,11 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    messages = Message.query.filter(
+    # ✅ OPTIMIZED: Load Sender and Recipient immediately
+    messages = Message.query.options(
+        joinedload(Message.sender), 
+        joinedload(Message.recipient)
+    ).filter(
         or_(Message.sender_id == current_user.id, Message.recipient_id == current_user.id)
     ).order_by(Message.date_created.desc()).all()
     
@@ -931,12 +948,6 @@ def inbox():
     chats = list(conversations.values())
     return render_template("inbox.html", user=current_user, chats=chats)
 
-
-
-# ---------------------------------------------
-# REPLACEMENT FOR CHAT FUNCTIONS IN views.py
-# ---------------------------------------------
-
 # 1. Chat Page Route
 @views.route('/chat/<username>')
 @login_required
@@ -947,21 +958,17 @@ def chat(username):
         flash('User not found.', category='error')
         return redirect(url_for('views.home'))
 
-    # ✅ MARK AS READ LOGIC
-    # Find unread messages specifically from THIS recipient to ME
     unread_msgs = Message.query.filter_by(
         sender_id=recipient.id, 
         recipient_id=current_user.id, 
         is_read=False
     ).all()
 
-    # Only commit if there are actually messages to update
     if unread_msgs:
         for msg in unread_msgs:
             msg.is_read = True
         db.session.commit()
 
-    # Fetch chat history (Standard Logic)
     messages = Message.query.filter(
         or_(
             and_(
@@ -1003,7 +1010,6 @@ def delete_message(id):
 def get_new_messages(recipient_id):
     last_id = request.args.get('last_id', 0, type=int)
 
-    # ✅ FIX: Changed Message.date -> Message.date_created
     new_messages = Message.query.filter(
         or_(
             and_(
@@ -1025,7 +1031,6 @@ def get_new_messages(recipient_id):
             'id': msg.id,
             'text': msg.text,
             'sender_id': msg.sender_id,
-            # ✅ FIX: Changed msg.date -> msg.date_created
             'time': msg.date_created.strftime("%H:%M") 
         })
     
@@ -1047,7 +1052,6 @@ def send_message():
         'success': True, 
         'id': new_message.id, 
         'text': new_message.text, 
-        # ✅ FIX: Changed new_message.date -> new_message.date_created
         'time': new_message.date_created.strftime("%H:%M") 
     })
 

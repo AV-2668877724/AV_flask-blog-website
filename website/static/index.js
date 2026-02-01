@@ -1,7 +1,7 @@
 /* =========================================
    GLOBAL CONFIG & HELPER FUNCTIONS
    ========================================= */
-const TRUNCATE_HEIGHT = 400; // ✅ Your preferred height
+const TRUNCATE_HEIGHT = 400; // Your preferred height for "Read More"
 
 // 1. Truncate posts (Global function so Infinite Scroll can use it)
 function truncatePosts() {
@@ -154,21 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ) {
         searchResults.classList.remove("show");
         searchResults.style.display = "none";
-      }
-    });
-  }
-
-  /* --- USERNAME RESET ON TYPING --- */
-  const newUsernameInput = document.getElementById("newUsername");
-  const submitUsernameBtn = document.getElementById("submitUsernameBtn");
-  const usernameStatus = document.getElementById("usernameStatus");
-
-  if (newUsernameInput && submitUsernameBtn) {
-    newUsernameInput.addEventListener("input", function () {
-      submitUsernameBtn.disabled = true;
-      if (usernameStatus) {
-        usernameStatus.textContent = "";
-        usernameStatus.className = "";
       }
     });
   }
@@ -407,10 +392,11 @@ function resetAdminFilter(sectionId) {
 }
 
 /* =========================================
-   USERNAME AVAILABILITY CHECKER
+   USERNAME AVAILABILITY (PROFILE EDIT & SIGNUP)
    ========================================= */
-let allowUsernameSubmit = false;
 
+// 1. Profile Edit Logic
+let allowUsernameSubmit = false;
 function checkUsername() {
   const input = document.getElementById("newUsername");
   const status = document.getElementById("usernameStatus");
@@ -446,40 +432,80 @@ function checkUsername() {
     });
 }
 
-let signupUsernameValid = false;
-
+// 2. Signup Page Logic (Consolidated)
 function checkSignupUsername() {
-  const input = document.getElementById("signupUsername");
-  const status = document.getElementById("signupUsernameStatus");
+  const usernameInput = document.getElementById("signupUsername");
+  const statusDiv = document.getElementById("signupUsernameStatus");
   const submitBtn = document.getElementById("signupSubmitBtn");
-  const username = input.value.trim();
+  const checkBtn = document.getElementById("checkBtn");
 
-  if (!username) {
-    status.textContent = "Username is required";
-    status.className = "text-danger";
+  const username = usernameInput.value.trim();
+
+  // Basic Validation
+  if (username.length < 3) {
+    statusDiv.innerHTML =
+      '<span class="text-danger"><i class="fas fa-times-circle"></i> Too short (min 3 chars).</span>';
+    usernameInput.classList.add("is-invalid");
     submitBtn.disabled = true;
-    signupUsernameValid = false;
     return;
   }
 
-  fetch("/check-username-signup", {
+  // Show Loading State
+  checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  checkBtn.disabled = true;
+  statusDiv.innerHTML =
+    '<span class="text-muted">Checking availability...</span>';
+
+  // Call Backend API
+  fetch("/check-username", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ username: username }),
+    headers: {
+      "Content-Type": "application/json",
+    },
   })
-    .then((res) => res.json())
+    .then((response) => response.json())
     .then((data) => {
-      status.textContent = data.message;
+      checkBtn.innerHTML = "Check"; // Reset Button text
+      checkBtn.disabled = false;
+
       if (data.available) {
-        status.className = "text-success";
+        // SUCCESS
+        statusDiv.innerHTML =
+          '<span class="text-success"><i class="fas fa-check-circle"></i> ' +
+          data.message +
+          "</span>";
+        usernameInput.classList.remove("is-invalid");
+        usernameInput.classList.add("is-valid");
         submitBtn.disabled = false;
-        signupUsernameValid = true;
       } else {
-        status.className = "text-danger";
+        // ERROR
+        statusDiv.innerHTML =
+          '<span class="text-danger"><i class="fas fa-times-circle"></i> ' +
+          data.message +
+          "</span>";
+        usernameInput.classList.add("is-invalid");
         submitBtn.disabled = true;
-        signupUsernameValid = false;
       }
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      checkBtn.innerHTML = "Check";
+      checkBtn.disabled = false;
+      statusDiv.innerHTML =
+        '<span class="text-warning">Error checking server. Try again.</span>';
     });
+}
+
+// Reset Signup Check on Type
+function resetSignupCheck() {
+  const submitBtn = document.getElementById("signupSubmitBtn");
+  const statusDiv = document.getElementById("signupUsernameStatus");
+  const usernameInput = document.getElementById("signupUsername");
+
+  if (submitBtn) submitBtn.disabled = true;
+  if (statusDiv) statusDiv.innerHTML = "";
+  if (usernameInput) usernameInput.classList.remove("is-valid", "is-invalid");
 }
 
 /* =========================================
@@ -616,61 +642,72 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* =========================================
-   REAL-TIME CHAT (SOCKET.IO - NO POLLING)
+   REAL-TIME CHAT & PRESENCE (SOCKET.IO)
    ========================================= */
 document.addEventListener("DOMContentLoaded", function () {
   const chatForm = document.getElementById("chatForm");
   const chatBox = document.getElementById("chat-box");
 
   if (chatForm && chatBox) {
-    // 1. Connect to WebSocket
     const socket = io();
     const recipientId = chatForm.dataset.recipient;
-
-    // Scroll to bottom on load
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // ------------------------------------
-    //  LISTEN FOR INCOMING MESSAGES
-    // ------------------------------------
+    // 1. LISTEN FOR MESSAGES
     socket.on("receive_message", function (msg) {
-      // Logic: If msg sender matches the recipient (them) OR the sender is me (via ID check logic or context)
-      // For simplified 1-on-1, just append it.
-      // Ideally, you verify msg.sender_id matches current context to avoid crossing chats.
-      appendMessageToChat(msg);
-      chatBox.scrollTop = chatBox.scrollHeight;
+      if (msg.sender_id == recipientId || msg.sender_id == "{{ user.id }}") {
+        appendMessageToChat(msg);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
     });
 
-    // ------------------------------------
-    //  SEND MESSAGE
-    // ------------------------------------
+    // 2. LISTEN FOR ONLINE/OFFLINE STATUS UPDATES
+    socket.on("user_status_change", function (data) {
+      if (data.user_id == recipientId) {
+        const statusContainer = document.getElementById(
+          `status-container-${recipientId}`,
+        );
+        const statusText = document.getElementById(
+          `status-text-${recipientId}`,
+        );
+        const icon = statusContainer
+          ? statusContainer.querySelector("i")
+          : null;
+
+        if (statusContainer && statusText && icon) {
+          if (data.status === "online") {
+            icon.className = "fas fa-circle text-success";
+            statusText.innerText = "Online";
+          } else {
+            icon.className = "fas fa-circle text-secondary";
+            statusText.innerText =
+              "Last seen " + (data.last_seen || "recently");
+          }
+        }
+      }
+    });
+
+    // 3. SEND MESSAGE
     chatForm.addEventListener("submit", function (e) {
       e.preventDefault();
       const messageInput = document.getElementById("messageInput");
       const text = messageInput.value.trim();
-
       if (!text) return;
-
-      // Emit event to server (Sockets!)
-      socket.emit("send_message", {
-        recipient_id: recipientId,
-        text: text,
-      });
-
-      // Clear input immediately (Optimistic UI)
+      socket.emit("send_message", { recipient_id: recipientId, text: text });
       messageInput.value = "";
     });
 
-    // ------------------------------------
-    //  HELPER: Append Message HTML
-    // ------------------------------------
+    // 4. APPEND HELPER
     function appendMessageToChat(msg) {
-      // Simple check: if sender is NOT recipient, it must be me.
+      // Prevent duplicates
+      if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`)) {
+        return;
+      }
+
       const isMe = msg.sender_id != recipientId;
       let html = "";
 
       if (isMe) {
-        // My Message
         html = `
             <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-end" data-msg-id="${msg.id}">
                 <div class="d-flex align-items-end justify-content-end w-100">
@@ -685,7 +722,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 </div>
             </div>`;
       } else {
-        // Their Message
         html = `
             <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-start" data-msg-id="${msg.id}">
                 <div class="d-flex align-items-end justify-content-start w-100">
@@ -715,7 +751,6 @@ function deleteMessage(msgId, btnElement) {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        // Updated selector to find .message-row properly
         const messageRow =
           btnElement.closest(".message-row") ||
           btnElement.closest(".d-flex.w-100");
@@ -801,124 +836,14 @@ function toggleFollow(userId, btn) {
 }
 
 /* =========================================
-   REAL-TIME CHAT & PRESENCE
+   FORCE RELOAD ON PAGE NAVIGATION
    ========================================= */
-document.addEventListener("DOMContentLoaded", function () {
-  const chatForm = document.getElementById("chatForm");
-  const chatBox = document.getElementById("chat-box");
-
-  if (chatForm && chatBox) {
-    const socket = io();
-    const recipientId = chatForm.dataset.recipient;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    // 1. LISTEN FOR MESSAGES
-    socket.on("receive_message", function (msg) {
-      if (msg.sender_id == recipientId || msg.sender_id == "{{ user.id }}") {
-        appendMessageToChat(msg);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    });
-
-    // 2. ✅ LISTEN FOR ONLINE/OFFLINE STATUS UPDATES
-    socket.on("user_status_change", function (data) {
-      // Check if the update is for the person I am currently chatting with
-      if (data.user_id == recipientId) {
-        const statusContainer = document.getElementById(
-          `status-container-${recipientId}`,
-        );
-        const statusText = document.getElementById(
-          `status-text-${recipientId}`,
-        );
-        const icon = statusContainer
-          ? statusContainer.querySelector("i")
-          : null;
-
-        if (statusContainer && statusText && icon) {
-          if (data.status === "online") {
-            // Change to Green / Online
-            icon.className = "fas fa-circle text-success";
-            statusText.innerText = "Online";
-          } else {
-            // Change to Gray / Last Seen
-            icon.className = "fas fa-circle text-secondary";
-            statusText.innerText =
-              "Last seen " + (data.last_seen || "recently");
-          }
-        }
-      }
-    });
-
-    // 3. SEND MESSAGE
-    chatForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const messageInput = document.getElementById("messageInput");
-      const text = messageInput.value.trim();
-      if (!text) return;
-      socket.emit("send_message", { recipient_id: recipientId, text: text });
-      messageInput.value = "";
-    });
-
-    // ------------------------------------
-    //  HELPER: Append Message HTML
-    // ------------------------------------
-    function appendMessageToChat(msg) {
-      
-      
-      // Check if a message with this ID already exists in the HTML
-      // If it exists, stop right here. Do not add it again.
-      if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`)) {
-        return; 
-      }
-
-      const isMe = msg.sender_id != recipientId;
-      let html = "";
-
-      if (isMe) {
-        // My Message
-        html = `
-            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-end" data-msg-id="${msg.id}">
-                <div class="d-flex align-items-end justify-content-end w-100">
-                    <button class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn" 
-                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
-                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
-                    </button>
-                    <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
-                        ${msg.text}
-                        <div class="text-white-50 text-end" style="font-size: 0.65rem;">${msg.time}</div>
-                    </div>
-                </div>
-            </div>`;
-      } else {
-        // Their Message
-        html = `
-            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-start" data-msg-id="${msg.id}">
-                <div class="d-flex align-items-end justify-content-start w-100">
-                    <div class="bg-white text-dark border rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
-                        ${msg.text}
-                        <div class="text-muted text-end" style="font-size: 0.65rem;">${msg.time}</div>
-                    </div>
-                    <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" 
-                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
-                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
-                    </button>
-                </div>
-            </div>`;
-      }
-      chatBox.insertAdjacentHTML("beforeend", html);
-    }
-  }
-});
-
-/* =========================================
-   FORCE RELOAD ON PAGE NAVIGATION (Fixes Stale Red Dots)
-   ========================================= */
-window.addEventListener( "pageshow", function ( event ) {
-  var historyTraversal = event.persisted || 
-                         ( typeof window.performance != "undefined" && 
-                              window.performance.navigation.type === 2 );
-  if ( historyTraversal ) {
-    // Handle page restore.
+window.addEventListener("pageshow", function (event) {
+  var historyTraversal =
+    event.persisted ||
+    (typeof window.performance != "undefined" &&
+      window.performance.navigation.type === 2);
+  if (historyTraversal) {
     window.location.reload();
   }
 });

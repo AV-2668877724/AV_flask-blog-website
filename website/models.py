@@ -32,8 +32,8 @@ class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     
     # Auth Details
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    email = db.Column(db.String(150), unique=True, nullable=False)
+    username = db.Column(db.String(150), unique=True, index=True    )
+    email = db.Column(db.String(150), unique=True, index=True)
     password = db.Column(db.String(150), nullable=False)
     
     # Profile Details
@@ -79,8 +79,7 @@ class Post(db.Model):
     is_deleted = db.Column(db.Boolean, default=False) # Soft Delete Flag
     
     # ✅ TIMEZONE FIX
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
-    
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
     # Relationships with Cascades
     # cascade="all, delete-orphan" ensures comments/likes are deleted if the post is Hard Deleted
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
@@ -92,14 +91,13 @@ class Post(db.Model):
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     text = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     
     # ✅ TIMEZONE FIX
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
-    
+    date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
 

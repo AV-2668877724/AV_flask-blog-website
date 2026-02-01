@@ -29,10 +29,12 @@
                 autocomplete="off"
                 pattern="[a-zA-Z0-9_.]+"
                 title="Letters, numbers, dots, and underscores only."
+                onkeyup="resetSignupCheck()"
               />
               <button
                 class="btn btn-outline-secondary"
                 type="button"
+                id="checkBtn"
                 onclick="checkSignupUsername()"
               >
                 Check

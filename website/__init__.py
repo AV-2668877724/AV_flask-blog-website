@@ -6,6 +6,7 @@ from flask_mail import Mail
 import os
 from datetime import datetime
 from flask_socketio import SocketIO
+from flask_compress import Compress
 
 db = SQLAlchemy()
 mail = Mail()
@@ -26,7 +27,7 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')    
     
     mail.init_app(app)
-
+    Compress(app) # ✅ Initialize Flask-Compress
     # UPLOAD FOLDER
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
