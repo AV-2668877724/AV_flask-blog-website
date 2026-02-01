@@ -135,15 +135,8 @@ block content %}
                     method="POST"
                     action="{{ url_for('views.admin_toggle_user_status', user_id=u.id) }}"
                     class="d-inline-flex gap-2 align-items-center"
+                    onsubmit="return injectAdminPassword(this);"
                   >
-                    <input
-                      type="password"
-                      name="admin_password"
-                      class="form-control form-control-sm"
-                      placeholder="Admin Pass"
-                      style="width: 100px"
-                      required
-                    />
                     {% if u.is_active %}
                     <button
                       class="btn btn-warning btn-sm text-white"
@@ -164,18 +157,13 @@ block content %}
                     method="POST"
                     action="{{ url_for('views.admin_delete_user', user_id=u.id) }}"
                     onsubmit="
-                      return confirm('WARNING: Permanently delete user?');
+                      return (
+                        confirm('WARNING: Permanently delete user?') &&
+                        injectAdminPassword(this)
+                      );
                     "
                     class="d-inline-flex ms-2"
                   >
-                    <input
-                      type="password"
-                      name="admin_password"
-                      class="form-control form-control-sm"
-                      placeholder="Admin Pass"
-                      style="width: 100px"
-                      required
-                    />
                     <button class="btn btn-outline-danger btn-sm border-0">
                       <i class="bi bi-trash"></i>
                     </button>
@@ -219,7 +207,7 @@ block content %}
             <tr>
               <td class="ps-4 fw-bold">{{ p.user.username }}</td>
               <td style="max-width: 300px">
-                <span class="text-truncate d-block text-muted"
+                <span class="text-truncate d-block"
                   >{{ p.text[:60] | striptags }}...</span
                 >
               </td>
@@ -228,17 +216,14 @@ block content %}
                 <form
                   method="POST"
                   action="{{ url_for('views.admin_delete_post', post_id=p.id) }}"
-                  onsubmit="return confirm('Move post to trash?');"
+                  onsubmit="
+                    return (
+                      confirm('Move post to trash?') &&
+                      injectAdminPassword(this)
+                    );
+                  "
                   class="d-inline-flex gap-2"
                 >
-                  <input
-                    type="password"
-                    name="admin_password"
-                    class="form-control form-control-sm"
-                    placeholder="Admin Pass"
-                    style="width: 120px"
-                    required
-                  />
                   <button class="btn btn-danger btn-sm text-white">
                     Delete
                   </button>
@@ -275,10 +260,10 @@ block content %}
           </thead>
           <tbody>
             {% for p in deleted_posts %}
-            <tr>
+            <tr class="table-danger">
               <td class="ps-4 fw-bold">{{ p.user.username }}</td>
               <td style="max-width: 300px">
-                <span class="text-truncate d-block text-muted"
+                <span class="text-truncate d-block"
                   ><del>{{ p.text[:60] | striptags }}...</del></span
                 >
               </td>
@@ -289,40 +274,23 @@ block content %}
                     method="POST"
                     action="{{ url_for('views.admin_restore_post', post_id=p.id) }}"
                     class="d-inline-flex gap-2"
+                    onsubmit="return injectAdminPassword(this);"
                   >
-                    <input
-                      type="password"
-                      name="admin_password"
-                      class="form-control form-control-sm"
-                      placeholder="Admin Pass"
-                      style="width: 100px"
-                      required
-                    />
                     <button class="btn btn-success btn-sm">Restore</button>
                   </form>
-
                   <form
                     method="POST"
                     action="{{ url_for('views.admin_permanent_delete_post', post_id=p.id) }}"
                     onsubmit="
-                      return confirm(
-                        'WARNING: This cannot be undone. Delete permanently?',
+                      return (
+                        confirm(
+                          'WARNING: This cannot be undone. Delete permanently?',
+                        ) && injectAdminPassword(this)
                       );
                     "
                     class="d-inline-flex gap-2"
                   >
-                    <input
-                      type="password"
-                      name="admin_password"
-                      class="form-control form-control-sm"
-                      placeholder="Admin Pass"
-                      style="width: 100px"
-                      required
-                    />
-                    <button
-                      class="btn btn-danger btn-sm"
-                      title="Delete Forever"
-                    >
+                    <button class="btn btn-dark btn-sm" title="Delete Forever">
                       <i class="fas fa-trash"></i>
                     </button>
                   </form>
@@ -359,27 +327,19 @@ block content %}
           </thead>
           <tbody>
             {% for c in comments %}
-            <tr>
+            <tr class="{{ 'table-danger' if c.is_deleted else '' }}">
               <td class="ps-4 fw-bold">{{ c.user.username }}</td>
               <td style="max-width: 300px">
-                <span class="text-truncate d-block text-muted"
-                  >{{ c.text }}</span
-                >
+                <span class="text-truncate d-block">{{ c.text }}</span>
                 <small class="text-muted d-block" style="font-size: 0.75rem"
                   >On post #{{ c.post_id }}</small
                 >
               </td>
               <td>
                 {% if c.is_deleted %}
-                <span
-                  class="badge bg-danger-subtle text-danger border border-danger-subtle"
-                  >Deleted</span
-                >
+                <span class="badge bg-danger">Deleted</span>
                 {% else %}
-                <span
-                  class="badge bg-success-subtle text-success border border-success-subtle"
-                  >Active</span
-                >
+                <span class="badge bg-success">Active</span>
                 {% endif %}
               </td>
               <td class="text-end pe-4">
@@ -387,17 +347,13 @@ block content %}
                 <form
                   method="POST"
                   action="{{ url_for('views.admin_delete_comment', comment_id=c.id) }}"
-                  onsubmit="return confirm('Hide this comment?');"
+                  onsubmit="
+                    return (
+                      confirm('Hide this comment?') && injectAdminPassword(this)
+                    );
+                  "
                   class="d-inline-flex gap-2"
                 >
-                  <input
-                    type="password"
-                    name="admin_password"
-                    class="form-control form-control-sm"
-                    placeholder="Admin Pass"
-                    style="width: 120px"
-                    required
-                  />
                   <button class="btn btn-danger btn-sm">Delete</button>
                 </form>
                 {% else %}
@@ -405,15 +361,8 @@ block content %}
                   method="POST"
                   action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
                   class="d-inline-flex gap-2"
+                  onsubmit="return injectAdminPassword(this);"
                 >
-                  <input
-                    type="password"
-                    name="admin_password"
-                    class="form-control form-control-sm"
-                    placeholder="Admin Pass"
-                    style="width: 120px"
-                    required
-                  />
                   <button class="btn btn-success btn-sm">Restore</button>
                 </form>
                 {% endif %}
@@ -432,4 +381,119 @@ block content %}
     </div>
   </div>
 </div>
+
+<div
+  class="modal fade"
+  id="adminPasswordModal"
+  tabindex="-1"
+  aria-hidden="true"
+  data-bs-backdrop="static"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-lg border-0">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold">Admin Verification</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body pt-2">
+        <p class="text-muted small mb-3">
+          Please enter your admin password to authorize this action.
+        </p>
+        <div class="form-group">
+          <input
+            type="password"
+            id="adminPasswordInput"
+            class="form-control form-control-lg bg-light"
+            placeholder="••••••••"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 pt-0">
+        <button
+          type="button"
+          class="btn btn-light rounded-pill px-4 fw-bold"
+          data-bs-dismiss="modal"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary rounded-pill px-4 fw-bold"
+          onclick="submitAdminPassword()"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let pendingForm = null;
+
+  // 1. Intercepts the form submission
+  function injectAdminPassword(form) {
+    // If we already added the password (re-submission), let it go through
+    if (form.querySelector('input[name="admin_password"]')) {
+      return true;
+    }
+
+    // Save the form we want to submit
+    pendingForm = form;
+
+    // Open the Modal
+    const modal = new bootstrap.Modal(
+      document.getElementById("adminPasswordModal"),
+    );
+    modal.show();
+
+    // Focus the input field automatically
+    const input = document.getElementById("adminPasswordInput");
+    input.value = "";
+    setTimeout(() => input.focus(), 500);
+
+    // Allow 'Enter' key to submit
+    input.onkeydown = function (e) {
+      if (e.key === "Enter") submitAdminPassword();
+    };
+
+    // Stop the original form from submitting (for now)
+    return false;
+  }
+
+  // 2. Handles the Modal Confirmation
+  function submitAdminPassword() {
+    const pwd = document.getElementById("adminPasswordInput").value;
+    const modalEl = document.getElementById("adminPasswordModal");
+    const modal = bootstrap.Modal.getInstance(modalEl);
+
+    if (!pwd) {
+      alert("Password is required.");
+      return;
+    }
+
+    if (pendingForm) {
+      // Create hidden input with the password
+      let input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "admin_password";
+      input.value = pwd;
+
+      // Add to the saved form
+      pendingForm.appendChild(input);
+
+      // Hide Modal
+      modal.hide();
+
+      // Submit the form programmatically (bypasses onsubmit)
+      pendingForm.submit();
+    }
+  }
+</script>
 {% endblock %}

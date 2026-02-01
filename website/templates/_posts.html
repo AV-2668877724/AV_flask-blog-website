@@ -141,7 +141,7 @@
           data-bs-target="#comments-{{ post.id }}"
         >
           <i class="far fa-comment fa-lg"></i>
-          <span class="fw-bold">{{ post.comments|length }}</span>
+          <span class="fw-bold">{{ post.active_comments_count }}</span>
         </button>
       </div>
 
@@ -205,7 +205,7 @@
         {% endif %}
 
         <div class="d-flex flex-column gap-3">
-          {% for comment in post.comments %}
+          {% for comment in post.comments %} {% if not comment.is_deleted %}
           <div class="d-flex gap-2">
             <a
               href="{{ url_for('views.profile', username=comment.user.username) }}"
@@ -267,7 +267,7 @@
                 </button>
 
                 {% if user.is_authenticated and (user.id == comment.author or
-                user.id == post.author) %}
+                user.id == post.author or user.is_admin) %}
                 <a
                   href="{{ url_for('views.delete_comment', comment_id=comment.id) }}"
                   class="text-danger text-decoration-none small"
@@ -278,7 +278,7 @@
               </div>
             </div>
           </div>
-          {% endfor %}
+          {% endif %} {% endfor %}
         </div>
       </div>
     </div>

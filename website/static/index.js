@@ -571,8 +571,13 @@ document.addEventListener("click", function (e) {
 });
 
 document.addEventListener("submit", function (e) {
+  // ✅ FIX: If the form submission was prevented (e.g. User clicked Cancel on password prompt)
+  // then DO NOT show the loader.
+  if (e.defaultPrevented) return;
+
   const form = e.target;
   if (form.id === "chatForm") return;
+
   if (form.checkValidity()) {
     showLoader();
   }

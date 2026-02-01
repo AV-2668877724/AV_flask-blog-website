@@ -66,9 +66,12 @@ def compress_image(form_picture, folder, width=None, height=None):
     return picture_fn
 
 def enrich_posts(posts):
-    # This function is now much faster because data is pre-loaded via 'subqueryload'
     for post in posts:
         post.likes_count = len(post.likes)
+        
+        # ✅ FIX: Calculate count of ACTIVE comments only
+        post.active_comments_count = sum(1 for c in post.comments if not c.is_deleted)
+
         post.liked = False
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
