@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app # ✅ Added current_app
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, mail
@@ -9,8 +9,9 @@ import random
 import string
 from flask import session
 import os
-import re # ✅ Added Regex for username validation
-from datetime import datetime # ✅ Added for Local Time login tracking
+import re 
+from datetime import datetime 
+from threading import Thread
 
 auth = Blueprint('auth', __name__)
 
@@ -27,33 +28,39 @@ RESERVED_USERNAMES = {
 }
 
 # ==========================================
-#  HELPER: SEND EMAILS
+#  HELPER: SEND EMAILS (ASYNC)
 # ==========================================
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
 def send_verification_email(user_email):
     token = s.dumps(user_email, salt='email-confirm')
     link = url_for('auth.confirm_email', token=token, _external=True)
     
     sender_email = os.getenv('MAIL_USERNAME')
-    
     msg = Message('Confirm Your Email - AV Postory', 
                   sender=sender_email, 
                   recipients=[user_email])
     
     msg.body = f'Your link is: {link}\n\nThis link expires in 1 hour.'
-    mail.send(msg)
+    
+    # ✅ FIX: current_app is now imported and works
+    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
 def send_reset_email(user_email):
     token = s.dumps(user_email, salt='password-reset')
     link = url_for('auth.reset_token', token=token, _external=True)
     
     sender_email = os.getenv('MAIL_USERNAME')
-    
     msg = Message('Password Reset Request', 
                   sender=sender_email, 
                   recipients=[user_email])
     
     msg.body = f'To reset your password, click the following link: {link}'
-    mail.send(msg)
+    
+    # ✅ FIX: Run in background
+    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
 
 # ==========================================
@@ -85,7 +92,9 @@ def sign_up():
                   recipients=[email])
             
             msg.body = f'Your verification code is: {otp}\n\nDo not share this code.'
-            mail.send(msg)
+            
+            # Async Send
+            Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
             
             flash('OTP sent to your email!', category='success')
             return redirect(url_for('auth.verify_otp'))
@@ -117,11 +126,9 @@ def verify_otp():
             
     return render_template("verify_otp.html", email=session['signup_email'], user=current_user)
 
-
-
-# ✅ UPDATED: Check Username Availability (For Sign Up)
-# =========================================================
-# In auth.py
+# ==========================================
+#  CHECK USERNAME (API)
+# ==========================================
 @auth.route('/check-username-signup', methods=['POST'])
 def check_username_signup():
     data = request.json
@@ -140,12 +147,11 @@ def check_username_signup():
     if user:
         return jsonify({'available': False, 'message': 'Username is already taken.'})
     
-    # ✅ Store verified username in session
     session['verified_username'] = username
     return jsonify({'available': True, 'message': 'Username is available!'})
-    
+
 # ==========================================
-#  STEP 3: CREATE USERNAME & PASSWORD
+#  STEP 3: FINISH SIGNUP
 # ==========================================
 @auth.route('/sign-up/finish', methods=['GET', 'POST'])
 def finish_signup():
@@ -158,20 +164,16 @@ def finish_signup():
         confirm_password = request.form.get('confirm_password')
         email = session.get('signup_email')
         
-        # ✅ NEW CHECK: Ensure username was verified first
+        # Security Check
         verified_username = session.get('verified_username')
         if not verified_username or verified_username != username.lower():
             flash('Please check username availability first.', category='error')
             return render_template('signup_final.html', user=current_user)
         
-        # Validations
         if len(username) < 2:
             flash('Username must be greater than 1 character.', category='error')
-        
-        # ✅ NEW STRICT VALIDATION: No spaces or special chars
         elif not re.match("^[a-zA-Z0-9_.]+$", username):
             flash("Username can only contain letters, numbers, dots (.), and underscores (_). No spaces.", category='error')
-            
         elif password != confirm_password:
             flash('Passwords don\'t match.', category='error')
         elif len(password) < 7:
@@ -180,13 +182,14 @@ def finish_signup():
             new_user = User(email=email, username=username, 
                             password=generate_password_hash(password, method='scrypt'), 
                             is_verified=True,
-                            date_created=datetime.now()) # Use Local Time
+                            date_created=datetime.now())
             
             db.session.add(new_user)
             db.session.commit()
             
             login_user(new_user, remember=True)
             
+            # Clean session
             session.pop('signup_email', None)
             session.pop('signup_otp', None)
             session.pop('email_verified', None)
@@ -197,27 +200,23 @@ def finish_signup():
     return render_template("finish_signup.html", user=current_user)
 
 # ==========================================
-#  ROUTES
+#  LOGIN & LOGOUT
 # ==========================================
-
 @auth.route('/confirm_email/<token>')
 def confirm_email(token):
     try:
         email = s.loads(token, salt='email-confirm', max_age=3600)
         user = User.query.filter_by(email=email).first()
-        
         if user:
             user.is_verified = True
             db.session.commit()
             flash('Email verified! You can now login.', category='success')
         else:
             flash('User not found.', category='error')
-            
     except SignatureExpired:
         flash('The token is expired.', category='error')
     except Exception:
         flash('The token is invalid.', category='error')
-
     return redirect(url_for('auth.login'))
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -227,10 +226,8 @@ def login():
         password = request.form.get('password')
 
         user = User.query.filter_by(email=email).first()
-        
         if user:
             if check_password_hash(user.password, password):
-                
                 if user.is_active is False:
                     return render_template("account_deactivated.html", username=user.username, email=user.email)
 
@@ -238,7 +235,6 @@ def login():
                     flash('Please verify your email first.', category='error')
                     return render_template("login.html", user=current_user)
 
-                # ✅ FIX: Use Local Time for Last Login (matches views.py)
                 user.last_login = datetime.now()
                 db.session.commit()
 
@@ -263,7 +259,6 @@ def reset_request():
             return redirect(url_for('auth.login'))
         else:
             flash('No account found with that email.', category='error')
-    
     return render_template('reset_request.html', user=current_user)
 
 @auth.route('/reset_password/<token>', methods=['GET', 'POST'])

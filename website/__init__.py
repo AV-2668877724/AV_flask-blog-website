@@ -28,6 +28,7 @@ def create_app():
     
     mail.init_app(app)
     Compress(app) # ✅ Initialize Flask-Compress
+    
     # UPLOAD FOLDER
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -59,6 +60,7 @@ def create_app():
         return User.query.get(int(id))
 
     # CONTEXT PROCESSORS
+    # This injects notification data into EVERY template so badges work
     @app.context_processor
     def inject_notifications():
         unread_notifs = 0
@@ -67,14 +69,18 @@ def create_app():
         
         if current_user.is_authenticated:
             try:
+                # Optimized Counts
                 unread_notifs = Notification.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
+                
                 unread_messages = Message.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
+                
+                # Fetch only latest 5 for the dropdown
                 latest_notifs = Notification.query.filter_by(recipient_id=current_user.id)\
                     .order_by(Notification.date_created.desc()).limit(5).all()
             except:
-                pass # Prevent crash if DB isn't ready
+                pass # Fail silently if DB is locked/busy
         
         return dict(
             unread_count=unread_notifs, 
@@ -83,10 +89,6 @@ def create_app():
             now=datetime.utcnow() 
         )
 
-    @app.context_processor
-    def inject_global_user():
-        return dict(current_user=current_user)
-        
     @app.context_processor
     def inject_admin_flag():
         is_admin = False

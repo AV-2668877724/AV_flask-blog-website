@@ -16,7 +16,7 @@ from PIL import Image
 import secrets
 from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
-from sqlalchemy.orm import joinedload, subqueryload
+
 
 views = Blueprint('views', __name__)
 
@@ -66,21 +66,32 @@ def compress_image(form_picture, folder, width=None, height=None):
     return picture_fn
 
 def enrich_posts(posts):
+    """
+    Efficiently calculates counts and 'liked' status for posts/comments
+    using data already fetched by joinedload/subqueryload.
+    """
     for post in posts:
+        # These lists are already populated by subqueryload
         post.likes_count = len(post.likes)
         
-        # ✅ FIX: Calculate count of ACTIVE comments only
-        post.active_comments_count = sum(1 for c in post.comments if not c.is_deleted)
-
+        # Filter deleted comments in Python (faster than separate DB query)
+        active_comments = [c for c in post.comments if not c.is_deleted]
+        post.active_comments_count = len(active_comments)
+        
         post.liked = False
         if current_user.is_authenticated:
+            # Check if current user ID is in the pre-fetched likes list
             post.liked = any(l.author == current_user.id for l in post.likes)
         
-        for comment in post.comments:
+        for comment in active_comments:
             comment.likes_count = len(comment.likes)
             comment.liked = False
             if current_user.is_authenticated:
                 comment.liked = any(l.author == current_user.id for l in comment.likes)
+        
+        # Override the relationship for the template to only show active ones
+        post.comments = active_comments
+        
     return posts
 
 def create_notification(visitor_id, recipient_id, action, post_id=None):
@@ -133,34 +144,31 @@ def detect_platform(url: str) -> str:
 # MAIN ROUTES
 # =================================================
 
-@views.route("/", methods=['GET'])
-@views.route("/home", methods=['GET'])
+@views.route('/home')
+@views.route('/')
+@login_required
 def home():
     page = request.args.get('page', 1, type=int)
-    per_page = 10
     
-    # ✅ OPTIMIZED QUERY: Pre-load User, Likes, and Comments
-    pagination = Post.query.options(
-        joinedload(Post.user),       
-        subqueryload(Post.likes),    
-        subqueryload(Post.comments).joinedload(Comment.user) 
-    ).filter_by(is_deleted=False)\
-    .order_by(Post.date_created.desc())\
-    .paginate(page=page, per_page=per_page, error_out=False)
-        
+    # ✅ OPTIMIZED QUERY
+    pagination = Post.query\
+        .options(
+            joinedload(Post.user),              # Author (Join)
+            subqueryload(Post.likes),           # Likes (Subquery)
+            subqueryload(Post.comments).joinedload(Comment.user) # Comments + Authors
+        )\
+        .order_by(Post.date_created.desc())\
+        .paginate(page=page, per_page=10)
+
+    # Use helper to process logic fast
     posts = enrich_posts(pagination.items)
 
     if request.args.get('ajax'):
-        return render_template("_posts.html", posts=posts, user=current_user)
+        return render_template('_posts.html', posts=posts, user=current_user)
+        
+    # ✅ FIX: Added 'user=current_user' here
+    return render_template("home.html", posts=posts, pagination=pagination, user=current_user)
 
-    return render_template(
-        "home.html", 
-        user=current_user, 
-        posts=posts, 
-        pagination=pagination,
-        is_home=True
-    )
-    
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
 def create_post():
@@ -358,25 +366,24 @@ def mark_notifications_read():
 @login_required
 def profile(username):
     user = User.query.filter_by(username=username).first()
-    
     if not user:
         flash('No user with that username exists.', category='error')
         return redirect(url_for('views.home'))
 
     page = request.args.get('page', 1, type=int)
-    per_page = 5
-
-    # ✅ OPTIMIZED QUERY
+    
+    # ✅ FAST QUERY for Profile Posts
     pagination = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
         subqueryload(Post.comments).joinedload(Comment.user)
     ).filter_by(author=user.id, is_deleted=False)\
     .order_by(Post.date_created.desc())\
-    .paginate(page=page, per_page=per_page, error_out=False)
+    .paginate(page=page, per_page=5, error_out=False)
 
     posts = enrich_posts(pagination.items)
     
+    # Simple count queries are usually fast enough, but can be optimized if needed
     followers_count = Follow.query.filter_by(following_id=user.id).count()
     following_count = Follow.query.filter_by(follower_id=user.id).count()
     total_posts = Post.query.filter_by(author=user.id, is_deleted=False).count()
@@ -391,7 +398,7 @@ def profile(username):
         user=current_user, 
         profile_user=user, 
         posts=posts, 
-        pagination=pagination,
+        pagination=pagination, 
         followers_count=followers_count,
         following_count=following_count,
         total_posts=total_posts,
@@ -809,25 +816,24 @@ def api_search_users():
 def search():
     query = request.args.get('q', '').strip()
     
-    users = User.query.filter(User.username.ilike(f"%{query}%")).all()
-    posts = Post.query.filter(Post.text.ilike(f"%{query}%")).all()
-    posts = enrich_posts(posts)
+    # Simple User Search
+    users = User.query.filter(User.username.ilike(f"%{query}%")).all() if query else []
     
-    suggestions = []
+    # ✅ FAST QUERY: Search Posts + Preload User
+    posts = []
+    if query:
+        posts = Post.query.filter(Post.text.ilike(f"%{query}%"))\
+            .options(
+                joinedload(Post.user),
+                subqueryload(Post.likes),
+                subqueryload(Post.comments).joinedload(Comment.user)
+            ).all()
     
-    if len(users) == 0:
-        suggestions = User.query.order_by(func.random()).limit(3).all()
-    else:
-        suggestions = []
+    if posts:
+        posts = enrich_posts(posts)
 
-    return render_template(
-        "search.html", 
-        user=current_user, 
-        users=users, 
-        posts=posts, 
-        suggestions=suggestions,
-        query=query
-    )
+    return render_template("search.html", user=current_user, users=users, posts=posts, query=query)
+
 
 @views.route('/profile/remove-social', methods=['POST'])
 @login_required
@@ -901,7 +907,7 @@ def like_comment(comment_id):
 
 @views.route("/post/<id>")
 def post_view(id):
-    # ✅ OPTIMIZED: Preload data for single post view
+    # ✅ FAST QUERY: Single Post
     post = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
@@ -921,7 +927,7 @@ def post_view(id):
         username=post.user.username,
         pagination=None 
     )
-
+    
 # =================================================
 # MESSAGING SYSTEM (Inbox & Chat)
 # =================================================
@@ -929,7 +935,7 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    # ✅ OPTIMIZED: Load Sender and Recipient immediately
+    # ✅ FAST QUERY: Load Sender and Recipient immediately
     messages = Message.query.options(
         joinedload(Message.sender), 
         joinedload(Message.recipient)
@@ -938,7 +944,6 @@ def inbox():
     ).order_by(Message.date_created.desc()).all()
     
     conversations = {}
-    
     for msg in messages:
         partner = msg.recipient if msg.sender_id == current_user.id else msg.sender
         if partner.id not in conversations:
@@ -948,8 +953,7 @@ def inbox():
                 'unread': (not msg.is_read and msg.recipient_id == current_user.id)
             }
     
-    chats = list(conversations.values())
-    return render_template("inbox.html", user=current_user, chats=chats)
+    return render_template("inbox.html", user=current_user, chats=list(conversations.values()))
 
 # 1. Chat Page Route
 @views.route('/chat/<username>')
