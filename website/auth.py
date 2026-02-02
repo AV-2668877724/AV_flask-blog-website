@@ -121,35 +121,28 @@ def verify_otp():
 
 # ✅ UPDATED: Check Username Availability (For Sign Up)
 # =========================================================
+# In auth.py
 @auth.route('/check-username-signup', methods=['POST'])
 def check_username_signup():
     data = request.json
-    username = data.get('username', '').strip().lower() # Convert to lowercase for check
+    username = data.get('username', '').strip().lower()
 
-    # 1. Check Empty
-    if not username:
-        return jsonify({'available': False, 'message': 'Username cannot be empty.'})
-
-    # 2. Check Length
-    if len(username) < 3:
+    if not username or len(username) < 3:
         return jsonify({'available': False, 'message': 'Too short (min 3 chars).'})
 
-    # 3. Check Restricted Characters (Regex)
-    # Only allow a-z, 0-9, dot(.), and underscore(_)
     if not re.match("^[a-z0-9_.]+$", username):
          return jsonify({'available': False, 'message': 'Use only letters, numbers, . and _'})
 
-    # 4. 🚫 CHECK RESERVED WORDS (The Fix)
     if username in RESERVED_USERNAMES:
-        return jsonify({'available': False, 'message': 'This username is reserved by the system.'})
+        return jsonify({'available': False, 'message': 'This username is reserved.'})
 
-    # 5. Check Database (Is it already taken?)
     user = User.query.filter_by(username=username).first()
-
     if user:
         return jsonify({'available': False, 'message': 'Username is already taken.'})
-    else:
-        return jsonify({'available': True, 'message': 'Username is available!'})
+    
+    # ✅ Store verified username in session
+    session['verified_username'] = username
+    return jsonify({'available': True, 'message': 'Username is available!'})
     
 # ==========================================
 #  STEP 3: CREATE USERNAME & PASSWORD
@@ -164,6 +157,12 @@ def finish_signup():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         email = session.get('signup_email')
+        
+        # ✅ NEW CHECK: Ensure username was verified first
+        verified_username = session.get('verified_username')
+        if not verified_username or verified_username != username.lower():
+            flash('Please check username availability first.', category='error')
+            return render_template('signup_final.html', user=current_user)
         
         # Validations
         if len(username) < 2:

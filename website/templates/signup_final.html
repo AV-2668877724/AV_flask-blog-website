@@ -1,9 +1,7 @@
-{% extends "base.html" %} {% block title %}Complete Registration{% endblock %}
+{% extends "base.html" %} 
+{% block title %}Complete Registration{% endblock %}
 {% block content %}
-<div
-  class="row justify-content-center align-items-center"
-  style="min-height: 70vh"
->
+<div class="row justify-content-center align-items-center" style="min-height: 70vh">
   <div class="col-md-5">
     <div class="card shadow border-0 auth-card">
       <div class="card-body p-4 p-md-5">
@@ -13,6 +11,7 @@
         </div>
 
         <form method="POST">
+          <!-- USERNAME WITH CHECK BUTTON -->
           <div class="mb-3">
             <label class="form-label fw-bold small text-muted">Username</label>
             <div class="input-group">
@@ -32,21 +31,20 @@
                 onkeyup="resetSignupCheck()"
               />
               <button
-                class="btn btn-outline-secondary"
+                class="btn btn-danger fw-bold"
                 type="button"
                 id="checkBtn"
                 onclick="checkSignupUsername()"
               >
-                Check
+                Check Availability
               </button>
             </div>
-
-            <div
-              id="signupUsernameStatus"
-              class="form-text small mt-1 fw-bold"
-            ></div>
+            <div id="signupUsernameStatus" class="form-text small mt-2 fw-bold">
+              <span class="text-muted">👉 Click "Check Availability" button first</span>
+            </div>
           </div>
 
+          <!-- PASSWORD FIELD -->
           <div class="mb-3">
             <label class="form-label fw-bold small text-muted">Password</label>
             <div class="input-group">
@@ -59,15 +57,15 @@
                 name="password"
                 placeholder="Create a password"
                 required
-                minlength="6"
+                minlength="7"
               />
             </div>
+            <div class="form-text">Must be at least 7 characters.</div>
           </div>
 
+          <!-- CONFIRM PASSWORD FIELD -->
           <div class="mb-4">
-            <label class="form-label fw-bold small text-muted"
-              >Confirm Password</label
-            >
+            <label class="form-label fw-bold small text-muted">Confirm Password</label>
             <div class="input-group">
               <span class="input-group-text bg-light border-end-0">
                 <i class="fas fa-lock text-muted"></i>
@@ -75,14 +73,15 @@
               <input
                 type="password"
                 class="form-control border-start-0 ps-0 bg-light"
-                name="password_confirm"
+                name="confirm_password"
                 placeholder="Repeat password"
                 required
-                minlength="6"
+                minlength="7"
               />
             </div>
           </div>
 
+          <!-- SUBMIT BUTTON -->
           <div class="d-grid gap-2">
             <button
               type="submit"

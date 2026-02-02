@@ -390,10 +390,70 @@ function resetAdminFilter(sectionId) {
 }
 
 /* =========================================
-   USERNAME AVAILABILITY (PROFILE EDIT & SIGNUP)
+   USERNAME AVAILABILITY (SIGNUP ONLY)
    ========================================= */
 
-// 1. Profile Edit Logic
+function checkSignupUsername() {
+  const usernameInput = document.getElementById("signupUsername");
+  const statusDiv = document.getElementById("signupUsernameStatus");
+  const submitBtn = document.getElementById("signupSubmitBtn"); // The Create Account button
+  const checkBtn = document.getElementById("checkBtn");
+
+  const username = usernameInput.value.trim();
+
+  // 1. Basic Validation
+  if (username.length < 3) {
+    statusDiv.innerHTML = '<span class="text-danger">Too short (min 3 chars).</span>';
+    submitBtn.disabled = true;
+    return;
+  }
+
+  // 2. Show Loading State
+  checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  checkBtn.disabled = true;
+
+  // 3. Call the Correct Backend API
+  fetch("/check-username-signup", {  // ✅ Points to auth.py route
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: username }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      checkBtn.innerHTML = "Check";
+      checkBtn.disabled = false;
+
+      if (data.available) {
+        // Success: Unlock the Create Account button
+        statusDiv.innerHTML = `<span class="text-success"><i class="fas fa-check-circle"></i> ${data.message}</span>`;
+        submitBtn.disabled = false; 
+        usernameInput.classList.remove("is-invalid");
+        usernameInput.classList.add("is-valid");
+      } else {
+        // Failure: Keep it locked
+        statusDiv.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> ${data.message}</span>`;
+        submitBtn.disabled = true;
+        usernameInput.classList.add("is-invalid");
+      }
+    })
+    .catch(() => {
+      checkBtn.innerHTML = "Check";
+      checkBtn.disabled = false;
+      statusDiv.innerHTML = '<span class="text-warning">Server error. Try again.</span>';
+    });
+}
+
+function resetSignupCheck() {
+  const submitBtn = document.getElementById("signupSubmitBtn");
+  const statusDiv = document.getElementById("signupUsernameStatus");
+  const usernameInput = document.getElementById("signupUsername");
+
+  // Lock the button immediately if they type anything new
+  if (submitBtn) submitBtn.disabled = true;
+  if (statusDiv) statusDiv.innerHTML = '<span class="text-muted small">Please check availability.</span>';
+  if (usernameInput) usernameInput.classList.remove("is-valid", "is-invalid");
+}
+// 3. Profile Edit Logic
 let allowUsernameSubmit = false;
 function checkUsername() {
   const input = document.getElementById("newUsername");
@@ -428,82 +488,6 @@ function checkUsername() {
         allowUsernameSubmit = false;
       }
     });
-}
-
-// 2. Signup Page Logic (Cleaned & Consolidated)
-function checkSignupUsername() {
-  const usernameInput = document.getElementById("signupUsername");
-  const statusDiv = document.getElementById("signupUsernameStatus");
-  const submitBtn = document.getElementById("signupSubmitBtn");
-  const checkBtn = document.getElementById("checkBtn");
-
-  const username = usernameInput.value.trim();
-
-  // Basic Validation
-  if (username.length < 3) {
-    statusDiv.innerHTML =
-      '<span class="text-danger"><i class="fas fa-times-circle"></i> Too short (min 3 chars).</span>';
-    usernameInput.classList.add("is-invalid");
-    submitBtn.disabled = true;
-    return;
-  }
-
-  // Show Loading State
-  checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-  checkBtn.disabled = true;
-  statusDiv.innerHTML =
-    '<span class="text-muted">Checking availability...</span>';
-
-  // Call Backend API
-  fetch("/check-username", {
-    method: "POST",
-    body: JSON.stringify({ username: username }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      checkBtn.innerHTML = "Check";
-      checkBtn.disabled = false;
-
-      if (data.available) {
-        // SUCCESS
-        statusDiv.innerHTML =
-          '<span class="text-success"><i class="fas fa-check-circle"></i> ' +
-          data.message +
-          "</span>";
-        usernameInput.classList.remove("is-invalid");
-        usernameInput.classList.add("is-valid");
-        submitBtn.disabled = false;
-      } else {
-        // ERROR
-        statusDiv.innerHTML =
-          '<span class="text-danger"><i class="fas fa-times-circle"></i> ' +
-          data.message +
-          "</span>";
-        usernameInput.classList.add("is-invalid");
-        submitBtn.disabled = true;
-      }
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      checkBtn.innerHTML = "Check";
-      checkBtn.disabled = false;
-      statusDiv.innerHTML =
-        '<span class="text-warning">Error checking server. Try again.</span>';
-    });
-}
-
-// Reset Signup Check on Type
-function resetSignupCheck() {
-  const submitBtn = document.getElementById("signupSubmitBtn");
-  const statusDiv = document.getElementById("signupUsernameStatus");
-  const usernameInput = document.getElementById("signupUsername");
-
-  if (submitBtn) submitBtn.disabled = true;
-  if (statusDiv) statusDiv.innerHTML = "";
-  if (usernameInput) usernameInput.classList.remove("is-valid", "is-invalid");
 }
 
 /* =========================================
