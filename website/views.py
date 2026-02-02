@@ -813,7 +813,7 @@ def api_search_users():
 
 @views.route("/search-page")
 @login_required
-def search():
+def search_page():
     query = request.args.get('q', '').strip()
     
     # Simple User Search

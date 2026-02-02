@@ -96,19 +96,26 @@
           <div class="d-flex align-items-center gap-3">
             {% if current_user.is_authenticated %}
 
-            <div class="position-relative d-none d-md-block">
+            <form
+              class="position-relative me-2 d-none d-lg-block"
+              action="{{ url_for('views.search_page') }}"
+              method="GET"
+              role="search"
+            >
               <input
-                type="text"
+                type="search"
+                name="q"
                 id="searchInput"
                 class="form-control form-control-sm search-input"
                 placeholder="Search..."
                 autocomplete="off"
+                required
               />
               <div
                 id="searchResults"
                 class="dropdown-menu position-absolute w-100 mt-1 shadow-sm"
               ></div>
-            </div>
+            </form>
 
             <button id="darkToggle" class="btn btn-icon" title="Toggle theme">
               <i class="far fa-moon"></i>
@@ -300,25 +307,88 @@
 
     {% if current_user.is_authenticated %}
     <nav class="mobile-nav d-md-none">
-      <a href="{{ url_for('views.home') }}" class="mobile-nav-item"
-        ><i class="bi bi-house-door-fill"></i
-      ></a>
-      <a href="{{ url_for('views.search') }}" class="mobile-nav-item"
-        ><i class="bi bi-search"></i
-      ></a>
-      <a href="{{ url_for('views.create_post') }}" class="mobile-nav-add"
-        ><i class="bi bi-plus-lg"></i
-      ></a>
-      <a href="{{ url_for('views.notifications') }}" class="mobile-nav-item"
-        ><i class="bi bi-bell-fill"></i
-      ></a>
+      <a href="{{ url_for('views.home') }}" class="mobile-nav-item">
+        <i class="bi bi-house-door-fill"></i>
+      </a>
+
+      <a
+        href="#"
+        class="mobile-nav-item"
+        data-bs-toggle="modal"
+        data-bs-target="#mobileSearchModal"
+      >
+        <i class="bi bi-search"></i>
+      </a>
+
+      <a href="{{ url_for('views.create_post') }}" class="mobile-nav-add">
+        <i class="bi bi-plus-lg"></i>
+      </a>
+
+      <a href="{{ url_for('views.notifications') }}" class="mobile-nav-item">
+        <i class="bi bi-bell-fill"></i>
+      </a>
+
       <a
         href="{{ url_for('views.profile', username=current_user.username) }}"
         class="mobile-nav-item"
-        ><i class="bi bi-person-circle"></i
-      ></a>
+      >
+        {% if current_user.profile_pic %}
+        <img
+          src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
+          class="rounded-circle border border-1 border-white"
+          style="width: 24px; height: 24px; object-fit: cover"
+          alt="Me"
+        />
+        {% else %}
+        <i class="bi bi-person-circle"></i>
+        {% endif %}
+      </a>
     </nav>
     {% endif %}
+
+    <div
+      class="modal fade"
+      id="mobileSearchModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold">Search</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-4 pt-3">
+            <form action="{{ url_for('views.search_page') }}" method="GET">
+              <div class="input-group input-group-lg">
+                <span class="input-group-text bg-light border-end-0">
+                  <i class="bi bi-search text-muted"></i>
+                </span>
+                <input
+                  type="search"
+                  name="q"
+                  id="mobileSearchInput"
+                  class="form-control bg-light border-start-0"
+                  placeholder="Search users or posts..."
+                  required
+                  autocomplete="off"
+                />
+              </div>
+              <div class="d-grid mt-3">
+                <button type="submit" class="btn btn-primary rounded-pill">
+                  Search
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div
       class="toast-container position-fixed bottom-0 end-0 p-3"
@@ -485,7 +555,6 @@
 
     <script>
       // 1. Force Page Reload on "Back" Button
-      // This ensures that if you read a message and go back, the red dot updates.
       window.addEventListener("pageshow", function (event) {
         var historyTraversal =
           event.persisted ||
@@ -497,9 +566,7 @@
       });
 
       // 2. Clear Badges Immediately on Click
-      // Gives instant visual feedback to the user.
       document.addEventListener("DOMContentLoaded", function () {
-        // Clear Message Badge
         const msgBtn = document.getElementById("messageIconBtn");
         if (msgBtn) {
           msgBtn.addEventListener("click", function () {
@@ -508,7 +575,6 @@
           });
         }
 
-        // Clear Notification Dots
         const notifItems = document.querySelectorAll(".dropdown-item");
         notifItems.forEach((item) => {
           item.addEventListener("click", function () {
@@ -516,6 +582,14 @@
             if (dot) dot.style.display = "none";
           });
         });
+
+        // ✅ AUTO-FOCUS Search Input on Mobile
+        const searchModal = document.getElementById("mobileSearchModal");
+        if (searchModal) {
+          searchModal.addEventListener("shown.bs.modal", function () {
+            document.getElementById("mobileSearchInput").focus();
+          });
+        }
       });
     </script>
   </body>

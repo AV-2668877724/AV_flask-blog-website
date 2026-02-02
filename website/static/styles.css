@@ -608,3 +608,23 @@ body.dark-mode .upload-area small {
     color: #94a3b8 !important; /* Slightly distinct grey for upload box */
 }
 
+/* Navbar Profile Image */
+.navbar .rounded-circle {
+    transition: transform 0.2s;
+}
+
+.navbar .rounded-circle:hover {
+    transform: scale(1.1);
+}
+
+/* Fix Input Group on Mobile */
+@media (max-width: 991px) {
+    .navbar form {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        width: 100%;
+    }
+    .navbar .input-group {
+        width: 100%;
+    }
+}
