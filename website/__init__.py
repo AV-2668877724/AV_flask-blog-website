@@ -11,13 +11,16 @@ from flask_compress import Compress
 db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
-socketio = SocketIO() # ✅ Global instance
+socketio = SocketIO() 
 
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # ⚡ SPEED: Cache Static Files (Images/CSS) for 1 Year
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
 
     # EMAIL CONFIGURATION
     app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
@@ -27,7 +30,7 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')    
     
     mail.init_app(app)
-    Compress(app) # ✅ Initialize Flask-Compress
+    Compress(app) # ⚡ SPEED: Gzip Compression
     
     # UPLOAD FOLDER
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
@@ -37,7 +40,7 @@ def create_app():
         makedirs(UPLOAD_FOLDER)
 
     db.init_app(app)
-    socketio.init_app(app)  # ✅ Initialize SocketIO with app
+    socketio.init_app(app)
 
     # BLUEPRINTS
     from .views import views
@@ -60,7 +63,6 @@ def create_app():
         return User.query.get(int(id))
 
     # CONTEXT PROCESSORS
-    # This injects notification data into EVERY template so badges work
     @app.context_processor
     def inject_notifications():
         unread_notifs = 0
@@ -69,18 +71,16 @@ def create_app():
         
         if current_user.is_authenticated:
             try:
-                # Optimized Counts
                 unread_notifs = Notification.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
                 
                 unread_messages = Message.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
                 
-                # Fetch only latest 5 for the dropdown
                 latest_notifs = Notification.query.filter_by(recipient_id=current_user.id)\
                     .order_by(Notification.date_created.desc()).limit(5).all()
             except:
-                pass # Fail silently if DB is locked/busy
+                pass 
         
         return dict(
             unread_count=unread_notifs, 
@@ -126,7 +126,6 @@ def create_app():
         else:
             return dt.strftime('%Y-%m-%d')
 
-    # ✅ IMPORT EVENTS LAST (To avoid circular imports)
     from . import events
     
     return app

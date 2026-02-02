@@ -2,10 +2,10 @@ from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
-from datetime import datetime  # ✅ Import datetime
+from datetime import datetime
 
 # =====================================================
-# User Model
+# Notification Model
 # =====================================================
 
 class Notification(db.Model):
@@ -14,25 +14,31 @@ class Notification(db.Model):
     
     # Relationships
     visitor_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    
+    # ✅ INDEXED: Makes the notification dropdown load instantly
+    recipient_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=True)
     
     action = db.Column(db.String(50), nullable=False) # 'like', 'comment', 'follow'
-    is_read = db.Column(db.Boolean, default=False)
+    is_read = db.Column(db.Boolean, default=False, index=True)
     
-    # ✅ TIMEZONE FIX: Use lambda to force new timestamp calculation on insert
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    # ✅ INDEXED: Faster sorting
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
 
     visitor = db.relationship('User', foreign_keys=[visitor_id], lazy=True)
     recipient = db.relationship('User', foreign_keys=[recipient_id], lazy=True)
     post = db.relationship('Post', lazy=True)
-    
+
+# =====================================================
+# User Model
+# =====================================================
+
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     
-    # Auth Details
-    username = db.Column(db.String(150), unique=True, index=True    )
+    # Auth Details (Indexed for fast login)
+    username = db.Column(db.String(150), unique=True, index=True)
     email = db.Column(db.String(150), unique=True, index=True)
     password = db.Column(db.String(150), nullable=False)
     
@@ -48,7 +54,6 @@ class User(db.Model, UserMixin):
     is_verified = db.Column(db.Boolean, default=False)
     deactivation_reason = db.Column(db.String(500), nullable=True)
     
-    # ✅ TIMEZONE FIX
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
     last_login = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
     
@@ -56,12 +61,11 @@ class User(db.Model, UserMixin):
     is_online = db.Column(db.Boolean, default=False)
     last_seen = db.Column(db.DateTime(timezone=True), default=func.now())
     
-    # Relationships (Cascade ensures data cleanup)
+    # Relationships
     posts = db.relationship('Post', backref='user', passive_deletes=True)
     comments = db.relationship('Comment', backref='user', passive_deletes=True)
     likes = db.relationship('Like', backref='user', passive_deletes=True)
     
-
 # =====================================================
 # Post Model
 # =====================================================
@@ -72,39 +76,40 @@ class Post(db.Model):
     text = db.Column(db.Text, nullable=False)
     cover_image = db.Column(db.String(150), nullable=True)
     
-    author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     
     # Flags
     is_edited = db.Column(db.Boolean, default=False)
-    is_deleted = db.Column(db.Boolean, default=False) # Soft Delete Flag
+    is_deleted = db.Column(db.Boolean, default=False)
     
-    # ✅ TIMEZONE FIX
+    # ✅ INDEXED: Critical for the Home Feed to sort fast
     date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
-    # Relationships with Cascades
-    # cascade="all, delete-orphan" ensures comments/likes are deleted if the post is Hard Deleted
+    
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     likes = db.relationship('Like', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     
     def likes_count(self):
         return len(self.likes)
 
-
 class Message(db.Model):
+    __tablename__ = 'message'
     id = db.Column(db.Integer, primary_key=True)
+    
+    # ✅ INDEXED: Critical for Chat loading speed
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
+    
     text = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     
-    # ✅ TIMEZONE FIX
+    # ✅ INDEXED: Sorting chat history
     date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
+    
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
 
-    # ✅ NEW FIELDS: Manage visibility for "Delete for Me"
     visible_to_sender = db.Column(db.Boolean, default=True)
     visible_to_recipient = db.Column(db.Boolean, default=True)
-    
     
 class Comment(db.Model):
     __tablename__ = 'comment'
@@ -112,40 +117,30 @@ class Comment(db.Model):
     text = db.Column(db.String(200), nullable=False)
     
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False)
+    # ✅ INDEXED: Loading comments for a specific post
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
     
     is_deleted = db.Column(db.Boolean, default=False)
-    
-    # ✅ TIMEZONE FIX
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
     
     likes = db.relationship('CommentLike', backref='comment', passive_deletes=True)
-
 
 class Like(db.Model):
     __tablename__ = 'like'
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False)
-    
-    # ✅ TIMEZONE FIX
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
-
 
 class Follow(db.Model):
     __tablename__ = 'follow'
     id = db.Column(db.Integer, primary_key=True)
-    follower_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    following_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    
-    # ✅ TIMEZONE FIX
+    follower_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    following_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
-
 
 class CommentLike(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
-    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id', ondelete="CASCADE"), nullable=False)
-    
-    # ✅ TIMEZONE FIX
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id', ondelete="CASCADE"), nullable=False, index=True)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
