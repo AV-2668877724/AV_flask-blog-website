@@ -1,13 +1,11 @@
 /* =========================================
    GLOBAL CONFIG & HELPER FUNCTIONS
    ========================================= */
-const TRUNCATE_HEIGHT = 400; // Your preferred height for "Read More"
+const TRUNCATE_HEIGHT = 400;
 
-// 1. Truncate posts (Global function so Infinite Scroll can use it)
 function truncatePosts() {
   document.querySelectorAll(".post-text").forEach((el) => {
     if (el.dataset.processed) return;
-
     const overlay = el.parentElement.querySelector(".fade-overlay");
     if (el.scrollHeight > TRUNCATE_HEIGHT) {
       if (overlay) overlay.style.display = "block";
@@ -432,7 +430,7 @@ function checkUsername() {
     });
 }
 
-// 2. Signup Page Logic (Consolidated)
+// 2. Signup Page Logic (Cleaned & Consolidated)
 function checkSignupUsername() {
   const usernameInput = document.getElementById("signupUsername");
   const statusDiv = document.getElementById("signupUsernameStatus");
@@ -466,7 +464,7 @@ function checkSignupUsername() {
   })
     .then((response) => response.json())
     .then((data) => {
-      checkBtn.innerHTML = "Check"; // Reset Button text
+      checkBtn.innerHTML = "Check";
       checkBtn.disabled = false;
 
       if (data.available) {
@@ -571,8 +569,6 @@ document.addEventListener("click", function (e) {
 });
 
 document.addEventListener("submit", function (e) {
-  // ✅ FIX: If the form submission was prevented (e.g. User clicked Cancel on password prompt)
-  // then DO NOT show the loader.
   if (e.defaultPrevented) return;
 
   const form = e.target;
@@ -658,7 +654,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const recipientId = chatForm.dataset.recipient;
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    // 1. LISTEN FOR MESSAGES
     socket.on("receive_message", function (msg) {
       if (msg.sender_id == recipientId || msg.sender_id == "{{ user.id }}") {
         appendMessageToChat(msg);
@@ -666,7 +661,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // 2. LISTEN FOR ONLINE/OFFLINE STATUS UPDATES
     socket.on("user_status_change", function (data) {
       if (data.user_id == recipientId) {
         const statusContainer = document.getElementById(
@@ -692,7 +686,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // 3. SEND MESSAGE
     chatForm.addEventListener("submit", function (e) {
       e.preventDefault();
       const messageInput = document.getElementById("messageInput");
@@ -702,9 +695,7 @@ document.addEventListener("DOMContentLoaded", function () {
       messageInput.value = "";
     });
 
-    // 4. APPEND HELPER
     function appendMessageToChat(msg) {
-      // Prevent duplicates
       if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`)) {
         return;
       }
@@ -774,8 +765,6 @@ function deleteMessage(msgId, btnElement) {
 /* =========================================
    PROFILE PAGE (Follow, Avatar, Socials)
    ========================================= */
-
-// 1. Image Preview
 function previewImage(input, imgId) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
@@ -790,7 +779,6 @@ function previewImage(input, imgId) {
   }
 }
 
-// 2. Full Size Viewer
 function viewFullSize(src) {
   const modal = new bootstrap.Modal(document.getElementById("imageViewModal"));
   const img = document.getElementById("fullSizeImage");
@@ -798,7 +786,6 @@ function viewFullSize(src) {
   modal.show();
 }
 
-// 3. Remove Social Link
 function removeSocialLink(url) {
   if (!confirm("Remove this link?")) return;
 
@@ -815,7 +802,6 @@ function removeSocialLink(url) {
     .catch((err) => console.error("Error:", err));
 }
 
-// 4. Toggle Follow
 function toggleFollow(userId, btn) {
   const isFollowing = btn.innerText.trim() === "Following";
   const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
