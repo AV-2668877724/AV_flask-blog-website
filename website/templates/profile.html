@@ -2,23 +2,19 @@
 Profile{% endblock %} {% block content %}
 
 <style>
-  /* 1. Make Links Light Blue in Dark Mode */
+  /* Dark Mode & Theme Styles */
   body.dark-mode a {
     color: #6ea8fe;
   }
   body.dark-mode a:hover {
     color: #9ec5fe;
   }
-
-  /* 2. Dark Mode Cards & Modals */
   body.dark-mode .card,
   body.dark-mode .modal-content {
     background-color: #2b2b2b !important;
     border-color: #444 !important;
     color: white !important;
   }
-
-  /* 3. Text Colors */
   body.dark-mode .text-dark {
     color: #e0e0e0 !important;
   }
@@ -28,8 +24,6 @@ Profile{% endblock %} {% block content %}
   body.dark-mode .bg-light {
     background-color: #1f1f1f !important;
   }
-
-  /* 4. Form Inputs */
   body.dark-mode .form-control {
     background-color: #1f1f1f;
     border-color: #555;
@@ -38,8 +32,6 @@ Profile{% endblock %} {% block content %}
   body.dark-mode .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%);
   }
-
-  /* 5. Specific Social Brand Colors (Overrides for visibility) */
   body.dark-mode .text-primary {
     color: #6ea8fe !important;
   }
@@ -73,7 +65,7 @@ Profile{% endblock %} {% block content %}
         <div class="w-100 h-100 bg-secondary bg-gradient"></div>
         {% endif %} {% if user.id == profile_user.id %}
         <button
-          class="btn btn-sm btn-light position-absolute top-0 end-0 m-3 shadow-sm rounded-circle p-2"
+          class="btn btn-sm btn-light position-absolute top-0 end-0 m-3 shadow-sm rounded-circle p-2 d-none d-md-block"
           data-bs-toggle="modal"
           data-bs-target="#coverPicModal"
           title="Edit Cover Photo"
@@ -107,7 +99,7 @@ Profile{% endblock %} {% block content %}
             </div>
             {% endif %} {% if user.id == profile_user.id %}
             <button
-              class="btn btn-primary rounded-circle position-absolute border border-2 border-white shadow-sm d-flex align-items-center justify-content-center"
+              class="btn btn-primary rounded-circle position-absolute border border-2 border-white shadow-sm align-items-center justify-content-center d-none d-md-flex"
               data-bs-toggle="modal"
               data-bs-target="#profilePicModal"
               style="
@@ -124,8 +116,10 @@ Profile{% endblock %} {% block content %}
           </div>
 
           <div class="flex-grow-1 mt-md-5 pt-md-2 w-100">
-            <div class="d-flex justify-content-between align-items-start">
-              <div>
+            <div
+              class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3"
+            >
+              <div class="w-100">
                 <h3
                   class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark"
                 >
@@ -173,7 +167,6 @@ Profile{% endblock %} {% block content %}
                       <i class="{{ icon }}"></i>
                       <span class="small fw-bold text-dark">{{ label }}</span>
                     </a>
-
                     {% if user.id == profile_user.id %}
                     <div class="vr mx-2"></div>
                     <button
@@ -185,11 +178,10 @@ Profile{% endblock %} {% block content %}
                     </button>
                     {% endif %}
                   </div>
-
                   {% endif %} {% endfor %} {% endif %} {% if user.id ==
                   profile_user.id %}
                   <button
-                    class="btn btn-sm btn-outline-primary rounded-pill border-dashed"
+                    class="btn btn-sm btn-outline-primary rounded-pill border-dashed d-none d-md-inline-block"
                     data-bs-toggle="modal"
                     data-bs-target="#socialLinkModal"
                   >
@@ -220,9 +212,12 @@ Profile{% endblock %} {% block content %}
                 </div>
               </div>
 
-              <div class="d-flex gap-2">
+              <div
+                class="d-flex gap-2 w-100 w-md-auto justify-content-start justify-content-md-end flex-wrap mt-2 mt-md-0"
+              >
                 {% if user.id == profile_user.id %}
-                <div class="dropdown">
+
+                <div class="dropdown d-none d-md-block">
                   <button
                     class="btn btn-outline-secondary btn-sm"
                     data-bs-toggle="dropdown"
@@ -250,30 +245,99 @@ Profile{% endblock %} {% block content %}
                         >Change Username</a
                       >
                     </li>
+                    
                   </ul>
                 </div>
-                {% else %} {% if is_following %}
-                <button
-                  class="btn btn-outline-secondary btn-sm rounded-pill px-3"
-                  onclick="toggleFollow('{{ profile_user.id }}', this)"
-                >
-                  Following
-                </button>
-                {% else %}
-                <button
-                  class="btn btn-primary btn-sm rounded-pill px-3"
-                  onclick="toggleFollow('{{ profile_user.id }}', this)"
-                >
-                  Follow
-                </button>
-                {% endif %}
 
-                <a
-                  href="{{ url_for('views.chat', username=profile_user.username) }}"
-                  class="btn btn-light btn-sm rounded-pill px-3 border"
-                >
-                  <i class="far fa-comment-dots"></i>
-                </a>
+                <div class="dropdown d-md-none w-100">
+                  <button
+                    class="btn btn-outline-dark w-100 rounded-pill"
+                    data-bs-toggle="dropdown"
+                  >
+                    <i class="fas fa-ellipsis-h me-2"></i> Edit Profile
+                  </button>
+                  <ul class="dropdown-menu shadow border-0 w-100 mt-2 p-2">
+                    <li><h6 class="dropdown-header fw-bold">Photos</h6></li>
+                    <li>
+                      <a
+                        class="dropdown-item py-2 rounded"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#profilePicModal"
+                        ><i class="fas fa-user-circle me-2"></i> Profile
+                        Picture</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        class="dropdown-item py-2 rounded"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#coverPicModal"
+                        ><i class="fas fa-image me-2"></i> Cover Photo</a
+                      >
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                    <li><h6 class="dropdown-header fw-bold">Info</h6></li>
+                    <li>
+                      <a
+                        class="dropdown-item py-2 rounded"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editProfileModal"
+                        ><i class="fas fa-pen me-2"></i> Edit Bio</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        class="dropdown-item py-2 rounded"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#changeUsernameModal"
+                        ><i class="fas fa-at me-2"></i> Change Username</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        class="dropdown-item py-2 rounded"
+                        href="#"
+                        data-bs-toggle="modal"
+                        data-bs-target="#socialLinkModal"
+                        ><i class="fas fa-link me-2"></i> Add Social Link</a
+                      >
+                    </li>
+                    
+                  </ul>
+                </div>
+
+                {% else %}
+
+                <div class="d-flex w-100 gap-2">
+                  {% if is_following %}
+                  <button
+                    class="btn btn-outline-secondary btn-sm rounded-pill px-3 flex-grow-1 flex-md-grow-0"
+                    onclick="toggleFollow('{{ profile_user.id }}', this)"
+                  >
+                    Following
+                  </button>
+                  {% else %}
+                  <button
+                    class="btn btn-primary btn-sm rounded-pill px-3 flex-grow-1 flex-md-grow-0"
+                    onclick="toggleFollow('{{ profile_user.id }}', this)"
+                  >
+                    Follow
+                  </button>
+                  {% endif %}
+
+                  <a
+                    href="{{ url_for('views.chat', username=profile_user.username) }}"
+                    class="btn btn-light btn-sm rounded-pill px-3 border flex-shrink-0"
+                  >
+                    <i class="far fa-comment-dots"></i>
+                    <span class="d-none d-sm-inline ms-1">Message</span>
+                  </a>
+                </div>
+
                 {% endif %}
               </div>
             </div>
@@ -282,7 +346,7 @@ Profile{% endblock %} {% block content %}
       </div>
     </div>
 
-    <h5 class="fw-bold mb-3 text-dark">Posts</h5>
+    <h5 class="fw-bold mb-3 text-dark ps-2">Posts</h5>
     {% if posts %} {% include "_posts.html" %}
 
     <nav class="mt-4">
@@ -536,7 +600,6 @@ Profile{% endblock %} {% block content %}
               required
             />
           </div>
-
           {% if user.social_links %}
           <div class="mt-3">
             <label class="form-label text-muted small fw-bold"
@@ -599,7 +662,8 @@ Profile{% endblock %} {% block content %}
                 name="reason"
                 value="Taking a break"
                 checked
-              /><label class="form-check-label"
+              />
+              <label class="form-check-label"
                 >I'm taking a temporary break</label
               >
             </div>
@@ -609,7 +673,8 @@ Profile{% endblock %} {% block content %}
                 type="radio"
                 name="reason"
                 value="Privacy concerns"
-              /><label class="form-check-label">Privacy concerns</label>
+              />
+              <label class="form-check-label">Privacy concerns</label>
             </div>
             <div class="form-check">
               <input
@@ -617,7 +682,8 @@ Profile{% endblock %} {% block content %}
                 type="radio"
                 name="reason"
                 value="Other"
-              /><label class="form-check-label">Other</label>
+              />
+              <label class="form-check-label">Other</label>
             </div>
           </div>
           <textarea
@@ -643,5 +709,83 @@ Profile{% endblock %} {% block content %}
     </div>
   </div>
 </div>
+
+<script>
+  function toggleFollow(userId, btn) {
+    const isFollowing = btn.classList.contains("btn-outline-secondary");
+    const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
+    fetch(url, { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          if (isFollowing) {
+            btn.className =
+              "btn btn-primary btn-sm rounded-pill px-3 flex-grow-1 flex-md-grow-0";
+            btn.textContent = "Follow";
+          } else {
+            btn.className =
+              "btn btn-outline-secondary btn-sm rounded-pill px-3 flex-grow-1 flex-md-grow-0";
+            btn.textContent = "Following";
+          }
+          const countEl = document.getElementById("followersCount");
+          let count = parseInt(countEl.innerText);
+          countEl.innerText = isFollowing ? count - 1 : count + 1;
+        }
+      });
+  }
+
+  function removeSocialLink(url) {
+    fetch("/profile/remove-social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: url }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          location.reload();
+        }
+      });
+  }
+
+  function checkUsername() {
+    const input = document.getElementById("newUsername");
+    const status = document.getElementById("usernameStatus");
+    const btn = document.getElementById("submitUsernameBtn");
+
+    if (input.value.length < 3) {
+      status.innerHTML = '<span class="text-danger">Too short</span>';
+      return;
+    }
+
+    fetch("/check-username", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: input.value }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.available) {
+          status.innerHTML = '<span class="text-success">Available!</span>';
+          btn.disabled = false;
+        } else {
+          status.innerHTML = `<span class="text-danger">${data.message}</span>`;
+          btn.disabled = true;
+        }
+      });
+  }
+
+  function previewImage(input, imgId) {
+    if (input.files && input.files[0]) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        const img = document.getElementById(imgId);
+        img.src = e.target.result;
+        img.classList.remove("d-none");
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+</script>
 
 {% endblock %}

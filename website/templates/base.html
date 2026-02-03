@@ -52,27 +52,212 @@
     </div>
 
     <nav class="navbar navbar-expand-lg sticky-top">
-      <div class="container">
+      <div class="container position-relative">
         <a
-          class="navbar-brand d-flex align-items-center gap-2"
+          class="navbar-brand d-flex align-items-center gap-2 me-auto me-lg-4"
           href="{{ url_for('views.home') }}"
         >
           <img
             src="{{ url_for('static', filename='images/logo.png') }}"
-            alt="AV Postory logo"
+            alt="Logo"
             class="nav-logo"
           />
-          <span class="brand-text">AV Postory</span>
+          <span class="brand-text d-none d-sm-block">AV Postory</span>
         </a>
 
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbar"
+        <div
+          class="d-flex align-items-center gap-2 gap-md-3 ms-auto order-lg-last"
         >
-          <span class="navbar-toggler-icon"></span>
-        </button>
+          {% if current_user.is_authenticated %}
+
+          <form
+            class="position-relative me-2 d-none d-lg-block"
+            action="{{ url_for('views.search_page') }}"
+            method="GET"
+            role="search"
+          >
+            <input
+              type="search"
+              name="q"
+              id="searchInput"
+              class="form-control form-control-sm search-input"
+              placeholder="Search..."
+              autocomplete="off"
+              required
+            />
+            <div
+              id="searchResults"
+              class="dropdown-menu position-absolute w-100 mt-1 shadow-sm"
+            ></div>
+          </form>
+
+          <button id="darkToggle" class="btn btn-icon" title="Toggle theme">
+            <i class="far fa-moon"></i>
+          </button>
+
+          <a
+            href="{{ url_for('views.inbox') }}"
+            class="btn btn-icon position-relative"
+            title="Messages"
+            id="messageIconBtn"
+          >
+            <i class="far fa-paper-plane"></i>
+            {% if unread_messages and unread_messages > 0 %}
+            <span
+              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light"
+              style="font-size: 0.5rem; padding: 0.25em 0.4em"
+            >
+              {{ unread_messages }}
+            </span>
+            {% endif %}
+          </a>
+
+          <div class="dropdown d-none d-lg-block">
+            <button
+              class="btn btn-icon position-relative"
+              type="button"
+              id="notifDropdown"
+              data-bs-toggle="dropdown"
+            >
+              <i class="far fa-bell"></i>
+              {% if unread_count and unread_count > 0 %}
+              <span
+                id="notifBadge"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger badge-dot"
+                >{{ unread_count }}</span
+              >
+              {% endif %}
+            </button>
+            <ul
+              class="dropdown-menu dropdown-menu-end shadow border-0 p-0 notif-dropdown-menu"
+            >
+              <li
+                class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center"
+              >
+                <h6 class="mb-0 fw-bold small text-uppercase text-muted">
+                  Recent Activity
+                </h6>
+                <a
+                  href="{{ url_for('views.notifications') }}"
+                  class="small text-decoration-none"
+                  >View All</a
+                >
+              </li>
+              {% if latest_notifs %} {% for n in latest_notifs %}
+              <li>
+                <a
+                  href="{% if n.post_id %}{{ url_for('views.home', _anchor='post-wrapper-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
+                  class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
+                >
+                  <div class="lh-sm">
+                    <p class="mb-0 small text-dark">
+                      <strong>{{ n.visitor.username }}</strong> {% if n.action
+                      == 'like' %} liked your post. {% elif n.action ==
+                      'comment' %} commented. {% elif n.action == 'follow' %}
+                      followed you. {% endif %}
+                    </p>
+                    <small class="text-muted small-text"
+                      >{{ n.date_created | timeago }}</small
+                    >
+                  </div>
+                  {% if not n.is_read %}<span class="unread-dot"></span>{% endif
+                  %}
+                </a>
+              </li>
+              {% endfor %} {% else %}
+              <li class="text-center p-4">
+                <p class="text-muted small mb-0">No new notifications.</p>
+              </li>
+              {% endif %}
+            </ul>
+          </div>
+
+          <div class="dropdown">
+            <a
+              class="d-flex align-items-center text-decoration-none dropdown-toggle user-dropdown-link"
+              href="#"
+              role="button"
+              data-bs-toggle="dropdown"
+            >
+              {% if current_user.profile_pic %}
+              <img
+                src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
+                class="rounded-circle border border-2 border-white shadow-sm user-avatar-nav"
+              />
+              {% else %}
+              <div class="user-avatar-xs">
+                {{ current_user.username[0]|upper }}
+              </div>
+              {% endif %}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+              <li>
+                <h6 class="dropdown-header">
+                  Signed in as <strong>{{ current_user.username }}</strong>
+                </h6>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="{{ url_for('views.profile', username=current_user.username) }}"
+                  >Profile</a
+                >
+              </li>
+              <li>
+                <a class="dropdown-item" href="{{ url_for('views.inbox') }}"
+                  >Messages</a
+                >
+              </li>
+              {% if current_user.is_admin %}
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="{{ url_for('views.admin_dashboard') }}"
+                  >Dashboard</a
+                >
+              </li>
+              {% endif %}
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a
+                  class="dropdown-item text-danger"
+                  href="#"
+                  data-bs-toggle="modal"
+                  data-bs-target="#deactivateModal"
+                  >Deactivate Account</a
+                >
+              </li>
+              <li>
+                <a
+                  class="dropdown-item"
+                  href="#"
+                  data-bs-toggle="modal"
+                  data-bs-target="#logoutModal"
+                  >Logout</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          {% else %}
+          <div class="d-flex gap-2">
+            <a class="btn btn-link nav-link px-0" href="/login">Log in</a>
+            <a class="btn btn-primary btn-sm rounded-pill px-3" href="/sign-up"
+              >Get Started</a
+            >
+          </div>
+          {% endif %}
+
+          <button
+            class="navbar-toggler ms-2"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbar"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
 
         <div class="collapse navbar-collapse" id="navbar">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
@@ -92,198 +277,10 @@
             </li>
             {% endif %}
           </ul>
-
-          <div class="d-flex align-items-center gap-3">
-            {% if current_user.is_authenticated %}
-
-            <form
-              class="position-relative me-2 d-none d-lg-block"
-              action="{{ url_for('views.search_page') }}"
-              method="GET"
-              role="search"
-            >
-              <input
-                type="search"
-                name="q"
-                id="searchInput"
-                class="form-control form-control-sm search-input"
-                placeholder="Search..."
-                autocomplete="off"
-                required
-              />
-              <div
-                id="searchResults"
-                class="dropdown-menu position-absolute w-100 mt-1 shadow-sm"
-              ></div>
-            </form>
-
-            <button id="darkToggle" class="btn btn-icon" title="Toggle theme">
-              <i class="far fa-moon"></i>
-            </button>
-
-            <a
-              href="{{ url_for('views.inbox') }}"
-              class="btn btn-icon position-relative"
-              title="Messages"
-              id="messageIconBtn"
-            >
-              <i class="far fa-paper-plane"></i>
-              {% if unread_messages and unread_messages > 0 %}
-              <span
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light"
-                style="font-size: 0.5rem; padding: 0.25em 0.4em"
-              >
-                {{ unread_messages }}
-              </span>
-              {% endif %}
-            </a>
-
-            <div class="dropdown me-2">
-              <button
-                class="btn btn-icon position-relative"
-                type="button"
-                id="notifDropdown"
-                data-bs-toggle="dropdown"
-              >
-                <i class="far fa-bell"></i>
-                {% if unread_count and unread_count > 0 %}
-                <span
-                  id="notifBadge"
-                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger badge-dot"
-                  >{{ unread_count }}</span
-                >
-                {% endif %}
-              </button>
-
-              <ul
-                class="dropdown-menu dropdown-menu-end shadow border-0 p-0 notif-dropdown-menu"
-              >
-                <li
-                  class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center"
-                >
-                  <h6 class="mb-0 fw-bold small text-uppercase text-muted">
-                    Recent Activity
-                  </h6>
-                  <a
-                    href="{{ url_for('views.notifications') }}"
-                    class="small text-decoration-none"
-                    >View All</a
-                  >
-                </li>
-                {% if latest_notifs %} {% for n in latest_notifs %}
-                <li>
-                  <a
-                    href="{% if n.post_id %}{{ url_for('views.home', _anchor='post-wrapper-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
-                    class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
-                  >
-                    <div class="lh-sm">
-                      <p class="mb-0 small text-dark">
-                        <strong>{{ n.visitor.username }}</strong>
-                        {% if n.action == 'like' %} liked your post. {% elif
-                        n.action == 'comment' %} commented on your post. {% elif
-                        n.action == 'follow' %} started following you. {% endif
-                        %}
-                      </p>
-                      <small class="text-muted small-text"
-                        >{{ n.date_created | timeago }}</small
-                      >
-                    </div>
-                    {% if not n.is_read %}<span class="unread-dot"></span>{%
-                    endif %}
-                  </a>
-                </li>
-                {% endfor %} {% else %}
-                <li class="text-center p-4">
-                  <p class="text-muted small mb-0">No new notifications.</p>
-                </li>
-                {% endif %}
-              </ul>
-            </div>
-
-            <div class="dropdown">
-              <a
-                class="d-flex align-items-center text-decoration-none dropdown-toggle user-dropdown-link"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-              >
-                {% if current_user.profile_pic %}
-                <img
-                  src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
-                  class="rounded-circle border border-2 border-white shadow-sm user-avatar-nav"
-                />
-                {% else %}
-                <div class="user-avatar-xs">
-                  {{ current_user.username[0]|upper }}
-                </div>
-                {% endif %}
-              </a>
-              <ul
-                class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
-              >
-                <li>
-                  <h6 class="dropdown-header">
-                    Signed in as <strong>{{ current_user.username }}</strong>
-                  </h6>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="{{ url_for('views.profile', username=current_user.username) }}"
-                    >Profile</a
-                  >
-                </li>
-                <li>
-                  <a class="dropdown-item" href="{{ url_for('views.inbox') }}"
-                    >Messages</a
-                  >
-                </li>
-                {% if current_user.is_admin %}
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="{{ url_for('views.admin_dashboard') }}"
-                    >Dashboard</a
-                  >
-                </li>
-                {% endif %}
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <a
-                    class="dropdown-item text-danger"
-                    href="#"
-                    data-bs-toggle="modal"
-                    data-bs-target="#deactivateModal"
-                    >Deactivate Account</a
-                  >
-                </li>
-                <li>
-                  <a
-                    class="dropdown-item"
-                    href="#"
-                    data-bs-toggle="modal"
-                    data-bs-target="#logoutModal"
-                    >Logout</a
-                  >
-                </li>
-              </ul>
-            </div>
-
-            {% else %}
-            <div class="d-flex gap-2">
-              <a class="btn btn-link nav-link px-0" href="/login">Log in</a>
-              <a
-                class="btn btn-primary btn-sm rounded-pill px-3"
-                href="/sign-up"
-                >Get Started</a
-              >
-            </div>
-            {% endif %}
-          </div>
         </div>
       </div>
     </nav>
+
     {% if page_title %}
     <div class="page-header text-center pt-5 pb-3">
       <div class="container">
@@ -307,27 +304,31 @@
 
     {% if current_user.is_authenticated %}
     <nav class="mobile-nav d-md-none">
-      <a href="{{ url_for('views.home') }}" class="mobile-nav-item">
-        <i class="bi bi-house-door-fill"></i>
-      </a>
-
+      <a href="{{ url_for('views.home') }}" class="mobile-nav-item"
+        ><i class="bi bi-house-door-fill"></i
+      ></a>
       <a
         href="#"
         class="mobile-nav-item"
         data-bs-toggle="modal"
         data-bs-target="#mobileSearchModal"
+        ><i class="bi bi-search"></i
+      ></a>
+      <a href="{{ url_for('views.create_post') }}" class="mobile-nav-add"
+        ><i class="bi bi-plus-lg"></i
+      ></a>
+      <a
+        href="{{ url_for('views.notifications') }}"
+        class="mobile-nav-item position-relative"
       >
-        <i class="bi bi-search"></i>
-      </a>
-
-      <a href="{{ url_for('views.create_post') }}" class="mobile-nav-add">
-        <i class="bi bi-plus-lg"></i>
-      </a>
-
-      <a href="{{ url_for('views.notifications') }}" class="mobile-nav-item">
         <i class="bi bi-bell-fill"></i>
+        {% if unread_count and unread_count > 0 %}
+        <span
+          class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+          style="width: 8px; height: 8px"
+        ></span>
+        {% endif %}
       </a>
-
       <a
         href="{{ url_for('views.profile', username=current_user.username) }}"
         class="mobile-nav-item"
@@ -352,7 +353,7 @@
       tabindex="-1"
       aria-hidden="true"
     >
-      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
           <div class="modal-header border-0 pb-0">
             <h5 class="modal-title fw-bold">Search</h5>
@@ -366,15 +367,15 @@
           <div class="modal-body p-4 pt-3">
             <form action="{{ url_for('views.search_page') }}" method="GET">
               <div class="input-group input-group-lg">
-                <span class="input-group-text bg-light border-end-0">
-                  <i class="bi bi-search text-muted"></i>
-                </span>
+                <span class="input-group-text bg-light border-end-0"
+                  ><i class="bi bi-search text-muted"></i
+                ></span>
                 <input
                   type="search"
                   name="q"
                   id="mobileSearchInput"
                   class="form-control bg-light border-start-0"
-                  placeholder="Search users or posts..."
+                  placeholder="Search..."
                   required
                   autocomplete="off"
                 />
@@ -459,13 +460,10 @@
               data-bs-dismiss="modal"
             ></button>
           </div>
-
           <div class="modal-body py-4">
             <p class="text-muted small text-center mb-4">
-              Your feedback helps us improve. Please tell us why you are
-              leaving.
+              Your feedback helps us improve.
             </p>
-
             <form method="POST" action="/deactivate-account">
               <div class="mb-3">
                 <label class="form-label fw-bold small"
@@ -473,36 +471,17 @@
                 >
                 <select name="reason" class="form-select" required>
                   <option value="" selected disabled>Select a reason...</option>
-                  <option value="privacy">I have privacy concerns</option>
-                  <option value="confusing">The website is hard to use</option>
-                  <option value="bugs">
-                    I experienced too many technical issues
-                  </option>
-                  <option value="useless">
-                    I don't find it useful anymore
-                  </option>
-                  <option value="break">I'm just taking a break</option>
+                  <option value="privacy">Privacy concerns</option>
+                  <option value="break">Taking a break</option>
                   <option value="other">Other reason</option>
                 </select>
               </div>
-
-              <div class="mb-4">
-                <label class="form-label fw-bold small"
-                  >Any suggestions for us? (Optional)</label
-                >
-                <textarea
-                  name="details"
-                  class="form-control"
-                  rows="2"
-                  placeholder="What could we do better?"
-                ></textarea>
-              </div>
-
-              <div class="alert alert-danger py-2 px-3 small mb-3">
-                <i class="fas fa-exclamation-triangle me-1"></i>
-                This will hide your profile and posts.
-              </div>
-
+              <textarea
+                name="details"
+                class="form-control mb-3"
+                rows="2"
+                placeholder="Optional details..."
+              ></textarea>
               <div class="d-grid">
                 <button type="submit" class="btn btn-danger btn-lg">
                   Confirm Deactivation
@@ -530,13 +509,11 @@
               type="button"
               class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
               data-bs-dismiss="modal"
-              aria-label="Close"
               style="
                 z-index: 1055;
                 filter: invert(1) grayscale(100%) brightness(200%);
               "
             ></button>
-
             <img
               id="fullSizeImage"
               src=""
@@ -554,7 +531,6 @@
     <script src="{{ url_for('static', filename='index.js') }}?v=3"></script>
 
     <script>
-      // 1. Force Page Reload on "Back" Button
       window.addEventListener("pageshow", function (event) {
         var historyTraversal =
           event.persisted ||
@@ -565,7 +541,6 @@
         }
       });
 
-      // 2. Clear Badges Immediately on Click
       document.addEventListener("DOMContentLoaded", function () {
         const msgBtn = document.getElementById("messageIconBtn");
         if (msgBtn) {
@@ -575,15 +550,7 @@
           });
         }
 
-        const notifItems = document.querySelectorAll(".dropdown-item");
-        notifItems.forEach((item) => {
-          item.addEventListener("click", function () {
-            const dot = this.querySelector(".unread-dot");
-            if (dot) dot.style.display = "none";
-          });
-        });
-
-        // ✅ AUTO-FOCUS Search Input on Mobile
+        // Search Auto-focus
         const searchModal = document.getElementById("mobileSearchModal");
         if (searchModal) {
           searchModal.addEventListener("shown.bs.modal", function () {

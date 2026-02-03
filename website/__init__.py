@@ -21,7 +21,11 @@ def create_app():
 
     # ⚡ SPEED: Cache Static Files (Images/CSS) for 1 Year
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
-
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size': 20,       # Keep 20 connections ready
+        'pool_recycle': 3600,  # Refresh them every hour
+        'pool_pre_ping': True  # Ensure connection is alive before using
+    }
     # EMAIL CONFIGURATION
     app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
     app.config['MAIL_PORT'] = 587

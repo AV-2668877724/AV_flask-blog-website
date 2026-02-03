@@ -33,8 +33,6 @@ def allowed_file(filename):
 
 def compress_image(form_picture, folder, width=None, height=None):
     random_hex = secrets.token_hex(8)
-    
-    # ✅ STEP 1: Force the extension to .webp (Modern, fast format)
     picture_fn = random_hex + ".webp"
     
     app = current_app
@@ -43,27 +41,24 @@ def compress_image(form_picture, folder, width=None, height=None):
     if not os.path.exists(os.path.dirname(upload_path)):
         os.makedirs(os.path.dirname(upload_path))
 
-    i = Image.open(form_picture)
+    try:
+        i = Image.open(form_picture)
+        if i.mode in ('P', 'RGBA'):
+            i = i.convert('RGBA')
 
-    # ✅ STEP 2: Handle Transparency (Important for PNGs)
-    # If the image is Paletted (P) or has Transparency (RGBA), keep it.
-    if i.mode in ('P', 'RGBA'):
-        i = i.convert('RGBA')
-
-    # ✅ STEP 3: Smart Resizing
-    if width and height:
-        i.thumbnail((width, height))
-    elif width:
-        # Calculate height to keep aspect ratio
-        w_percent = (width / float(i.size[0]))
-        h_size = int((float(i.size[1]) * float(w_percent)))
-        i = i.resize((width, h_size), Image.Resampling.LANCZOS)
-    
-    # ✅ STEP 4: Save as WebP with Optimization
-    # Quality 80 is the sweet spot for web (indistinguishable from 100 but half the size)
-    i.save(upload_path, 'WEBP', quality=80, optimize=True)
-
-    return picture_fn
+        if width and height:
+            i.thumbnail((width, height))
+        elif width:
+            w_percent = (width / float(i.size[0]))
+            h_size = int((float(i.size[1]) * float(w_percent)))
+            i = i.resize((width, h_size), Image.Resampling.LANCZOS)
+        
+        # ⚡ SPEED BOOST: Lower quality from 80 -> 60 (Huge size reduction)
+        i.save(upload_path, 'WEBP', quality=60, optimize=True)
+        return picture_fn
+    except Exception as e:
+        print(f"Error compressing image: {e}")
+        return None
 
 def enrich_posts(posts):
     """
