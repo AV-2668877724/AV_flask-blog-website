@@ -33,6 +33,8 @@ AV_Postory/
         │
         ├── sign_up.html        # ⚡ UPDATED: Step 1 (Email & OTP only)
         ├── signup_final.html   # ✅ NEW: Step 3 (Username Check, Password creation)
+        ├── finish_signup.html  # ✅ NEW: Final signup completion page
+        ├── verify_otp.html     # ✅ NEW: OTP verification page
         │
         ├── profile.html     # ⚡ UPDATED: Social links logic fixed (.items), Dark mode fixed
         ├── about.html       # About Us Page
@@ -44,11 +46,16 @@ AV_Postory/
         ├── create_posts.html 
         ├── edit_post.html    
         ├── _posts.html      
+        ├── posts.html               # ✅ NEW: Posts listing page
+        ├── _skeleton_post.html      # ✅ NEW: Post loading skeleton UI
         │
         ├── admin_dashboard.html 
         ├── search.html      
         ├── notifications.html   
-        ├── followers.html       
+        ├── followers.html           # ✅ NEW (added as you requested)
+        │
+        ├── reset_request.html       # ✅ NEW: Password reset request
+        ├── reset_token.html         # ✅ NEW: Password reset form via token
         │
         ├── 404.html         
         └── 500.html
