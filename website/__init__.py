@@ -19,13 +19,18 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # ⚡ SPEED: Cache Static Files (Images/CSS) for 1 Year
+    # ⚡ PERFORMANCE: Cache Static Files (Images/CSS) for 1 Year
+    # This tells the browser: "Don't ask for the logo/css again for 1 year"
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
+    
+    # ⚡ PERFORMANCE: Database Connection Pooling
+    # Prevents "Database Locked" errors and speeds up queries under load
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         'pool_size': 20,       # Keep 20 connections ready
         'pool_recycle': 3600,  # Refresh them every hour
         'pool_pre_ping': True  # Ensure connection is alive before using
     }
+    
     # EMAIL CONFIGURATION
     app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
     app.config['MAIL_PORT'] = 587
@@ -34,7 +39,10 @@ def create_app():
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')    
     
     mail.init_app(app)
-    Compress(app) # ⚡ SPEED: Gzip Compression
+    
+    # ⚡ PERFORMANCE: Enable Gzip Compression
+    # Compresses responses (HTML/JSON) to be ~70% smaller
+    Compress(app) 
     
     # UPLOAD FOLDER
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
@@ -75,6 +83,7 @@ def create_app():
         
         if current_user.is_authenticated:
             try:
+                # Note: These queries are now fast thanks to models.py indexes
                 unread_notifs = Notification.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
                 

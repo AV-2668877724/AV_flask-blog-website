@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import ( 
     Blueprint, render_template, request,
-    flash, redirect, url_for, abort, jsonify, current_app
+    flash, redirect, url_for, abort, jsonify, current_app, make_response
 )
 from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message
@@ -145,8 +145,9 @@ def detect_platform(url: str) -> str:
 def home():
     page = request.args.get('page', 1, type=int)
     
-    # ✅ OPTIMIZED QUERY
+    # ⚡ PERFORMANCE: Filter out deleted posts at DB level to reduce memory usage
     pagination = Post.query\
+        .filter(or_(Post.is_deleted == False, Post.is_deleted == None))\
         .options(
             joinedload(Post.user),              # Author (Join)
             subqueryload(Post.likes),           # Likes (Subquery)
@@ -161,7 +162,6 @@ def home():
     if request.args.get('ajax'):
         return render_template('_posts.html', posts=posts, user=current_user)
         
-    # ✅ FIX: Added 'user=current_user' here
     return render_template("home.html", posts=posts, pagination=pagination, user=current_user)
 
 @views.route('/create-post', methods=['GET', 'POST'])
@@ -229,7 +229,7 @@ def posts(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
     
-    # ✅ OPTIMIZED QUERY
+    # ⚡ PERFORMANCE: Optimized Query
     pagination = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
@@ -338,7 +338,7 @@ def like(post_id):
 @views.route('/notifications')
 @login_required
 def notifications():
-    # ✅ OPTIMIZED: Load the 'visitor' (User who triggered notif) immediately
+    # ⚡ PERFORMANCE: Load the 'visitor' (User who triggered notif) immediately
     notifs = Notification.query.options(joinedload(Notification.visitor))\
         .filter_by(recipient_id=current_user.id)\
         .order_by(Notification.date_created.desc()).limit(50).all()
@@ -367,7 +367,7 @@ def profile(username):
 
     page = request.args.get('page', 1, type=int)
     
-    # ✅ FAST QUERY for Profile Posts
+    # ⚡ PERFORMANCE: Profile Posts Query
     pagination = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
@@ -378,7 +378,7 @@ def profile(username):
 
     posts = enrich_posts(pagination.items)
     
-    # Simple count queries are usually fast enough, but can be optimized if needed
+    # Simple count queries are usually fast enough
     followers_count = Follow.query.filter_by(following_id=user.id).count()
     following_count = Follow.query.filter_by(follower_id=user.id).count()
     total_posts = Post.query.filter_by(author=user.id, is_deleted=False).count()
@@ -814,7 +814,7 @@ def search_page():
     # Simple User Search
     users = User.query.filter(User.username.ilike(f"%{query}%")).all() if query else []
     
-    # ✅ FAST QUERY: Search Posts + Preload User
+    # ⚡ PERFORMANCE: Search Posts + Preload User
     posts = []
     if query:
         posts = Post.query.filter(Post.text.ilike(f"%{query}%"))\
@@ -902,7 +902,7 @@ def like_comment(comment_id):
 
 @views.route("/post/<id>")
 def post_view(id):
-    # ✅ FAST QUERY: Single Post
+    # ⚡ PERFORMANCE: Single Post Query
     post = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
@@ -930,7 +930,7 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    # ✅ FAST QUERY: Load Sender and Recipient immediately
+    # ⚡ PERFORMANCE: Load Sender and Recipient immediately
     messages = Message.query.options(
         joinedload(Message.sender), 
         joinedload(Message.recipient)
@@ -1071,4 +1071,7 @@ def internal_server_error(e):
 
 @views.route('/about')
 def about():
-    return render_template("about.html", user=current_user)
+    # ⚡ PERFORMANCE: Cache Static Page (1 Hour)
+    resp = make_response(render_template("about.html", user=current_user))
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp

@@ -10,6 +10,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap"
       rel="stylesheet"
@@ -35,8 +38,25 @@
     />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='styles.css') }}?v=2"
+      href="{{ url_for('static', filename='styles.css') }}?v=3"
     />
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"
+      defer
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+      defer
+    ></script>
+    <script
+      src="{{ url_for('static', filename='index.js') }}?v=3"
+      defer
+    ></script>
   </head>
 
   <body>
@@ -51,7 +71,7 @@
       </div>
     </div>
 
-    <nav class="navbar navbar-expand-lg sticky-top">
+    <nav class="navbar navbar-expand-lg sticky-top bg-white border-bottom">
       <div class="container position-relative">
         <a
           class="navbar-brand d-flex align-items-center gap-2 me-auto me-lg-4"
@@ -62,7 +82,7 @@
             alt="Logo"
             class="nav-logo"
           />
-          <span class="brand-text d-none d-sm-block">AV Postory</span>
+          <span class="brand-text d-none d-sm-block fw-bold">AV Postory</span>
         </a>
 
         <div
@@ -75,19 +95,20 @@
             action="{{ url_for('views.search_page') }}"
             method="GET"
             role="search"
+            autocomplete="off"
           >
             <input
               type="search"
               name="q"
               id="searchInput"
-              class="form-control form-control-sm search-input"
+              class="form-control form-control-sm search-input rounded-pill bg-light border-0"
               placeholder="Search..."
               autocomplete="off"
               required
             />
             <div
               id="searchResults"
-              class="dropdown-menu position-absolute w-100 mt-1 shadow-sm"
+              class="dropdown-menu position-absolute w-100 mt-1 shadow-lg border-0"
             ></div>
           </form>
 
@@ -132,7 +153,7 @@
               class="dropdown-menu dropdown-menu-end shadow border-0 p-0 notif-dropdown-menu"
             >
               <li
-                class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center"
+                class="p-3 border-bottom d-flex justify-content-between align-items-center"
               >
                 <h6 class="mb-0 fw-bold small text-uppercase text-muted">
                   Recent Activity
@@ -143,32 +164,34 @@
                   >View All</a
                 >
               </li>
-              {% if latest_notifs %} {% for n in latest_notifs %}
-              <li>
-                <a
-                  href="{% if n.post_id %}{{ url_for('views.home', _anchor='post-wrapper-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
-                  class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
-                >
-                  <div class="lh-sm">
-                    <p class="mb-0 small text-dark">
-                      <strong>{{ n.visitor.username }}</strong> {% if n.action
-                      == 'like' %} liked your post. {% elif n.action ==
-                      'comment' %} commented. {% elif n.action == 'follow' %}
-                      followed you. {% endif %}
-                    </p>
-                    <small class="text-muted small-text"
-                      >{{ n.date_created | timeago }}</small
-                    >
-                  </div>
-                  {% if not n.is_read %}<span class="unread-dot"></span>{% endif
-                  %}
-                </a>
-              </li>
-              {% endfor %} {% else %}
-              <li class="text-center p-4">
-                <p class="text-muted small mb-0">No new notifications.</p>
-              </li>
-              {% endif %}
+              <div style="max-height: 300px; overflow-y: auto">
+                {% if latest_notifs %} {% for n in latest_notifs %}
+                <li>
+                  <a
+                    href="{% if n.post_id %}{{ url_for('views.home', _anchor='post-wrapper-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
+                    class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
+                  >
+                    <div class="lh-sm">
+                      <p class="mb-0 small text-dark">
+                        <strong>{{ n.visitor.username }}</strong> {% if n.action
+                        == 'like' %} liked your post. {% elif n.action ==
+                        'comment' %} commented. {% elif n.action == 'follow' %}
+                        followed you. {% endif %}
+                      </p>
+                      <small class="text-muted small-text"
+                        >{{ n.date_created | timeago }}</small
+                      >
+                    </div>
+                    {% if not n.is_read %}<span class="unread-dot"></span>{%
+                    endif %}
+                  </a>
+                </li>
+                {% endfor %} {% else %}
+                <li class="text-center p-4">
+                  <p class="text-muted small mb-0">No new notifications.</p>
+                </li>
+                {% endif %}
+              </div>
             </ul>
           </div>
 
@@ -209,7 +232,7 @@
                   >Messages</a
                 >
               </li>
-              {% if current_user.is_admin %}
+              {% if is_admin %}
               <li>
                 <a
                   class="dropdown-item"
@@ -500,14 +523,14 @@
       tabindex="-1"
       aria-hidden="true"
     >
-      <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content bg-transparent border-0 pointer-event-none">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0 shadow-none">
           <div
             class="modal-body p-0 text-center position-relative d-flex justify-content-center align-items-center"
           >
             <button
               type="button"
-              class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+              class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3"
               data-bs-dismiss="modal"
               style="
                 z-index: 1055;
@@ -517,18 +540,13 @@
             <img
               id="fullSizeImage"
               src=""
-              class="img-fluid rounded shadow-lg"
+              class="img-fluid rounded-3 shadow-lg"
               style="max-height: 90vh; max-width: 95vw; object-fit: contain"
             />
           </div>
         </div>
       </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <script src="{{ url_for('static', filename='index.js') }}?v=3"></script>
 
     <script>
       window.addEventListener("pageshow", function (event) {

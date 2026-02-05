@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
 from datetime import datetime
+from sqlalchemy import Index  # ✅ NEW: Imported Index for performance
 
 # =====================================================
 # Notification Model
@@ -15,19 +16,26 @@ class Notification(db.Model):
     # Relationships
     visitor_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     
-    # ✅ INDEXED: Makes the notification dropdown load instantly
+    # Single Index (Keep this for general lookups)
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=True)
     
     action = db.Column(db.String(50), nullable=False) # 'like', 'comment', 'follow'
     is_read = db.Column(db.Boolean, default=False, index=True)
     
-    # ✅ INDEXED: Faster sorting
+    # Single Index (Faster sorting)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
 
     visitor = db.relationship('User', foreign_keys=[visitor_id], lazy=True)
     recipient = db.relationship('User', foreign_keys=[recipient_id], lazy=True)
     post = db.relationship('Post', lazy=True)
+
+    # ⚡ PERFORMANCE: Composite Index
+    # This allows the DB to instantly count unread notifications for a specific user
+    # without scanning the whole table.
+    __table_args__ = (
+        Index('idx_notif_recipient_read', 'recipient_id', 'is_read'),
+    )
 
 # =====================================================
 # User Model
@@ -82,7 +90,7 @@ class Post(db.Model):
     is_edited = db.Column(db.Boolean, default=False)
     is_deleted = db.Column(db.Boolean, default=False)
     
-    # ✅ INDEXED: Critical for the Home Feed to sort fast
+    # Index for the Home Feed sorting
     date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
     
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
@@ -95,14 +103,12 @@ class Message(db.Model):
     __tablename__ = 'message'
     id = db.Column(db.Integer, primary_key=True)
     
-    # ✅ INDEXED: Critical for Chat loading speed
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     
     text = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     
-    # ✅ INDEXED: Sorting chat history
     date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
     
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
@@ -110,6 +116,12 @@ class Message(db.Model):
 
     visible_to_sender = db.Column(db.Boolean, default=True)
     visible_to_recipient = db.Column(db.Boolean, default=True)
+
+    # ⚡ PERFORMANCE: Composite Index
+    # Instant lookup for "Unread Messages for User X"
+    __table_args__ = (
+        Index('idx_msg_recipient_read', 'recipient_id', 'is_read'),
+    )
     
 class Comment(db.Model):
     __tablename__ = 'comment'
@@ -117,7 +129,6 @@ class Comment(db.Model):
     text = db.Column(db.String(200), nullable=False)
     
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
-    # ✅ INDEXED: Loading comments for a specific post
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
     
     is_deleted = db.Column(db.Boolean, default=False)

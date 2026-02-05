@@ -16,6 +16,19 @@ function truncatePosts() {
   });
 }
 
+/**
+ * ⚡ PERFORMANCE: Debounce Function
+ * Prevents functions from firing too often (e.g., on every keystroke).
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    const context = this;
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(context, args), wait);
+  };
+}
+
 /* =========================================
    MAIN DOM LOAD LOGIC
    ========================================= */
@@ -96,47 +109,51 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchResults = document.getElementById("searchResults");
 
   if (searchInput && searchResults) {
-    searchInput.addEventListener("input", async function () {
-      const query = this.value.trim();
+    // ⚡ PERFORMANCE: Wrapped in debounce to reduce server calls
+    searchInput.addEventListener(
+      "input",
+      debounce(async function () {
+        const query = this.value.trim();
 
-      if (query.length < 1) {
-        searchResults.classList.remove("show");
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/search-users?q=${query}`);
-        const users = await response.json();
-        searchResults.innerHTML = "";
-
-        if (users.length > 0) {
-          users.forEach((user) => {
-            const item = document.createElement("a");
-            item.className =
-              "dropdown-item d-flex align-items-center gap-2 py-2";
-            item.href = `/profile/${user.username}`;
-
-            let avatarHtml = "";
-            if (user.profile_pic) {
-              avatarHtml = `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">`;
-            } else {
-              const initial = user.username.charAt(0).toUpperCase();
-              avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 30px; height: 30px; font-size: 0.8rem; font-weight: bold;">${initial}</div>`;
-            }
-
-            item.innerHTML = `${avatarHtml} <span>${user.username}</span>`;
-            searchResults.appendChild(item);
-          });
-          searchResults.classList.add("show");
-          searchResults.style.display = "block";
-        } else {
+        if (query.length < 1) {
           searchResults.classList.remove("show");
-          searchResults.style.display = "none";
+          return;
         }
-      } catch (error) {
-        console.error("Search error:", error);
-      }
-    });
+
+        try {
+          const response = await fetch(`/api/search-users?q=${query}`);
+          const users = await response.json();
+          searchResults.innerHTML = "";
+
+          if (users.length > 0) {
+            users.forEach((user) => {
+              const item = document.createElement("a");
+              item.className =
+                "dropdown-item d-flex align-items-center gap-2 py-2";
+              item.href = `/profile/${user.username}`;
+
+              let avatarHtml = "";
+              if (user.profile_pic) {
+                avatarHtml = `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">`;
+              } else {
+                const initial = user.username.charAt(0).toUpperCase();
+                avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 30px; height: 30px; font-size: 0.8rem; font-weight: bold;">${initial}</div>`;
+              }
+
+              item.innerHTML = `${avatarHtml} <span>${user.username}</span>`;
+              searchResults.appendChild(item);
+            });
+            searchResults.classList.add("show");
+            searchResults.style.display = "block";
+          } else {
+            searchResults.classList.remove("show");
+            searchResults.style.display = "none";
+          }
+        } catch (error) {
+          console.error("Search error:", error);
+        }
+      }, 300) // ⚡ Waited 300ms before firing
+    );
 
     searchInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
