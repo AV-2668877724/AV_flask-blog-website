@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app # ✅ Added current_app
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, mail
@@ -12,6 +12,7 @@ import os
 import re 
 from datetime import datetime 
 from threading import Thread
+from sqlalchemy import func  # ✅ NEW: Required for Case-Insensitive Search
 
 auth = Blueprint('auth', __name__)
 
@@ -45,7 +46,6 @@ def send_verification_email(user_email):
     
     msg.body = f'Your link is: {link}\n\nThis link expires in 1 hour.'
     
-    # ✅ FIX: current_app is now imported and works
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
 def send_reset_email(user_email):
@@ -59,7 +59,6 @@ def send_reset_email(user_email):
     
     msg.body = f'To reset your password, click the following link: {link}'
     
-    # ✅ FIX: Run in background
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
 
@@ -93,7 +92,6 @@ def sign_up():
             
             msg.body = f'Your verification code is: {otp}\n\nDo not share this code.'
             
-            # Async Send
             Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
             
             flash('OTP sent to your email!', category='success')
@@ -127,7 +125,7 @@ def verify_otp():
     return render_template("verify_otp.html", email=session['signup_email'], user=current_user)
 
 # ==========================================
-#  CHECK USERNAME (API)
+#  CHECK USERNAME (API) - FIXED ✅
 # ==========================================
 @auth.route('/check-username-signup', methods=['POST'])
 def check_username_signup():
@@ -143,7 +141,9 @@ def check_username_signup():
     if username in RESERVED_USERNAMES:
         return jsonify({'available': False, 'message': 'This username is reserved.'})
 
-    user = User.query.filter_by(username=username).first()
+    # ✅ FIX: Use func.lower() to compare case-insensitively
+    user = User.query.filter(func.lower(User.username) == username).first()
+    
     if user:
         return jsonify({'available': False, 'message': 'Username is already taken.'})
     
@@ -179,6 +179,12 @@ def finish_signup():
         elif len(password) < 7:
             flash('Password must be at least 7 characters.', category='error')
         else:
+            # Double check existence before insert (Safety Net)
+            existing_user = User.query.filter(func.lower(User.username) == username.lower()).first()
+            if existing_user:
+                flash('Username is already taken.', category='error')
+                return render_template('signup_final.html', user=current_user)
+
             new_user = User(email=email, username=username, 
                             password=generate_password_hash(password, method='scrypt'), 
                             is_verified=True,
@@ -197,7 +203,7 @@ def finish_signup():
             flash('Account created successfully!', category='success')
             return redirect(url_for('views.home'))
 
-    return render_template("finish_signup.html", user=current_user)
+    return render_template("signup_final.html", user=current_user)
 
 # ==========================================
 #  LOGIN & LOGOUT

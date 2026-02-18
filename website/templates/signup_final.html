@@ -1,7 +1,9 @@
-{% extends "base.html" %} 
-{% block title %}Complete Registration{% endblock %}
+{% extends "base.html" %} {% block title %}Complete Registration{% endblock %}
 {% block content %}
-<div class="row justify-content-center align-items-center" style="min-height: 70vh">
+<div
+  class="row justify-content-center align-items-center"
+  style="min-height: 70vh"
+>
   <div class="col-md-5">
     <div class="card shadow border-0 auth-card">
       <div class="card-body p-4 p-md-5">
@@ -11,7 +13,6 @@
         </div>
 
         <form method="POST">
-          <!-- USERNAME WITH CHECK BUTTON -->
           <div class="mb-3">
             <label class="form-label fw-bold small text-muted">Username</label>
             <div class="input-group">
@@ -40,11 +41,12 @@
               </button>
             </div>
             <div id="signupUsernameStatus" class="form-text small mt-2 fw-bold">
-              <span class="text-muted">👉 Click "Check Availability" button first</span>
+              <span class="text-muted"
+                >👉 Click "Check Availability" button first</span
+              >
             </div>
           </div>
 
-          <!-- PASSWORD FIELD -->
           <div class="mb-3">
             <label class="form-label fw-bold small text-muted">Password</label>
             <div class="input-group">
@@ -63,9 +65,10 @@
             <div class="form-text">Must be at least 7 characters.</div>
           </div>
 
-          <!-- CONFIRM PASSWORD FIELD -->
           <div class="mb-4">
-            <label class="form-label fw-bold small text-muted">Confirm Password</label>
+            <label class="form-label fw-bold small text-muted"
+              >Confirm Password</label
+            >
             <div class="input-group">
               <span class="input-group-text bg-light border-end-0">
                 <i class="fas fa-lock text-muted"></i>
@@ -81,7 +84,6 @@
             </div>
           </div>
 
-          <!-- SUBMIT BUTTON -->
           <div class="d-grid gap-2">
             <button
               type="submit"
@@ -97,4 +99,63 @@
     </div>
   </div>
 </div>
+
+<script>
+  function checkSignupUsername() {
+    const input = document.getElementById("signupUsername");
+    const status = document.getElementById("signupUsernameStatus");
+    const btn = document.getElementById("signupSubmitBtn");
+    const checkBtn = document.getElementById("checkBtn");
+
+    if (input.value.length < 2) {
+      status.innerHTML = '<span class="text-danger">Too short</span>';
+      return;
+    }
+
+    // Disable button while checking
+    checkBtn.disabled = true;
+    checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
+
+    fetch("/check-username-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: input.value }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        checkBtn.disabled = false;
+        checkBtn.innerText = "Check Availability";
+
+        if (data.available) {
+          status.innerHTML =
+            '<span class="text-success"><i class="fas fa-check-circle"></i> ' +
+            data.message +
+            "</span>";
+          btn.disabled = false; // Enable Submit
+          input.classList.add("is-valid");
+          input.classList.remove("is-invalid");
+        } else {
+          status.innerHTML =
+            '<span class="text-danger"><i class="fas fa-times-circle"></i> ' +
+            data.message +
+            "</span>";
+          btn.disabled = true; // Disable Submit
+          input.classList.add("is-invalid");
+          input.classList.remove("is-valid");
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        checkBtn.disabled = false;
+        checkBtn.innerText = "Check Availability";
+      });
+  }
+
+  function resetSignupCheck() {
+    document.getElementById("signupSubmitBtn").disabled = true;
+    document.getElementById("signupUsername").classList.remove("is-valid");
+    document.getElementById("signupUsernameStatus").innerHTML =
+      '<span class="text-muted">👉 Click "Check Availability" button first</span>';
+  }
+</script>
 {% endblock %}
