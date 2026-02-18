@@ -628,3 +628,44 @@ body.dark-mode .upload-area small {
         width: 100%;
     }
 }
+
+/* =========================================
+   26. DARK MODE: NUCLEAR INPUT GROUP FIX (Navbar & Home)
+   ========================================= */
+/* This forces ALL input groups (Search, etc.) to be dark in dark mode.
+   It overrides the 'bg-light' class if it exists in the HTML.
+*/
+body.dark-mode .input-group-text, 
+body.dark-mode .input-group-text.bg-light,
+body.dark-mode .form-control.bg-light,
+body.dark-mode input[type="search"] {
+    background-color: #1f1f1f !important;
+    border-color: #555 !important;
+    color: white !important;
+}
+
+/* Additional dark mode form control styling to match profile page */
+body.dark-mode .form-control {
+    background-color: #1f1f1f !important;
+    border-color: #555 !important;
+    color: white !important;
+}
+
+body.dark-mode .search-input {
+    background-color: #1f1f1f !important;
+    border-color: #555 !important;
+    color: white !important;
+}
+
+/* =========================================
+   27. DARK MODE: AUTOFILL FIX
+   ========================================= */
+/* Prevents Chrome/Edge from turning inputs White/Yellow on autocomplete */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important;
+    -webkit-text-fill-color: var(--text-main) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
