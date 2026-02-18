@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
           console.error("Search error:", error);
         }
-      }, 300) // ⚡ Waited 300ms before firing
+      }, 300), // ⚡ Waited 300ms before firing
     );
 
     searchInput.addEventListener("keypress", function (e) {
@@ -420,7 +420,8 @@ function checkSignupUsername() {
 
   // 1. Basic Validation
   if (username.length < 3) {
-    statusDiv.innerHTML = '<span class="text-danger">Too short (min 3 chars).</span>';
+    statusDiv.innerHTML =
+      '<span class="text-danger">Too short (min 3 chars).</span>';
     submitBtn.disabled = true;
     return;
   }
@@ -430,7 +431,8 @@ function checkSignupUsername() {
   checkBtn.disabled = true;
 
   // 3. Call the Correct Backend API
-  fetch("/check-username-signup", {  // ✅ Points to auth.py route
+  fetch("/check-username-signup", {
+    // ✅ Points to auth.py route
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: username }),
@@ -443,7 +445,7 @@ function checkSignupUsername() {
       if (data.available) {
         // Success: Unlock the Create Account button
         statusDiv.innerHTML = `<span class="text-success"><i class="fas fa-check-circle"></i> ${data.message}</span>`;
-        submitBtn.disabled = false; 
+        submitBtn.disabled = false;
         usernameInput.classList.remove("is-invalid");
         usernameInput.classList.add("is-valid");
       } else {
@@ -456,7 +458,8 @@ function checkSignupUsername() {
     .catch(() => {
       checkBtn.innerHTML = "Check";
       checkBtn.disabled = false;
-      statusDiv.innerHTML = '<span class="text-warning">Server error. Try again.</span>';
+      statusDiv.innerHTML =
+        '<span class="text-warning">Server error. Try again.</span>';
     });
 }
 
@@ -467,7 +470,9 @@ function resetSignupCheck() {
 
   // Lock the button immediately if they type anything new
   if (submitBtn) submitBtn.disabled = true;
-  if (statusDiv) statusDiv.innerHTML = '<span class="text-muted small">Please check availability.</span>';
+  if (statusDiv)
+    statusDiv.innerHTML =
+      '<span class="text-muted small">Please check availability.</span>';
   if (usernameInput) usernameInput.classList.remove("is-valid", "is-invalid");
 }
 // 3. Profile Edit Logic
@@ -656,7 +661,18 @@ document.addEventListener("DOMContentLoaded", function () {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     socket.on("receive_message", function (msg) {
-      if (msg.sender_id == recipientId || msg.sender_id == "{{ user.id }}") {
+      // 🛡️ DEBUG & ROBUST MATCHING
+      // We convert all IDs to Strings to ensure that 5 matches "5"
+      const msgSender = String(msg.sender_id);
+      const msgRecipient = String(msg.recipient_id);
+      const currentChatPartner = String(recipientId);
+
+      // Condition 1: Message is FROM the person I'm chatting with (I am Receiver)
+      // Condition 2: Message is TO the person I'm chatting with (I am Sender)
+      if (
+        msgSender === currentChatPartner ||
+        msgRecipient === currentChatPartner
+      ) {
         appendMessageToChat(msg);
         chatBox.scrollTop = chatBox.scrollHeight;
       }
@@ -697,11 +713,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function appendMessageToChat(msg) {
-      if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`)) {
+      // Prevent duplicate messages
+      if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`))
         return;
-      }
 
-      const isMe = msg.sender_id != recipientId;
+      const isMe = String(msg.sender_id) !== String(recipientId);
       let html = "";
 
       if (isMe) {
