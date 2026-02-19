@@ -12,7 +12,7 @@ import os
 import re 
 from datetime import datetime 
 from threading import Thread
-from sqlalchemy import func  # ✅ NEW: Required for Case-Insensitive Search
+from sqlalchemy import func
 
 auth = Blueprint('auth', __name__)
 
@@ -35,9 +35,22 @@ def send_async_email(app, msg):
     with app.app_context():
         mail.send(msg)
 
+def get_public_link(endpoint, token):
+    """Generates a link and forces the Ngrok URL if running locally."""
+    link = url_for(endpoint, token=token, _external=True)
+    
+    # YOUR NGROK URL (Update this if it changes!)
+    PUBLIC_DOMAIN = "https://arjun-diffusible-nonfamiliarly.ngrok-free.dev"
+    
+    if "127.0.0.1" in link or "localhost" in link:
+        link = link.replace("http://127.0.0.1:8000", PUBLIC_DOMAIN)
+        link = link.replace("http://localhost:8000", PUBLIC_DOMAIN)
+        
+    return link
+
 def send_verification_email(user_email):
     token = s.dumps(user_email, salt='email-confirm')
-    link = url_for('auth.confirm_email', token=token, _external=True)
+    link = get_public_link('auth.confirm_email', token)
     
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Confirm Your Email - AV Postory', 
@@ -50,7 +63,7 @@ def send_verification_email(user_email):
 
 def send_reset_email(user_email):
     token = s.dumps(user_email, salt='password-reset')
-    link = url_for('auth.reset_token', token=token, _external=True)
+    link = get_public_link('auth.reset_token', token)
     
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Password Reset Request', 
@@ -69,34 +82,25 @@ def send_reset_email(user_email):
 def sign_up():
     if request.method == 'POST':
         email = request.form.get('email')
-        
-        # 1. Check if email already exists
         user = User.query.filter_by(email=email).first()
         if user:
             flash('Email already registered. Please log in.', category='error')
             return redirect(url_for('auth.login'))
         
-        # 2. Generate 6-digit OTP
         otp = ''.join(random.choices(string.digits, k=6))
-        
-        # 3. Store in Session
         session['signup_email'] = email
         session['signup_otp'] = otp
         
-        # 4. Send Email
         try:
             sender_email = os.getenv('MAIL_USERNAME')
             msg = Message('Your Verification Code - AV Postory', 
                   sender=sender_email, 
                   recipients=[email])
-            
             msg.body = f'Your verification code is: {otp}\n\nDo not share this code.'
-            
             Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
             
             flash('OTP sent to your email!', category='success')
             return redirect(url_for('auth.verify_otp'))
-            
         except Exception as e:
             print(e)
             flash('Error sending email. Check your internet connection.', category='error')
@@ -125,7 +129,7 @@ def verify_otp():
     return render_template("verify_otp.html", email=session['signup_email'], user=current_user)
 
 # ==========================================
-#  CHECK USERNAME (API) - FIXED ✅
+#  CHECK USERNAME (API)
 # ==========================================
 @auth.route('/check-username-signup', methods=['POST'])
 def check_username_signup():
@@ -141,7 +145,6 @@ def check_username_signup():
     if username in RESERVED_USERNAMES:
         return jsonify({'available': False, 'message': 'This username is reserved.'})
 
-    # ✅ FIX: Use func.lower() to compare case-insensitively
     user = User.query.filter(func.lower(User.username) == username).first()
     
     if user:
@@ -164,7 +167,6 @@ def finish_signup():
         confirm_password = request.form.get('confirm_password')
         email = session.get('signup_email')
         
-        # Security Check
         verified_username = session.get('verified_username')
         if not verified_username or verified_username != username.lower():
             flash('Please check username availability first.', category='error')
@@ -179,7 +181,6 @@ def finish_signup():
         elif len(password) < 7:
             flash('Password must be at least 7 characters.', category='error')
         else:
-            # Double check existence before insert (Safety Net)
             existing_user = User.query.filter(func.lower(User.username) == username.lower()).first()
             if existing_user:
                 flash('Username is already taken.', category='error')
@@ -195,7 +196,6 @@ def finish_signup():
             
             login_user(new_user, remember=True)
             
-            # Clean session
             session.pop('signup_email', None)
             session.pop('signup_otp', None)
             session.pop('email_verified', None)
@@ -267,8 +267,16 @@ def reset_request():
             flash('No account found with that email.', category='error')
     return render_template('reset_request.html', user=current_user)
 
+# ==========================================
+#  RESET TOKEN (Fixed Auto-Logout)
+# ==========================================
 @auth.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_token(token):
+    # ✅ FIX: Force Logout if user clicks reset link while logged in
+    if current_user.is_authenticated:
+        logout_user()
+        flash('Logged out for security. Please create your new password.', category='info')
+        
     try:
         email = s.loads(token, salt='password-reset', max_age=1800)
     except SignatureExpired:
