@@ -39,7 +39,7 @@
 
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='styles.css') }}?v=5"
+      href="{{ url_for('static', filename='styles.css') }}?v=9"
     />
 
     <script
@@ -73,7 +73,7 @@
       </div>
     </div>
 
-    <nav class="navbar navbar-expand-lg sticky-top bg-white border-bottom">
+    <nav class="navbar navbar-expand-lg sticky-top" id="mainNavbar">
       <div class="container position-relative">
         <a
           class="navbar-brand d-flex align-items-center gap-2 me-auto me-lg-4"
@@ -82,7 +82,7 @@
           <img
             src="{{ url_for('static', filename='images/logo.png') }}"
             alt="Logo"
-            class="nav-logo"
+            class="nav-logo shadow-sm"
           />
           <span class="brand-text d-none d-sm-block fw-bold">AV Postory</span>
         </a>
@@ -99,35 +99,48 @@
             role="search"
             autocomplete="off"
           >
-            <input
-              type="search"
-              name="q"
-              id="searchInput"
-              class="form-control form-control-sm search-input rounded-pill bg-light border-0"
-              placeholder="Search..."
-              autocomplete="off"
-              required
-            />
+            <div
+              class="input-group shadow-sm"
+              style="border-radius: 20px; overflow: hidden"
+            >
+              <span class="input-group-text border-end-0 border-0">
+                <i class="fas fa-search text-muted"></i>
+              </span>
+              <input
+                type="search"
+                name="q"
+                id="searchInput"
+                class="form-control border-start-0 border-0 search-input"
+                placeholder="Search..."
+                autocomplete="off"
+                required
+              />
+            </div>
             <div
               id="searchResults"
               class="dropdown-menu position-absolute w-100 mt-1 shadow-lg border-0"
+              style="border-radius: 12px"
             ></div>
           </form>
 
-          <button id="darkToggle" class="btn btn-icon" title="Toggle theme">
+          <button
+            id="darkToggle"
+            class="btn btn-icon shadow-sm"
+            title="Toggle theme"
+          >
             <i class="far fa-moon"></i>
           </button>
 
           <a
             href="{{ url_for('views.inbox') }}"
-            class="btn btn-icon position-relative"
+            class="btn btn-icon position-relative shadow-sm"
             title="Messages"
             id="messageIconBtn"
           >
             <i class="far fa-paper-plane"></i>
             {% if unread_messages and unread_messages > 0 %}
             <span
-              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light"
+              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light shadow-sm"
               style="font-size: 0.5rem; padding: 0.25em 0.4em"
             >
               {{ unread_messages }}
@@ -137,7 +150,7 @@
 
           <div class="dropdown d-none d-lg-block">
             <button
-              class="btn btn-icon position-relative"
+              class="btn btn-icon position-relative shadow-sm"
               type="button"
               id="notifDropdown"
               data-bs-toggle="dropdown"
@@ -146,13 +159,14 @@
               {% if unread_count and unread_count > 0 %}
               <span
                 id="notifBadge"
-                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger badge-dot"
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger badge-dot shadow-sm"
                 >{{ unread_count }}</span
               >
               {% endif %}
             </button>
             <ul
-              class="dropdown-menu dropdown-menu-end shadow border-0 p-0 notif-dropdown-menu"
+              class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 notif-dropdown-menu"
+              style="border-radius: 16px; overflow: hidden"
             >
               <li
                 class="p-3 border-bottom d-flex justify-content-between align-items-center"
@@ -207,15 +221,18 @@
               {% if current_user.profile_pic %}
               <img
                 src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
-                class="rounded-circle border border-2 border-white shadow-sm user-avatar-nav"
+                class="user-avatar-nav border border-2 border-white shadow-sm"
               />
               {% else %}
-              <div class="user-avatar-xs">
+              <div class="user-avatar-xs shadow-sm">
                 {{ current_user.username[0]|upper }}
               </div>
               {% endif %}
             </a>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
+            <ul
+              class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2"
+              style="border-radius: 16px"
+            >
               <li>
                 <h6 class="dropdown-header">
                   Signed in as <strong>{{ current_user.username }}</strong>
@@ -224,42 +241,45 @@
               <li><hr class="dropdown-divider" /></li>
               <li>
                 <a
-                  class="dropdown-item"
+                  class="dropdown-item py-2"
                   href="{{ url_for('views.profile', username=current_user.username) }}"
-                  >Profile</a
+                  ><i class="bi bi-person me-2"></i> Profile</a
                 >
               </li>
               <li>
-                <a class="dropdown-item" href="{{ url_for('views.inbox') }}"
-                  >Messages</a
+                <a
+                  class="dropdown-item py-2"
+                  href="{{ url_for('views.inbox') }}"
+                  ><i class="bi bi-chat-dots me-2"></i> Messages</a
                 >
               </li>
               {% if is_admin %}
               <li>
                 <a
-                  class="dropdown-item"
+                  class="dropdown-item py-2 text-warning"
                   href="{{ url_for('views.admin_dashboard') }}"
-                  >Dashboard</a
+                  ><i class="bi bi-shield-lock me-2"></i> Dashboard</a
                 >
               </li>
               {% endif %}
               <li><hr class="dropdown-divider" /></li>
               <li>
                 <a
-                  class="dropdown-item text-danger"
+                  class="dropdown-item text-danger py-2"
                   href="#"
                   data-bs-toggle="modal"
                   data-bs-target="#deactivateModal"
-                  >Deactivate Account</a
+                  ><i class="bi bi-exclamation-triangle me-2"></i> Deactivate
+                  Account</a
                 >
               </li>
               <li>
                 <a
-                  class="dropdown-item"
+                  class="dropdown-item text-danger py-2"
                   href="#"
                   data-bs-toggle="modal"
                   data-bs-target="#logoutModal"
-                  >Logout</a
+                  ><i class="bi bi-box-arrow-right me-2"></i> Logout</a
                 >
               </li>
             </ul>
@@ -268,14 +288,16 @@
           {% else %}
           <div class="d-flex gap-2">
             <a class="btn btn-link nav-link px-0" href="/login">Log in</a>
-            <a class="btn btn-primary btn-sm rounded-pill px-3" href="/sign-up"
+            <a
+              class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm"
+              href="/sign-up"
               >Get Started</a
             >
           </div>
           {% endif %}
 
           <button
-            class="navbar-toggler ms-2"
+            class="navbar-toggler ms-2 border-0"
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#navbar"
@@ -285,7 +307,7 @@
         </div>
 
         <div class="collapse navbar-collapse" id="navbar">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 mt-3 mt-lg-0">
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('views.home') }}">Home</a>
             </li>
@@ -307,7 +329,7 @@
     </nav>
 
     {% if page_title %}
-    <div class="page-header text-center pt-5 pb-3">
+    <div class="page-header text-center pt-5 pb-3 fade-in-up">
       <div class="container">
         <h1 class="display-5 fw-bold mb-2 font-heading">{{ page_title }}</h1>
         {% if page_subtitle %}
@@ -317,7 +339,7 @@
     </div>
     {% endif %}
 
-    <div class="container my-4" style="min-height: 80vh">
+    <div class="container my-4 fade-in-up" style="min-height: 80vh">
       {% block content %}{% endblock %}
     </div>
 
@@ -349,7 +371,7 @@
         <i class="bi bi-bell-fill"></i>
         {% if unread_count and unread_count > 0 %}
         <span
-          class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+          class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm"
           style="width: 8px; height: 8px"
         ></span>
         {% endif %}
@@ -361,8 +383,8 @@
         {% if current_user.profile_pic %}
         <img
           src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
-          class="rounded-circle border border-1 border-white"
-          style="width: 24px; height: 24px; object-fit: cover"
+          class="rounded-circle border border-2 border-white shadow-sm"
+          style="width: 28px; height: 28px; object-fit: cover"
           alt="Me"
         />
         {% else %}
@@ -379,7 +401,10 @@
       aria-hidden="true"
     >
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
+        <div
+          class="modal-content border-0 shadow-lg"
+          style="border-radius: 20px"
+        >
           <div class="modal-header border-0 pb-0">
             <h5 class="modal-title fw-bold">Search</h5>
             <button
@@ -391,22 +416,28 @@
           </div>
           <div class="modal-body p-4 pt-3">
             <form action="{{ url_for('views.search_page') }}" method="GET">
-              <div class="input-group input-group-lg">
-                <span class="input-group-text bg-light border-end-0"
+              <div
+                class="input-group input-group-lg shadow-sm"
+                style="border-radius: 16px; overflow: hidden"
+              >
+                <span class="input-group-text bg-light border-0"
                   ><i class="bi bi-search text-muted"></i
                 ></span>
                 <input
                   type="search"
                   name="q"
                   id="mobileSearchInput"
-                  class="form-control bg-light border-start-0"
+                  class="form-control bg-light border-0"
                   placeholder="Search..."
                   required
                   autocomplete="off"
                 />
               </div>
-              <div class="d-grid mt-3">
-                <button type="submit" class="btn btn-primary rounded-pill">
+              <div class="d-grid mt-4">
+                <button
+                  type="submit"
+                  class="btn btn-primary rounded-pill py-2 shadow-sm fw-bold"
+                >
                   Search
                 </button>
               </div>
@@ -424,10 +455,11 @@
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %} {% for category, message in messages %}
       <div
-        class="toast align-items-center border-0 shadow {% if category == 'error' %}text-bg-danger{% else %}text-bg-dark{% endif %}"
+        class="toast align-items-center border-0 shadow-lg {% if category == 'error' %}text-bg-danger{% else %}text-bg-dark{% endif %}"
         role="alert"
         aria-live="assertive"
         aria-atomic="true"
+        style="border-radius: 12px"
       >
         <div class="d-flex">
           <div class="toast-body">{{ message }}</div>
@@ -444,7 +476,10 @@
     {% if current_user.is_authenticated %}
     <div class="modal fade" id="logoutModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div
+          class="modal-content border-0 shadow-lg"
+          style="border-radius: 20px"
+        >
           <div class="modal-header border-0 pb-0">
             <h5 class="modal-title fw-bold">Leaving so soon?</h5>
             <button
@@ -459,14 +494,12 @@
           <div class="modal-footer border-0 justify-content-center gap-2 pb-4">
             <button
               type="button"
-              class="btn btn-primary px-4 rounded-pill"
+              class="btn btn-primary px-4 rounded-pill shadow-sm"
               data-bs-dismiss="modal"
             >
               No, Stay
             </button>
-            <a
-              href="/logout"
-              class="btn btn-outline-secondary px-4 rounded-pill"
+            <a href="/logout" class="btn btn-outline-danger px-4 rounded-pill"
               >Yes, Log Out</a
             >
           </div>
@@ -476,7 +509,10 @@
 
     <div class="modal fade" id="deactivateModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0">
+        <div
+          class="modal-content border-0 shadow-lg"
+          style="border-radius: 20px; overflow: hidden"
+        >
           <div class="modal-header bg-danger-subtle text-danger border-0">
             <h5 class="modal-title fw-bold">We're sorry to see you go</h5>
             <button
@@ -485,7 +521,7 @@
               data-bs-dismiss="modal"
             ></button>
           </div>
-          <div class="modal-body py-4">
+          <div class="modal-body py-4 px-4">
             <p class="text-muted small text-center mb-4">
               Your feedback helps us improve.
             </p>
@@ -494,7 +530,12 @@
                 <label class="form-label fw-bold small"
                   >Reason for leaving</label
                 >
-                <select name="reason" class="form-select" required>
+                <select
+                  name="reason"
+                  class="form-select shadow-sm"
+                  style="border-radius: 12px"
+                  required
+                >
                   <option value="" selected disabled>Select a reason...</option>
                   <option value="privacy">Privacy concerns</option>
                   <option value="break">Taking a break</option>
@@ -503,12 +544,16 @@
               </div>
               <textarea
                 name="details"
-                class="form-control mb-3"
+                class="form-control mb-4 shadow-sm"
                 rows="2"
+                style="border-radius: 12px"
                 placeholder="Optional details..."
               ></textarea>
               <div class="d-grid">
-                <button type="submit" class="btn btn-danger btn-lg">
+                <button
+                  type="submit"
+                  class="btn btn-danger btn-lg rounded-pill shadow-sm"
+                >
                   Confirm Deactivation
                 </button>
               </div>
@@ -542,7 +587,7 @@
             <img
               id="fullSizeImage"
               src=""
-              class="img-fluid rounded-3 shadow-lg"
+              class="img-fluid rounded-4 shadow-lg"
               style="max-height: 90vh; max-width: 95vw; object-fit: contain"
             />
           </div>
@@ -551,6 +596,7 @@
     </div>
 
     <script>
+      // Force reload on back traversal
       window.addEventListener("pageshow", function (event) {
         var historyTraversal =
           event.persisted ||
@@ -562,6 +608,7 @@
       });
 
       document.addEventListener("DOMContentLoaded", function () {
+        // Clear message badge on click
         const msgBtn = document.getElementById("messageIconBtn");
         if (msgBtn) {
           msgBtn.addEventListener("click", function () {
@@ -570,11 +617,23 @@
           });
         }
 
-        // Search Auto-focus
+        // Search Auto-focus in Mobile Modal
         const searchModal = document.getElementById("mobileSearchModal");
         if (searchModal) {
           searchModal.addEventListener("shown.bs.modal", function () {
             document.getElementById("mobileSearchInput").focus();
+          });
+        }
+
+        // ✅ UI UPGRADE: Dynamic Navbar Shrink on Scroll
+        const navbar = document.getElementById("mainNavbar");
+        if (navbar) {
+          window.addEventListener("scroll", () => {
+            if (window.scrollY > 50) {
+              navbar.classList.add("scrolled");
+            } else {
+              navbar.classList.remove("scrolled");
+            }
           });
         }
       });

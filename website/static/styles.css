@@ -1,54 +1,65 @@
 /* =========================================
-   1. VARIABLES & THEME CONFIG
+   1. VARIABLES & THEME CONFIG (UPGRADED)
    ========================================= */
 :root {
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-serif: 'Playfair Display', Georgia, serif;
 
-  /* Light Theme (Default) */
-  --primary: #2563eb;       /* Modern Royal Blue */
+  /* Light Theme (Premium) */
+  --primary: #2563eb;       
   --primary-hover: #1d4ed8;
-  --bg-body: #f8fafc;       /* Very light slate */
+  --primary-glow: rgba(37, 99, 235, 0.4);
+  --bg-body: #f4f7f6;       /* Slightly cooler off-white */
   --bg-card: #ffffff;
   --bg-input: #f1f5f9;
-  --text-main: #1e293b;     /* Dark Slate Blue */
+  --text-main: #0f172a;     /* Deep readable dark */
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   
   /* Modern UI Elements */
   --border-radius: 16px;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --border-radius-lg: 24px;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 16px rgba(0,0,0,0.06);
+  --shadow-hover: 0 12px 24px rgba(37, 99, 235, 0.12); /* Interactive shadow */
   --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.3);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+  
+  /* Transitions */
+  --trans-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --trans-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Theme Variables */
+/* Dark Theme Variables (OLED-style) */
 body.dark-mode {
-  --bg-body: #0f172a;       /* Deep Slate */
-  --bg-card: #1e293b;       /* Lighter Slate */
-  --bg-input: #334155;
-  --text-main: #f1f5f9;     /* Bright White-ish */
+  --bg-body: #09090b;       /* Very deep dark */
+  --bg-card: #18181b;       /* Elevated dark */
+  --bg-input: #27272a;
+  --text-main: #f8fafc;     
   --text-muted: #94a3b8;
-  --border-color: #374151;
+  --border-color: #27272a;
   
-  --primary: #60a5fa;
-  --primary-hover: #93c5fd;
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-glow: rgba(59, 130, 246, 0.3);
   
-  --glass-bg: rgba(30, 41, 59, 0.8);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 16px rgba(0,0,0,0.5);
+  --shadow-hover: 0 12px 24px rgba(0,0,0,0.7);
+  --glass-bg: rgba(24, 24, 27, 0.8);
   --glass-border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* =========================================
-   2. GLOBAL RESET
+   2. GLOBAL RESET & SCROLLBAR
    ========================================= */
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-body);
   color: var(--text-main);
   line-height: 1.6;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--trans-smooth), color var(--trans-smooth);
   padding-bottom: 70px;
   overflow-x: hidden;
 }
@@ -57,128 +68,95 @@ h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
   font-family: var(--font-serif);
   font-weight: 700;
   color: var(--text-main);
+  letter-spacing: -0.02em;
 }
 
 a {
   color: var(--primary);
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--trans-fast);
 }
-a:hover {
-  color: var(--primary-hover);
+a:hover { color: var(--primary-hover); }
+
+/* CUSTOM SCROLLBAR */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-body); }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* =========================================
+   3. ANIMATIONS & PAGE LOAD
+   ========================================= */
+.fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================================
-   3. GLASSMORPHISM NAVBAR
+   4. GLASSMORPHISM NAVBAR
    ========================================= */
 .navbar {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: var(--glass-border);
   box-shadow: var(--shadow-sm);
-  padding: 0.75rem 0;
+  padding: 0.85rem 0;
   position: sticky;
   top: 0;
   z-index: 1020;
+  transition: all var(--trans-smooth);
 }
 
-.nav-logo {
-  height: 32px;
-  width: auto;
-  border-radius: 6px;
+.navbar.scrolled {
+  padding: 0.5rem 0;
+  box-shadow: var(--shadow-md);
 }
 
-.brand-text {
-  font-size: 1.25rem;
-  letter-spacing: -0.5px;
-}
+.nav-logo { height: 34px; width: auto; border-radius: 8px; transition: transform var(--trans-fast); }
+.navbar-brand:hover .nav-logo { transform: scale(1.05) rotate(-3deg); }
 
-.nav-link {
-  color: var(--text-muted) !important;
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-.nav-link:hover, .nav-link.active {
-  color: var(--primary) !important;
-}
+.nav-link { color: var(--text-muted) !important; font-weight: 500; font-size: 0.95rem; transition: all var(--trans-fast); }
+.nav-link:hover, .nav-link.active { color: var(--primary) !important; transform: translateY(-1px); }
 
-/* ✅ FIX: Prevents Profile Pic from Exploding */
 .user-avatar-nav {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 50%;
+  width: 40px; height: 40px; object-fit: cover; border-radius: 50%;
+  transition: box-shadow var(--trans-fast), transform var(--trans-fast);
 }
+.user-avatar-nav:hover { box-shadow: 0 0 0 3px var(--primary-glow); transform: scale(1.05); }
 
-@media (max-width: 768px) {
-    .navbar { display: none !important; }
-}
-
-/* =========================================
-   4. MOBILE BOTTOM NAV
-   ========================================= */
-.mobile-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 65px;
-    background: var(--bg-card);
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 1040;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
-}
-
-.mobile-nav-item {
-    font-size: 1.5rem;
-    color: var(--text-muted);
-    transition: color 0.2s;
-    display: flex;
-    align-items: center;
-}
-
-.mobile-nav-item.active, .mobile-nav-item:hover {
-    color: var(--primary);
-}
-
-.mobile-nav-add {
-    background: var(--primary);
-    color: white;
-    width: 45px;
-    height: 45px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.5rem;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
-    margin-bottom: 5px;
+@media (max-width: 991px) {
+    .navbar form { margin-top: 10px; margin-bottom: 10px; width: 100%; }
+    .navbar .input-group { width: 100%; }
 }
 
 /* =========================================
-   5. PREMIUM CARDS
+   5. INTERACTIVE CARDS
    ========================================= */
 .card {
   background-color: var(--bg-card);
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-sm);
   margin-bottom: 1.5rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--trans-smooth), box-shadow var(--trans-smooth), border-color var(--trans-smooth);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(37, 99, 235, 0.2);
 }
 
 .card-header {
   background-color: transparent;
   border-bottom: 1px solid var(--border-color);
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem;
 }
 
 /* =========================================
@@ -188,78 +166,74 @@ a:hover {
   background-color: var(--bg-input);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 0.75rem;
-  border-radius: var(--border-radius);
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  transition: all var(--trans-fast);
 }
 
 .form-control:focus, .search-input:focus {
   background-color: var(--bg-card);
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px var(--primary-glow);
   color: var(--text-main);
+  transform: translateY(-1px);
 }
 
-.search-input {
-  border-radius: 20px;
-  padding-left: 1rem;
-  width: 240px;
-}
+.search-input { border-radius: 20px; padding-left: 1rem; width: 260px; }
 
 /* =========================================
-   7. BUTTONS
+   7. INTERACTIVE BUTTONS
    ========================================= */
 .btn {
-  font-weight: 500;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 0.6rem 1.25rem;
+  transition: all var(--trans-fast);
+  letter-spacing: 0.3px;
 }
 
 .btn-primary {
-  background-color: var(--primary);
-  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), #4f46e5);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 10px var(--primary-glow);
 }
+
 .btn-primary:hover {
-  background-color: var(--primary-hover);
-  border-color: var(--primary-hover);
+  background: linear-gradient(135deg, var(--primary-hover), #4338ca);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px var(--primary-glow);
+  color: white;
 }
+
+.btn-primary:active { transform: translateY(1px); box-shadow: 0 2px 5px var(--primary-glow); }
 
 .btn-icon {
   color: var(--text-muted);
   border: 1px solid var(--border-color);
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--trans-fast);
+  background-color: var(--bg-card);
 }
 .btn-icon:hover {
   color: var(--primary);
   border-color: var(--primary);
+  background-color: var(--primary-glow);
+  transform: rotate(5deg) scale(1.05);
 }
 
 /* =========================================
    8. MODERN PRELOADER & SKELETON
    ========================================= */
 #preloader {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg-card);
-    z-index: 99999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: var(--bg-card); z-index: 99999;
+    display: flex; justify-content: center; align-items: center;
     transition: opacity 0.5s ease, visibility 0.5s ease;
 }
-
-.loader-logo {
-    width: 80px; height: 80px;
-    animation: breathe 3s ease-in-out infinite;
-}
-
+.loader-logo { width: 80px; height: 80px; animation: breathe 2s ease-in-out infinite; }
 .loader-dots span {
     width: 10px; height: 10px; background-color: var(--primary);
     border-radius: 50%; display: inline-block;
@@ -267,12 +241,11 @@ a:hover {
 }
 .loader-dots span:nth-child(1) { animation-delay: -0.32s; }
 .loader-dots span:nth-child(2) { animation-delay: -0.16s; }
-
 .loader-hidden { opacity: 0; visibility: hidden; }
 
 @keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.85; }
+    0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 10px var(--primary-glow)); }
+    50% { transform: scale(1.05); opacity: 0.85; filter: drop-shadow(0 0 20px var(--primary-glow)); }
 }
 @keyframes wave {
     0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
@@ -291,8 +264,30 @@ body.dark-mode .skeleton {
 @keyframes shimmer { 100% { background-position: -200% 0; } }
 
 /* =========================================
-   9. PAGE UTILITIES
+   9. MOBILE NAVIGATION & UTILITIES
    ========================================= */
+.mobile-nav {
+    position: fixed; bottom: 15px; left: 5%; width: 90%; height: 65px;
+    background: var(--glass-bg); backdrop-filter: blur(15px);
+    border: 1px solid var(--border-color); border-radius: 24px;
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 1040; box-shadow: var(--shadow-md);
+}
+@media (max-width: 768px) {
+    .navbar { display: none !important; }
+    body { padding-bottom: 90px; } 
+}
+.mobile-nav-item { font-size: 1.5rem; color: var(--text-muted); transition: all 0.2s; display: flex; align-items: center; }
+.mobile-nav-item.active, .mobile-nav-item:hover { color: var(--primary); transform: translateY(-3px); }
+.mobile-nav-add {
+    background: linear-gradient(135deg, var(--primary), #4f46e5); color: white;
+    width: 50px; height: 50px; border-radius: 16px;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.5rem; box-shadow: 0 4px 10px var(--primary-glow);
+    margin-top: -20px; border: 3px solid var(--bg-body); transition: transform 0.2s;
+}
+.mobile-nav-add:hover { transform: scale(1.1) rotate(90deg); color: white; }
+
 .user-avatar-xs {
   width: 32px; height: 32px; border-radius: 50%;
   background-color: var(--primary); color: #fff;
@@ -311,32 +306,24 @@ body.dark-mode .skeleton {
 #searchResults .dropdown-item:hover { background-color: var(--bg-input); }
 
 .notif-dropdown-menu { width: 350px; }
-.bg-blue-subtle { background-color: #f0f9ff; }
+.bg-blue-subtle { background-color: rgba(59, 130, 246, 0.1); }
 .unread-dot {
     position: absolute; top: 50%; right: 0; transform: translateY(-50%);
     margin-right: 1rem; width: 6px; height: 6px;
     background-color: var(--primary); border-radius: 50%;
 }
 
-.bio-text { color: #6c757d; }
+.bio-text { color: var(--text-muted); }
 body.dark-mode .bio-text { color: #e0e0e0 !important; }
 
 /* =========================================
    10. POST TEXT CONTRAST FIX
    ========================================= */
-.post-text {
-  font-size: 1.05rem; line-height: 1.7;
-  white-space: pre-wrap; overflow-wrap: break-word;
-}
-.post-text, .post-text * {
-  color: var(--text-main) !important;
-  opacity: 1 !important; background-color: transparent !important;
-}
-.post-text a { color: var(--primary) !important; text-decoration: underline; }
-.post-text blockquote {
-    border-left: 4px solid var(--primary); padding-left: 1rem;
-    color: var(--text-muted) !important;
-}
+.post-text { font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; overflow-wrap: break-word; }
+.post-text, .post-text * { color: var(--text-main) !important; opacity: 1 !important; background-color: transparent !important; }
+.post-text a { color: var(--primary) !important; text-decoration: underline; transition: opacity 0.2s; }
+.post-text a:hover { opacity: 0.8; }
+.post-text blockquote { border-left: 4px solid var(--primary); padding-left: 1rem; color: var(--text-muted) !important; font-style: italic; background: var(--bg-input) !important; padding: 1rem; border-radius: 0 8px 8px 0; }
 
 /* =========================================
    11. DARK MODE OVERRIDES (GENERAL)
@@ -345,38 +332,20 @@ body.dark-mode .text-dark, body.dark-mode .link-dark { color: var(--text-main) !
 body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
 body.dark-mode .border-light { border-color: var(--border-color) !important; }
 body.dark-mode a.text-decoration-none:hover { color: var(--primary) !important; }
-body.dark-mode .bg-blue-subtle { background-color: #1e293b; }
-
-/* Buttons */
-body.dark-mode .btn-outline-dark { color: #F9FAFB; border-color: #F9FAFB; }
-body.dark-mode .btn-outline-dark:hover { background-color: #F9FAFB; color: #111827; }
-
-/* Navbar */
-body.dark-mode .nav-link { color: #e2e8f0 !important; }
+body.dark-mode .btn-outline-dark { color: #f8fafc; border-color: #f8fafc; }
+body.dark-mode .btn-outline-dark:hover { background-color: #f8fafc; color: #0f172a; }
+body.dark-mode .nav-link { color: #cbd5e1 !important; }
 body.dark-mode .nav-link:hover, body.dark-mode .nav-link.active { color: var(--primary) !important; }
 body.dark-mode .brand-text { color: #ffffff !important; }
-body.dark-mode .navbar-toggler-icon { filter: invert(1) grayscale(100%) brightness(200%); }
-
-/* Lists & Inputs */
-body.dark-mode .list-group-item {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border-color) !important;
-    color: var(--text-main) !important;
-}
-body.dark-mode ::placeholder { color: #94a3b8 !important; opacity: 1; }
-
-/* Headings */
-body.dark-mode .text-muted, body.dark-mode .lead { color: #cbd5e1 !important; }
+body.dark-mode .list-group-item { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
+body.dark-mode ::placeholder { color: #64748b !important; opacity: 1; }
+body.dark-mode .text-muted, body.dark-mode .lead { color: #94a3b8 !important; }
 body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode h5, body.dark-mode .font-heading { color: #ffffff !important; }
-
-/* Dropdowns */
-body.dark-mode .dropdown-menu {
-    background-color: #1e293b !important;
-    border: 1px solid #374151;
-}
-body.dark-mode .dropdown-item { color: #f1f5f9 !important; }
-body.dark-mode .dropdown-item:hover { background-color: #334155 !important; color: #60a5fa !important; }
-body.dark-mode .dropdown-header, body.dark-mode .notif-dropdown-menu h6 { color: #cbd5e1 !important; }
+body.dark-mode .dropdown-menu { background-color: #18181b !important; border: 1px solid #27272a; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
+body.dark-mode .dropdown-item { color: #f8fafc !important; transition: background 0.2s; }
+body.dark-mode .dropdown-item:hover { background-color: #27272a !important; color: var(--primary) !important; }
+body.dark-mode .dropdown-item.text-danger { color: #ef4444 !important; }
+body.dark-mode .dropdown-header { color: #94a3b8 !important; }
 
 /* Notifications Fix */
 body.dark-mode .notif-dropdown-menu .bg-light { background-color: #1e293b !important; border-color: #374151 !important; }
@@ -384,257 +353,77 @@ body.dark-mode .notif-dropdown-menu a.small { color: #60a5fa !important; }
 body.dark-mode .notif-dropdown-menu .text-muted { color: #94a3b8 !important; }
 body.dark-mode .notif-dropdown-menu strong { color: #ffffff !important; }
 
-/* ✅ FIX: Force Deactivate Link to be RED in Dark Mode */
-body.dark-mode .dropdown-item.text-danger {
-    color: #ef4444 !important; /* Bright Red */
-}
-
 /* =========================================
    12. NUCLEAR FIX: EDIT PROFILE & DEACTIVATE MODAL
    ========================================= */
-
-/* 1. Force Modal Background to DARK */
-body.dark-mode .modal-content,
-body.dark-mode .modal-content.bg-white {
-    background-color: #1e293b !important; /* Dark Slate */
-    color: #ffffff !important;
-}
-
-/* 2. FORCE "Bio" (Labels) to be White */
-body.dark-mode .modal-body label,
-body.dark-mode .modal-body .form-label,
-body.dark-mode .modal-body .fw-bold {
-    color: #ffffff !important;
-    opacity: 1 !important;
-}
-
-/* 3. FORCE "Add Social" / "Change Username" (Links) to be Blue/Visible */
-body.dark-mode .modal-body a,
-body.dark-mode .modal-body a.text-decoration-none {
-    color: #60a5fa !important; /* Bright Blue */
-}
-body.dark-mode .modal-body a:hover {
-    color: #93c5fd !important; /* Lighter Blue on hover */
-}
-
-/* 4. FORCE "Text Muted" (Instructions) to be Light Grey */
-body.dark-mode .modal-body .text-muted,
-body.dark-mode .modal-body small {
-    color: #cbd5e1 !important; /* Readable Grey */
-}
-
-/* 5. FIX INPUTS (Make them Dark with White Text) */
-body.dark-mode .modal-body input, 
-body.dark-mode .modal-body textarea, 
-body.dark-mode .modal-body select {
-    background-color: #334155 !important;
-    border: 1px solid #475569 !important;
-    color: #ffffff !important;
-}
-
-/* 6. FIX INPUT PLACEHOLDERS */
-body.dark-mode .modal-body input::placeholder,
-body.dark-mode .modal-body textarea::placeholder {
-    color: #94a3b8 !important;
-}
-
-/* 7. FIX CLOSE BUTTON */
-body.dark-mode .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%) !important;
-}
-
-/* ✅ 8. FIX DEACTIVATE MODAL HEADER IN DARK MODE */
-/* Transforms the light pink header into a Dark Red header with Light Red text */
-body.dark-mode .modal-header.bg-danger-subtle {
-    background-color: #3f0e0e !important; /* Deep Dark Red */
-    border-bottom: 1px solid #7f1d1d !important;
-}
-
-body.dark-mode .modal-header.bg-danger-subtle .modal-title,
-body.dark-mode .modal-header.bg-danger-subtle .text-danger {
-    color: #fca5a5 !important; /* Soft Light Red (Easily visible) */
-}
+body.dark-mode .modal-content, body.dark-mode .modal-content.bg-white { background-color: #18181b !important; color: #ffffff !important; border: 1px solid #27272a !important;}
+body.dark-mode .modal-body label, body.dark-mode .modal-body .form-label, body.dark-mode .modal-body .fw-bold { color: #ffffff !important; opacity: 1 !important;}
+body.dark-mode .modal-body a { color: var(--primary) !important; }
+body.dark-mode .modal-body .text-muted, body.dark-mode .modal-body small { color: #94a3b8 !important; }
+body.dark-mode .modal-body input, body.dark-mode .modal-body textarea, body.dark-mode .modal-body select { background-color: #27272a !important; border: 1px solid #3f3f46 !important; color: #ffffff !important; }
+body.dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%) !important; }
+body.dark-mode .modal-header.bg-danger-subtle { background-color: rgba(220, 38, 38, 0.1) !important; border-bottom: 1px solid rgba(220, 38, 38, 0.2) !important; }
+body.dark-mode .modal-header.bg-danger-subtle .modal-title, body.dark-mode .modal-header.bg-danger-subtle .text-danger { color: #fca5a5 !important; }
 
 /* =========================================
-   23. MODERN ANIMATIONS (LIKE & COMMENT)
+   23. MODERN ANIMATIONS (LIKE & COMMENT) - FIXED!
    ========================================= */
-
-/* --- 1. THE HEART EXPLOSION --- */
-
-/* The Heart Icon itself popping */
-.like-anim i {
-  animation: heart-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
-}
-
-/* The Confetti Particles (Using Pseudo-element) */
-.like-anim i::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: transparent;
-  transform: translate(-50%, -50%);
-  z-index: -1; /* Behind the heart */
-  animation: confetti 0.6s ease-out forwards;
-}
-
-@keyframes heart-pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.5); } /* Pop big */
-  100% { transform: scale(1); }  /* Return to normal */
-}
-
-@keyframes confetti {
-  0% {
-    opacity: 1;
-    box-shadow: 0 0 0 #e11d48; /* Start at center */
-  }
-  100% {
-    opacity: 0;
-    /* 8 particles moving outwards */
-    box-shadow: 
-      -15px -15px 0 #ef4444,   /* Top Left */
-       15px -15px 0 #f472b6,   /* Top Right */
-      -15px  15px 0 #ef4444,   /* Bottom Left */
-       15px  15px 0 #f472b6,   /* Bottom Right */
-       0    -20px 0 #ef4444,   /* Top */
-       0     20px 0 #f472b6,   /* Bottom */
-      -20px  0    0 #ef4444,   /* Left */
-       20px  0    0 #f472b6;   /* Right */
-  }
-}
-
-/* --- 2. THE COMMENT RIPPLE --- */
-
-.ripple-effect {
+.like-anim {
+  display: inline-flex;
   position: relative;
-  overflow: hidden; /* Contains the ripple inside the button */
+  align-items: center;
+  justify-content: center;
 }
 
-.ripple-effect::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: rgba(37, 99, 235, 0.3); /* Blue transparent ripple */
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
+.like-anim i { 
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
 }
 
-/* Class added by JS to trigger animation */
-.ripple-active::after {
-  animation: ripple-anim 0.5s linear;
+/* Beautiful pop effect when clicked */
+.btn-like:active .like-anim i { 
+  transform: scale(1.4); 
 }
 
-@keyframes ripple-anim {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0.5;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(20); /* Expands huge */
-    opacity: 0;
-  }
+/* The Ripple Effect for the whole button */
+.ripple-effect { position: relative; overflow: hidden; }
+.ripple-effect::after { 
+  content: ""; 
+  position: absolute; 
+  width: 10px; 
+  height: 10px; 
+  background: rgba(37, 99, 235, 0.3); 
+  border-radius: 50%; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%) scale(0); 
+  opacity: 0; 
 }
-
-/* Ensure the Like Button can contain the absolute particles */
-.btn-like {
-    position: relative; 
-    z-index: 1;
+.ripple-active::after { animation: ripple-anim 0.5s linear; }
+@keyframes ripple-anim { 
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.5; } 
+  100% { transform: translate(-50%, -50%) scale(20); opacity: 0; } 
 }
+.btn-like { position: relative; z-index: 1; }
 
 /* =========================================
    24. DARK MODE: COMMENTS FIX & LIKES
    ========================================= */
-
-/* 1. Comment Container Background */
-body.dark-mode .collapse.bg-light {
-    background-color: #0f172a !important; /* Very Dark Slate */
-    border-top: 1px solid #334155 !important;
-}
-
-/* 2. Individual Comment Bubble */
-body.dark-mode .comments-list .bg-white {
-    background-color: #1e293b !important;
-    border: 1px solid #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-/* 3. Input Field Fix */
-body.dark-mode .input-group .form-control {
-    background-color: #334155 !important;
-    border-color: #475569 !important;
-    color: #ffffff !important;
-}
-body.dark-mode .input-group .form-control::placeholder {
-    color: #94a3b8 !important;
-}
-
-/* 4. Post Button Fix */
-body.dark-mode .input-group .btn-outline-secondary {
-    background-color: #334155 !important;
-    border-color: #475569 !important;
-    color: #60a5fa !important;
-}
-
-/* 5. Like Button Colors in Dark Mode */
-body.dark-mode .comment-like-btn {
-    color: #94a3b8 !important;
-}
-body.dark-mode .comment-like-btn i.text-danger {
-    color: #ef4444 !important; /* Bright Red */
-}
+body.dark-mode .collapse.bg-light { background-color: #09090b !important; border-top: 1px solid #27272a !important; }
+body.dark-mode .comments-list .bg-white { background-color: #18181b !important; border: 1px solid #27272a !important; color: #f8fafc !important; }
+body.dark-mode .input-group .form-control { background-color: #27272a !important; border-color: #3f3f46 !important; color: #ffffff !important; }
+body.dark-mode .input-group .btn-outline-secondary { background-color: #27272a !important; border-color: #3f3f46 !important; color: var(--primary) !important; }
+body.dark-mode .comment-like-btn { color: #94a3b8 !important; }
+body.dark-mode .comment-like-btn i.text-danger { color: #ef4444 !important; }
 
 /* =========================================
    25. DARK MODE: FORM HELP TEXT FIX
    ========================================= */
-
-/* Fixes "Supported: JPG..." and other small form hints */
-body.dark-mode .form-text, 
-body.dark-mode .text-muted, 
-body.dark-mode small.text-secondary {
-    color: #cbd5e1 !important; /* Light Readable Grey */
-    opacity: 1 !important;
-}
-
-/* Specifically for the File Upload Area hint */
-body.dark-mode .upload-area small {
-    color: #94a3b8 !important; /* Slightly distinct grey for upload box */
-}
-
-/* Navbar Profile Image */
-.navbar .rounded-circle {
-    transition: transform 0.2s;
-}
-
-.navbar .rounded-circle:hover {
-    transform: scale(1.1);
-}
-
-/* Fix Input Group on Mobile */
-@media (max-width: 991px) {
-    .navbar form {
-        margin-top: 10px;
-        margin-bottom: 10px;
-        width: 100%;
-    }
-    .navbar .input-group {
-        width: 100%;
-    }
-}
+body.dark-mode .form-text, body.dark-mode .text-muted, body.dark-mode small.text-secondary { color: #cbd5e1 !important; opacity: 1 !important; }
+body.dark-mode .upload-area small { color: #94a3b8 !important; }
 
 /* =========================================
-   26. DARK MODE: NUCLEAR INPUT GROUP FIX (Navbar & Home)
+   26. DARK MODE: NUCLEAR INPUT GROUP FIX 
    ========================================= */
-/* This forces ALL input groups (Search, etc.) to be dark in dark mode.
-   It overrides the 'bg-light' class if it exists in the HTML.
-*/
 body.dark-mode .input-group-text, 
 body.dark-mode .input-group-text.bg-light,
 body.dark-mode .form-control.bg-light,
@@ -644,7 +433,6 @@ body.dark-mode input[type="search"] {
     color: white !important;
 }
 
-/* Additional dark mode form control styling to match profile page */
 body.dark-mode .form-control {
     background-color: #1f1f1f !important;
     border-color: #555 !important;
@@ -660,7 +448,6 @@ body.dark-mode .search-input {
 /* =========================================
    27. DARK MODE: AUTOFILL FIX
    ========================================= */
-/* Prevents Chrome/Edge from turning inputs White/Yellow on autocomplete */
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus, 
@@ -668,4 +455,17 @@ input:-webkit-autofill:active{
     -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important;
     -webkit-text-fill-color: var(--text-main) !important;
     transition: background-color 5000s ease-in-out 0s;
+}
+
+/* =========================================
+   28. DARK MODE: HOME PAGE SPECIFIC OVERRIDE
+   ========================================= */
+body.dark-mode .input-group > .form-control,
+body.dark-mode .input-group > .input-group-text {
+    background-color: #1f1f1f !important;
+    color: white !important;
+    border-color: #444 !important;
+}
+body.dark-mode .input-group-text i {
+    color: #a0aec0 !important; 
 }

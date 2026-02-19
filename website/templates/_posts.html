@@ -1,35 +1,40 @@
 {% for post in posts %}
-<div class="card border-0 shadow-sm mb-4" id="post-{{ post.id }}">
+<div
+  class="card border-0 shadow-sm mb-4"
+  id="post-{{ post.id }}"
+  style="border-radius: var(--border-radius-lg); overflow: hidden"
+>
   <div class="card-body p-0">
-    <div class="d-flex align-items-center p-3">
+    <div class="d-flex align-items-center p-3 p-md-4 pb-2">
       <a
         href="{{ url_for('views.profile', username=post.user.username) }}"
-        class="text-decoration-none"
+        class="text-decoration-none position-relative d-inline-block"
       >
         {% if post.user.profile_pic %}
         <img
           src="{{ url_for('static', filename='uploads/avatars/' + post.user.profile_pic) }}"
-          class="rounded-circle border me-2"
-          width="40"
-          height="40"
+          class="rounded-circle me-3 shadow-sm"
+          width="48"
+          height="48"
           style="object-fit: cover"
           loading="lazy"
           decoding="async"
         />
         {% else %}
         <div
-          class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold me-2"
-          style="width: 40px; height: 40px"
+          class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold me-3 shadow-sm"
+          style="width: 48px; height: 48px; font-size: 1.2rem"
         >
           {{ post.user.username[0]|upper }}
         </div>
         {% endif %}
       </a>
 
-      <div>
+      <div class="flex-grow-1">
         <a
           href="{{ url_for('views.profile', username=post.user.username) }}"
-          class="text-decoration-none text-dark fw-bold"
+          class="text-decoration-none text-dark fw-bold d-block"
+          style="font-size: 1.05rem"
         >
           {{ post.user.username }}
         </a>
@@ -47,23 +52,30 @@
       {% if user.is_authenticated and (user.id == post.author or user.is_admin)
       %}
       <div class="dropdown ms-auto">
-        <button class="btn btn-link text-muted p-0" data-bs-toggle="dropdown">
+        <button
+          class="btn btn-icon text-muted p-0 shadow-sm"
+          data-bs-toggle="dropdown"
+          style="width: 32px; height: 32px"
+        >
           <i class="fas fa-ellipsis-v"></i>
         </button>
-        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+        <ul
+          class="dropdown-menu dropdown-menu-end border-0 shadow-lg"
+          style="border-radius: 12px"
+        >
           {% if user.id == post.author %}
           <li>
             <a
-              class="dropdown-item"
+              class="dropdown-item py-2"
               href="{{ url_for('views.edit_post', id=post.id) }}"
             >
-              <i class="fas fa-edit me-2 text-warning"></i> Edit
+              <i class="fas fa-edit me-2 text-primary"></i> Edit
             </a>
           </li>
           {% endif %}
           <li>
             <a
-              class="dropdown-item text-danger"
+              class="dropdown-item text-danger py-2"
               href="{{ url_for('views.delete_post', id=post.id) }}"
               onclick="return confirm('Are you sure?');"
             >
@@ -75,7 +87,7 @@
       {% endif %}
     </div>
 
-    <div class="px-3 pb-2">
+    <div class="px-3 px-md-4 pb-2 pt-1 position-relative">
       <div class="post-text-container position-relative mb-2">
         <div
           class="card-text post-text mb-1"
@@ -87,7 +99,7 @@
         <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
       </div>
       <button
-        class="btn btn-link p-0 text-decoration-none see-more-btn"
+        class="btn btn-link p-0 text-decoration-none see-more-btn fw-bold"
         data-post-id="{{ post.id }}"
         style="display: none; font-size: 0.9rem"
       >
@@ -96,10 +108,10 @@
     </div>
 
     {% if post.cover_image %}
-    <div class="bg-light text-center overflow-hidden" style="max-height: 600px">
+    <div class="px-3 px-md-4 pb-3 text-center overflow-hidden">
       <img
         src="{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}"
-        class="img-fluid w-100"
+        class="img-fluid rounded-4 shadow-sm w-100"
         style="object-fit: cover; max-height: 600px; cursor: pointer"
         alt="Post Image"
         onclick="viewFullSize(this.src)"
@@ -110,11 +122,12 @@
     {% endif %}
 
     <div
-      class="d-flex align-items-center justify-content-between p-3 border-top"
+      class="d-flex align-items-center justify-content-between px-3 px-md-4 py-3 border-top"
+      style="background-color: rgba(0, 0, 0, 0.01)"
     >
-      <div class="d-flex gap-3">
+      <div class="d-flex gap-4">
         <button
-          class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-1 {{ 'text-danger' if post.liked else 'text-muted' }}"
+          class="btn btn-link text-decoration-none p-0 d-flex align-items-center gap-2 fw-bold text-muted ripple-effect btn-like"
           id="like-button-{{ post.id }}"
           {%
           if
@@ -129,116 +142,124 @@
           endif
           %}
         >
-          <i
-            class="{{ 'fas' if post.liked else 'far' }} fa-heart fa-lg transition-transform"
-          ></i>
-          <span class="fw-bold" id="likes-count-{{ post.id }}"
-            >{{ post.likes_count }}</span
-          >
+          <span class="like-anim">
+            <i
+              class="{{ 'fas text-danger' if post.liked else 'far' }} fa-heart fa-lg transition-transform"
+            ></i>
+          </span>
+          <span id="likes-count-{{ post.id }}">{{ post.likes_count }}</span>
         </button>
 
         <button
-          class="btn btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-1 comment-btn-trigger"
+          class="btn btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-2 comment-btn-trigger fw-bold"
           data-bs-toggle="collapse"
           data-bs-target="#comments-{{ post.id }}"
         >
           <i class="far fa-comment fa-lg"></i>
-          <span class="fw-bold">{{ post.active_comments_count }}</span>
+          <span>{{ post.active_comments_count }}</span>
         </button>
       </div>
 
       <button
-        class="btn btn-link text-muted p-0"
+        class="btn btn-icon text-muted p-0 shadow-sm"
+        style="width: 36px; height: 36px"
         onclick="navigator.clipboard.writeText(window.location.origin + '/post/{{ post.id }}'); showToast('Link copied!');"
       >
-        <i class="far fa-paper-plane fa-lg"></i>
+        <i class="far fa-paper-plane"></i>
       </button>
     </div>
 
-    <div
-      class="collapse bg-light bg-opacity-50 border-top"
-      id="comments-{{ post.id }}"
-    >
-      <div class="p-3">
+    <div class="collapse bg-light" id="comments-{{ post.id }}">
+      <div class="p-3 p-md-4 border-top">
         {% if user.is_authenticated %}
         <form
           action="{{ url_for('views.create_comment', post_id=post.id) }}"
           method="POST"
-          class="d-flex gap-2 mb-3"
+          class="d-flex gap-2 mb-4 align-items-center"
         >
           {% if user.profile_pic %}
           <img
             src="{{ url_for('static', filename='uploads/avatars/' + user.profile_pic) }}"
-            class="rounded-circle"
-            width="32"
-            height="32"
+            class="rounded-circle shadow-sm"
+            width="36"
+            height="36"
             style="object-fit: cover"
             loading="lazy"
             decoding="async"
           />
           {% else %}
           <div
-            class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-            style="width: 32px; height: 32px; font-size: 0.8rem"
+            class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm fw-bold"
+            style="width: 36px; height: 36px; font-size: 0.9rem"
           >
             {{ user.username[0]|upper }}
           </div>
           {% endif %}
-          <input
-            type="text"
-            name="text"
-            class="form-control rounded-pill bg-white"
-            placeholder="Write a comment..."
-            required
-            autocomplete="off"
-          />
-          <button
-            type="submit"
-            class="btn btn-primary rounded-circle btn-comment"
+
+          <div
+            class="input-group shadow-sm rounded-pill overflow-hidden flex-grow-1"
           >
-            <i class="fas fa-paper-plane"></i>
-          </button>
+            <input
+              type="text"
+              name="text"
+              class="form-control border-0 bg-white ps-4 py-2"
+              placeholder="Write a comment..."
+              required
+              autocomplete="off"
+            />
+            <button
+              type="submit"
+              class="btn btn-primary px-4 fw-bold btn-comment"
+            >
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
         </form>
         {% else %}
-        <div class="text-center mb-3">
-          <small class="text-muted">
-            <a href="/login">Log in</a> to write a comment.
-          </small>
+        <div class="text-center mb-4 pb-2 border-bottom">
+          <p class="small text-muted mb-0">
+            <a href="/login" class="fw-bold">Log in</a> to join the
+            conversation.
+          </p>
         </div>
         {% endif %}
 
-        <div class="d-flex flex-column gap-3">
+        <div class="d-flex flex-column gap-3 comments-list">
           {% for comment in post.comments %} {% if not comment.is_deleted %}
-          <div class="d-flex gap-2">
+          <div class="d-flex gap-3">
             <a
               href="{{ url_for('views.profile', username=comment.user.username) }}"
             >
               {% if comment.user.profile_pic %}
               <img
                 src="{{ url_for('static', filename='uploads/avatars/' + comment.user.profile_pic) }}"
-                class="rounded-circle"
-                width="32"
-                height="32"
+                class="rounded-circle shadow-sm"
+                width="36"
+                height="36"
                 style="object-fit: cover"
                 loading="lazy"
                 decoding="async"
               />
               {% else %}
               <div
-                class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center"
-                style="width: 32px; height: 32px; font-size: 0.8rem"
+                class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                style="width: 36px; height: 36px; font-size: 0.9rem"
               >
                 {{ comment.user.username[0]|upper }}
               </div>
               {% endif %}
             </a>
-            <div class="bg-white p-2 px-3 rounded-4 shadow-sm border w-100">
+
+            <div
+              class="bg-white p-3 rounded-4 shadow-sm border w-100 position-relative"
+            >
               <div
                 class="d-flex justify-content-between align-items-center mb-1"
               >
                 <a
                   href="{{ url_for('views.profile', username=comment.user.username) }}"
-                  class="fw-bold text-dark text-decoration-none small"
+                  class="fw-bold text-dark text-decoration-none"
+                  style="font-size: 0.9rem"
                 >
                   {{ comment.user.username }}
                 </a>
@@ -246,11 +267,13 @@
                   >{{ comment.date_created|timeago }}</small
                 >
               </div>
-              <p class="mb-1 small text-secondary">{{ comment.text }}</p>
+              <p class="mb-2 small" style="color: var(--text-main)">
+                {{ comment.text }}
+              </p>
 
-              <div class="d-flex align-items-center gap-3 mt-1">
+              <div class="d-flex align-items-center gap-3">
                 <button
-                  class="btn btn-link p-0 text-decoration-none small {{ 'text-danger' if comment.liked else 'text-muted' }}"
+                  class="btn btn-link p-0 text-decoration-none small fw-bold comment-like-btn {{ 'text-danger' if comment.liked else 'text-muted' }}"
                   {%
                   if
                   user.is_authenticated
@@ -267,14 +290,14 @@
                   <i
                     class="{{ 'fas' if comment.liked else 'far' }} fa-heart"
                   ></i>
-                  <span class="like-count">{{ comment.likes_count }}</span>
+                  <span class="like-count ms-1">{{ comment.likes_count }}</span>
                 </button>
 
                 {% if user.is_authenticated and (user.id == comment.author or
                 user.id == post.author or user.is_admin) %}
                 <a
                   href="{{ url_for('views.delete_comment', comment_id=comment.id) }}"
-                  class="text-danger text-decoration-none small"
+                  class="text-danger text-decoration-none small fw-bold"
                   onclick="return confirm('Delete this comment?');"
                   >Delete</a
                 >
