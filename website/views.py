@@ -8,7 +8,7 @@ from .models import User, Post, Comment, Like, Follow, Notification, CommentLike
 from sqlalchemy.exc import IntegrityError
 from . import db
 from sqlalchemy import func, or_, desc, and_
-# ✅ NEW: Imports for Speed Optimization
+from werkzeug.security import check_password_hash
 from sqlalchemy.orm import joinedload, subqueryload 
 import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
@@ -16,7 +16,7 @@ from PIL import Image
 import secrets
 from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
-
+from sqlalchemy import or_, func
 
 views = Blueprint('views', __name__)
 
@@ -357,6 +357,8 @@ def mark_notifications_read():
 # PROFILE & SETTINGS
 # =================================================
 
+
+
 @views.route("/profile/<username>")
 @login_required
 def profile(username):
@@ -364,6 +366,14 @@ def profile(username):
     if not user:
         flash('No user with that username exists.', category='error')
         return redirect(url_for('views.home'))
+
+    # ==========================================
+    # ✅ FIX: PREVENT NORMAL USERS FROM VIEWING ADMIN PROFILE
+    # ==========================================
+    if user.is_admin and not current_user.is_admin:
+        flash('This profile is private and cannot be viewed.', category='error')
+        return redirect(url_for('views.home'))
+    # ==========================================
 
     page = request.args.get('page', 1, type=int)
     
@@ -679,6 +689,32 @@ def admin_delete_comment(comment_id):
         flash("Comment hidden.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
+
+@views.route('/admin-permanent-delete-comment/<int:comment_id>', methods=['POST'])
+@login_required
+def admin_permanent_delete_comment(comment_id):
+    # Security Check: Ensure user is admin
+    if not current_user.is_admin:
+        flash("Access denied.", category='error')
+        return redirect(url_for('views.home'))
+
+    # Security Check: Verify Admin Password from the Modal
+    admin_password = request.form.get('admin_password')
+    if not check_password_hash(current_user.password, admin_password):
+        flash("Invalid admin password.", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+
+    # Find and permanently delete the comment
+    comment = Comment.query.get(comment_id)
+    if comment:
+        db.session.delete(comment)
+        db.session.commit()
+        flash('Comment permanently deleted.', category='success')
+    else:
+        flash('Comment not found.', category='error')
+        
+    return redirect(url_for('views.admin_dashboard'))
+
 @views.route('/admin/restore-comment/<int:comment_id>', methods=['POST'])
 @login_required
 def admin_restore_comment(comment_id):
@@ -790,14 +826,18 @@ def deactivate_account():
 # API ROUTES (SEARCH)
 # =================================================
 
-@views.route('/api/search-users')
-@login_required
-def api_search_users():
-    query = request.args.get('q', '').strip()
-    if not query:
+@views.route('/api/search-users', methods=['GET'])
+def search_users_api():
+    q = request.args.get('q', '').strip()
+    if not q:
         return jsonify([])
-    
-    users = User.query.filter(User.username.ilike(f"%{query}%")).limit(5).all()
+
+    # ✅ FIX: Added User.is_admin == False to hide admins from the dropdown
+    users = User.query.filter(
+        User.username.ilike(f'%{q}%'),
+        User.is_admin == False 
+    ).limit(5).all()
+
     results = []
     for u in users:
         results.append({
@@ -811,19 +851,99 @@ def api_search_users():
 def search_page():
     query = request.args.get('q', '').strip()
     
-    # Simple User Search
-    users = User.query.filter(User.username.ilike(f"%{query}%")).all() if query else []
-    
-    # ⚡ PERFORMANCE: Search Posts + Preload User
+    users = []
     posts = []
+    
     if query:
-        posts = Post.query.filter(Post.text.ilike(f"%{query}%"))\
+        # 1. Attempt EXACT phrase match first
+        users = User.query.filter(
+            User.username.ilike(f"%{query}%"),
+            User.is_admin == False
+        ).all()
+        
+        posts = Post.query.filter(
+            Post.text.ilike(f"%{query}%"),
+            Post.is_deleted == False
+        ).options(
+            joinedload(Post.user),
+            subqueryload(Post.likes),
+            subqueryload(Post.comments).joinedload(Comment.user)
+        ).order_by(Post.date_created.desc()).all()
+
+        # 2. RELATED SEARCH: If exact phrase fails, break query into words
+        words = query.split()
+        if not users and not posts and len(words) > 1:
+            user_conditions = [User.username.ilike(f"%{word}%") for word in words]
+            post_conditions = [Post.text.ilike(f"%{word}%") for word in words]
+            
+            users = User.query.filter(
+                or_(*user_conditions),
+                User.is_admin == False
+            ).all()
+            
+            posts = Post.query.filter(
+                or_(*post_conditions),
+                Post.is_deleted == False
+            ).options(
+                joinedload(Post.user),
+                subqueryload(Post.likes),
+                subqueryload(Post.comments).joinedload(Comment.user)
+            ).order_by(Post.date_created.desc()).all()
+
+        # 3. SMART FILL: If results are less than 5, supplement with random content!
+        if len(users) < 5 or len(posts) < 5:
+            
+            # Track what we already found so we don't show duplicates
+            found_user_ids = [u.id for u in users]
+            found_user_ids.append(current_user.id) # Never recommend the logged-in user to themselves
+            
+            found_post_ids = [p.id for p in posts]
+            added_recommendations = False
+            
+            # If less than 5 users found -> Add 5 more random users
+            if len(users) < 5:
+                extra_users = User.query.filter(
+                    User.is_admin == False,
+                    ~User.id.in_(found_user_ids) # Exclude users already in the list
+                ).order_by(func.random()).limit(5).all()
+                
+                if extra_users:
+                    users.extend(extra_users)
+                    added_recommendations = True
+                    
+            # If less than 5 posts found -> Add 10 more random posts
+            if len(posts) < 5:
+                extra_posts = Post.query.filter(
+                    Post.is_deleted == False,
+                    ~Post.id.in_(found_post_ids) # Exclude posts already in the list
+                ).options(
+                    joinedload(Post.user),
+                    subqueryload(Post.likes),
+                    subqueryload(Post.comments).joinedload(Comment.user)
+                ).order_by(func.random()).limit(10).all()
+                
+                if extra_posts:
+                    posts.extend(extra_posts)
+                    added_recommendations = True
+            
+            if added_recommendations:
+                flash(f"Showing results for '{query}' along with some recommended content!", category='info')
+
+    else:
+        # 4. Explore Mode: If they navigated to Search without typing anything, show random mix
+        users = User.query.filter(
+            User.is_admin == False,
+            User.id != current_user.id
+        ).order_by(func.random()).limit(5).all()
+        
+        posts = Post.query.filter_by(is_deleted=False)\
             .options(
                 joinedload(Post.user),
                 subqueryload(Post.likes),
                 subqueryload(Post.comments).joinedload(Comment.user)
-            ).all()
+            ).order_by(func.random()).limit(10).all()
     
+    # Enrich the final post list (process likes, comments, etc.)
     if posts:
         posts = enrich_posts(posts)
 

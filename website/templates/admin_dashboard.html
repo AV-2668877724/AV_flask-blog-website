@@ -15,22 +15,27 @@ block content %}
     border-color: var(--primary) !important;
   }
 
-  /* Modern Tabs */
-  .admin-tabs .nav-link {
-    color: var(--text-muted);
+  /* Modern Tabs - Base Styles */
+  #adminTabs .nav-link {
+    color: var(--text-muted) !important;
     border-radius: 12px;
     padding: 0.6rem 1.2rem;
     margin-right: 0.5rem;
     transition: all 0.2s;
   }
-  .admin-tabs .nav-link:hover {
-    background-color: var(--bg-input);
-    color: var(--text-main);
+  #adminTabs .nav-link:hover {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
   }
-  .admin-tabs .nav-link.active {
-    background-color: var(--primary);
-    color: white !important;
-    box-shadow: 0 4px 12px var(--primary-glow);
+
+  /* Ultimate Specificity for Active Tabs (Forces White Text) */
+  body #adminTabs .nav-link.active,
+  body.dark-mode #adminTabs .nav-link.active,
+  body #adminTabs .nav-link.active.text-danger,
+  body #adminTabs .nav-link.active i {
+    background-color: var(--primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px var(--primary-glow) !important;
   }
 
   /* Fix Table Colors for Dark Mode */
@@ -51,6 +56,48 @@ block content %}
     color: var(--text-main) !important;
   }
   .table-hover tbody tr:hover td {
+    background-color: var(--bg-input) !important;
+  }
+
+  /* Admin Live Filter Bar */
+  .admin-filter-bar {
+    background-color: var(--bg-input);
+    border-radius: 50px;
+    height: 42px;
+    border: 2px solid var(--border-color);
+    transition: all 0.3s ease;
+  }
+  .admin-filter-bar:focus-within {
+    background-color: var(--bg-card);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-glow);
+  }
+  .admin-filter-input {
+    width: 100%;
+    outline: none;
+    color: var(--text-main);
+    padding: 0 10px;
+    font-weight: 500;
+    background-color: transparent !important;
+  }
+
+  /* ✅ FIX: Floating Label Visibility in Dark Mode */
+  body.dark-mode .form-floating > label {
+    color: #a1a1aa !important; /* Muted gray so it's visible before clicking */
+  }
+  body.dark-mode .form-floating > .form-control:focus ~ label,
+  body.dark-mode
+    .form-floating
+    > .form-control:not(:placeholder-shown)
+    ~ label {
+    color: var(--primary) !important; /* Turns cool blue when you click it */
+  }
+  /* Fixes the white background "cutout" Bootstrap applies to floating labels */
+  body.dark-mode .form-floating > .form-control:focus ~ label::after,
+  body.dark-mode
+    .form-floating
+    > .form-control:not(:placeholder-shown)
+    ~ label::after {
     background-color: var(--bg-input) !important;
   }
 </style>
@@ -133,52 +180,70 @@ block content %}
       </div>
     </div>
 
-    <ul class="nav nav-pills mb-4 admin-tabs" id="adminTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link active fw-bold"
-          id="users-tab"
-          data-bs-toggle="pill"
-          data-bs-target="#pills-users"
-          type="button"
-        >
-          Users
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link fw-bold"
-          id="posts-tab"
-          data-bs-toggle="pill"
-          data-bs-target="#pills-posts"
-          type="button"
-        >
-          Active Posts
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link fw-bold text-danger"
-          id="deleted-tab"
-          data-bs-toggle="pill"
-          data-bs-target="#pills-deleted"
-          type="button"
-        >
-          <i class="fas fa-trash-alt me-1"></i> Trash
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link fw-bold"
-          id="comments-tab"
-          data-bs-toggle="pill"
-          data-bs-target="#pills-comments"
-          type="button"
-        >
-          Comments Audit
-        </button>
-      </li>
-    </ul>
+    <div
+      class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3"
+    >
+      <ul class="nav nav-pills admin-tabs" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active fw-bold"
+            id="users-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-users"
+            type="button"
+          >
+            Users
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link fw-bold"
+            id="posts-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-posts"
+            type="button"
+          >
+            Active Posts
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link fw-bold text-danger"
+            id="deleted-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-deleted"
+            type="button"
+          >
+            <i class="fas fa-trash-alt me-1"></i> Trash
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link fw-bold"
+            id="comments-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-comments"
+            type="button"
+          >
+            Comments Audit
+          </button>
+        </li>
+      </ul>
+
+      <div
+        class="admin-filter-bar d-flex align-items-center px-3"
+        style="width: 100%; max-width: 280px"
+      >
+        <i class="fas fa-filter text-muted"></i>
+        <input
+          type="text"
+          id="adminLiveFilter"
+          class="admin-filter-input bg-transparent border-0"
+          placeholder="Filter this list..."
+          autocomplete="off"
+        />
+      </div>
+    </div>
 
     <div class="tab-content" id="adminTabsContent">
       <div class="tab-pane fade show active" id="pills-users">
@@ -204,7 +269,7 @@ block content %}
                 </thead>
                 <tbody>
                   {% for u in users %}
-                  <tr>
+                  <tr class="admin-data-row">
                     <td class="ps-4 py-3 fw-bold">
                       <div class="d-flex align-items-center gap-3">
                         {% if u.profile_pic %}
@@ -343,7 +408,7 @@ block content %}
                 </thead>
                 <tbody>
                   {% for p in active_posts %}
-                  <tr>
+                  <tr class="admin-data-row">
                     <td
                       class="ps-4 py-3 fw-bold"
                       style="color: var(--text-main)"
@@ -375,9 +440,9 @@ block content %}
                         class="d-inline-flex gap-2"
                       >
                         <button
-                          class="btn btn-danger btn-sm fw-bold rounded-pill px-3 shadow-sm text-white"
+                          class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm"
                         >
-                          Trash
+                          Soft Delete
                         </button>
                       </form>
                     </td>
@@ -419,7 +484,7 @@ block content %}
                 </thead>
                 <tbody>
                   {% for p in deleted_posts %}
-                  <tr>
+                  <tr class="admin-data-row">
                     <td class="ps-4 py-3 fw-bold text-danger">
                       {{ p.user.username }}
                     </td>
@@ -509,7 +574,7 @@ block content %}
                 </thead>
                 <tbody>
                   {% for c in comments %}
-                  <tr>
+                  <tr class="admin-data-row">
                     <td
                       class="ps-4 py-3 fw-bold"
                       style="color: var(--text-main)"
@@ -520,8 +585,11 @@ block content %}
                       <span
                         class="text-truncate d-block"
                         style="color: var(--text-main)"
-                        >{{ c.text }}</span
                       >
+                        {% if c.is_deleted %}<del class="text-muted"
+                          >{{ c.text }}</del
+                        >{% else %}{{ c.text }}{% endif %}
+                      </span>
                       <small
                         class="text-primary d-block fw-bold mt-1"
                         style="font-size: 0.75rem"
@@ -555,24 +623,46 @@ block content %}
                         class="d-inline-flex gap-2"
                       >
                         <button
-                          class="btn btn-danger btn-sm fw-bold rounded-pill px-3 shadow-sm"
+                          class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm"
                         >
-                          Delete
+                          Soft Delete
                         </button>
                       </form>
                       {% else %}
-                      <form
-                        method="POST"
-                        action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
-                        class="d-inline-flex gap-2"
-                        onsubmit="return injectAdminPassword(this);"
-                      >
-                        <button
-                          class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm"
+                      <div class="d-inline-flex gap-2">
+                        <form
+                          method="POST"
+                          action="{{ url_for('views.admin_restore_comment', comment_id=c.id) }}"
+                          class="d-inline-flex gap-2"
+                          onsubmit="return injectAdminPassword(this);"
                         >
-                          Restore
-                        </button>
-                      </form>
+                          <button
+                            class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm"
+                          >
+                            Restore
+                          </button>
+                        </form>
+                        <form
+                          method="POST"
+                          action="{{ url_for('views.admin_permanent_delete_comment', comment_id=c.id) }}"
+                          class="d-inline-flex gap-2"
+                          onsubmit="
+                            return (
+                              confirm(
+                                'WARNING: This cannot be undone. Delete comment permanently?',
+                              ) && injectAdminPassword(this)
+                            );
+                          "
+                        >
+                          <button
+                            class="btn btn-dark btn-sm rounded-circle shadow-sm"
+                            style="width: 32px; height: 32px"
+                            title="Delete Forever"
+                          >
+                            <i class="fas fa-trash-alt"></i>
+                          </button>
+                        </form>
+                      </div>
                       {% endif %}
                     </td>
                   </tr>
@@ -632,9 +722,7 @@ block content %}
             autocomplete="off"
             style="background-color: var(--bg-input); color: var(--text-main)"
           />
-          <label for="adminPasswordInput" style="color: var(--text-muted)"
-            >Admin Password</label
-          >
+          <label for="adminPasswordInput">Admin Password</label>
         </div>
       </div>
       <div class="modal-footer border-0 pt-0 px-4 pb-4 gap-2">
@@ -659,8 +747,39 @@ block content %}
 </div>
 
 <script>
-  // ✅ FIX: Move the modal to the <body> so it doesn't get trapped behind the backdrop!
-  document.addEventListener("DOMContentLoaded", function() {
+  // Live Local Filter Logic
+  document.addEventListener("DOMContentLoaded", function () {
+    const filterInput = document.getElementById("adminLiveFilter");
+
+    filterInput.addEventListener("keyup", function () {
+      const query = this.value.toLowerCase();
+      const activePane = document.querySelector(".tab-pane.active");
+      if (!activePane) return;
+
+      const rows = activePane.querySelectorAll("tr.admin-data-row");
+
+      rows.forEach((row) => {
+        const textContext = row.textContent.toLowerCase();
+        if (textContext.includes(query)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+
+    document
+      .querySelectorAll('#adminTabs button[data-bs-toggle="pill"]')
+      .forEach((tab) => {
+        tab.addEventListener("shown.bs.tab", () => {
+          filterInput.value = "";
+          document
+            .querySelectorAll("tr.admin-data-row")
+            .forEach((row) => (row.style.display = ""));
+        });
+      });
+
+    // Move modal to body to fix stacking issues
     const adminModal = document.getElementById("adminPasswordModal");
     if (adminModal) {
       document.body.appendChild(adminModal);
@@ -669,27 +788,20 @@ block content %}
 
   let pendingForm = null;
 
-  // 1. Intercepts the form submission
   function injectAdminPassword(form) {
-    // If we already added the password (re-submission), let it go through
     if (form.querySelector('input[name="admin_password"]')) {
       return true;
     }
 
-    // Save the form we want to submit
     pendingForm = form;
-
-    // Use getOrCreateInstance to prevent multiple overlapping backdrops
     const modalEl = document.getElementById("adminPasswordModal");
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
 
-    // Focus the input field automatically
     const input = document.getElementById("adminPasswordInput");
     input.value = "";
     setTimeout(() => input.focus(), 500);
 
-    // Allow 'Enter' key to submit
     input.onkeydown = function (e) {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -697,11 +809,9 @@ block content %}
       }
     };
 
-    // Stop the original form from submitting (for now)
     return false;
   }
 
-  // 2. Handles the Modal Confirmation
   function submitAdminPassword() {
     const pwd = document.getElementById("adminPasswordInput").value;
     const modalEl = document.getElementById("adminPasswordModal");
@@ -713,19 +823,14 @@ block content %}
     }
 
     if (pendingForm) {
-      // Create hidden input with the password
       let input = document.createElement("input");
       input.type = "hidden";
       input.name = "admin_password";
       input.value = pwd;
 
-      // Add to the saved form
       pendingForm.appendChild(input);
-
-      // Hide Modal correctly
       modal.hide();
 
-      // Small delay to let the modal fade out before navigating away
       setTimeout(() => {
         pendingForm.submit();
       }, 300);
