@@ -220,7 +220,8 @@
         <form
           action="{{ url_for('views.create_comment', post_id=post.id) }}"
           method="POST"
-          class="d-flex gap-2 gap-md-3 mb-4 align-items-center"
+          class="d-flex gap-2 gap-md-3 mb-4 align-items-center ajax-comment-form"
+          data-post-id="{{ post.id }}"
         >
           {% if user.profile_pic %}
           <img
@@ -352,8 +353,8 @@
                 user.id == post.author or user.is_admin) %}
                 <a
                   href="{{ url_for('views.delete_comment', comment_id=comment.id) }}"
-                  class="text-danger text-decoration-none small fw-bold opacity-75 hover-opacity-100"
-                  onclick="return confirm('Delete this comment?');"
+                  class="text-danger text-decoration-none small fw-bold opacity-75 hover-opacity-100 ajax-delete-comment"
+                  data-post-id="{{ post.id }}"
                   >Delete</a
                 >
                 {% endif %}

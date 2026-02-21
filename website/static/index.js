@@ -32,9 +32,6 @@ function truncatePosts() {
   });
 }
 
-/* =========================================
-   ✅ FIX: GLOBAL TOGGLE READ MORE FUNCTION
-   ========================================= */
 window.toggleReadMore = function (postId, btn) {
   const postText = document.getElementById(`post-text-${postId}`);
   const fade = document.getElementById(`fade-overlay-${postId}`);
@@ -44,7 +41,6 @@ window.toggleReadMore = function (postId, btn) {
   const isExpanded = btn.getAttribute("data-expanded") === "true";
 
   if (!isExpanded) {
-    // EXPAND
     postText.style.maxHeight = postText.scrollHeight + 100 + "px";
     if (fade) fade.style.display = "none";
     btn.innerHTML =
@@ -55,14 +51,12 @@ window.toggleReadMore = function (postId, btn) {
       postText.style.maxHeight = "none";
     }, 400);
   } else {
-    // COLLAPSE
     postText.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
     if (fade) fade.style.display = "block";
     btn.innerHTML =
       'Read More <i class="fas fa-chevron-down ms-1" style="font-size: 0.8rem;"></i>';
     btn.setAttribute("data-expanded", "false");
 
-    // SCROLL FIX
     const card = postText.closest(".card");
     if (card) {
       const yOffset = card.getBoundingClientRect().top + window.scrollY - 80;
@@ -87,7 +81,6 @@ function debounce(func, wait) {
    MAIN DOM LOAD LOGIC
    ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  /* --- DARK MODE --- */
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
 
@@ -102,18 +95,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.remove("dark-mode");
   }
 
-  /* --- AUTO TOAST SHOW --- */
   document
     .querySelectorAll("#toastContainer .toast")
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
-  /* --- INITIAL POST TRUNCATION --- */
   truncatePosts();
-
-  // Re-run after window fully loads (for heavy images in posts)
   window.addEventListener("load", truncatePosts);
 
-  /* --- NOTIFICATION BADGE --- */
   const notifBtn = document.getElementById("notifDropdown");
   if (notifBtn) {
     notifBtn.addEventListener("click", () => {
@@ -127,11 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* --- TIMESTAMP REFRESH --- */
   refreshTimestamps();
   setInterval(refreshTimestamps, 60000);
 
-  /* --- LIVE SEARCH (AUTOCOMPLETE) --- */
   const searchInput = document.getElementById("searchInput");
   const searchResults = document.getElementById("searchResults");
 
@@ -140,7 +126,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "input",
       debounce(async function () {
         const query = this.value.trim();
-
         if (query.length < 1) {
           searchResults.classList.remove("show");
           return;
@@ -199,7 +184,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* --- GLOBAL USERNAME INPUT VALIDATION --- */
   const usernameInputs = document.querySelectorAll('input[name="username"]');
   usernameInputs.forEach((input) => {
     input.addEventListener("keypress", function (e) {
@@ -531,7 +515,7 @@ function checkUsername() {
 }
 
 /* =========================================
-   PRELOADER SYSTEM
+   PRELOADER SYSTEM & AJAX LOGIC
    ========================================= */
 const loader = document.getElementById("preloader");
 let safetyTimer = null;
@@ -569,7 +553,134 @@ window.addEventListener("pageshow", function (event) {
   }
 });
 
-document.addEventListener("click", function (e) {
+// ✅ FIX: AJAX Comments via Individual Post Fetch
+document.addEventListener("submit", async function (e) {
+  const form = e.target;
+
+  if (form.classList.contains("ajax-comment-form")) {
+    e.preventDefault();
+
+    const input = form.querySelector('input[name="text"]');
+    const btn = form.querySelector('button[type="submit"]');
+    const postId = form.getAttribute("data-post-id");
+
+    if (!input || !input.value.trim()) return;
+
+    btn.disabled = true;
+    const originalBtnText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    try {
+      const formData = new FormData(form);
+      // 1. Submit the comment to the server
+      await fetch(form.action, { method: "POST", body: formData });
+
+      // 2. Fetch the specific post page directly (guarantees we find the post HTML)
+      const postResponse = await fetch(`/post/${postId}`);
+      if (postResponse.ok) {
+        const html = await postResponse.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        const newComments = doc.querySelector(
+          `#comments-${postId} .comments-list`,
+        );
+        const oldComments = document.querySelector(
+          `#comments-${postId} .comments-list`,
+        );
+
+        if (newComments && oldComments) {
+          oldComments.innerHTML = newComments.innerHTML;
+
+          const newCount = doc.querySelector(
+            `[data-bs-target="#comments-${postId}"] span`,
+          );
+          const oldCount = document.querySelector(
+            `[data-bs-target="#comments-${postId}"] span`,
+          );
+          if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+
+          input.value = "";
+          showToast("Comment posted!");
+        } else {
+          window.location.reload();
+        }
+      } else {
+        showToast("Error retrieving updated comments", true);
+      }
+    } catch (error) {
+      showToast("Network error", true);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+    }
+    return;
+  }
+
+  // Normal Form Handlers
+  if (e.defaultPrevented) return;
+  if (form.id === "chatForm") return;
+  if (form.checkValidity()) {
+    showLoader();
+  }
+});
+
+// ✅ FIX: AJAX Comment Deletion via Individual Post Fetch
+document.addEventListener("click", async function (e) {
+  const deleteBtn = e.target.closest(".ajax-delete-comment");
+  if (deleteBtn) {
+    e.preventDefault();
+    if (!confirm("Delete this comment?")) return;
+
+    const postId = deleteBtn.getAttribute("data-post-id");
+    const originalText = deleteBtn.innerHTML;
+
+    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    deleteBtn.style.pointerEvents = "none";
+
+    try {
+      // 1. Delete the comment
+      await fetch(deleteBtn.href);
+
+      // 2. Fetch the updated post page
+      const postResponse = await fetch(`/post/${postId}`);
+      if (postResponse.ok) {
+        const html = await postResponse.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        const newComments = doc.querySelector(
+          `#comments-${postId} .comments-list`,
+        );
+        const oldComments = document.querySelector(
+          `#comments-${postId} .comments-list`,
+        );
+
+        if (newComments && oldComments) {
+          oldComments.innerHTML = newComments.innerHTML;
+
+          const newCount = doc.querySelector(
+            `[data-bs-target="#comments-${postId}"] span`,
+          );
+          const oldCount = document.querySelector(
+            `[data-bs-target="#comments-${postId}"] span`,
+          );
+          if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
+
+          showToast("Comment deleted!");
+        } else {
+          window.location.reload();
+        }
+      }
+    } catch (err) {
+      showToast("Network error", true);
+      deleteBtn.innerHTML = originalText;
+      deleteBtn.style.pointerEvents = "auto";
+    }
+    return;
+  }
+
+  // Preloader target logic
   const target = e.target.closest("a");
   if (target) {
     const href = target.getAttribute("href");
@@ -585,21 +696,11 @@ document.addEventListener("click", function (e) {
       targetAttr !== "_blank" &&
       !toggleAttr &&
       !dismissAttr &&
-      !actionAttr
+      !actionAttr &&
+      !target.classList.contains("ajax-delete-comment")
     ) {
       showLoader();
     }
-  }
-});
-
-document.addEventListener("submit", function (e) {
-  if (e.defaultPrevented) return;
-
-  const form = e.target;
-  if (form.id === "chatForm") return;
-
-  if (form.checkValidity()) {
-    showLoader();
   }
 });
 
@@ -767,9 +868,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-/* =========================================
-   DELETE MESSAGE (API CALL)
-   ========================================= */
 function deleteMessage(msgId, btnElement) {
   if (!confirm("Delete this message for me?")) return;
 
@@ -792,9 +890,6 @@ function deleteMessage(msgId, btnElement) {
     .catch((err) => console.error(err));
 }
 
-/* =========================================
-   PROFILE PAGE (Follow, Avatar, Socials)
-   ========================================= */
 function previewImage(input, imgId) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
@@ -856,9 +951,6 @@ function toggleFollow(userId, btn) {
     .catch((err) => console.error("Error:", err));
 }
 
-/* =========================================
-   FORCE RELOAD ON PAGE NAVIGATION
-   ========================================= */
 window.addEventListener("pageshow", function (event) {
   var historyTraversal =
     event.persisted ||

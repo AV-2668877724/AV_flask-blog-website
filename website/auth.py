@@ -268,11 +268,11 @@ def reset_request():
     return render_template('reset_request.html', user=current_user)
 
 # ==========================================
-#  RESET TOKEN (Fixed Auto-Logout)
+#  RESET TOKEN (Fixed Auto-Logout & Password Check)
 # ==========================================
 @auth.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_token(token):
-    # ✅ FIX: Force Logout if user clicks reset link while logged in
+    # Force Logout if user clicks reset link while logged in
     if current_user.is_authenticated:
         logout_user()
         flash('Logged out for security. Please create your new password.', category='info')
@@ -297,10 +297,15 @@ def reset_token(token):
         else:
             user = User.query.filter_by(email=email).first()
             if user:
-                user.password = generate_password_hash(password, method='scrypt')
-                db.session.commit()
-                flash('Your password has been updated! You can now login.', category='success')
-                return redirect(url_for('auth.login'))
+                # ✅ FIX: Check if the new password is the exact same as their current password
+                if check_password_hash(user.password, password):
+                    flash('Your new password cannot be the same as your current password. Please choose a different one.', category='error')
+                else:
+                    # Password is new and valid, save it!
+                    user.password = generate_password_hash(password, method='scrypt')
+                    db.session.commit()
+                    flash('Your password has been updated! You can now login.', category='success')
+                    return redirect(url_for('auth.login'))
 
     return render_template('reset_token.html', token=token, user=current_user)
 
