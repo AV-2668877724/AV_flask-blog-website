@@ -2,49 +2,127 @@
 content %}
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
 
-<div class="row justify-content-center">
-  <div class="col-lg-8">
-    <h2 class="font-heading fw-bold mb-4">Create a new story</h2>
-    <div class="card border-0 shadow-sm p-4">
+<style>
+  /* Premium Quill Editor Styles & Dark Mode Support */
+  .ql-toolbar.ql-snow {
+    border-color: var(--border-color) !important;
+    background-color: var(--bg-input) !important;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    padding: 12px !important;
+    transition: all var(--trans-smooth);
+  }
+  .ql-container.ql-snow {
+    border-color: var(--border-color) !important;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    font-size: 1.1rem !important;
+    font-family: var(--font-sans) !important;
+    transition: all var(--trans-smooth);
+  }
+  .ql-editor {
+    min-height: 350px;
+    padding: 1.5rem !important;
+    line-height: 1.8;
+  }
+
+  /* Quill Icons in Dark Mode */
+  body.dark-mode .ql-snow .ql-stroke {
+    stroke: var(--text-muted);
+  }
+  body.dark-mode .ql-snow .ql-fill {
+    fill: var(--text-muted);
+  }
+  body.dark-mode .ql-snow .ql-picker {
+    color: var(--text-muted);
+  }
+  body.dark-mode .ql-snow.ql-toolbar button:hover .ql-stroke,
+  body.dark-mode .ql-snow .ql-toolbar button:hover .ql-stroke {
+    stroke: var(--primary);
+  }
+</style>
+
+<div class="row justify-content-center fade-in-up">
+  <div class="col-lg-9 col-xl-8">
+    <div class="d-flex align-items-center mb-4 px-2">
+      <div
+        class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle me-3"
+        style="width: 50px; height: 50px"
+      >
+        <i class="fas fa-pen-nib fa-lg"></i>
+      </div>
+      <div>
+        <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
+          Create a new story
+        </h3>
+        <p class="text-muted small mb-0">
+          Share your thoughts with the community
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="card border-0 shadow-md p-4 p-md-5 mb-5"
+      style="
+        border-radius: var(--border-radius-lg);
+        background-color: var(--bg-card);
+      "
+    >
       <form
         method="POST"
         id="postForm"
         enctype="multipart/form-data"
-        onsubmit="return validatePostForm()"
+        onsubmit="return validatePostForm();"
       >
         <input type="hidden" name="text" id="hiddenInput" />
 
         <div class="mb-4">
-          <label class="form-label fw-bold small text-uppercase text-muted"
-            >Cover Image</label
+          <label
+            class="form-label fw-bold small text-uppercase"
+            style="color: var(--text-muted); letter-spacing: 0.5px"
+            >Cover Image
+            <span class="fw-normal text-lowercase">(Optional)</span></label
           >
           <input
             type="file"
             name="cover_image"
-            class="form-control"
+            class="form-control bg-light border-0 py-3 rounded-4 shadow-sm"
             accept="image/*"
+            style="cursor: pointer"
           />
-          <div class="form-text">Supported: JPG, PNG, WEBP (Max 5MB)</div>
+          <div class="form-text mt-2 fw-bold opacity-75">
+            <i class="fas fa-info-circle me-1"></i> Supported: JPG, PNG, WEBP
+            (Max 5MB)
+          </div>
         </div>
 
-        <div class="mb-3">
-          <div
-            id="editor-container"
-            style="
-              min-height: 300px;
-              font-family: 'Inter', sans-serif;
-              font-size: 1.1rem;
-            "
-          ></div>
+        <div class="mb-4 shadow-sm" style="border-radius: 16px">
+          <div id="editor-container"></div>
         </div>
 
         <div
-          class="d-flex justify-content-between align-items-center border-top pt-3"
+          class="d-flex flex-column flex-md-row justify-content-between align-items-center border-top pt-4 mt-2"
+          style="border-color: var(--border-color) !important"
         >
-          <small class="text-muted">Supports Markdown shortcuts</small>
-          <div class="d-flex gap-2">
-            <a href="/home" class="btn btn-outline-secondary">Cancel</a>
-            <button type="submit" class="btn btn-primary px-4">Publish</button>
+          <small class="text-muted fw-bold mb-3 mb-md-0"
+            ><i class="fab fa-markdown me-1"></i> Supports Markdown
+            shortcuts</small
+          >
+          <div class="d-flex gap-3 w-100 w-md-auto">
+            <a
+              href="/home"
+              class="btn btn-light rounded-pill px-4 fw-bold flex-grow-1 flex-md-grow-0 border shadow-sm"
+              style="background-color: var(--bg-input); color: var(--text-main)"
+              >Cancel</a
+            >
+            <button
+              type="submit"
+              class="btn btn-primary rounded-pill px-5 fw-bold flex-grow-1 flex-md-grow-0 shadow-sm"
+            >
+              Publish Story
+            </button>
           </div>
         </div>
       </form>
@@ -54,6 +132,7 @@ content %}
 
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
+  // Initialized exactly as your original code
   var quill = new Quill("#editor-container", {
     theme: "snow",
     placeholder: "Tell your story...",
@@ -71,28 +150,17 @@ content %}
     var html = quill.root.innerHTML;
     var text = quill.getText().trim();
     if (text.length === 0) {
-      alert("Content cannot be empty");
+      showToast("Content cannot be empty!"); // Upgraded alert to your toast notification if available
       return false;
     }
     document.getElementById("hiddenInput").value = html;
+
+    // Optional: Change button state to loading
+    const btn = document.querySelector('button[type="submit"]');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Publishing...';
+    btn.disabled = true;
+
     return true;
   }
 </script>
-
-<style>
-  .ql-toolbar.ql-snow {
-    border-color: #e5e7eb;
-    background-color: #f9fafb;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-  }
-  .ql-container.ql-snow {
-    border-color: #e5e7eb;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
-  }
-  .ql-editor {
-    color: var(--text-main);
-  }
-</style>
 {% endblock %}

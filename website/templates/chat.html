@@ -2,146 +2,184 @@
 endblock %} {% block content %}
 
 <style>
-  /* 1. Fix the Delete (Dustbin) Icon visibility in Dark Mode */
-  body.dark-mode .delete-btn {
-    color: #e0e0e0 !important; /* White/Light Gray */
-    opacity: 0.8 !important; /* High Visibility */
+  /* Premium Chat UI Adjustments */
+  .chat-container {
+    height: calc(100vh - 180px);
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
   }
-  body.dark-mode .delete-btn:hover {
-    color: #ff6b6b !important; /* Red on Hover */
-    opacity: 1 !important;
+  .chat-box {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    scroll-behavior: smooth;
   }
 
-  /* 2. General Dark Mode Chat Styling */
-  body.dark-mode .card {
-    background-color: #2b2b2b !important;
-    border-color: #444 !important;
+  /* Modern Chat Bubbles */
+  .msg-bubble {
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+    max-width: 75%;
+    word-wrap: break-word;
   }
-  body.dark-mode .card-header,
-  body.dark-mode .card-footer {
-    background-color: #1f1f1f !important;
-    border-color: #444 !important;
-    color: white !important;
+  .msg-sent {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    border-radius: 20px 20px 4px 20px;
   }
-  body.dark-mode #chat-box {
-    background-color: #121212 !important; /* Very dark background for message area */
+  .msg-received {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 20px 20px 20px 4px;
   }
-  body.dark-mode #messageInput {
-    color: white !important;
-    background-color: transparent !important;
+
+  /* Dark Mode specific chat tweaks */
+  body.dark-mode .msg-received {
+    background-color: #1e1e1e;
+    border-color: #333;
   }
-  body.dark-mode #messageInput::placeholder {
-    color: #aaa !important;
+  body.dark-mode .delete-btn {
+    color: #a1a1aa !important;
   }
-  body.dark-mode .input-group {
-    background-color: #2b2b2b !important;
-    border-color: #555 !important;
+  body.dark-mode .delete-btn:hover {
+    color: #ef4444 !important;
   }
-  body.dark-mode .text-muted {
-    color: #b0b0b0 !important; /* Lighter gray text for timestamps */
+  body.dark-mode .chat-footer-bg {
+    background-color: #121212 !important;
+    border-top: 1px solid #333 !important;
+  }
+
+  /* Input Area */
+  .chat-input-wrapper {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+    padding: 0.3rem 0.5rem 0.3rem 1.5rem;
+    transition: all 0.3s;
+  }
+  .chat-input-wrapper:focus-within {
+    background-color: var(--bg-card);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-glow);
   }
 </style>
 
-<div class="row justify-content-center">
-  <div class="col-md-8 col-lg-6">
-    <div class="card border-0 shadow-sm" style="height: 80vh">
+<div class="row justify-content-center fade-in-up">
+  <div class="col-lg-8 col-xl-7">
+    <div
+      class="card border-0 shadow-md chat-container"
+      style="
+        border-radius: var(--border-radius-lg);
+        background-color: var(--bg-body);
+      "
+    >
       <div
-        class="card-header bg-white py-3 border-bottom d-flex align-items-center"
+        class="card-header bg-transparent border-bottom p-3 d-flex align-items-center justify-content-between"
+        style="
+          background-color: var(--glass-bg);
+          backdrop-filter: blur(10px);
+          border-top-left-radius: var(--border-radius-lg);
+          border-top-right-radius: var(--border-radius-lg);
+          z-index: 10;
+        "
       >
-        <a
-          href="{{ url_for('views.home') }}"
-          class="btn btn-sm btn-light rounded-circle me-3"
-          ><i class="fas fa-arrow-left"></i
-        ></a>
-
-        <div class="position-relative me-2">
-          {% if recipient.profile_pic %}
-          <img
-            src="{{ url_for('static', filename='uploads/avatars/' + recipient.profile_pic) }}"
-            class="rounded-circle border"
-            width="40"
-            height="40"
-            style="object-fit: cover"
-          />
-          {% else %}
-          <div
-            class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center fw-bold"
-            style="width: 40px; height: 40px"
+        <div class="d-flex align-items-center gap-3">
+          <a
+            href="/inbox"
+            class="btn btn-icon text-muted shadow-sm bg-card d-md-none"
+            style="width: 36px; height: 36px"
           >
-            {{ recipient.username[0]|upper }}
-          </div>
-          {% endif %}
-        </div>
+            <i class="fas fa-chevron-left"></i>
+          </a>
 
-        <div>
-          <h6 class="fw-bold mb-0">{{ recipient.username }}</h6>
-
-          <small class="text-muted" id="status-container-{{ recipient.id }}">
-            {% if recipient.is_online %}
-            <i class="fas fa-circle text-success" style="font-size: 8px"></i>
-            <span id="status-text-{{ recipient.id }}">Online</span>
+          <a
+            href="{{ url_for('views.profile', username=recipient.username) }}"
+            class="text-decoration-none d-flex align-items-center gap-3"
+          >
+            {% if recipient.profile_pic %}
+            <img
+              src="{{ url_for('static', filename='uploads/avatars/' + recipient.profile_pic) }}"
+              class="rounded-circle shadow-sm"
+              width="46"
+              height="46"
+              style="object-fit: cover"
+            />
             {% else %}
-            <i class="fas fa-circle text-secondary" style="font-size: 8px"></i>
-            <span id="status-text-{{ recipient.id }}">
-              {% if recipient.last_seen %} Last seen {{
-              recipient.last_seen.strftime('%H:%M') }} {% else %} Offline {%
-              endif %}
-            </span>
+            <div
+              class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+              style="width: 46px; height: 46px; font-size: 1.2rem"
+            >
+              {{ recipient.username[0]|upper }}
+            </div>
             {% endif %}
-          </small>
+            <div class="lh-sm">
+              <h5
+                class="mb-0 fw-bold font-heading"
+                style="color: var(--text-main)"
+              >
+                {{ recipient.username }}
+              </h5>
+              <small
+                id="status-text-{{ recipient.id }}"
+                class="fw-bold {% if recipient.is_online %}text-success{% else %}text-muted{% endif %}"
+              >
+                {% if recipient.is_online %}
+                <i class="fas fa-circle ms-1" style="font-size: 0.5rem"></i>
+                Online {% else %} Offline • {{
+                recipient.last_seen.strftime("%H:%M") if recipient.last_seen
+                else "Unknown" }} {% endif %}
+              </small>
+            </div>
+          </a>
         </div>
       </div>
 
-      <div
-        class="card-body p-4 overflow-auto bg-light"
-        id="chat-box"
-        style="scroll-behavior: smooth"
-      >
+      <div class="chat-box" id="chat-box">
         {% for msg in messages %}
-        <div
-          class="d-flex w-100 mb-3 align-items-end message-row"
-          data-msg-id="{{ msg.id }}"
-          class="{{ 'justify-content-end' if msg.sender_id == user.id else 'justify-content-start' }}"
-        >
-          {% if msg.sender_id == user.id %}
+        <div class="d-flex flex-column mb-3 fade-in-up" id="msg-{{ msg.id }}">
+          {% if msg.sender_id == current_user.id %}
           <div class="d-flex align-items-end justify-content-end w-100">
             <button
               class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn"
               onclick="deleteMessage('{{ msg.id }}', this)"
               title="Delete for me"
             >
-              <i class="fas fa-trash-alt" style="font-size: 0.8rem"></i>
+              <i class="fas fa-trash-alt" style="font-size: 0.85rem"></i>
             </button>
-
-            <div
-              class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm"
-              style="max-width: 75%"
-            >
+            <div class="msg-bubble msg-sent">
               {{ msg.text }}
-              <div class="text-white-50 text-end" style="font-size: 0.65rem">
+              <div
+                class="text-white-50 text-end mt-1"
+                style="font-size: 0.65rem; font-weight: 600"
+              >
                 {{ msg.date_created.strftime('%H:%M') }}
+                <i class="fas fa-check-double ms-1"></i>
               </div>
             </div>
           </div>
 
           {% else %}
           <div class="d-flex align-items-end justify-content-start w-100">
-            <div
-              class="bg-white text-dark border rounded-3 px-3 py-2 shadow-sm"
-              style="max-width: 75%"
-            >
+            <div class="msg-bubble msg-received shadow-sm">
               {{ msg.text }}
-              <div class="text-muted text-end" style="font-size: 0.65rem">
+              <div
+                class="text-muted text-end mt-1"
+                style="font-size: 0.65rem; font-weight: 600"
+              >
                 {{ msg.date_created.strftime('%H:%M') }}
               </div>
             </div>
-
             <button
               class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn"
               onclick="deleteMessage('{{ msg.id }}', this)"
               title="Delete for me"
             >
-              <i class="fas fa-trash-alt" style="font-size: 0.8rem"></i>
+              <i class="fas fa-trash-alt" style="font-size: 0.85rem"></i>
             </button>
           </div>
           {% endif %}
@@ -149,19 +187,30 @@ endblock %} {% block content %}
         {% endfor %}
       </div>
 
-      <div class="card-footer bg-white py-3 border-0">
-        <form id="chatForm" data-recipient="{{ recipient.id }}">
-          <div class="input-group bg-light rounded-pill border">
+      <div
+        class="card-footer bg-white py-3 border-0 chat-footer-bg"
+        style="
+          border-bottom-left-radius: var(--border-radius-lg);
+          border-bottom-right-radius: var(--border-radius-lg);
+        "
+      >
+        <form id="chatForm" data-recipient="{{ recipient.id }}" class="m-0">
+          <div class="d-flex align-items-center chat-input-wrapper">
             <input
               type="text"
               id="messageInput"
-              class="form-control bg-transparent border-0"
+              class="form-control bg-transparent border-0 shadow-none px-0"
               placeholder="Type a message..."
               required
               autocomplete="off"
+              style="color: var(--text-main); font-weight: 500"
             />
-            <button class="btn btn-primary rounded-pill m-1 px-4" type="submit">
-              <i class="fas fa-paper-plane"></i>
+            <button
+              class="btn btn-primary rounded-circle ms-2 shadow-sm d-flex align-items-center justify-content-center"
+              type="submit"
+              style="width: 44px; height: 44px; flex-shrink: 0"
+            >
+              <i class="fas fa-paper-plane" style="margin-left: -2px"></i>
             </button>
           </div>
         </form>
@@ -169,4 +218,26 @@ endblock %} {% block content %}
     </div>
   </div>
 </div>
+
+<script>
+  // Force scroll to bottom immediately on load
+  document.addEventListener("DOMContentLoaded", function () {
+    const chatBox = document.getElementById("chat-box");
+    if (chatBox) {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  });
+
+  // Preserve your existing delete logic exactly
+  function deleteMessage(msgId, btn) {
+    if (!confirm("Delete this message for you?")) return;
+    fetch(`/delete-message/${msgId}`, { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          document.getElementById(`msg-${msgId}`).remove();
+        }
+      });
+  }
+</script>
 {% endblock %}

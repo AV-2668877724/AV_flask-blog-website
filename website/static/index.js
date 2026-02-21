@@ -1,24 +1,78 @@
 /* =========================================
    GLOBAL CONFIG & HELPER FUNCTIONS
    ========================================= */
-const TRUNCATE_HEIGHT = 400;
+const TRUNCATE_HEIGHT = 320;
 
 function truncatePosts() {
   document.querySelectorAll(".post-text").forEach((el) => {
     if (el.dataset.processed) return;
-    const overlay = el.parentElement.querySelector(".fade-overlay");
-    if (el.scrollHeight > TRUNCATE_HEIGHT) {
-      if (overlay) overlay.style.display = "block";
-      el.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
-      el.style.overflow = "hidden";
-    }
-    el.dataset.processed = "true";
+
+    setTimeout(() => {
+      el.offsetHeight; // Force reflow
+      if (el.scrollHeight > TRUNCATE_HEIGHT) {
+        const postId = el.id.replace("post-text-", "");
+        const fade = document.getElementById(`fade-overlay-${postId}`);
+        const btn = document.querySelector(
+          `.see-more-btn[data-post-id="${postId}"]`,
+        );
+
+        if (fade && btn) {
+          el.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
+          el.style.overflow = "hidden";
+          el.style.transition = "max-height 0.4s ease-out";
+          fade.style.display = "block";
+
+          btn.style.display = "inline-block";
+          btn.style.color = "#3b82f6";
+          btn.setAttribute("data-expanded", "false");
+        }
+      }
+      el.dataset.processed = "true";
+    }, 400);
   });
 }
 
+/* =========================================
+   ✅ FIX: GLOBAL TOGGLE READ MORE FUNCTION
+   ========================================= */
+window.toggleReadMore = function (postId, btn) {
+  const postText = document.getElementById(`post-text-${postId}`);
+  const fade = document.getElementById(`fade-overlay-${postId}`);
+
+  if (!postText) return;
+
+  const isExpanded = btn.getAttribute("data-expanded") === "true";
+
+  if (!isExpanded) {
+    // EXPAND
+    postText.style.maxHeight = postText.scrollHeight + 100 + "px";
+    if (fade) fade.style.display = "none";
+    btn.innerHTML =
+      'See Less <i class="fas fa-chevron-up ms-1" style="font-size: 0.8rem;"></i>';
+    btn.setAttribute("data-expanded", "true");
+
+    setTimeout(() => {
+      postText.style.maxHeight = "none";
+    }, 400);
+  } else {
+    // COLLAPSE
+    postText.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
+    if (fade) fade.style.display = "block";
+    btn.innerHTML =
+      'Read More <i class="fas fa-chevron-down ms-1" style="font-size: 0.8rem;"></i>';
+    btn.setAttribute("data-expanded", "false");
+
+    // SCROLL FIX
+    const card = postText.closest(".card");
+    if (card) {
+      const yOffset = card.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: yOffset, behavior: "smooth" });
+    }
+  }
+};
+
 /**
  * ⚡ PERFORMANCE: Debounce Function
- * Prevents functions from firing too often (e.g., on every keystroke).
  */
 function debounce(func, wait) {
   let timeout;
@@ -56,35 +110,8 @@ document.addEventListener("DOMContentLoaded", () => {
   /* --- INITIAL POST TRUNCATION --- */
   truncatePosts();
 
-  /* --- READ MORE / READ LESS DELEGATION --- */
-  document.addEventListener("click", function (e) {
-    if (e.target && e.target.classList.contains("see-more-btn")) {
-      const btn = e.target;
-      const postId = btn.dataset.postId;
-      const postText = document.getElementById(`post-text-${postId}`);
-      const overlay = document.getElementById(`fade-overlay-${postId}`);
-
-      if (!postText) return;
-
-      if (btn.innerText.trim() === "Read More") {
-        postText.style.maxHeight = "none";
-        postText.style.overflow = "visible";
-        btn.innerText = "Read Less";
-        if (overlay) overlay.style.display = "none";
-      } else {
-        postText.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
-        postText.style.overflow = "hidden";
-        btn.innerText = "Read More";
-        if (overlay) overlay.style.display = "block";
-
-        const rect = btn.getBoundingClientRect();
-        window.scrollTo({
-          top: window.scrollY + rect.top - 100,
-          behavior: "smooth",
-        });
-      }
-    }
-  });
+  // Re-run after window fully loads (for heavy images in posts)
+  window.addEventListener("load", truncatePosts);
 
   /* --- NOTIFICATION BADGE --- */
   const notifBtn = document.getElementById("notifDropdown");
@@ -109,7 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchResults = document.getElementById("searchResults");
 
   if (searchInput && searchResults) {
-    // ⚡ PERFORMANCE: Wrapped in debounce to reduce server calls
     searchInput.addEventListener(
       "input",
       debounce(async function () {
@@ -152,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } catch (error) {
           console.error("Search error:", error);
         }
-      }, 300), // ⚡ Waited 300ms before firing
+      }, 300),
     );
 
     searchInput.addEventListener("keypress", function (e) {
@@ -409,16 +435,14 @@ function resetAdminFilter(sectionId) {
 /* =========================================
    USERNAME AVAILABILITY (SIGNUP ONLY)
    ========================================= */
-
 function checkSignupUsername() {
   const usernameInput = document.getElementById("signupUsername");
   const statusDiv = document.getElementById("signupUsernameStatus");
-  const submitBtn = document.getElementById("signupSubmitBtn"); // The Create Account button
+  const submitBtn = document.getElementById("signupSubmitBtn");
   const checkBtn = document.getElementById("checkBtn");
 
   const username = usernameInput.value.trim();
 
-  // 1. Basic Validation
   if (username.length < 3) {
     statusDiv.innerHTML =
       '<span class="text-danger">Too short (min 3 chars).</span>';
@@ -426,13 +450,10 @@ function checkSignupUsername() {
     return;
   }
 
-  // 2. Show Loading State
   checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
   checkBtn.disabled = true;
 
-  // 3. Call the Correct Backend API
   fetch("/check-username-signup", {
-    // ✅ Points to auth.py route
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: username }),
@@ -443,13 +464,11 @@ function checkSignupUsername() {
       checkBtn.disabled = false;
 
       if (data.available) {
-        // Success: Unlock the Create Account button
         statusDiv.innerHTML = `<span class="text-success"><i class="fas fa-check-circle"></i> ${data.message}</span>`;
         submitBtn.disabled = false;
         usernameInput.classList.remove("is-invalid");
         usernameInput.classList.add("is-valid");
       } else {
-        // Failure: Keep it locked
         statusDiv.innerHTML = `<span class="text-danger"><i class="fas fa-times-circle"></i> ${data.message}</span>`;
         submitBtn.disabled = true;
         usernameInput.classList.add("is-invalid");
@@ -468,14 +487,13 @@ function resetSignupCheck() {
   const statusDiv = document.getElementById("signupUsernameStatus");
   const usernameInput = document.getElementById("signupUsername");
 
-  // Lock the button immediately if they type anything new
   if (submitBtn) submitBtn.disabled = true;
   if (statusDiv)
     statusDiv.innerHTML =
       '<span class="text-muted small">Please check availability.</span>';
   if (usernameInput) usernameInput.classList.remove("is-valid", "is-invalid");
 }
-// 3. Profile Edit Logic
+
 let allowUsernameSubmit = false;
 function checkUsername() {
   const input = document.getElementById("newUsername");
@@ -661,14 +679,10 @@ document.addEventListener("DOMContentLoaded", function () {
     chatBox.scrollTop = chatBox.scrollHeight;
 
     socket.on("receive_message", function (msg) {
-      // 🛡️ DEBUG & ROBUST MATCHING
-      // We convert all IDs to Strings to ensure that 5 matches "5"
       const msgSender = String(msg.sender_id);
       const msgRecipient = String(msg.recipient_id);
       const currentChatPartner = String(recipientId);
 
-      // Condition 1: Message is FROM the person I'm chatting with (I am Receiver)
-      // Condition 2: Message is TO the person I'm chatting with (I am Sender)
       if (
         msgSender === currentChatPartner ||
         msgRecipient === currentChatPartner
@@ -713,7 +727,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     function appendMessageToChat(msg) {
-      // Prevent duplicate messages
       if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`))
         return;
 
@@ -728,9 +741,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
                         <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
                     </button>
-                    <div class="bg-primary text-white rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+                    <div class="msg-bubble msg-sent">
                         ${msg.text}
-                        <div class="text-white-50 text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                        <div class="text-white-50 text-end mt-1" style="font-size: 0.65rem; font-weight: 600;">${msg.time} <i class="fas fa-check-double ms-1"></i></div>
                     </div>
                 </div>
             </div>`;
@@ -738,9 +751,9 @@ document.addEventListener("DOMContentLoaded", function () {
         html = `
             <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-start" data-msg-id="${msg.id}">
                 <div class="d-flex align-items-end justify-content-start w-100">
-                    <div class="bg-white text-dark border rounded-3 px-3 py-2 shadow-sm" style="max-width: 75%;">
+                    <div class="msg-bubble msg-received shadow-sm">
                         ${msg.text}
-                        <div class="text-muted text-end" style="font-size: 0.65rem;">${msg.time}</div>
+                        <div class="text-muted text-end mt-1" style="font-size: 0.65rem; font-weight: 600;">${msg.time}</div>
                     </div>
                     <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" 
                             onclick="deleteMessage('${msg.id}', this)" title="Delete for me">

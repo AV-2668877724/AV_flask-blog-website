@@ -1,15 +1,21 @@
 {% extends "base.html" %} {% block title %}Search Results{% endblock %} {% block
 content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center fade-in-up">
   <div class="col-lg-8">
-    <h3 class="font-heading fw-bold mb-4" style="color: var(--text-main)">
-      Results for "<span class="text-primary">{{ query }}</span>"
-    </h3>
+    <div class="d-flex align-items-center mb-4 px-2">
+      <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
+        Results for "<span class="text-primary">{{ query }}</span>"
+      </h3>
+      <div
+        class="flex-grow-1 ms-4 border-top opacity-25"
+        style="border-color: var(--text-muted) !important"
+      ></div>
+    </div>
 
     {% if users %}
     <h5
       class="fw-bold mb-3 small text-uppercase"
-      style="color: var(--text-muted)"
+      style="color: var(--text-muted); letter-spacing: 1px"
     >
       People Found
     </h5>
@@ -17,46 +23,59 @@ content %}
       {% for u in users %}
       <div class="col-md-6">
         <div
-          class="card border-0 shadow-sm h-100"
-          style="background-color: var(--bg-card)"
+          class="card border-0 shadow-sm h-100 transition-all hover-opacity-100"
+          style="background-color: var(--bg-card); border-radius: 16px"
         >
-          <div class="card-body d-flex align-items-center gap-3">
-            <a href="{{ url_for('views.profile', username=u.username) }}">
+          <div class="card-body d-flex align-items-center gap-3 p-3">
+            <a
+              href="{{ url_for('views.profile', username=u.username) }}"
+              class="flex-shrink-0"
+            >
               {% if u.profile_pic %}
               <img
                 src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-                class="rounded-circle"
-                style="width: 50px; height: 50px; object-fit: cover"
+                class="rounded-circle shadow-sm"
+                style="
+                  width: 56px;
+                  height: 56px;
+                  object-fit: cover;
+                  border: 2px solid var(--border-color);
+                "
               />
               {% else %}
               <div
-                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary"
+                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
                 style="
-                  width: 50px;
-                  height: 50px;
-                  font-size: 1.2rem;
-                  background-color: var(--bg-input);
+                  width: 56px;
+                  height: 56px;
+                  font-size: 1.4rem;
+                  background: linear-gradient(135deg, var(--primary), #4f46e5);
                 "
               >
                 {{ u.username[0]|upper }}
               </div>
               {% endif %}
             </a>
-            <div>
+            <div class="flex-grow-1 min-w-0">
               <a
                 href="{{ url_for('views.profile', username=u.username) }}"
-                class="text-decoration-none fw-bold d-block"
-                style="color: var(--text-main)"
-                >{{ u.username }}</a
+                class="text-decoration-none fw-bold d-block text-truncate"
+                style="color: var(--text-main); font-size: 1.05rem"
               >
+                {{ u.username }}
+              </a>
               <small style="color: var(--text-muted)"
                 >Joined {{ u.date_created.strftime('%b %Y') }}</small
               >
             </div>
-            <div class="ms-auto">
+            <div class="ms-auto flex-shrink-0">
               <a
                 href="{{ url_for('views.profile', username=u.username) }}"
-                class="btn btn-sm btn-outline-primary rounded-pill"
+                class="btn btn-sm btn-light rounded-pill px-3 fw-bold border shadow-sm"
+                style="
+                  background-color: var(--bg-input);
+                  color: var(--text-main);
+                "
                 >View</a
               >
             </div>
@@ -67,21 +86,23 @@ content %}
     </div>
     {% endif %} {% if not users and suggestions %}
     <div
-      class="alert border shadow-sm mb-4"
+      class="alert border-0 shadow-sm mb-4 d-flex align-items-center gap-3"
       style="
         background-color: var(--bg-input);
         color: var(--text-main);
-        border-color: var(--border-color);
+        border-radius: 16px;
       "
     >
-      <i class="fas fa-info-circle me-2 text-primary"></i>
-      We couldn't find an exact match for "<strong>{{ query }}</strong>", but
-      here are some suggestions:
+      <i class="fas fa-info-circle fa-lg text-primary"></i>
+      <div>
+        We couldn't find an exact match for "<strong>{{ query }}</strong>", but
+        here are some suggestions:
+      </div>
     </div>
 
     <h5
       class="fw-bold mb-3 small text-uppercase"
-      style="color: var(--text-muted)"
+      style="color: var(--text-muted); letter-spacing: 1px"
     >
       Suggested People
     </h5>
@@ -89,46 +110,59 @@ content %}
       {% for u in suggestions %}
       <div class="col-md-6">
         <div
-          class="card border-0 shadow-sm h-100"
-          style="background-color: var(--bg-card)"
+          class="card border-0 shadow-sm h-100 transition-all hover-opacity-100"
+          style="background-color: var(--bg-card); border-radius: 16px"
         >
-          <div class="card-body d-flex align-items-center gap-3">
-            <a href="{{ url_for('views.profile', username=u.username) }}">
+          <div class="card-body d-flex align-items-center gap-3 p-3">
+            <a
+              href="{{ url_for('views.profile', username=u.username) }}"
+              class="flex-shrink-0"
+            >
               {% if u.profile_pic %}
               <img
                 src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-                class="rounded-circle"
-                style="width: 50px; height: 50px; object-fit: cover"
+                class="rounded-circle shadow-sm"
+                style="
+                  width: 56px;
+                  height: 56px;
+                  object-fit: cover;
+                  border: 2px solid var(--border-color);
+                "
               />
               {% else %}
               <div
-                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-secondary"
+                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
                 style="
-                  width: 50px;
-                  height: 50px;
-                  font-size: 1.2rem;
-                  background-color: var(--bg-input);
+                  width: 56px;
+                  height: 56px;
+                  font-size: 1.4rem;
+                  background: linear-gradient(135deg, var(--primary), #4f46e5);
                 "
               >
                 {{ u.username[0]|upper }}
               </div>
               {% endif %}
             </a>
-            <div>
+            <div class="flex-grow-1 min-w-0">
               <a
                 href="{{ url_for('views.profile', username=u.username) }}"
-                class="text-decoration-none fw-bold d-block"
-                style="color: var(--text-main)"
-                >{{ u.username }}</a
+                class="text-decoration-none fw-bold d-block text-truncate"
+                style="color: var(--text-main); font-size: 1.05rem"
               >
+                {{ u.username }}
+              </a>
               <small style="color: var(--text-muted)"
                 >You might know them</small
               >
             </div>
-            <div class="ms-auto">
+            <div class="ms-auto flex-shrink-0">
               <a
                 href="{{ url_for('views.profile', username=u.username) }}"
-                class="btn btn-sm btn-outline-secondary rounded-pill"
+                class="btn btn-sm btn-light rounded-pill px-3 fw-bold border shadow-sm"
+                style="
+                  background-color: var(--bg-input);
+                  color: var(--text-main);
+                "
                 >View</a
               >
             </div>
@@ -141,14 +175,29 @@ content %}
 
     <h5
       class="fw-bold mb-3 small text-uppercase mt-4"
-      style="color: var(--text-muted)"
+      style="color: var(--text-muted); letter-spacing: 1px"
     >
       Stories Found
     </h5>
+
     {% if posts %} {% include "_posts.html" %} {% else %}
-    <p class="fst-italic" style="color: var(--text-muted)">
-      No stories found matching your query.
-    </p>
+    <div
+      class="text-center py-5 my-3 rounded-4 border border-dashed shadow-sm"
+      style="
+        background-color: var(--bg-card);
+        border-color: var(--border-color) !important;
+      "
+    >
+      <div
+        class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
+        style="width: 70px; height: 70px"
+      >
+        <i class="fas fa-search fa-xl opacity-50"></i>
+      </div>
+      <p class="mb-0 text-muted fw-bold">
+        No stories found matching your query.
+      </p>
+    </div>
     {% endif %}
   </div>
 </div>

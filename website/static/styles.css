@@ -1,471 +1,288 @@
 /* =========================================
-   1. VARIABLES & THEME CONFIG (UPGRADED)
+   1. PREMIUM VARIABLES & THEME CONFIG
    ========================================= */
-:root {
-  /* Typography */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-
-  /* Light Theme (Premium) */
-  --primary: #2563eb;       
-  --primary-hover: #1d4ed8;
-  --primary-glow: rgba(37, 99, 235, 0.4);
-  --bg-body: #f4f7f6;       /* Slightly cooler off-white */
-  --bg-card: #ffffff;
-  --bg-input: #f1f5f9;
-  --text-main: #0f172a;     /* Deep readable dark */
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
+   :root {
+    /* Typography */
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Playfair Display', Georgia, serif;
   
-  /* Modern UI Elements */
-  --border-radius: 16px;
-  --border-radius-lg: 24px;
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-md: 0 8px 16px rgba(0,0,0,0.06);
-  --shadow-hover: 0 12px 24px rgba(37, 99, 235, 0.12); /* Interactive shadow */
-  --glass-bg: rgba(255, 255, 255, 0.85);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+    /* Light Theme - Soft & Premium */
+    --primary: #3b82f6;       
+    --primary-hover: #2563eb;
+    --primary-glow: rgba(59, 130, 246, 0.4);
+    --bg-body: #f8fafc;       /* Very soft blue-tinted white */
+    --bg-card: #ffffff;
+    --bg-input: #f1f5f9;
+    --text-main: #0f172a;     
+    --text-muted: #64748b;
+    --border-color: rgba(226, 232, 240, 0.8);
+    
+    /* Modern UI Elements */
+    --border-radius: 16px;
+    --border-radius-lg: 24px;
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    --shadow-hover: 0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.05); 
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+    
+    /* Transitions */
+    --trans-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --trans-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
   
-  /* Transitions */
-  --trans-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --trans-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Dark Theme Variables (OLED-style) */
-body.dark-mode {
-  --bg-body: #09090b;       /* Very deep dark */
-  --bg-card: #18181b;       /* Elevated dark */
-  --bg-input: #27272a;
-  --text-main: #f8fafc;     
-  --text-muted: #94a3b8;
-  --border-color: #27272a;
+  /* Deep Dark Theme (OLED/Premium Style) */
+  body.dark-mode {
+    --bg-body: #050505;       /* True Black backdrop */
+    --bg-card: #121212;       /* Elevated dark */
+    --bg-input: #1a1a1a;
+    --text-main: #f8fafc;     
+    --text-muted: #a1a1aa;
+    --border-color: rgba(255, 255, 255, 0.08);
+    
+    --primary: #60a5fa;
+    --primary-hover: #93c5fd;
+    --primary-glow: rgba(96, 165, 250, 0.25);
+    
+    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.9), 0 0 15px 0 var(--primary-glow);
+    --glass-bg: rgba(18, 18, 18, 0.75);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+  }
   
-  --primary: #3b82f6;
-  --primary-hover: #60a5fa;
-  --primary-glow: rgba(59, 130, 246, 0.3);
+  /* =========================================
+     2. GLOBAL RESET & MESH BACKGROUND
+     ========================================= */
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    line-height: 1.6;
+    transition: background-color var(--trans-smooth), color var(--trans-smooth);
+    padding-bottom: 70px;
+    overflow-x: hidden;
+    /* Subtle Mesh Gradient for Light Mode */
+    background-image: radial-gradient(at 0% 0%, hsla(217,100%,97%,1) 0px, transparent 50%),
+                      radial-gradient(at 100% 0%, hsla(210,100%,98%,1) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
   
-  --shadow-sm: 0 2px 4px rgba(0,0,0,0.4);
-  --shadow-md: 0 8px 16px rgba(0,0,0,0.5);
-  --shadow-hover: 0 12px 24px rgba(0,0,0,0.7);
-  --glass-bg: rgba(24, 24, 27, 0.8);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* =========================================
-   2. GLOBAL RESET & SCROLLBAR
-   ========================================= */
-body {
-  font-family: var(--font-sans);
-  background-color: var(--bg-body);
-  color: var(--text-main);
-  line-height: 1.6;
-  transition: background-color var(--trans-smooth), color var(--trans-smooth);
-  padding-bottom: 70px;
-  overflow-x: hidden;
-}
-
-h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
-}
-
-a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: color var(--trans-fast);
-}
-a:hover { color: var(--primary-hover); }
-
-/* CUSTOM SCROLLBAR */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-body); }
-::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-/* =========================================
-   3. ANIMATIONS & PAGE LOAD
-   ========================================= */
-.fade-in-up {
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-@keyframes fadeInUp {
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* =========================================
-   4. GLASSMORPHISM NAVBAR
-   ========================================= */
-.navbar {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: var(--glass-border);
-  box-shadow: var(--shadow-sm);
-  padding: 0.85rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 1020;
-  transition: all var(--trans-smooth);
-}
-
-.navbar.scrolled {
-  padding: 0.5rem 0;
-  box-shadow: var(--shadow-md);
-}
-
-.nav-logo { height: 34px; width: auto; border-radius: 8px; transition: transform var(--trans-fast); }
-.navbar-brand:hover .nav-logo { transform: scale(1.05) rotate(-3deg); }
-
-.nav-link { color: var(--text-muted) !important; font-weight: 500; font-size: 0.95rem; transition: all var(--trans-fast); }
-.nav-link:hover, .nav-link.active { color: var(--primary) !important; transform: translateY(-1px); }
-
-.user-avatar-nav {
-  width: 40px; height: 40px; object-fit: cover; border-radius: 50%;
-  transition: box-shadow var(--trans-fast), transform var(--trans-fast);
-}
-.user-avatar-nav:hover { box-shadow: 0 0 0 3px var(--primary-glow); transform: scale(1.05); }
-
-@media (max-width: 991px) {
-    .navbar form { margin-top: 10px; margin-bottom: 10px; width: 100%; }
-    .navbar .input-group { width: 100%; }
-}
-
-/* =========================================
-   5. INTERACTIVE CARDS
-   ========================================= */
-.card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 1.5rem;
-  transition: transform var(--trans-smooth), box-shadow var(--trans-smooth), border-color var(--trans-smooth);
-}
-
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
-  border-color: rgba(37, 99, 235, 0.2);
-}
-
-.card-header {
-  background-color: transparent;
-  border-bottom: 1px solid var(--border-color);
-  padding: 1.25rem 1.5rem;
-}
-
-/* =========================================
-   6. FORMS & INPUTS
-   ========================================= */
-.form-control, .form-select, .search-input {
-  background-color: var(--bg-input);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  transition: all var(--trans-fast);
-}
-
-.form-control:focus, .search-input:focus {
-  background-color: var(--bg-card);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px var(--primary-glow);
-  color: var(--text-main);
-  transform: translateY(-1px);
-}
-
-.search-input { border-radius: 20px; padding-left: 1rem; width: 260px; }
-
-/* =========================================
-   7. INTERACTIVE BUTTONS
-   ========================================= */
-.btn {
-  font-weight: 600;
-  border-radius: 10px;
-  padding: 0.6rem 1.25rem;
-  transition: all var(--trans-fast);
-  letter-spacing: 0.3px;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), #4f46e5);
-  border: none;
-  color: white;
-  box-shadow: 0 4px 10px var(--primary-glow);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, var(--primary-hover), #4338ca);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px var(--primary-glow);
-  color: white;
-}
-
-.btn-primary:active { transform: translateY(1px); box-shadow: 0 2px 5px var(--primary-glow); }
-
-.btn-icon {
-  color: var(--text-muted);
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  width: 40px; height: 40px;
-  display: flex; align-items: center; justify-content: center;
-  transition: all var(--trans-fast);
-  background-color: var(--bg-card);
-}
-.btn-icon:hover {
-  color: var(--primary);
-  border-color: var(--primary);
-  background-color: var(--primary-glow);
-  transform: rotate(5deg) scale(1.05);
-}
-
-/* =========================================
-   8. MODERN PRELOADER & SKELETON
-   ========================================= */
-#preloader {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background-color: var(--bg-card); z-index: 99999;
-    display: flex; justify-content: center; align-items: center;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-}
-.loader-logo { width: 80px; height: 80px; animation: breathe 2s ease-in-out infinite; }
-.loader-dots span {
-    width: 10px; height: 10px; background-color: var(--primary);
-    border-radius: 50%; display: inline-block;
-    animation: wave 1.4s infinite ease-in-out both;
-}
-.loader-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loader-dots span:nth-child(2) { animation-delay: -0.16s; }
-.loader-hidden { opacity: 0; visibility: hidden; }
-
-@keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 10px var(--primary-glow)); }
-    50% { transform: scale(1.05); opacity: 0.85; filter: drop-shadow(0 0 20px var(--primary-glow)); }
-}
-@keyframes wave {
-    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-    40% { transform: scale(1); opacity: 1; }
-}
-
-.skeleton {
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 4px;
-}
-body.dark-mode .skeleton {
-    background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
-}
-@keyframes shimmer { 100% { background-position: -200% 0; } }
-
-/* =========================================
-   9. MOBILE NAVIGATION & UTILITIES
-   ========================================= */
-.mobile-nav {
-    position: fixed; bottom: 15px; left: 5%; width: 90%; height: 65px;
-    background: var(--glass-bg); backdrop-filter: blur(15px);
-    border: 1px solid var(--border-color); border-radius: 24px;
-    display: flex; justify-content: space-around; align-items: center;
-    z-index: 1040; box-shadow: var(--shadow-md);
-}
-@media (max-width: 768px) {
-    .navbar { display: none !important; }
-    body { padding-bottom: 90px; } 
-}
-.mobile-nav-item { font-size: 1.5rem; color: var(--text-muted); transition: all 0.2s; display: flex; align-items: center; }
-.mobile-nav-item.active, .mobile-nav-item:hover { color: var(--primary); transform: translateY(-3px); }
-.mobile-nav-add {
-    background: linear-gradient(135deg, var(--primary), #4f46e5); color: white;
-    width: 50px; height: 50px; border-radius: 16px;
-    display: flex; justify-content: center; align-items: center;
-    font-size: 1.5rem; box-shadow: 0 4px 10px var(--primary-glow);
-    margin-top: -20px; border: 3px solid var(--bg-body); transition: transform 0.2s;
-}
-.mobile-nav-add:hover { transform: scale(1.1) rotate(90deg); color: white; }
-
-.user-avatar-xs {
-  width: 32px; height: 32px; border-radius: 50%;
-  background-color: var(--primary); color: #fff;
-  display: flex; align-items: center; justify-content: center;
-}
-
-#searchResults {
-    position: absolute; top: 100%; left: 0; right: 0;
-    z-index: 9999; background-color: var(--bg-card);
+  body.dark-mode {
+    /* Subtle Glowing Orbs for Dark Mode */
+    background-image: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+  }
+  
+  h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+  }
+  
+  a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: all var(--trans-fast);
+  }
+  a:hover { color: var(--primary-hover); }
+  
+  /* CUSTOM SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  
+  /* =========================================
+     3. GLASSMORPHISM NAVBAR
+     ========================================= */
+  .navbar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: var(--glass-border);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    transition: all var(--trans-smooth);
+  }
+  
+  .navbar.scrolled {
+    padding: 0.6rem 0;
+    box-shadow: var(--shadow-sm);
+    background: rgba(255, 255, 255, 0.9);
+  }
+  body.dark-mode .navbar.scrolled { background: rgba(18, 18, 18, 0.9); }
+  
+  .nav-logo { height: 38px; width: auto; border-radius: 10px; transition: transform var(--trans-smooth); }
+  .navbar-brand:hover .nav-logo { transform: scale(1.08) rotate(-4deg); }
+  
+  .nav-link { color: var(--text-muted) !important; font-weight: 600; font-size: 0.95rem; transition: all var(--trans-fast); }
+  .nav-link:hover, .nav-link.active { color: var(--text-main) !important; transform: translateY(-2px); }
+  
+  /* =========================================
+     4. INTERACTIVE CARDS
+     ========================================= */
+  .card {
+    background-color: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: 0.375rem; box-shadow: var(--shadow-md);
-    display: none;
-}
-#searchResults.show { display: block; }
-#searchResults .dropdown-item { color: var(--text-main); }
-#searchResults .dropdown-item:hover { background-color: var(--bg-input); }
-
-.notif-dropdown-menu { width: 350px; }
-.bg-blue-subtle { background-color: rgba(59, 130, 246, 0.1); }
-.unread-dot {
-    position: absolute; top: 50%; right: 0; transform: translateY(-50%);
-    margin-right: 1rem; width: 6px; height: 6px;
-    background-color: var(--primary); border-radius: 50%;
-}
-
-.bio-text { color: var(--text-muted); }
-body.dark-mode .bio-text { color: #e0e0e0 !important; }
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    transition: transform var(--trans-smooth), box-shadow var(--trans-smooth), border-color var(--trans-smooth);
+    overflow: hidden;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  body.dark-mode .card:hover { border-color: rgba(255,255,255,0.15); }
+  
+  .card-header { background-color: transparent; border-bottom: 1px solid var(--border-color); padding: 1.5rem; }
+  
+  /* Auth Card Specific */
+  .auth-card {
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* =========================================
+     5. FORMS & INPUTS (MODERN FLOATING)
+     ========================================= */
+  .form-control, .form-select, .search-input {
+    background-color: var(--bg-input);
+    border: 2px solid transparent;
+    color: var(--text-main);
+    padding: 0.85rem 1.2rem;
+    border-radius: 16px;
+    transition: all var(--trans-fast);
+    font-weight: 500;
+  }
+  
+  .form-control:focus, .search-input:focus {
+    background-color: var(--bg-card);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 5px var(--primary-glow);
+    color: var(--text-main);
+    transform: translateY(-2px);
+  }
+  
+  .input-group-text {
+    background-color: var(--bg-input);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    color: var(--text-muted);
+    transition: all var(--trans-fast);
+  }
+  .input-group:focus-within .input-group-text {
+    background-color: var(--bg-card);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  
+  /* =========================================
+     6. INTERACTIVE BUTTONS
+     ========================================= */
+  .btn {
+    font-weight: 600;
+    border-radius: 14px;
+    padding: 0.7rem 1.5rem;
+    transition: all var(--trans-smooth);
+    letter-spacing: 0.3px;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 15px var(--primary-glow);
+  }
+  
+  .btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-hover), #4338ca);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px var(--primary-glow);
+    color: white;
+  }
+  
+  .btn-icon {
+    color: var(--text-muted);
+    background-color: var(--bg-input);
+    border: 1px solid transparent;
+    border-radius: 50%;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all var(--trans-smooth);
+  }
+  .btn-icon:hover {
+    color: var(--primary);
+    background-color: var(--primary-glow);
+    transform: rotate(8deg) scale(1.1);
+  }
+  
+  /* =========================================
+     7. POST TEXT CONTRAST & ANIMATIONS
+     ========================================= */
+  .post-text { font-size: 1.1rem; line-height: 1.8; color: var(--text-main) !important; }
+  
+  .like-anim i { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  .btn-like:active .like-anim i { transform: scale(1.5); }
+  
+  /* =========================================
+     8. DARK MODE SPECIFIC OVERRIDES
+     ========================================= */
+  body.dark-mode .text-dark { color: #ffffff !important; }
+  body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
+  body.dark-mode .bg-light { background-color: var(--bg-input) !important; }
+  body.dark-mode .border, body.dark-mode .border-top, body.dark-mode .border-bottom { border-color: var(--border-color) !important; }
+  body.dark-mode .dropdown-menu { background-color: #1a1a1a !important; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
+  body.dark-mode .dropdown-item { color: var(--text-main) !important; }
+  body.dark-mode .dropdown-item:hover { background-color: #27272a !important; color: var(--primary) !important; }
+  body.dark-mode .modal-content { background-color: #121212 !important; border: 1px solid var(--border-color) !important; }
+  
+  /* Dropdown/Chat Fixes for Dark Mode */
+  body.dark-mode .list-group-item { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
+  body.dark-mode input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important; -webkit-text-fill-color: var(--text-main) !important; }
+  
+  /* Skeleton Loading Upgrades */
+  .skeleton {
+      background: linear-gradient(90deg, var(--bg-input) 25%, var(--border-color) 50%, var(--bg-input) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+  }
+  @keyframes shimmer { 100% { background-position: -200% 0; } }
 
 /* =========================================
-   10. POST TEXT CONTRAST FIX
+   29. POST TRUNCATION FADE OVERLAY
    ========================================= */
-.post-text { font-size: 1.05rem; line-height: 1.8; white-space: pre-wrap; overflow-wrap: break-word; }
-.post-text, .post-text * { color: var(--text-main) !important; opacity: 1 !important; background-color: transparent !important; }
-.post-text a { color: var(--primary) !important; text-decoration: underline; transition: opacity 0.2s; }
-.post-text a:hover { opacity: 0.8; }
-.post-text blockquote { border-left: 4px solid var(--primary); padding-left: 1rem; color: var(--text-muted) !important; font-style: italic; background: var(--bg-input) !important; padding: 1rem; border-radius: 0 8px 8px 0; }
-
-/* =========================================
-   11. DARK MODE OVERRIDES (GENERAL)
-   ========================================= */
-body.dark-mode .text-dark, body.dark-mode .link-dark { color: var(--text-main) !important; }
-body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
-body.dark-mode .border-light { border-color: var(--border-color) !important; }
-body.dark-mode a.text-decoration-none:hover { color: var(--primary) !important; }
-body.dark-mode .btn-outline-dark { color: #f8fafc; border-color: #f8fafc; }
-body.dark-mode .btn-outline-dark:hover { background-color: #f8fafc; color: #0f172a; }
-body.dark-mode .nav-link { color: #cbd5e1 !important; }
-body.dark-mode .nav-link:hover, body.dark-mode .nav-link.active { color: var(--primary) !important; }
-body.dark-mode .brand-text { color: #ffffff !important; }
-body.dark-mode .list-group-item { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
-body.dark-mode ::placeholder { color: #64748b !important; opacity: 1; }
-body.dark-mode .text-muted, body.dark-mode .lead { color: #94a3b8 !important; }
-body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4, body.dark-mode h5, body.dark-mode .font-heading { color: #ffffff !important; }
-body.dark-mode .dropdown-menu { background-color: #18181b !important; border: 1px solid #27272a; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
-body.dark-mode .dropdown-item { color: #f8fafc !important; transition: background 0.2s; }
-body.dark-mode .dropdown-item:hover { background-color: #27272a !important; color: var(--primary) !important; }
-body.dark-mode .dropdown-item.text-danger { color: #ef4444 !important; }
-body.dark-mode .dropdown-header { color: #94a3b8 !important; }
-
-/* Notifications Fix */
-body.dark-mode .notif-dropdown-menu .bg-light { background-color: #1e293b !important; border-color: #374151 !important; }
-body.dark-mode .notif-dropdown-menu a.small { color: #60a5fa !important; }
-body.dark-mode .notif-dropdown-menu .text-muted { color: #94a3b8 !important; }
-body.dark-mode .notif-dropdown-menu strong { color: #ffffff !important; }
-
-/* =========================================
-   12. NUCLEAR FIX: EDIT PROFILE & DEACTIVATE MODAL
-   ========================================= */
-body.dark-mode .modal-content, body.dark-mode .modal-content.bg-white { background-color: #18181b !important; color: #ffffff !important; border: 1px solid #27272a !important;}
-body.dark-mode .modal-body label, body.dark-mode .modal-body .form-label, body.dark-mode .modal-body .fw-bold { color: #ffffff !important; opacity: 1 !important;}
-body.dark-mode .modal-body a { color: var(--primary) !important; }
-body.dark-mode .modal-body .text-muted, body.dark-mode .modal-body small { color: #94a3b8 !important; }
-body.dark-mode .modal-body input, body.dark-mode .modal-body textarea, body.dark-mode .modal-body select { background-color: #27272a !important; border: 1px solid #3f3f46 !important; color: #ffffff !important; }
-body.dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%) !important; }
-body.dark-mode .modal-header.bg-danger-subtle { background-color: rgba(220, 38, 38, 0.1) !important; border-bottom: 1px solid rgba(220, 38, 38, 0.2) !important; }
-body.dark-mode .modal-header.bg-danger-subtle .modal-title, body.dark-mode .modal-header.bg-danger-subtle .text-danger { color: #fca5a5 !important; }
-
-/* =========================================
-   23. MODERN ANIMATIONS (LIKE & COMMENT) - FIXED!
-   ========================================= */
-.like-anim {
-  display: inline-flex;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-}
-
-.like-anim i { 
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-}
-
-/* Beautiful pop effect when clicked */
-.btn-like:active .like-anim i { 
-  transform: scale(1.4); 
-}
-
-/* The Ripple Effect for the whole button */
-.ripple-effect { position: relative; overflow: hidden; }
-.ripple-effect::after { 
-  content: ""; 
-  position: absolute; 
-  width: 10px; 
-  height: 10px; 
-  background: rgba(37, 99, 235, 0.3); 
-  border-radius: 50%; 
-  top: 50%; 
-  left: 50%; 
-  transform: translate(-50%, -50%) scale(0); 
-  opacity: 0; 
-}
-.ripple-active::after { animation: ripple-anim 0.5s linear; }
-@keyframes ripple-anim { 
-  0% { transform: translate(-50%, -50%) scale(0); opacity: 0.5; } 
-  100% { transform: translate(-50%, -50%) scale(20); opacity: 0; } 
-}
-.btn-like { position: relative; z-index: 1; }
-
-/* =========================================
-   24. DARK MODE: COMMENTS FIX & LIKES
-   ========================================= */
-body.dark-mode .collapse.bg-light { background-color: #09090b !important; border-top: 1px solid #27272a !important; }
-body.dark-mode .comments-list .bg-white { background-color: #18181b !important; border: 1px solid #27272a !important; color: #f8fafc !important; }
-body.dark-mode .input-group .form-control { background-color: #27272a !important; border-color: #3f3f46 !important; color: #ffffff !important; }
-body.dark-mode .input-group .btn-outline-secondary { background-color: #27272a !important; border-color: #3f3f46 !important; color: var(--primary) !important; }
-body.dark-mode .comment-like-btn { color: #94a3b8 !important; }
-body.dark-mode .comment-like-btn i.text-danger { color: #ef4444 !important; }
-
-/* =========================================
-   25. DARK MODE: FORM HELP TEXT FIX
-   ========================================= */
-body.dark-mode .form-text, body.dark-mode .text-muted, body.dark-mode small.text-secondary { color: #cbd5e1 !important; opacity: 1 !important; }
-body.dark-mode .upload-area small { color: #94a3b8 !important; }
-
-/* =========================================
-   26. DARK MODE: NUCLEAR INPUT GROUP FIX 
-   ========================================= */
-body.dark-mode .input-group-text, 
-body.dark-mode .input-group-text.bg-light,
-body.dark-mode .form-control.bg-light,
-body.dark-mode input[type="search"] {
-    background-color: #1f1f1f !important;
-    border-color: #555 !important;
-    color: white !important;
-}
-
-body.dark-mode .form-control {
-    background-color: #1f1f1f !important;
-    border-color: #555 !important;
-    color: white !important;
-}
-
-body.dark-mode .search-input {
-    background-color: #1f1f1f !important;
-    border-color: #555 !important;
-    color: white !important;
+.fade-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, var(--bg-card));
+  pointer-events: none;
+  display: none;
 }
 
 /* =========================================
-   27. DARK MODE: AUTOFILL FIX
+   DYNAMIC POST TRUNCATION FADE OVERLAY
    ========================================= */
-input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
-input:-webkit-autofill:active{
-    -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important;
-    -webkit-text-fill-color: var(--text-main) !important;
-    transition: background-color 5000s ease-in-out 0s;
+.dynamic-fade-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, #ffffff);
+  pointer-events: none;
 }
-
-/* =========================================
-   28. DARK MODE: HOME PAGE SPECIFIC OVERRIDE
-   ========================================= */
-body.dark-mode .input-group > .form-control,
-body.dark-mode .input-group > .input-group-text {
-    background-color: #1f1f1f !important;
-    color: white !important;
-    border-color: #444 !important;
-}
-body.dark-mode .input-group-text i {
-    color: #a0aec0 !important; 
+body.dark-mode .dynamic-fade-overlay {
+  background: linear-gradient(to bottom, transparent, #2b2b2b);
 }

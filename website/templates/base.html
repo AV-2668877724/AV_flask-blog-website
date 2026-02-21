@@ -56,23 +56,86 @@
     ></script>
 
     <script
-      src="{{ url_for('static', filename='index.js') }}?v=4"
+      src="{{ url_for('static', filename='index.js') }}?v=22"
       defer
     ></script>
+
+    <style>
+      /* 1. Force Rich Text to obey Dark Mode (overrides inline editor colors) */
+      body.dark-mode .post-text * {
+        color: var(--text-main) !important;
+        background-color: transparent !important;
+      }
+
+      /* 2. Improve Muted Text contrast in dark mode */
+      body.dark-mode .text-muted,
+      body.dark-mode .text-secondary {
+        color: #a1a1aa !important;
+      }
+
+      /* 3. Prevent long links/words from breaking mobile screen width */
+      .post-text {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+      }
+
+      /* 4. Complete Mobile Bottom Navigation styling */
+      .mobile-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        z-index: 1050;
+        padding-bottom: env(safe-area-inset-bottom, 0.5rem); /* iOS padding */
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+      }
+      body.dark-mode .mobile-nav {
+        background-color: rgba(18, 18, 18, 0.95);
+        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);
+      }
+      .mobile-nav-item {
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        padding: 0.5rem;
+        transition:
+          color 0.2s,
+          transform 0.2s;
+      }
+      .mobile-nav-item:hover,
+      .mobile-nav-item:active {
+        color: var(--primary);
+        transform: translateY(-2px);
+      }
+      .mobile-nav-add {
+        background: linear-gradient(135deg, var(--primary), #4f46e5);
+        color: white !important;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 15px var(--primary-glow);
+        transform: translateY(-15px); /* Pops up from the bar */
+        transition: transform 0.2s;
+      }
+      .mobile-nav-add:active {
+        transform: translateY(-12px) scale(0.95);
+      }
+    </style>
   </head>
 
   <body>
-    <div id="preloader">
-      <div class="loader-content">
-        <img
-          src="{{ url_for('static', filename='images/logo.png') }}"
-          alt="AV Postory"
-          class="loader-logo"
-        />
-        <div class="loader-dots"><span></span><span></span><span></span></div>
-      </div>
-    </div>
-
+    
     <nav class="navbar navbar-expand-lg sticky-top" id="mainNavbar">
       <div class="container position-relative">
         <a
@@ -133,7 +196,7 @@
 
           <a
             href="{{ url_for('views.inbox') }}"
-            class="btn btn-icon position-relative shadow-sm"
+            class="btn btn-icon position-relative shadow-sm d-none d-md-flex"
             title="Messages"
             id="messageIconBtn"
           >
@@ -188,11 +251,11 @@
                     class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
                   >
                     <div class="lh-sm">
-                      <p class="mb-0 small text-dark">
-                        <strong>{{ n.visitor.username }}</strong> {% if n.action
-                        == 'like' %} liked your post. {% elif n.action ==
-                        'comment' %} commented. {% elif n.action == 'follow' %}
-                        followed you. {% endif %}
+                      <p class="mb-0 small" style="color: var(--text-main)">
+                        <strong>{{ n.visitor.username }}</strong>
+                        {% if n.action == 'like' %} liked your post. {% elif
+                        n.action == 'comment' %} commented. {% elif n.action ==
+                        'follow' %} followed you. {% endif %}
                       </p>
                       <small class="text-muted small-text"
                         >{{ n.date_created | timeago }}</small
@@ -222,9 +285,18 @@
               <img
                 src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
                 class="user-avatar-nav border border-2 border-white shadow-sm"
+                style="
+                  width: 38px;
+                  height: 38px;
+                  border-radius: 50%;
+                  object-fit: cover;
+                "
               />
               {% else %}
-              <div class="user-avatar-xs shadow-sm">
+              <div
+                class="user-avatar-xs shadow-sm bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                style="width: 38px; height: 38px; border-radius: 50%"
+              >
                 {{ current_user.username[0]|upper }}
               </div>
               {% endif %}
@@ -246,7 +318,7 @@
                   ><i class="bi bi-person me-2"></i> Profile</a
                 >
               </li>
-              <li>
+              <li class="d-md-none">
                 <a
                   class="dropdown-item py-2"
                   href="{{ url_for('views.inbox') }}"
@@ -269,8 +341,7 @@
                   href="#"
                   data-bs-toggle="modal"
                   data-bs-target="#deactivateModal"
-                  ><i class="bi bi-exclamation-triangle me-2"></i> Deactivate
-                  Account</a
+                  ><i class="bi bi-exclamation-triangle me-2"></i> Deactivate</a
                 >
               </li>
               <li>
@@ -331,7 +402,12 @@
     {% if page_title %}
     <div class="page-header text-center pt-5 pb-3 fade-in-up">
       <div class="container">
-        <h1 class="display-5 fw-bold mb-2 font-heading">{{ page_title }}</h1>
+        <h1
+          class="display-5 fw-bold mb-2 font-heading"
+          style="color: var(--text-main)"
+        >
+          {{ page_title }}
+        </h1>
         {% if page_subtitle %}
         <p class="text-muted lead">{{ page_subtitle }}</p>
         {% endif %}
@@ -345,6 +421,7 @@
 
     <footer
       class="py-4 mt-5 text-center text-muted border-top d-none d-md-block"
+      style="border-color: var(--border-color) !important"
     >
       <small>&copy; 2026 AV Postory. All rights reserved.</small>
     </footer>
@@ -361,7 +438,9 @@
         data-bs-target="#mobileSearchModal"
         ><i class="bi bi-search"></i
       ></a>
-      <a href="{{ url_for('views.create_post') }}" class="mobile-nav-add"
+      <a
+        href="{{ url_for('views.create_post') }}"
+        class="mobile-nav-add text-decoration-none"
         ><i class="bi bi-plus-lg"></i
       ></a>
       <a
@@ -372,7 +451,7 @@
         {% if unread_count and unread_count > 0 %}
         <span
           class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm"
-          style="width: 8px; height: 8px"
+          style="width: 10px; height: 10px; margin-top: 8px; margin-left: -5px"
         ></span>
         {% endif %}
       </a>
@@ -383,8 +462,13 @@
         {% if current_user.profile_pic %}
         <img
           src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
-          class="rounded-circle border border-2 border-white shadow-sm"
-          style="width: 28px; height: 28px; object-fit: cover"
+          class="rounded-circle shadow-sm"
+          style="
+            width: 32px;
+            height: 32px;
+            object-fit: cover;
+            border: 2px solid var(--border-color);
+          "
           alt="Me"
         />
         {% else %}
@@ -403,10 +487,12 @@
       <div class="modal-dialog modal-dialog-centered">
         <div
           class="modal-content border-0 shadow-lg"
-          style="border-radius: 20px"
+          style="border-radius: 20px; background-color: var(--bg-card)"
         >
           <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold">Search</h5>
+            <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+              Search
+            </h5>
             <button
               type="button"
               class="btn-close"
@@ -418,7 +504,11 @@
             <form action="{{ url_for('views.search_page') }}" method="GET">
               <div
                 class="input-group input-group-lg shadow-sm"
-                style="border-radius: 16px; overflow: hidden"
+                style="
+                  border-radius: 16px;
+                  overflow: hidden;
+                  border: 1px solid var(--border-color);
+                "
               >
                 <span class="input-group-text bg-light border-0"
                   ><i class="bi bi-search text-muted"></i
@@ -462,7 +552,7 @@
         style="border-radius: 12px"
       >
         <div class="d-flex">
-          <div class="toast-body">{{ message }}</div>
+          <div class="toast-body fw-bold">{{ message }}</div>
           <button
             type="button"
             class="btn-close btn-close-white me-2 m-auto"
@@ -478,10 +568,12 @@
       <div class="modal-dialog modal-dialog-centered">
         <div
           class="modal-content border-0 shadow-lg"
-          style="border-radius: 20px"
+          style="border-radius: 20px; background-color: var(--bg-card)"
         >
           <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold">Leaving so soon?</h5>
+            <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+              Leaving so soon?
+            </h5>
             <button
               type="button"
               class="btn-close"
@@ -489,17 +581,22 @@
             ></button>
           </div>
           <div class="modal-body text-center py-4">
-            <h6 class="fw-bold">Are you sure you want to log out?</h6>
+            <h6 class="fw-bold" style="color: var(--text-muted)">
+              Are you sure you want to log out?
+            </h6>
           </div>
           <div class="modal-footer border-0 justify-content-center gap-2 pb-4">
             <button
               type="button"
-              class="btn btn-primary px-4 rounded-pill shadow-sm"
+              class="btn btn-light px-4 rounded-pill shadow-sm fw-bold border"
               data-bs-dismiss="modal"
+              style="background-color: var(--bg-input); color: var(--text-main)"
             >
               No, Stay
             </button>
-            <a href="/logout" class="btn btn-outline-danger px-4 rounded-pill"
+            <a
+              href="/logout"
+              class="btn btn-danger px-4 rounded-pill fw-bold shadow-sm"
               >Yes, Log Out</a
             >
           </div>
@@ -511,7 +608,11 @@
       <div class="modal-dialog modal-dialog-centered">
         <div
           class="modal-content border-0 shadow-lg"
-          style="border-radius: 20px; overflow: hidden"
+          style="
+            border-radius: 20px;
+            overflow: hidden;
+            background-color: var(--bg-card);
+          "
         >
           <div class="modal-header bg-danger-subtle text-danger border-0">
             <h5 class="modal-title fw-bold">We're sorry to see you go</h5>
@@ -527,13 +628,15 @@
             </p>
             <form method="POST" action="/deactivate-account">
               <div class="mb-3">
-                <label class="form-label fw-bold small"
+                <label
+                  class="form-label fw-bold small"
+                  style="color: var(--text-main)"
                   >Reason for leaving</label
                 >
                 <select
                   name="reason"
-                  class="form-select shadow-sm"
-                  style="border-radius: 12px"
+                  class="form-select shadow-sm bg-light border-0"
+                  style="border-radius: 12px; color: var(--text-main)"
                   required
                 >
                   <option value="" selected disabled>Select a reason...</option>
@@ -544,15 +647,15 @@
               </div>
               <textarea
                 name="details"
-                class="form-control mb-4 shadow-sm"
+                class="form-control mb-4 shadow-sm bg-light border-0"
                 rows="2"
-                style="border-radius: 12px"
+                style="border-radius: 12px; color: var(--text-main)"
                 placeholder="Optional details..."
               ></textarea>
               <div class="d-grid">
                 <button
                   type="submit"
-                  class="btn btn-danger btn-lg rounded-pill shadow-sm"
+                  class="btn btn-danger btn-lg rounded-pill shadow-sm fw-bold"
                 >
                   Confirm Deactivation
                 </button>
@@ -625,7 +728,7 @@
           });
         }
 
-        // ✅ UI UPGRADE: Dynamic Navbar Shrink on Scroll
+        // Dynamic Navbar Shrink on Scroll
         const navbar = document.getElementById("mainNavbar");
         if (navbar) {
           window.addEventListener("scroll", () => {

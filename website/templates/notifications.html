@@ -1,55 +1,142 @@
-{% extends "base.html" %} 
-{% block title %}Notifications{% endblock %} 
-
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-6">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3 class="font-heading fw-bold mb-0">Notifications</h3>
-            <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">Refresh</button>
-        </div>
-
-        <div class="list-group shadow-sm">
-            {% for n in notifications %}
-            <a href="{% if n.post_id %}/home#post-wrapper-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}" 
-               class="list-group-item list-group-item-action p-3 border-0 border-bottom d-flex align-items-center gap-3 {% if not n.is_read %}bg-blue-subtle{% endif %}">
-                
-                {% if n.visitor.profile_pic %}
-                <img src="{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                {% else %}
-                <div class="user-avatar-xs" style="width: 40px; height: 40px;">{{ n.visitor.username[0]|upper }}</div>
-                {% endif %}
-
-                <div class="flex-grow-1">
-                    <p class="mb-0 small">
-                        <strong>{{ n.visitor.username }}</strong>
-                        {% if n.action == 'like' %}
-                            liked your story. <i class="fas fa-heart text-danger ms-1"></i>
-                        {% elif n.action == 'comment' %}
-                            commented on your story. <i class="fas fa-comment text-primary ms-1"></i>
-                        {% elif n.action == 'follow' %}
-                            started following you. <i class="fas fa-user-plus text-success ms-1"></i>
-                        {% endif %}
-                    </p>
-                    <small class="text-muted" style="font-size: 0.75rem;">{{ n.date_created | timeago }}</small>
-                </div>
-
-                {% if not n.is_read %}
-                <span class="badge bg-primary rounded-circle p-1" style="width: 8px; height: 8px;"> </span>
-                {% endif %}
-            </a>
-            {% else %}
-            <div class="text-center py-5">
-                <i class="far fa-bell-slash fa-3x text-muted mb-3"></i>
-                <p class="text-muted">No new notifications.</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</div>
+{% extends "base.html" %} {% block title %}Notifications{% endblock %} {% block
+content %}
 
 <style>
-    .bg-blue-subtle { background-color: #eff6ff; }
-    body.dark-mode .bg-blue-subtle { background-color: #1e293b; }
+  /* Move dynamic background to a CSS class to fix VS Code linting errors */
+  .notif-unread {
+    background-color: var(--primary-glow) !important;
+  }
+  .notif-read {
+    background-color: transparent !important;
+  }
 </style>
+
+<div class="row justify-content-center fade-in-up">
+  <div class="col-lg-8 col-xl-6">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+      <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
+        Notifications
+      </h3>
+      <button
+        class="btn btn-sm btn-light rounded-pill px-3 border shadow-sm fw-bold"
+        onclick="location.reload()"
+        style="background-color: var(--bg-card); color: var(--text-main)"
+      >
+        <i class="fas fa-sync-alt me-1"></i> Refresh
+      </button>
+    </div>
+
+    <div
+      class="card border-0 shadow-md mb-5"
+      style="
+        border-radius: var(--border-radius-lg);
+        background-color: var(--bg-card);
+        overflow: hidden;
+      "
+    >
+      <div class="list-group list-group-flush">
+        {% for n in notifications %}
+
+        <a
+          href="{% if n.post_id %}/home#post-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}"
+          class="list-group-item list-group-item-action p-3 p-md-4 border-bottom d-flex align-items-center gap-3 transition-all hover-opacity-100 {% if not n.is_read %}notif-unread{% else %}notif-read{% endif %}"
+          style="border-color: var(--border-color) !important"
+        >
+          <div class="position-relative flex-shrink-0">
+            {% if n.visitor.profile_pic %}
+            <img
+              src="{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}"
+              class="rounded-circle shadow-sm"
+              style="
+                width: 48px;
+                height: 48px;
+                object-fit: cover;
+                border: 2px solid var(--bg-card);
+              "
+            />
+            {% else %}
+            <div
+              class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+              style="
+                width: 48px;
+                height: 48px;
+                font-size: 1.1rem;
+                background: linear-gradient(135deg, var(--primary), #4f46e5);
+                border: 2px solid var(--bg-card);
+              "
+            >
+              {{ n.visitor.username[0]|upper }}
+            </div>
+            {% endif %}
+
+            <div
+              class="position-absolute bottom-0 end-0 rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+              style="
+                width: 20px;
+                height: 20px;
+                border: 2px solid var(--bg-card);
+                background-color: var(--bg-card);
+              "
+            >
+              {% if n.action == 'like' %}
+              <i
+                class="fas fa-heart text-danger"
+                style="font-size: 0.65rem"
+              ></i>
+              {% elif n.action == 'comment' %}
+              <i
+                class="fas fa-comment text-primary"
+                style="font-size: 0.65rem"
+              ></i>
+              {% elif n.action == 'follow' %}
+              <i
+                class="fas fa-user-plus text-success"
+                style="font-size: 0.65rem"
+              ></i>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="flex-grow-1 min-w-0">
+            <p
+              class="mb-1 text-truncate"
+              style="color: var(--text-main); font-size: 0.95rem"
+            >
+              <strong class="fw-bold">{{ n.visitor.username }}</strong>
+              {% if n.action == 'like' %} liked your story. {% elif n.action ==
+              'comment' %} commented on your story. {% elif n.action == 'follow'
+              %} started following you. {% endif %}
+            </p>
+            <div class="text-muted fw-bold" style="font-size: 0.75rem">
+              {{ n.date_created | timeago }}
+            </div>
+          </div>
+
+          {% if not n.is_read %}
+          <div class="flex-shrink-0 ms-2">
+            <span
+              class="badge bg-primary rounded-circle p-1 shadow-sm"
+              style="width: 10px; height: 10px; display: inline-block"
+            ></span>
+          </div>
+          {% endif %}
+        </a>
+        {% else %}
+        <div class="text-center py-5 my-4">
+          <div
+            class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
+            style="width: 80px; height: 80px"
+          >
+            <i class="far fa-bell-slash fa-2x opacity-50"></i>
+          </div>
+          <h5 class="fw-bold font-heading mb-1" style="color: var(--text-main)">
+            No notifications
+          </h5>
+          <p class="text-muted small mb-0">You're all caught up!</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

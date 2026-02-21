@@ -33,7 +33,6 @@ AV_Postory/
         │
         ├── sign_up.html        # ⚡ UPDATED: Step 1 (Email & OTP only)
         ├── signup_final.html   # ✅ NEW: Step 3 (Username Check, Password creation)
-        ├── finish_signup.html  # ✅ NEW: Final signup completion page
         ├── verify_otp.html     # ✅ NEW: OTP verification page
         │
         ├── profile.html     # ⚡ UPDATED: Social links logic fixed (.items), Dark mode fixed

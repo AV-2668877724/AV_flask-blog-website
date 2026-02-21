@@ -1,78 +1,92 @@
 {% extends "base.html" %} {% block title %} {{ title }} - {{
 profile_user.username }} {% endblock %} {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-6">
-    <div class="d-flex align-items-center mb-4">
+<div class="row justify-content-center fade-in-up">
+  <div class="col-lg-6 col-md-8">
+    <div class="d-flex align-items-center mb-4 px-2">
       <a
         href="{{ url_for('views.profile', username=profile_user.username) }}"
-        class="btn btn-icon btn-light me-3"
+        class="btn btn-icon text-muted shadow-sm bg-card me-3"
+        style="width: 40px; height: 40px"
       >
         <i class="fas fa-arrow-left"></i>
       </a>
       <h4 class="mb-0 fw-bold font-heading" style="color: var(--text-main)">
         {{ title }}
-        <span class="fs-6 ms-2" style="color: var(--text-muted)"
-          >({{ users|length }})</span
+        <span
+          class="badge bg-light text-muted border shadow-sm fs-6 ms-2 align-middle rounded-pill px-3"
+          >{{ users|length }}</span
         >
       </h4>
     </div>
 
     <div
-      class="card border-0 shadow-sm"
-      style="background-color: var(--bg-card)"
+      class="card border-0 shadow-md mb-5"
+      style="
+        border-radius: var(--border-radius-lg);
+        background-color: var(--bg-card);
+        overflow: hidden;
+      "
     >
       <div class="list-group list-group-flush">
         {% if users %} {% for u in users %}
         <div
-          class="list-group-item p-3 d-flex align-items-center justify-content-between"
+          class="list-group-item p-3 p-md-4 d-flex align-items-center justify-content-between transition-all hover-opacity-100"
           style="
-            background-color: var(--bg-card);
-            border-color: var(--border-color);
+            background-color: transparent;
+            border-color: var(--border-color) !important;
           "
         >
           <a
             href="{{ url_for('views.profile', username=u.username) }}"
-            class="d-flex align-items-center text-decoration-none gap-3"
+            class="d-flex align-items-center text-decoration-none gap-3 flex-grow-1 min-w-0"
             style="color: var(--text-main)"
           >
             {% if u.profile_pic %}
             <img
               src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-              class="rounded-circle border"
-              style="width: 50px; height: 50px; object-fit: cover"
+              class="rounded-circle shadow-sm"
+              style="
+                width: 52px;
+                height: 52px;
+                object-fit: cover;
+                border: 2px solid var(--border-color);
+              "
             />
             {% else %}
             <div
-              class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle"
+              class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
               style="
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
-                font-weight: bold;
+                width: 52px;
+                height: 52px;
+                font-size: 1.3rem;
+                background: linear-gradient(135deg, var(--primary), #4f46e5);
               "
             >
               {{ u.username[0]|upper }}
             </div>
             {% endif %}
 
-            <div class="lh-sm">
-              <h6 class="mb-0 fw-bold">{{ u.username }}</h6>
+            <div class="lh-sm text-truncate pe-3">
+              <h6 class="mb-0 fw-bold fs-5">{{ u.username }}</h6>
+              <small class="text-muted fw-bold">View Profile</small>
             </div>
           </a>
 
           {% if current_user.is_authenticated and u.id != current_user.id %}
-          <div>
+          <div class="flex-shrink-0">
             {% if u.id in following_ids %}
             <button
-              class="btn btn-sm btn-outline-secondary rounded-pill px-3 unfollow-btn"
+              class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold border-2 unfollow-btn"
               data-user-id="{{ u.id }}"
+              onclick="toggleFollow('{{ u.id }}', this)"
             >
               Following
             </button>
             {% else %}
             <button
-              class="btn btn-sm btn-primary rounded-pill px-3 follow-btn"
+              class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold follow-btn"
               data-user-id="{{ u.id }}"
+              onclick="toggleFollow('{{ u.id }}', this)"
             >
               Follow
             </button>
@@ -81,16 +95,17 @@ profile_user.username }} {% endblock %} {% block content %}
           {% endif %}
         </div>
         {% endfor %} {% else %}
-        <div class="text-center py-5">
-          <div class="mb-3" style="color: var(--text-muted)">
-            <i class="fas fa-users-slash fa-3x"></i>
+        <div class="text-center py-5 my-4">
+          <div
+            class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
+            style="width: 80px; height: 80px"
+          >
+            <i class="fas fa-users-slash fa-2x opacity-50"></i>
           </div>
-          <h5 class="fw-bold" style="color: var(--text-main)">
+          <h5 class="fw-bold font-heading mb-1" style="color: var(--text-main)">
             No users found
           </h5>
-          <p class="small" style="color: var(--text-muted)">
-            This list is currently empty.
-          </p>
+          <p class="small text-muted mb-0">This list is currently empty.</p>
         </div>
         {% endif %}
       </div>

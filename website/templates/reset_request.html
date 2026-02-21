@@ -1,21 +1,55 @@
-{% extends "base.html" %} 
-{% block title %}Reset Password{% endblock %} 
-{% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card shadow-sm border-0">
-      <div class="card-body p-4">
-        <h3 class="fw-bold mb-3 text-center">Reset Password</h3>
-        <p class="text-muted text-center mb-4 small">Enter your email and we'll send you a link to get back into your account.</p>
-        
-        <form method="POST">
-          <div class="mb-3">
-            <label class="form-label fw-bold small">Email Address</label>
-            <input type="email" class="form-control" name="email" placeholder="Enter your email" required />
+{% extends "base.html" %} {% block title %}Reset Password{% endblock %} {% block
+content %}
+<div
+  class="row justify-content-center align-items-center fade-in-up"
+  style="min-height: 75vh"
+>
+  <div class="col-md-6 col-lg-5">
+    <div class="card border-0 auth-card">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-5">
+          <div
+            class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
+            style="width: 60px; height: 60px"
+          >
+            <i class="fas fa-key fa-2x"></i>
           </div>
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary">Send Reset Link</button>
-            <a href="/login" class="btn btn-link text-decoration-none text-muted">Back to Login</a>
+          <h2 class="fw-bold font-heading">Reset Password</h2>
+          <p class="text-muted">
+            Enter your email and we'll send you a link to get back into your
+            account.
+          </p>
+        </div>
+
+        <form method="POST">
+          <div class="form-floating mb-4">
+            <input
+              type="email"
+              class="form-control bg-light border-0"
+              id="email"
+              name="email"
+              placeholder="name@example.com"
+              required
+            />
+            <label for="email" class="text-muted"
+              ><i class="fas fa-envelope me-2"></i>Email Address</label
+            >
+          </div>
+
+          <div class="d-grid gap-3">
+            <button
+              type="submit"
+              class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm"
+            >
+              Send Reset Link
+            </button>
+            <a
+              href="/login"
+              class="btn btn-light rounded-pill fw-bold border shadow-sm mt-2"
+              style="background-color: var(--bg-card); color: var(--text-main)"
+            >
+              <i class="fas fa-arrow-left me-2"></i> Back to Login
+            </a>
           </div>
         </form>
       </div>

@@ -1,36 +1,63 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
 %}
 <div class="row justify-content-center">
-  <div class="col-lg-10 col-md-11 mx-auto">
-    <div class="d-md-none mb-4">
+  <div class="col-lg-9 col-xl-8 mx-auto">
+    <div class="d-md-none mb-4 fade-in-up">
       <form
         action="{{ url_for('views.search_page') }}"
         method="GET"
         class="position-relative"
       >
-        <div class="input-group">
-          <span class="input-group-text border-end-0"
-            ><i class="fas fa-search text-muted"></i
-          ></span>
-
+        <div
+          class="input-group shadow-sm"
+          style="
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            background: var(--bg-card);
+          "
+        >
+          <span class="input-group-text bg-transparent border-0 ps-4">
+            <i class="fas fa-search text-muted"></i>
+          </span>
           <input
             type="search"
             name="q"
-            class="form-control border-start-0"
+            class="form-control border-0 bg-transparent py-3 shadow-none"
             placeholder="Search people & posts..."
             autocomplete="off"
             required
+            style="font-weight: 500"
           />
-          <button class="btn btn-primary" type="submit">Search</button>
+          <button
+            class="btn btn-primary px-4 fw-bold"
+            type="submit"
+            style="border-radius: 0 16px 16px 0"
+          >
+            Search
+          </button>
         </div>
       </form>
     </div>
 
     <div id="posts-container" class="post-feed">
       {% if posts %} {% include "_posts.html" %} {% else %}
-      <div class="text-center py-5">
-        <i class="bi bi-journal-text display-4 text-muted mb-3"></i>
-        <p class="lead text-muted">No stories found here yet.</p>
+      <div class="text-center py-5 my-5">
+        <div
+          class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-4"
+          style="width: 80px; height: 80px"
+        >
+          <i class="bi bi-journal-richtext fa-2x"></i>
+        </div>
+        <h4 class="fw-bold font-heading mb-2">Your Feed is Empty</h4>
+        <p class="text-muted mb-4">
+          Follow some creators or publish your first story to get started.
+        </p>
+        <a
+          href="{{ url_for('views.create_post') }}"
+          class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
+          >Write a Story</a
+        >
       </div>
       {% endif %}
     </div>
@@ -38,7 +65,7 @@
     {% if posts %}
     <div
       id="sentinel"
-      class="text-center py-4"
+      class="text-center py-4 my-3"
       data-page="1"
       data-has-next="{{ 'true' if pagination.has_next else 'false' }}"
       data-url="{{ url_for('views.home') }}"
@@ -47,14 +74,22 @@
         id="scroll-spinner"
         class="spinner-border text-primary"
         role="status"
-        style="display: none; width: 1.5rem; height: 1.5rem"
+        style="display: none; width: 2rem; height: 2rem; border-width: 0.25em"
       >
         <span class="visually-hidden">Loading...</span>
       </div>
 
-      <p id="end-message" class="text-muted small d-none">
-        <i class="fas fa-check-circle me-1"></i> You're all caught up!
-      </p>
+      <div
+        id="end-message"
+        class="text-muted small d-none py-3 px-4 rounded-pill d-inline-block shadow-sm"
+        style="
+          background: var(--bg-card);
+          border: 1px solid var(--border-color);
+        "
+      >
+        <i class="fas fa-check-circle me-2 text-success"></i> You've caught up
+        on everything!
+      </div>
     </div>
     {% endif %}
   </div>

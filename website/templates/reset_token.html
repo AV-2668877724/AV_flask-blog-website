@@ -1,32 +1,57 @@
 {% extends "base.html" %} {% block title %}New Password{% endblock %} {% block
 content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card shadow-sm border-0">
-      <div class="card-body p-4">
-        <h3 class="fw-bold mb-3 text-center">New Password</h3>
+<div
+  class="row justify-content-center align-items-center fade-in-up"
+  style="min-height: 75vh"
+>
+  <div class="col-md-6 col-lg-5">
+    <div class="card border-0 auth-card">
+      <div class="card-body p-4 p-md-5">
+        <div class="text-center mb-5">
+          <div
+            class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
+            style="width: 60px; height: 60px"
+          >
+            <i class="fas fa-shield-alt fa-2x"></i>
+          </div>
+          <h2 class="fw-bold font-heading">New Password</h2>
+          <p class="text-muted">Create a strong, secure password.</p>
+        </div>
 
         <form method="POST">
-          <div class="mb-3">
-            <label class="form-label fw-bold small">New Password</label>
+          <div class="form-floating mb-3">
             <input
               type="password"
-              class="form-control"
+              class="form-control bg-light border-0"
+              id="password"
               name="password"
+              placeholder="New Password"
               required
             />
+            <label for="password" class="text-muted"
+              ><i class="fas fa-lock me-2"></i>New Password</label
+            >
           </div>
-          <div class="mb-4">
-            <label class="form-label fw-bold small">Confirm Password</label>
+
+          <div class="form-floating mb-5">
             <input
               type="password"
-              class="form-control"
+              class="form-control bg-light border-0"
+              id="confirm_password"
               name="confirm_password"
+              placeholder="Confirm Password"
               required
             />
+            <label for="confirm_password" class="text-muted"
+              ><i class="fas fa-check-double me-2"></i>Confirm Password</label
+            >
           </div>
+
           <div class="d-grid">
-            <button type="submit" class="btn btn-primary">
+            <button
+              type="submit"
+              class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm"
+            >
               Update Password
             </button>
           </div>
@@ -37,7 +62,7 @@ content %}
 </div>
 
 <script>
-  // Immediately remove dark mode class if present
+  // Immediately remove dark mode class if present (Your original logic)
   document.body.classList.remove("dark-mode");
 
   // Ensure it stays off even after page load

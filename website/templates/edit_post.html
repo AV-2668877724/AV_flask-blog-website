@@ -2,104 +2,140 @@
 content %}
 
 <style>
-  /* Dark Mode Support */
-  body.dark-mode .form-label,
-  body.dark-mode .card-header h5,
-  body.dark-mode .text-adaptive {
-    color: #ffffff !important;
-    opacity: 1 !important;
+  /* Premium CKEditor & Dark Mode Support */
+  .ck-editor__editable_inline {
+    background-color: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    border-bottom-left-radius: 16px !important;
+    border-bottom-right-radius: 16px !important;
+    min-height: 350px;
+    padding: 1.5rem !important;
+    font-family: var(--font-sans) !important;
+    font-size: 1.1rem !important;
+    line-height: 1.8;
+    box-shadow: none !important;
   }
-  body.dark-mode .border-dashed {
-    border-color: #ffffff50 !important;
+  .ck-toolbar {
+    background-color: var(--bg-input) !important;
+    border: 1px solid var(--border-color) !important;
+    border-top-left-radius: 16px !important;
+    border-top-right-radius: 16px !important;
+    padding: 8px !important;
   }
-  /* CKEditor Dark Mode */
-  body.dark-mode .ck-editor__editable_inline {
-    background-color: #2b2b2b !important;
-    color: #ffffff !important;
-    border-color: #444 !important;
+  .ck-editor__editable.ck-focused {
+    border-color: var(--primary) !important;
+    box-shadow: inset 0 0 0 1px var(--primary) !important;
   }
-  body.dark-mode .ck-toolbar {
-    background-color: #1f1f1f !important;
-    border-color: #444 !important;
+
+  /* CKEditor Dropdowns & Buttons in Dark Mode */
+  body.dark-mode .ck.ck-button,
+  body.dark-mode .ck.ck-dropdown__button {
+    color: var(--text-muted) !important;
+    cursor: pointer;
   }
-  body.dark-mode .ck-button {
-    color: #e0e0e0 !important;
+  body.dark-mode .ck.ck-button:hover,
+  body.dark-mode .ck.ck-button.ck-on {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-main) !important;
   }
-  body.dark-mode .ck-button:hover {
-    background-color: #333 !important;
+  body.dark-mode .ck.ck-toolbar__separator {
+    background-color: var(--border-color) !important;
   }
-  .ck-editor__editable {
-    min-height: 300px;
+  body.dark-mode .ck.ck-dropdown__panel {
+    background-color: #1a1a1a !important;
+    border-color: #333 !important;
   }
 </style>
 
-<div class="row justify-content-center">
-  <div class="col-md-8 col-lg-6">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white py-3">
-        <div class="d-flex align-items-center justify-content-between">
-          <h5 class="fw-bold mb-0">Edit Post</h5>
-          <a href="{{ url_for('views.home') }}" class="btn-close"></a>
-        </div>
+<div class="row justify-content-center fade-in-up">
+  <div class="col-lg-9 col-xl-8">
+    <div class="d-flex align-items-center mb-4 px-2">
+      <a
+        href="{{ url_for('views.home') }}"
+        class="btn btn-icon text-muted shadow-sm bg-card me-3"
+        style="width: 40px; height: 40px"
+      >
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      <div>
+        <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
+          Edit Story
+        </h3>
       </div>
+    </div>
 
-      <div class="card-body p-4">
-        <form method="POST" enctype="multipart/form-data">
-          <div class="mb-4">
-            <label class="form-label fw-bold small text-adaptive"
-              >Post Content</label
-            >
+    <div
+      class="card border-0 shadow-md p-4 p-md-5 mb-5"
+      style="
+        border-radius: var(--border-radius-lg);
+        background-color: var(--bg-card);
+      "
+    >
+      <form method="POST" enctype="multipart/form-data">
+        <div class="mb-5 shadow-sm" style="border-radius: 16px">
+          <textarea name="text" id="editor" class="form-control d-none">
+{{ post.text }}</textarea
+          >
+        </div>
 
-            <textarea name="text" id="editor">
-{{ content_to_edit | safe }}</textarea
-            >
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold small text-adaptive"
-              >Current Image</label
-            >
-            <div class="p-3 rounded-3 text-center border border-dashed">
-              {% if post.cover_image %}
+        <h5 class="fw-bold font-heading mb-3" style="color: var(--text-main)">
+          Cover Image
+        </h5>
+        <div
+          class="p-4 border border-2 border-dashed rounded-4 mb-4"
+          style="
+            border-color: var(--border-color) !important;
+            background-color: var(--bg-input);
+          "
+        >
+          <div class="text-center">
+            {% if post.cover_image %}
+            <div class="position-relative d-inline-block mb-3">
               <img
                 src="{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}"
-                class="img-fluid rounded shadow-sm"
+                class="img-fluid rounded-3 shadow-sm"
                 style="max-height: 200px; object-fit: cover"
-                alt="Current Post Image"
+                alt="Current Cover"
               />
-              <div class="small mt-2 text-adaptive">
-                Uploading a new image will replace this one.
-              </div>
-              {% else %}
-              <p class="mb-0 text-adaptive fw-bold">
-                No image currently attached.
-              </p>
-              {% endif %}
             </div>
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label fw-bold small text-adaptive"
-              >Upload New Image</label
+            <div class="small mt-2 fw-bold text-muted">
+              <i class="fas fa-sync-alt me-1"></i> Uploading a new image will
+              replace this one.
+            </div>
+            {% else %}
+            <div
+              class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
+              style="width: 60px; height: 60px"
             >
-            <input
-              type="file"
-              name="cover_image"
-              class="form-control"
-              accept="image/*"
-            />
+              <i class="fas fa-image fa-2x opacity-50"></i>
+            </div>
+            <p class="mb-0 text-muted fw-bold">No image currently attached.</p>
+            {% endif %}
           </div>
+        </div>
 
-          <div class="d-grid">
-            <button
-              type="submit"
-              class="btn btn-primary rounded-pill fw-bold py-2"
-            >
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </div>
+        <div class="mb-4">
+          <input
+            type="file"
+            name="cover_image"
+            class="form-control bg-light border-0 py-3 rounded-4 shadow-sm"
+            accept="image/*"
+          />
+        </div>
+
+        <div
+          class="d-flex justify-content-end border-top pt-4 mt-2"
+          style="border-color: var(--border-color) !important"
+        >
+          <button
+            type="submit"
+            class="btn btn-primary rounded-pill fw-bold px-5 py-2 shadow-sm w-100 w-md-auto"
+          >
+            Save Changes
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
