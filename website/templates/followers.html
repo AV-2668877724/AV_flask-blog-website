@@ -1,5 +1,7 @@
-{% extends "base.html" %} {% block title %}{{ title }} - {{
-profile_user.username }}{% endblock %} {% block content %}
+{% extends "base.html" %} 
+{% block title %}{{ title }} - {{ profile_user.username }}{% endblock %} 
+
+{% block content %}
 <style>
   /* Header Card */
   .page-header-card {
@@ -52,7 +54,7 @@ profile_user.username }}{% endblock %} {% block content %}
     font-size: 1.8rem;
     font-weight: bold;
   }
-
+  
   .profile-link {
     color: var(--text-main);
     text-decoration: none;
@@ -65,108 +67,77 @@ profile_user.username }}{% endblock %} {% block content %}
 
 <div class="row justify-content-center fade-in-up">
   <div class="col-lg-8 col-xl-7">
+    
     <div class="page-header-card">
-      <a
-        href="{{ url_for('views.profile', username=profile_user.username) }}"
-        class="btn btn-icon border shadow-sm"
-        style="width: 44px; height: 44px"
-      >
+      <a href="{{ url_for('views.profile', username=profile_user.username) }}" class="btn btn-icon border shadow-sm" style="width: 44px; height: 44px;">
         <i class="fas fa-arrow-left"></i>
       </a>
       <div>
-        <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
-          {{ profile_user.username }}
-        </h3>
+        <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main);">{{ profile_user.username }}</h3>
         <p class="text-muted small mb-0 fw-bold">{{ title }}</p>
       </div>
     </div>
 
     {% if users %}
-    <div class="d-flex flex-column">
-      {% for u in users %}
-      <div
-        class="user-list-card fade-in-up"
-        style="animation-delay: {{ loop.index0 * 0.05 }}s;"
-      >
-        <a
-          href="{{ url_for('views.profile', username=u.username) }}"
-          class="flex-shrink-0"
-        >
-          {% if u.profile_pic %}
-          <img
-            src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-            class="list-avatar shadow-sm"
-            alt="{{ u.username }}"
-          />
-          {% else %}
-          <div class="list-avatar-placeholder shadow-sm">
-            {{ u.username[0]|upper }}
-          </div>
-          {% endif %}
-        </a>
-
-        <div class="flex-grow-1 min-w-0 ms-2">
-          <a
-            href="{{ url_for('views.profile', username=u.username) }}"
-            class="profile-link"
-          >
-            <h6 class="fw-bold mb-1 text-truncate" style="font-size: 1.1rem">
-              {{ u.username }} {% if u.is_verified %}
-              <i
-                class="fas fa-check-circle text-primary ms-1"
-                style="font-size: 0.9rem"
-                title="Verified"
-              ></i>
+      <div class="d-flex flex-column">
+        {% for u in users %}
+          <div class="user-list-card fade-in-up" {{ 'style="animation-delay: ' ~ (loop.index0 * 0.05) ~ 's;"' | safe }}>
+            
+            <a href="{{ url_for('views.profile', username=u.username) }}" class="flex-shrink-0">
+              {% if u.profile_pic %}
+                <img src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}" class="list-avatar shadow-sm" alt="{{ u.username }}">
+              {% else %}
+                <div class="list-avatar-placeholder shadow-sm">{{ u.username[0]|upper }}</div>
               {% endif %}
-            </h6>
-          </a>
-          <p class="text-muted small mb-0 text-truncate">
-            {% if u.bio %} {{ u.bio }} {% else %} Joined {{
-            u.date_created.strftime('%b %Y') }} {% endif %}
-          </p>
-        </div>
+            </a>
 
-        {% if current_user.is_authenticated and current_user.id != u.id %}
-        <div class="flex-shrink-0 ms-2">
-          {% if u.id in following_ids %}
-          <button
-            class="btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm"
-            onclick="toggleFollowList('{{ u.id }}', this)"
-          >
-            Following
-          </button>
-          {% else %}
-          <button
-            class="btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm"
-            onclick="toggleFollowList('{{ u.id }}', this)"
-          >
-            Follow
-          </button>
-          {% endif %}
-        </div>
-        {% endif %}
+            <div class="flex-grow-1 min-w-0 ms-2">
+              <a href="{{ url_for('views.profile', username=u.username) }}" class="profile-link">
+                <h6 class="fw-bold mb-1 text-truncate" style="font-size: 1.1rem;">
+                  {{ u.username }}
+                  {% if u.is_verified %}
+                    <i class="fas fa-check-circle text-primary ms-1" style="font-size: 0.9rem;" title="Verified"></i>
+                  {% endif %}
+                </h6>
+              </a>
+              <p class="text-muted small mb-0 text-truncate">
+                {% if u.bio %}
+                  {{ u.bio }}
+                {% else %}
+                  Joined {{ u.date_created.strftime('%b %Y') }}
+                {% endif %}
+              </p>
+            </div>
+
+            {% if current_user.is_authenticated and current_user.id != u.id %}
+              <div class="flex-shrink-0 ms-2">
+                {% if u.id in following_ids %}
+                  <button class="btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm" onclick="toggleFollowList('{{ u.id }}', this)">
+                    Following
+                  </button>
+                {% else %}
+                  <button class="btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm" onclick="toggleFollowList('{{ u.id }}', this)">
+                    Follow
+                  </button>
+                {% endif %}
+              </div>
+            {% endif %}
+
+          </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
     {% else %}
-
-    <div class="text-center py-5 mt-4">
-      <div
-        class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-        style="width: 80px; height: 80px; background-color: var(--bg-input)"
-      >
-        <i class="fas fa-users-slash fa-2x text-muted"></i>
+      
+      <div class="text-center py-5 mt-4">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 80px; height: 80px; background-color: var(--bg-input);">
+          <i class="fas fa-users-slash fa-2x text-muted"></i>
+        </div>
+        <h4 class="fw-bold" style="color: var(--text-main);">No {{ title|lower }} yet</h4>
+        <p class="text-muted">When {{ profile_user.username }} gets {{ title|lower }}, they will show up here.</p>
       </div>
-      <h4 class="fw-bold" style="color: var(--text-main)">
-        No {{ title|lower }} yet
-      </h4>
-      <p class="text-muted">
-        When {{ profile_user.username }} gets {{ title|lower }}, they will show
-        up here.
-      </p>
-    </div>
 
     {% endif %}
+
   </div>
 </div>
 
@@ -175,15 +146,13 @@ profile_user.username }}{% endblock %} {% block content %}
   function toggleFollowList(userId, btn) {
     const isFollowing = btn.classList.contains("btn-outline-secondary");
     const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
-
+    
     // Optimistic UI updates (instant feel)
     if (isFollowing) {
-      btn.className =
-        "btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+      btn.className = "btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
       btn.textContent = "Follow";
     } else {
-      btn.className =
-        "btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+      btn.className = "btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
       btn.textContent = "Following";
     }
 
@@ -194,18 +163,16 @@ profile_user.username }}{% endblock %} {% block content %}
         if (!data.success) {
           // If server fails, revert the button
           if (isFollowing) {
-            btn.className =
-              "btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+            btn.className = "btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
             btn.textContent = "Following";
           } else {
-            btn.className =
-              "btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+            btn.className = "btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
             btn.textContent = "Follow";
           }
           console.error("Follow action failed.");
         }
       })
-      .catch((err) => console.error("Error:", err));
+      .catch(err => console.error("Error:", err));
   }
 </script>
 {% endblock %}
