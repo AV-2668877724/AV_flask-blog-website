@@ -1,163 +1,194 @@
-{% extends "base.html" %} {% block title %}Complete Registration{% endblock %}
-{% block content %}
-<div
-  class="row justify-content-center align-items-center"
-  style="min-height: 75vh"
->
-  <div class="col-md-6 col-lg-5">
-    <div class="card border-0 auth-card">
-      <div class="card-body p-4 p-md-5">
-        <div class="text-center mb-5">
-          <div
-            class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
-            style="width: 60px; height: 60px"
+{% extends "base.html" %} {% block title %}Complete Setup - AV Postory{%
+endblock %} {% block content %}
+<style>
+  .auth-wrapper {
+    min-height: 75vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  .auth-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 24px;
+    box-shadow: var(--shadow-float);
+    width: 100%;
+    max-width: 420px;
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-card::before {
+    content: "";
+    position: absolute;
+    bottom: -50px;
+    left: -50px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(
+      circle,
+      var(--primary-glow) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+    transition: color 0.2s;
+  }
+  .password-toggle:hover {
+    color: var(--primary);
+  }
+</style>
+
+<div class="auth-wrapper fade-in-up">
+  <div class="auth-card">
+    <div class="auth-content" style="position: relative; z-index: 1">
+      <div class="text-center mb-4">
+        <h2 class="font-heading fw-bold" style="color: var(--text-main)">
+          Almost there!
+        </h2>
+        <p class="text-muted small">Choose your username and password.</p>
+      </div>
+
+      <form method="POST" id="finalSignupForm">
+        <div class="mb-3">
+          <label class="form-label fw-bold small text-muted ms-1"
+            >Choose Username</label
           >
-            <i class="fas fa-id-badge fa-2x"></i>
-          </div>
-          <h2 class="fw-bold font-heading">Final Step</h2>
-          <p class="text-muted">Set your unique identity</p>
-        </div>
-
-        <form method="POST">
-          <div class="mb-4">
-            <div class="input-group">
-              <div class="form-floating flex-grow-1">
-                <input
-                  type="text"
-                  class="form-control bg-light border-0"
-                  name="username"
-                  id="signupUsername"
-                  placeholder="Username"
-                  required
-                  autocomplete="off"
-                  pattern="[a-zA-Z0-9_.]+"
-                  title="Letters, numbers, dots, and underscores only."
-                  onkeyup="resetSignupCheck()"
-                />
-                <label for="signupUsername" class="text-muted"
-                  ><i class="fas fa-at me-2"></i>Username</label
-                >
-              </div>
-              <button
-                class="btn btn-primary fw-bold px-4"
-                type="button"
-                id="checkBtn"
-                onclick="checkSignupUsername()"
-              >
-                Check
-              </button>
-            </div>
-            <div
-              id="signupUsernameStatus"
-              class="form-text small mt-2 fw-bold px-2"
-            >
-              <span class="text-muted">👉 Click "Check" button first</span>
-            </div>
-          </div>
-
-          <div class="form-floating mb-3">
+          <div
+            class="input-group shadow-sm"
+            style="
+              border-radius: 12px;
+              overflow: hidden;
+              border: 2px solid transparent;
+            "
+          >
+            <span
+              class="input-group-text border-0"
+              style="background-color: var(--bg-input)"
+              ><i class="fas fa-at"></i
+            ></span>
             <input
-              type="password"
-              class="form-control bg-light border-0"
-              name="password"
-              id="password"
-              placeholder="Create a password"
+              type="text"
+              class="form-control border-0"
+              style="background-color: var(--bg-input); color: var(--text-main)"
+              id="signupUsername"
+              name="username"
+              placeholder="username"
               required
-              minlength="7"
+              autocomplete="off"
+              oninput="resetSignupCheck()"
             />
-            <label for="password" class="text-muted"
-              ><i class="fas fa-lock me-2"></i>Create Password</label
-            >
-            <div class="form-text px-2">Must be at least 7 characters.</div>
-          </div>
-
-          <div class="form-floating mb-5">
-            <input
-              type="password"
-              class="form-control bg-light border-0"
-              name="confirm_password"
-              id="confirm_password"
-              placeholder="Repeat password"
-              required
-              minlength="7"
-            />
-            <label for="confirm_password" class="text-muted"
-              ><i class="fas fa-check-double me-2"></i>Confirm Password</label
-            >
-          </div>
-
-          <div class="d-grid gap-2">
             <button
-              type="submit"
-              id="signupSubmitBtn"
-              class="btn btn-primary btn-lg rounded-pill fw-bold"
-              disabled
+              class="btn border-0 fw-bold"
+              style="background-color: var(--bg-input); color: var(--primary)"
+              type="button"
+              id="checkBtn"
+              onclick="checkSignupUsername()"
             >
-              Create Account
+              Check
             </button>
           </div>
-        </form>
-      </div>
+          <div id="signupUsernameStatus" class="form-text small ms-1 mt-1">
+            <span class="text-muted">Please check availability.</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small text-muted ms-1"
+            >Create Password</label
+          >
+          <div class="position-relative">
+            <input
+              type="password"
+              class="form-control shadow-sm"
+              id="password"
+              name="password"
+              placeholder="Minimum 7 characters"
+              required
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              onclick="toggleVisibility('password', 'eye1')"
+            >
+              <i class="far fa-eye" id="eye1"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold small text-muted ms-1"
+            >Confirm Password</label
+          >
+          <div class="position-relative">
+            <input
+              type="password"
+              class="form-control shadow-sm"
+              id="confirm_password"
+              name="confirm_password"
+              placeholder="Type password again"
+              required
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              onclick="toggleVisibility('confirm_password', 'eye2')"
+            >
+              <i class="far fa-eye" id="eye2"></i>
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm"
+          id="signupSubmitBtn"
+          disabled
+        >
+          Complete Sign Up
+        </button>
+      </form>
     </div>
   </div>
 </div>
 
 <script>
-  function checkSignupUsername() {
-    const input = document.getElementById("signupUsername");
-    const status = document.getElementById("signupUsernameStatus");
-    const btn = document.getElementById("signupSubmitBtn");
-    const checkBtn = document.getElementById("checkBtn");
-
-    if (input.value.length < 2) {
-      status.innerHTML = '<span class="text-danger">Too short</span>';
-      return;
+  // Show/Hide Password function
+  function toggleVisibility(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === "password") {
+      input.type = "text";
+      icon.classList.remove("fa-eye");
+      icon.classList.add("fa-eye-slash");
+    } else {
+      input.type = "password";
+      icon.classList.remove("fa-eye-slash");
+      icon.classList.add("fa-eye");
     }
-
-    // Disable button while checking
-    checkBtn.disabled = true;
-    checkBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    fetch("/check-username-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: input.value }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        checkBtn.disabled = false;
-        checkBtn.innerText = "Check";
-
-        if (data.available) {
-          status.innerHTML =
-            '<span class="text-success"><i class="fas fa-check-circle"></i> ' +
-            data.message +
-            "</span>";
-          btn.disabled = false; // Enable Submit
-          input.classList.add("is-valid");
-          input.classList.remove("is-invalid");
-        } else {
-          status.innerHTML =
-            '<span class="text-danger"><i class="fas fa-times-circle"></i> ' +
-            data.message +
-            "</span>";
-          btn.disabled = true; // Disable Submit
-          input.classList.add("is-invalid");
-          input.classList.remove("is-valid");
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        checkBtn.disabled = false;
-        checkBtn.innerText = "Check";
-      });
   }
 
-  function resetSignupCheck() {
-    document.getElementById("signupSubmitBtn").disabled = true;
-    document.getElementById("signupUsername").classList.remove("is-valid");
-    document.getElementById("signupUsernameStatus").innerHTML =
-      '<span class="text-muted">👉 Click "Check" button first</span>';
-  }
+  // Submit button loader
+  document
+    .getElementById("finalSignupForm")
+    .addEventListener("submit", function () {
+      const btn = document.getElementById("signupSubmitBtn");
+      btn.innerHTML =
+        '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
+    });
 </script>
 {% endblock %}

@@ -1,115 +1,211 @@
-{% extends "base.html" %} {% block title %} {{ title }} - {{
-profile_user.username }} {% endblock %} {% block content %}
+{% extends "base.html" %} {% block title %}{{ title }} - {{
+profile_user.username }}{% endblock %} {% block content %}
+<style>
+  /* Header Card */
+  .page-header-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 24px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* User List Cards */
+  .user-list-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color) !important;
+    border-radius: 20px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all var(--trans-smooth);
+  }
+  .user-list-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: rgba(79, 70, 229, 0.4) !important; /* Soft glow on hover */
+  }
+
+  .list-avatar {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+  }
+
+  .list-avatar-placeholder {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+  }
+
+  .profile-link {
+    color: var(--text-main);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .profile-link:hover {
+    color: var(--primary);
+  }
+</style>
+
 <div class="row justify-content-center fade-in-up">
-  <div class="col-lg-6 col-md-8">
-    <div class="d-flex align-items-center mb-4 px-2">
+  <div class="col-lg-8 col-xl-7">
+    <div class="page-header-card">
       <a
         href="{{ url_for('views.profile', username=profile_user.username) }}"
-        class="btn btn-icon text-muted shadow-sm bg-card me-3"
-        style="width: 40px; height: 40px"
+        class="btn btn-icon border shadow-sm"
+        style="width: 44px; height: 44px"
       >
         <i class="fas fa-arrow-left"></i>
       </a>
-      <h4 class="mb-0 fw-bold font-heading" style="color: var(--text-main)">
-        {{ title }}
-        <span
-          class="badge bg-light text-muted border shadow-sm fs-6 ms-2 align-middle rounded-pill px-3"
-          >{{ users|length }}</span
-        >
-      </h4>
+      <div>
+        <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
+          {{ profile_user.username }}
+        </h3>
+        <p class="text-muted small mb-0 fw-bold">{{ title }}</p>
+      </div>
     </div>
 
-    <div
-      class="card border-0 shadow-md mb-5"
-      style="
-        border-radius: var(--border-radius-lg);
-        background-color: var(--bg-card);
-        overflow: hidden;
-      "
-    >
-      <div class="list-group list-group-flush">
-        {% if users %} {% for u in users %}
-        <div
-          class="list-group-item p-3 p-md-4 d-flex align-items-center justify-content-between transition-all hover-opacity-100"
-          style="
-            background-color: transparent;
-            border-color: var(--border-color) !important;
-          "
+    {% if users %}
+    <div class="d-flex flex-column">
+      {% for u in users %}
+      <div
+        class="user-list-card fade-in-up"
+        style="animation-delay: {{ loop.index0 * 0.05 }}s;"
+      >
+        <a
+          href="{{ url_for('views.profile', username=u.username) }}"
+          class="flex-shrink-0"
         >
-          <a
-            href="{{ url_for('views.profile', username=u.username) }}"
-            class="d-flex align-items-center text-decoration-none gap-3 flex-grow-1 min-w-0"
-            style="color: var(--text-main)"
-          >
-            {% if u.profile_pic %}
-            <img
-              src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-              class="rounded-circle shadow-sm"
-              style="
-                width: 52px;
-                height: 52px;
-                object-fit: cover;
-                border: 2px solid var(--border-color);
-              "
-            />
-            {% else %}
-            <div
-              class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-              style="
-                width: 52px;
-                height: 52px;
-                font-size: 1.3rem;
-                background: linear-gradient(135deg, var(--primary), #4f46e5);
-              "
-            >
-              {{ u.username[0]|upper }}
-            </div>
-            {% endif %}
-
-            <div class="lh-sm text-truncate pe-3">
-              <h6 class="mb-0 fw-bold fs-5">{{ u.username }}</h6>
-              <small class="text-muted fw-bold">View Profile</small>
-            </div>
-          </a>
-
-          {% if current_user.is_authenticated and u.id != current_user.id %}
-          <div class="flex-shrink-0">
-            {% if u.id in following_ids %}
-            <button
-              class="btn btn-outline-secondary rounded-pill px-4 shadow-sm fw-bold border-2 unfollow-btn"
-              data-user-id="{{ u.id }}"
-              onclick="toggleFollow('{{ u.id }}', this)"
-            >
-              Following
-            </button>
-            {% else %}
-            <button
-              class="btn btn-primary rounded-pill px-4 shadow-sm fw-bold follow-btn"
-              data-user-id="{{ u.id }}"
-              onclick="toggleFollow('{{ u.id }}', this)"
-            >
-              Follow
-            </button>
-            {% endif %}
+          {% if u.profile_pic %}
+          <img
+            src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
+            class="list-avatar shadow-sm"
+            alt="{{ u.username }}"
+          />
+          {% else %}
+          <div class="list-avatar-placeholder shadow-sm">
+            {{ u.username[0]|upper }}
           </div>
           {% endif %}
-        </div>
-        {% endfor %} {% else %}
-        <div class="text-center py-5 my-4">
-          <div
-            class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
-            style="width: 80px; height: 80px"
+        </a>
+
+        <div class="flex-grow-1 min-w-0 ms-2">
+          <a
+            href="{{ url_for('views.profile', username=u.username) }}"
+            class="profile-link"
           >
-            <i class="fas fa-users-slash fa-2x opacity-50"></i>
-          </div>
-          <h5 class="fw-bold font-heading mb-1" style="color: var(--text-main)">
-            No users found
-          </h5>
-          <p class="small text-muted mb-0">This list is currently empty.</p>
+            <h6 class="fw-bold mb-1 text-truncate" style="font-size: 1.1rem">
+              {{ u.username }} {% if u.is_verified %}
+              <i
+                class="fas fa-check-circle text-primary ms-1"
+                style="font-size: 0.9rem"
+                title="Verified"
+              ></i>
+              {% endif %}
+            </h6>
+          </a>
+          <p class="text-muted small mb-0 text-truncate">
+            {% if u.bio %} {{ u.bio }} {% else %} Joined {{
+            u.date_created.strftime('%b %Y') }} {% endif %}
+          </p>
+        </div>
+
+        {% if current_user.is_authenticated and current_user.id != u.id %}
+        <div class="flex-shrink-0 ms-2">
+          {% if u.id in following_ids %}
+          <button
+            class="btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm"
+            onclick="toggleFollowList('{{ u.id }}', this)"
+          >
+            Following
+          </button>
+          {% else %}
+          <button
+            class="btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm"
+            onclick="toggleFollowList('{{ u.id }}', this)"
+          >
+            Follow
+          </button>
+          {% endif %}
         </div>
         {% endif %}
       </div>
+      {% endfor %}
     </div>
+    {% else %}
+
+    <div class="text-center py-5 mt-4">
+      <div
+        class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+        style="width: 80px; height: 80px; background-color: var(--bg-input)"
+      >
+        <i class="fas fa-users-slash fa-2x text-muted"></i>
+      </div>
+      <h4 class="fw-bold" style="color: var(--text-main)">
+        No {{ title|lower }} yet
+      </h4>
+      <p class="text-muted">
+        When {{ profile_user.username }} gets {{ title|lower }}, they will show
+        up here.
+      </p>
+    </div>
+
+    {% endif %}
   </div>
 </div>
+
+<script>
+  // Real-time Follow/Unfollow logic specifically designed for this list
+  function toggleFollowList(userId, btn) {
+    const isFollowing = btn.classList.contains("btn-outline-secondary");
+    const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
+
+    // Optimistic UI updates (instant feel)
+    if (isFollowing) {
+      btn.className =
+        "btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+      btn.textContent = "Follow";
+    } else {
+      btn.className =
+        "btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+      btn.textContent = "Following";
+    }
+
+    // Backend sync
+    fetch(url, { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) {
+          // If server fails, revert the button
+          if (isFollowing) {
+            btn.className =
+              "btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+            btn.textContent = "Following";
+          } else {
+            btn.className =
+              "btn btn-primary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm";
+            btn.textContent = "Follow";
+          }
+          console.error("Follow action failed.");
+        }
+      })
+      .catch((err) => console.error("Error:", err));
+  }
+</script>
 {% endblock %}

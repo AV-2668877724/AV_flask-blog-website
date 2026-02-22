@@ -1,204 +1,278 @@
-{% extends "base.html" %} {% block title %}Search Results{% endblock %} {% block
-content %}
+{% extends "base.html" %} {% block title %}Search: {{ query }}{% endblock %} {%
+block content %}
+<style>
+  /* Search Header Card */
+  .search-header-card {
+    background-color: var(--bg-card);
+    border-radius: 24px;
+    padding: 2rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+  }
+
+  /* Large Search Input */
+  .search-input-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .search-input-large {
+    background-color: var(--bg-input);
+    border: 2px solid transparent;
+    border-radius: 50px;
+    padding: 1.2rem 1.5rem 1.2rem 3.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-main);
+    width: 100%;
+    transition: all var(--trans-smooth);
+  }
+  .search-input-large:focus {
+    border-color: var(--primary);
+    background-color: var(--bg-card);
+    box-shadow: 0 0 0 4px var(--primary-glow);
+    outline: none;
+  }
+  .search-icon-large {
+    position: absolute;
+    left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.3rem;
+  }
+
+  /* Modern Animated Tabs */
+  .search-tabs {
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+  }
+  .search-tabs .nav-link {
+    background: none;
+    border: none;
+    color: var(--text-muted) !important;
+    font-weight: 600;
+    padding: 1rem 0.5rem;
+    font-size: 1.1rem;
+    position: relative;
+    transition: color 0.2s;
+    border-radius: 0;
+  }
+  .search-tabs .nav-link:hover {
+    color: var(--text-main) !important;
+  }
+  .search-tabs .nav-link.active {
+    color: var(--text-main) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .search-tabs .nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--primary);
+    border-radius: 4px 4px 0 0;
+  }
+
+  /* Premium User Cards */
+  .user-result-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    transition: all var(--trans-smooth);
+    text-decoration: none;
+  }
+  .user-result-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+  .user-avatar-search {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+  }
+  .user-placeholder-search {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+  }
+</style>
+
 <div class="row justify-content-center fade-in-up">
-  <div class="col-lg-8">
-    <div class="d-flex align-items-center mb-4 px-2">
-      <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
-        Results for "<span class="text-primary">{{ query }}</span>"
-      </h3>
-      <div
-        class="flex-grow-1 ms-4 border-top opacity-25"
-        style="border-color: var(--text-muted) !important"
-      ></div>
-    </div>
+  <div class="col-lg-8 col-xl-7">
+    <div class="search-header-card text-center">
+      <h2 class="font-heading fw-bold mb-4" style="color: var(--text-main)">
+        {% if query %} Results for
+        <span style="color: var(--primary)">"{{ query }}"</span> {% else %}
+        Explore <span style="color: var(--primary)">AV Postory</span>
+        {% endif %}
+      </h2>
 
-    {% if users %}
-    <h5
-      class="fw-bold mb-3 small text-uppercase"
-      style="color: var(--text-muted); letter-spacing: 1px"
-    >
-      People Found
-    </h5>
-    <div class="row g-3 mb-5">
-      {% for u in users %}
-      <div class="col-md-6">
-        <div
-          class="card border-0 shadow-sm h-100 transition-all hover-opacity-100"
-          style="background-color: var(--bg-card); border-radius: 16px"
-        >
-          <div class="card-body d-flex align-items-center gap-3 p-3">
-            <a
-              href="{{ url_for('views.profile', username=u.username) }}"
-              class="flex-shrink-0"
-            >
-              {% if u.profile_pic %}
-              <img
-                src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-                class="rounded-circle shadow-sm"
-                style="
-                  width: 56px;
-                  height: 56px;
-                  object-fit: cover;
-                  border: 2px solid var(--border-color);
-                "
-              />
-              {% else %}
-              <div
-                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
-                style="
-                  width: 56px;
-                  height: 56px;
-                  font-size: 1.4rem;
-                  background: linear-gradient(135deg, var(--primary), #4f46e5);
-                "
-              >
-                {{ u.username[0]|upper }}
-              </div>
-              {% endif %}
-            </a>
-            <div class="flex-grow-1 min-w-0">
-              <a
-                href="{{ url_for('views.profile', username=u.username) }}"
-                class="text-decoration-none fw-bold d-block text-truncate"
-                style="color: var(--text-main); font-size: 1.05rem"
-              >
-                {{ u.username }}
-              </a>
-              <small style="color: var(--text-muted)"
-                >Joined {{ u.date_created.strftime('%b %Y') }}</small
-              >
-            </div>
-            <div class="ms-auto flex-shrink-0">
-              <a
-                href="{{ url_for('views.profile', username=u.username) }}"
-                class="btn btn-sm btn-light rounded-pill px-3 fw-bold border shadow-sm"
-                style="
-                  background-color: var(--bg-input);
-                  color: var(--text-main);
-                "
-                >View</a
-              >
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %} {% if not users and suggestions %}
-    <div
-      class="alert border-0 shadow-sm mb-4 d-flex align-items-center gap-3"
-      style="
-        background-color: var(--bg-input);
-        color: var(--text-main);
-        border-radius: 16px;
-      "
-    >
-      <i class="fas fa-info-circle fa-lg text-primary"></i>
-      <div>
-        We couldn't find an exact match for "<strong>{{ query }}</strong>", but
-        here are some suggestions:
-      </div>
-    </div>
-
-    <h5
-      class="fw-bold mb-3 small text-uppercase"
-      style="color: var(--text-muted); letter-spacing: 1px"
-    >
-      Suggested People
-    </h5>
-    <div class="row g-3 mb-5">
-      {% for u in suggestions %}
-      <div class="col-md-6">
-        <div
-          class="card border-0 shadow-sm h-100 transition-all hover-opacity-100"
-          style="background-color: var(--bg-card); border-radius: 16px"
-        >
-          <div class="card-body d-flex align-items-center gap-3 p-3">
-            <a
-              href="{{ url_for('views.profile', username=u.username) }}"
-              class="flex-shrink-0"
-            >
-              {% if u.profile_pic %}
-              <img
-                src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-                class="rounded-circle shadow-sm"
-                style="
-                  width: 56px;
-                  height: 56px;
-                  object-fit: cover;
-                  border: 2px solid var(--border-color);
-                "
-              />
-              {% else %}
-              <div
-                class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm"
-                style="
-                  width: 56px;
-                  height: 56px;
-                  font-size: 1.4rem;
-                  background: linear-gradient(135deg, var(--primary), #4f46e5);
-                "
-              >
-                {{ u.username[0]|upper }}
-              </div>
-              {% endif %}
-            </a>
-            <div class="flex-grow-1 min-w-0">
-              <a
-                href="{{ url_for('views.profile', username=u.username) }}"
-                class="text-decoration-none fw-bold d-block text-truncate"
-                style="color: var(--text-main); font-size: 1.05rem"
-              >
-                {{ u.username }}
-              </a>
-              <small style="color: var(--text-muted)"
-                >You might know them</small
-              >
-            </div>
-            <div class="ms-auto flex-shrink-0">
-              <a
-                href="{{ url_for('views.profile', username=u.username) }}"
-                class="btn btn-sm btn-light rounded-pill px-3 fw-bold border shadow-sm"
-                style="
-                  background-color: var(--bg-input);
-                  color: var(--text-main);
-                "
-                >View</a
-              >
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-
-    <h5
-      class="fw-bold mb-3 small text-uppercase mt-4"
-      style="color: var(--text-muted); letter-spacing: 1px"
-    >
-      Stories Found
-    </h5>
-
-    {% if posts %} {% include "_posts.html" %} {% else %}
-    <div
-      class="text-center py-5 my-3 rounded-4 border border-dashed shadow-sm"
-      style="
-        background-color: var(--bg-card);
-        border-color: var(--border-color) !important;
-      "
-    >
-      <div
-        class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
-        style="width: 70px; height: 70px"
+      <form
+        action="{{ url_for('views.search_page') }}"
+        method="GET"
+        class="search-input-wrapper"
       >
-        <i class="fas fa-search fa-xl opacity-50"></i>
-      </div>
-      <p class="mb-0 text-muted fw-bold">
-        No stories found matching your query.
-      </p>
+        <i class="fas fa-search search-icon-large"></i>
+        <input
+          type="text"
+          name="q"
+          class="search-input-large shadow-sm"
+          placeholder="Search for posts or people..."
+          value="{{ query }}"
+          autocomplete="off"
+        />
+      </form>
     </div>
-    {% endif %}
+
+    <ul class="nav search-tabs" id="searchTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link active"
+          id="posts-tab"
+          data-bs-toggle="pill"
+          data-bs-target="#pills-posts"
+          type="button"
+          role="tab"
+        >
+          <i class="fas fa-file-alt me-2"></i>Posts
+          <span
+            class="badge rounded-pill ms-2"
+            style="background-color: var(--bg-input); color: var(--text-main)"
+            >{{ posts|length }}</span
+          >
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="users-tab"
+          data-bs-toggle="pill"
+          data-bs-target="#pills-users"
+          type="button"
+          role="tab"
+        >
+          <i class="fas fa-users me-2"></i>People
+          <span
+            class="badge rounded-pill ms-2"
+            style="background-color: var(--bg-input); color: var(--text-main)"
+            >{{ users|length }}</span
+          >
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content mt-4" id="searchTabsContent">
+      <div class="tab-pane fade show active" id="pills-posts" role="tabpanel">
+        {% if posts %}
+        <div id="posts-container">{% include '_posts.html' %}</div>
+        {% else %}
+        <div class="text-center py-5">
+          <div
+            class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+            style="width: 80px; height: 80px; background-color: var(--bg-input)"
+          >
+            <i class="far fa-folder-open fa-2x text-muted"></i>
+          </div>
+          <h4 class="fw-bold" style="color: var(--text-main)">
+            No posts found
+          </h4>
+          <p class="text-muted">
+            Try searching for different keywords or check your spelling.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="tab-pane fade" id="pills-users" role="tabpanel">
+        {% if users %}
+        <div class="row g-3">
+          {% for u in users %}
+          <div class="col-12 col-md-6">
+            <a
+              href="{{ url_for('views.profile', username=u.username) }}"
+              class="user-result-card"
+            >
+              <div class="flex-shrink-0">
+                {% if u.profile_pic %}
+                <img
+                  src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
+                  class="user-avatar-search shadow-sm"
+                  alt="{{ u.username }}"
+                />
+                {% else %}
+                <div class="user-placeholder-search shadow-sm">
+                  {{ u.username[0]|upper }}
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="flex-grow-1 min-w-0">
+                <h6
+                  class="fw-bold mb-1 text-truncate"
+                  style="color: var(--text-main); font-size: 1.1rem"
+                >
+                  {{ u.username }} {% if u.is_verified %}
+                  <i
+                    class="fas fa-check-circle text-primary ms-1"
+                    style="font-size: 0.9rem"
+                    title="Verified"
+                  ></i>
+                  {% endif %}
+                </h6>
+                <p class="text-muted small mb-0 text-truncate">
+                  {% if u.bio %} {{ u.bio }} {% else %} Joined {{
+                  u.date_created.strftime('%b %Y') }} {% endif %}
+                </p>
+              </div>
+
+              <div class="flex-shrink-0 text-muted opacity-50">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            </a>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+          <div
+            class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+            style="width: 80px; height: 80px; background-color: var(--bg-input)"
+          >
+            <i class="fas fa-user-slash fa-2x text-muted"></i>
+          </div>
+          <h4 class="fw-bold" style="color: var(--text-main)">
+            No people found
+          </h4>
+          <p class="text-muted">
+            We couldn't find any users matching that name.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

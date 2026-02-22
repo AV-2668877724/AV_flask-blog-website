@@ -711,6 +711,13 @@ Profile{% endblock %} {% block content %}
 </div>
 
 <script>
+  // ✅ FIX: Move all modals to the body to prevent unclickable overlay bugs
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.modal').forEach(function(modal) {
+      document.body.appendChild(modal);
+    });
+  });
+  
   function toggleFollow(userId, btn) {
     const isFollowing = btn.classList.contains("btn-outline-secondary");
     const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;

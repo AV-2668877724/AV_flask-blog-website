@@ -1,265 +1,233 @@
 /* =========================================
-   1. PREMIUM VARIABLES & THEME CONFIG
+   1. PREMIUM CSS VARIABLES & THEME
    ========================================= */
-   :root {
-    /* Typography */
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    --font-serif: 'Playfair Display', Georgia, serif;
-  
-    /* Light Theme - Soft & Premium */
-    --primary: #3b82f6;       
-    --primary-hover: #2563eb;
-    --primary-glow: rgba(59, 130, 246, 0.4);
-    --bg-body: #f8fafc;       /* Very soft blue-tinted white */
-    --bg-card: #ffffff;
-    --bg-input: #f1f5f9;
-    --text-main: #0f172a;     
-    --text-muted: #64748b;
-    --border-color: rgba(226, 232, 240, 0.8);
-    
-    /* Modern UI Elements */
-    --border-radius: 16px;
-    --border-radius-lg: 24px;
-    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-    --shadow-hover: 0 20px 25px -5px rgba(59, 130, 246, 0.1), 0 8px 10px -6px rgba(59, 130, 246, 0.05); 
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.6);
-    
-    /* Transitions */
-    --trans-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    --trans-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-  
-  /* Deep Dark Theme (OLED/Premium Style) */
-  body.dark-mode {
-    --bg-body: #050505;       /* True Black backdrop */
-    --bg-card: #121212;       /* Elevated dark */
-    --bg-input: #1a1a1a;
-    --text-main: #f8fafc;     
-    --text-muted: #a1a1aa;
-    --border-color: rgba(255, 255, 255, 0.08);
-    
-    --primary: #60a5fa;
-    --primary-hover: #93c5fd;
-    --primary-glow: rgba(96, 165, 250, 0.25);
-    
-    --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-    --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.8);
-    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.9), 0 0 15px 0 var(--primary-glow);
-    --glass-bg: rgba(18, 18, 18, 0.75);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  
-  /* =========================================
-     2. GLOBAL RESET & MESH BACKGROUND
-     ========================================= */
-  body {
-    font-family: var(--font-sans);
-    background-color: var(--bg-body);
-    color: var(--text-main);
-    line-height: 1.6;
-    transition: background-color var(--trans-smooth), color var(--trans-smooth);
-    padding-bottom: 70px;
-    overflow-x: hidden;
-    /* Subtle Mesh Gradient for Light Mode */
-    background-image: radial-gradient(at 0% 0%, hsla(217,100%,97%,1) 0px, transparent 50%),
-                      radial-gradient(at 100% 0%, hsla(210,100%,98%,1) 0px, transparent 50%);
-    background-attachment: fixed;
-  }
-  
-  body.dark-mode {
-    /* Subtle Glowing Orbs for Dark Mode */
-    background-image: radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.05) 0px, transparent 50%),
-                      radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
-  }
-  
-  h1, h2, h3, h4, h5, h6, .brand-text, .font-heading {
-    font-family: var(--font-serif);
-    font-weight: 700;
-    color: var(--text-main);
-    letter-spacing: -0.03em;
-  }
-  
-  a {
-    color: var(--primary);
-    text-decoration: none;
-    transition: all var(--trans-fast);
-  }
-  a:hover { color: var(--primary-hover); }
-  
-  /* CUSTOM SCROLLBAR */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-  
-  /* =========================================
-     3. GLASSMORPHISM NAVBAR
-     ========================================= */
-  .navbar {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: var(--glass-border);
-    padding: 1rem 0;
-    position: sticky;
-    top: 0;
-    z-index: 1020;
-    transition: all var(--trans-smooth);
-  }
-  
-  .navbar.scrolled {
-    padding: 0.6rem 0;
-    box-shadow: var(--shadow-sm);
-    background: rgba(255, 255, 255, 0.9);
-  }
-  body.dark-mode .navbar.scrolled { background: rgba(18, 18, 18, 0.9); }
-  
-  .nav-logo { height: 38px; width: auto; border-radius: 10px; transition: transform var(--trans-smooth); }
-  .navbar-brand:hover .nav-logo { transform: scale(1.08) rotate(-4deg); }
-  
-  .nav-link { color: var(--text-muted) !important; font-weight: 600; font-size: 0.95rem; transition: all var(--trans-fast); }
-  .nav-link:hover, .nav-link.active { color: var(--text-main) !important; transform: translateY(-2px); }
-  
-  /* =========================================
-     4. INTERACTIVE CARDS
-     ========================================= */
-  .card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-md);
-    margin-bottom: 2rem;
-    transition: transform var(--trans-smooth), box-shadow var(--trans-smooth), border-color var(--trans-smooth);
-    overflow: hidden;
-  }
-  
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-hover);
-    border-color: rgba(59, 130, 246, 0.3);
-  }
-  body.dark-mode .card:hover { border-color: rgba(255,255,255,0.15); }
-  
-  .card-header { background-color: transparent; border-bottom: 1px solid var(--border-color); padding: 1.5rem; }
-  
-  /* Auth Card Specific */
-  .auth-card {
-    border-radius: 30px;
-    backdrop-filter: blur(10px);
-  }
-  
-  /* =========================================
-     5. FORMS & INPUTS (MODERN FLOATING)
-     ========================================= */
-  .form-control, .form-select, .search-input {
-    background-color: var(--bg-input);
-    border: 2px solid transparent;
-    color: var(--text-main);
-    padding: 0.85rem 1.2rem;
-    border-radius: 16px;
-    transition: all var(--trans-fast);
-    font-weight: 500;
-  }
-  
-  .form-control:focus, .search-input:focus {
-    background-color: var(--bg-card);
-    border-color: var(--primary);
-    box-shadow: 0 0 0 5px var(--primary-glow);
-    color: var(--text-main);
-    transform: translateY(-2px);
-  }
-  
-  .input-group-text {
-    background-color: var(--bg-input);
-    border: 2px solid transparent;
-    border-radius: 16px;
-    color: var(--text-muted);
-    transition: all var(--trans-fast);
-  }
-  .input-group:focus-within .input-group-text {
-    background-color: var(--bg-card);
-    border-color: var(--primary);
-    color: var(--primary);
-  }
-  
-  /* =========================================
-     6. INTERACTIVE BUTTONS
-     ========================================= */
-  .btn {
-    font-weight: 600;
-    border-radius: 14px;
-    padding: 0.7rem 1.5rem;
-    transition: all var(--trans-smooth);
-    letter-spacing: 0.3px;
-  }
-  
-  .btn-primary {
-    background: linear-gradient(135deg, var(--primary), #4f46e5);
-    border: none;
-    color: white;
-    box-shadow: 0 4px 15px var(--primary-glow);
-  }
-  
-  .btn-primary:hover {
-    background: linear-gradient(135deg, var(--primary-hover), #4338ca);
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px var(--primary-glow);
-    color: white;
-  }
-  
-  .btn-icon {
-    color: var(--text-muted);
-    background-color: var(--bg-input);
-    border: 1px solid transparent;
-    border-radius: 50%;
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    transition: all var(--trans-smooth);
-  }
-  .btn-icon:hover {
-    color: var(--primary);
-    background-color: var(--primary-glow);
-    transform: rotate(8deg) scale(1.1);
-  }
-  
-  /* =========================================
-     7. POST TEXT CONTRAST & ANIMATIONS
-     ========================================= */
-  .post-text { font-size: 1.1rem; line-height: 1.8; color: var(--text-main) !important; }
-  
-  .like-anim i { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-  .btn-like:active .like-anim i { transform: scale(1.5); }
-  
-  /* =========================================
-     8. DARK MODE SPECIFIC OVERRIDES
-     ========================================= */
-  body.dark-mode .text-dark { color: #ffffff !important; }
-  body.dark-mode .bg-white { background-color: var(--bg-card) !important; }
-  body.dark-mode .bg-light { background-color: var(--bg-input) !important; }
-  body.dark-mode .border, body.dark-mode .border-top, body.dark-mode .border-bottom { border-color: var(--border-color) !important; }
-  body.dark-mode .dropdown-menu { background-color: #1a1a1a !important; border: 1px solid var(--border-color); box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
-  body.dark-mode .dropdown-item { color: var(--text-main) !important; }
-  body.dark-mode .dropdown-item:hover { background-color: #27272a !important; color: var(--primary) !important; }
-  body.dark-mode .modal-content { background-color: #121212 !important; border: 1px solid var(--border-color) !important; }
-  
-  /* Dropdown/Chat Fixes for Dark Mode */
-  body.dark-mode .list-group-item { background-color: var(--bg-card) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
-  body.dark-mode input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important; -webkit-text-fill-color: var(--text-main) !important; }
-  
-  /* Skeleton Loading Upgrades */
-  .skeleton {
-      background: linear-gradient(90deg, var(--bg-input) 25%, var(--border-color) 50%, var(--bg-input) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      border-radius: 8px;
-  }
-  @keyframes shimmer { 100% { background-position: -200% 0; } }
+:root {
+  /* Light Mode Palette */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --primary: #4f46e5;
+  --primary-glow: rgba(79, 70, 229, 0.25);
+  --border-color: #e2e8f0;
+
+  /* Shadows & Transitions */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.05);
+  --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.08);
+  --trans-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode Palette */
+body.dark-mode {
+  --bg-main: #0b1120;
+  --bg-card: #1e293b;
+  --bg-input: #0f172a;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --primary: #6366f1;
+  --primary-glow: rgba(99, 102, 241, 0.3);
+  --border-color: rgba(255, 255, 255, 0.05);
+
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.4);
+  --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
 
 /* =========================================
-   29. POST TRUNCATION FADE OVERLAY
+   2. GLOBAL RESET & TYPOGRAPHY
    ========================================= */
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background-color var(--trans-smooth), color var(--trans-smooth);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 70px;
+  /* Space for mobile nav */
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+a:hover {
+  color: #4338ca;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* =========================================
+   3. PREMIUM CARDS
+   ========================================= */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color) !important;
+  border-radius: 24px !important;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--trans-smooth), box-shadow var(--trans-smooth);
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+}
+
+/* =========================================
+   4. BUTTONS & ICONS
+   ========================================= */
+.btn {
+  font-weight: 600;
+  border-radius: 14px;
+  letter-spacing: 0.3px;
+  transition: all var(--trans-smooth);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), #4338ca);
+  border: none;
+  box-shadow: 0 4px 12px var(--primary-glow);
+  color: white !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--primary-glow);
+  background: linear-gradient(135deg, #4338ca, var(--primary));
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-icon {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--trans-smooth);
+  color: var(--text-muted);
+}
+
+.btn-icon:hover {
+  background-color: var(--bg-input);
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+/* =========================================
+   5. NAVBAR & NAVIGATION
+   ========================================= */
+.navbar {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.8rem 0;
+  transition: all var(--trans-smooth);
+}
+
+body.dark-mode .navbar {
+  background-color: rgba(11, 17, 32, 0.85);
+}
+
+.nav-link {
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: var(--primary);
+}
+
+.nav-logo {
+  height: 38px;
+  width: auto;
+  border-radius: 10px;
+  transition: transform var(--trans-smooth);
+}
+
+.navbar-brand:hover .nav-logo {
+  transform: scale(1.08) rotate(-4deg);
+}
+/* Add this to force the brand text to obey Dark Mode */
+.brand-text {
+  color: var(--text-main) !important;
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+}
+
+/* =========================================
+   6. INPUTS & FORMS
+   ========================================= */
+.form-control,
+.form-select {
+  background-color: var(--bg-input);
+  border: 1px solid transparent;
+  color: var(--text-main);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--bg-card);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-glow);
+  color: var(--text-main);
+}
+
+body.dark-mode .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-main);
+}
+
+/* =========================================
+   7. POST TEXT & OVERLAYS
+   ========================================= */
+.post-text {
+  line-height: 1.7;
+  font-size: 1.05rem;
+  color: var(--text-main);
+}
+
 .fade-overlay {
   position: absolute;
   bottom: 0;
@@ -271,18 +239,98 @@
   display: none;
 }
 
-/* =========================================
-   DYNAMIC POST TRUNCATION FADE OVERLAY
-   ========================================= */
 .dynamic-fade-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 60px;
-  background: linear-gradient(to bottom, transparent, #ffffff);
+  background: linear-gradient(to bottom, transparent, var(--bg-card));
   pointer-events: none;
 }
-body.dark-mode .dynamic-fade-overlay {
-  background: linear-gradient(to bottom, transparent, #2b2b2b);
+
+/* =========================================
+   8. ANIMATIONS & SKELETON LOADERS
+   ========================================= */
+.fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-input) 25%, var(--border-color) 50%, var(--bg-input) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* =========================================
+   9. BOOTSTRAP DARK MODE FIXES
+   ========================================= */
+body.dark-mode .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+body.dark-mode .bg-light {
+  background-color: var(--bg-input) !important;
+}
+
+body.dark-mode .text-dark {
+  color: #ffffff !important;
+}
+
+body.dark-mode .border,
+body.dark-mode .border-top,
+body.dark-mode .border-bottom {
+  border-color: var(--border-color) !important;
+}
+
+body.dark-mode .dropdown-menu {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+body.dark-mode .dropdown-item {
+  color: var(--text-main) !important;
+}
+
+body.dark-mode .dropdown-item:hover {
+  background-color: var(--bg-input) !important;
+  color: var(--primary) !important;
+}
+
+body.dark-mode .modal-content {
+  background-color: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+body.dark-mode .list-group-item {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+
+body.dark-mode input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important;
+  -webkit-text-fill-color: var(--text-main) !important;
 }
