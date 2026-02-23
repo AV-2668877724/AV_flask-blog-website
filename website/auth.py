@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
-from .models import User
+# ✅ FIX: Import Message as ChatMessage to avoid conflict with flask_mail
+from .models import User, Message as ChatMessage 
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, mail
 from flask_login import login_user, login_required, logout_user, current_user
@@ -33,7 +34,14 @@ RESERVED_USERNAMES = {
 # ==========================================
 def send_async_email(app, msg):
     with app.app_context():
-        mail.send(msg)
+        try:
+            mail.send(msg)
+            print("✅ EMAIL SENT SUCCESSFULLY TO:", msg.recipients)
+        except Exception as e:
+            print("=========================================")
+            print("❌ CRITICAL EMAIL ERROR:")
+            print(e)
+            print("=========================================")
 
 def get_public_link(endpoint, token):
     """Generates a link and forces the Ngrok URL if running locally."""
@@ -55,7 +63,8 @@ def send_verification_email(user_email):
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Confirm Your Email - AV Postory', 
                   sender=sender_email, 
-                  recipients=[user_email])
+                  recipients=[user_email],
+                  reply_to='noreply@avpostory.com')
     
     msg.body = f'Your link is: {link}\n\nThis link expires in 1 hour.'
     
@@ -68,9 +77,31 @@ def send_reset_email(user_email):
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Password Reset Request', 
                   sender=sender_email, 
-                  recipients=[user_email])
+                  recipients=[user_email],
+                  reply_to='noreply@avpostory.com')
     
     msg.body = f'To reset your password, click the following link: {link}'
+    
+    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+
+# 🚀 NEW: Send Real Welcome Email
+def send_welcome_email(user_email, username):
+    sender_email = os.getenv('MAIL_USERNAME')
+    msg = Message('Welcome to AV Postory! 🎉', 
+                  sender=sender_email, 
+                  recipients=[user_email],
+                  reply_to='noreply@avpostory.com')
+    
+    msg.body = f'''Hello {username},
+
+Welcome to AV Postory! We are absolutely thrilled to have you join our community.
+
+Your account has been successfully created. You can now set up your profile, browse the feed, connect with others, and share your first story with the world.
+
+If you ever need anything, just reply to this email!
+
+Best regards,
+The AV Postory Team'''
     
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
@@ -194,13 +225,34 @@ def finish_signup():
             db.session.add(new_user)
             db.session.commit()
             
+            # ==========================================
+            # 🚀 NEW: WELCOME MESSAGES
+            # ==========================================
+            # 1. Automated Chat Message (Inside the app)
+            welcome_text = "Welcome to AV Postory! 🎉 We are so incredibly excited to have you here. Feel free to set up your profile, browse the feed, and share your first story with the world!"
+            
+            welcome_msg = ChatMessage(
+                text=welcome_text, 
+                sender_id=1, # Admin account ID
+                recipient_id=new_user.id
+            )
+            db.session.add(welcome_msg)
+            db.session.commit()
+
+            # 2. Real Welcome Email to their Gmail account
+            try:
+                send_welcome_email(email, username)
+            except Exception as e:
+                print("Failed to send welcome email:", e)
+            
             login_user(new_user, remember=True)
             
             session.pop('signup_email', None)
             session.pop('signup_otp', None)
             session.pop('email_verified', None)
             
-            flash('Account created successfully!', category='success')
+            # Trigger the Confetti!
+            flash('Welcome to AV Postory! Your account is ready.', category='signup_success')
             return redirect(url_for('views.home'))
 
     return render_template("signup_final.html", user=current_user)
@@ -268,11 +320,10 @@ def reset_request():
     return render_template('reset_request.html', user=current_user)
 
 # ==========================================
-#  RESET TOKEN (Fixed Auto-Logout & Password Check)
+#  RESET TOKEN 
 # ==========================================
 @auth.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_token(token):
-    # Force Logout if user clicks reset link while logged in
     if current_user.is_authenticated:
         logout_user()
         flash('Logged out for security. Please create your new password.', category='info')
@@ -297,11 +348,9 @@ def reset_token(token):
         else:
             user = User.query.filter_by(email=email).first()
             if user:
-                # ✅ FIX: Check if the new password is the exact same as their current password
                 if check_password_hash(user.password, password):
                     flash('Your new password cannot be the same as your current password. Please choose a different one.', category='error')
                 else:
-                    # Password is new and valid, save it!
                     user.password = generate_password_hash(password, method='scrypt')
                     db.session.commit()
                     flash('Your password has been updated! You can now login.', category='success')

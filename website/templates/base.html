@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap"
       rel="stylesheet"
@@ -174,8 +174,6 @@
   </head>
 
   <body>
-    
-
     <nav class="navbar navbar-expand-lg sticky-top" id="mainNavbar">
       <div class="container position-relative">
         <a
@@ -574,8 +572,9 @@
     >
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %} {% for category, message in messages %}
+
       <div
-        class="toast align-items-center border-0 shadow-lg {% if category == 'error' %}text-bg-danger{% else %}text-bg-dark{% endif %}"
+        class="toast align-items-center border-0 shadow-lg {% if category == 'error' %}text-bg-danger{% elif category == 'signup_success' %}text-bg-success{% else %}text-bg-dark{% endif %}"
         role="alert"
         aria-live="assertive"
         aria-atomic="true"
@@ -590,7 +589,36 @@
           ></button>
         </div>
       </div>
-      {% endfor %} {% endif %} {% endwith %}
+
+      {% if category == 'signup_success' %}
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          var duration = 3 * 1000;
+          var end = Date.now() + duration;
+
+          (function frame() {
+            confetti({
+              particleCount: 5,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0 },
+              colors: ["#4f46e5", "#6366f1", "#ffffff"],
+            });
+            confetti({
+              particleCount: 5,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1 },
+              colors: ["#4f46e5", "#6366f1", "#ffffff"],
+            });
+
+            if (Date.now() < end) {
+              requestAnimationFrame(frame);
+            }
+          })();
+        });
+      </script>
+      {% endif %} {% endfor %} {% endif %} {% endwith %}
     </div>
 
     {% if current_user.is_authenticated %}
