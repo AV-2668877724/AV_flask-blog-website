@@ -210,6 +210,12 @@ def edit_post(id):
         else:
             post.text = text
             if file and file.filename != '' and allowed_file(file.filename):
+                # 🚀 NEW: Clean up the old cover image before saving the new one
+                if post.cover_image:
+                    old_path = os.path.join(current_app.root_path, 'static/uploads/posts', post.cover_image)
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+
                 new_filename = compress_image(file, 'posts', width=1080)
                 post.cover_image = new_filename
                 
@@ -357,8 +363,6 @@ def mark_notifications_read():
 # PROFILE & SETTINGS
 # =================================================
 
-
-
 @views.route("/profile/<username>")
 @login_required
 def profile(username):
@@ -423,6 +427,12 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
+        # 🚀 NEW: Clean up old profile picture before saving the new one
+        if current_user.profile_pic:
+            old_path = os.path.join(current_app.root_path, 'static/uploads/avatars', current_user.profile_pic)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
         # Resize to 300x300 for avatars to save space
         filename = compress_image(file, 'avatars', width=300, height=300)
         current_user.profile_pic = filename
@@ -666,6 +676,12 @@ def admin_permanent_delete_post(post_id):
         
     post = Post.query.get(post_id)
     if post:
+        # 🚀 NEW: Delete the post's cover image when the post is permanently deleted by admin
+        if post.cover_image:
+            old_path = os.path.join(current_app.root_path, 'static/uploads/posts', post.cover_image)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        
         db.session.delete(post)
         db.session.commit()
         flash("Post permanently deleted.", category='success')
@@ -990,6 +1006,12 @@ def update_cover_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
+        # 🚀 NEW: Clean up old cover picture before saving the new one
+        if current_user.cover_pic:
+            old_path = os.path.join(current_app.root_path, 'static/uploads/posts', current_user.cover_pic)
+            if os.path.exists(old_path):
+                os.remove(old_path)
+        
         filename = compress_image(file, 'posts', width=1080, height=600)
         current_user.cover_pic = filename
         db.session.commit()
@@ -1050,12 +1072,15 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    # ⚡ PERFORMANCE: Load Sender and Recipient immediately
+    # 🚀 FIX: Ensure we only load messages that haven't been deleted by the user
     messages = Message.query.options(
         joinedload(Message.sender), 
         joinedload(Message.recipient)
     ).filter(
-        or_(Message.sender_id == current_user.id, Message.recipient_id == current_user.id)
+        or_(
+            and_(Message.sender_id == current_user.id, Message.visible_to_sender == True),
+            and_(Message.recipient_id == current_user.id, Message.visible_to_recipient == True)
+        )
     ).order_by(Message.date_created.desc()).all()
     
     conversations = {}

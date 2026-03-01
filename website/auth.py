@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
-# ✅ FIX: Import Message as ChatMessage to avoid conflict with flask_mail
 from .models import User, Message as ChatMessage 
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db, mail
@@ -17,8 +16,9 @@ from sqlalchemy import func
 
 auth = Blueprint('auth', __name__)
 
-# Setup Token Serializer
-s = URLSafeTimedSerializer('CCAV@129') 
+# Setup Token Serializer dynamically using the app's secret key
+def get_serializer():
+    return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
 
 RESERVED_USERNAMES = {
     'avpostory','av_postory','home', 'login', 'logout', 'sign-up', 'signup', 'register',
@@ -43,9 +43,11 @@ def send_async_email(app, msg):
             print(e)
             print("=========================================")
 
-def get_public_link(endpoint, token):
+def get_public_link(endpoint, token=None, **kwargs):
     """Generates a link and forces the Ngrok URL if running locally."""
-    link = url_for(endpoint, token=token, _external=True)
+    if token:
+        kwargs['token'] = token
+    link = url_for(endpoint, _external=True, **kwargs)
     
     # YOUR NGROK URL (Update this if it changes!)
     PUBLIC_DOMAIN = "https://arjun-diffusible-nonfamiliarly.ngrok-free.dev"
@@ -57,8 +59,8 @@ def get_public_link(endpoint, token):
     return link
 
 def send_verification_email(user_email):
-    token = s.dumps(user_email, salt='email-confirm')
-    link = get_public_link('auth.confirm_email', token)
+    token = get_serializer().dumps(user_email, salt='email-confirm')
+    link = get_public_link('auth.confirm_email', token=token)
     
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Confirm Your Email - AV Postory', 
@@ -71,8 +73,8 @@ def send_verification_email(user_email):
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
 def send_reset_email(user_email):
-    token = s.dumps(user_email, salt='password-reset')
-    link = get_public_link('auth.reset_token', token)
+    token = get_serializer().dumps(user_email, salt='password-reset')
+    link = get_public_link('auth.reset_token', token=token)
     
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Password Reset Request', 
@@ -84,7 +86,7 @@ def send_reset_email(user_email):
     
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
-# 🚀 NEW: Send Real Welcome Email
+# 🚀 NEW: Send Beautiful HTML Welcome Email
 def send_welcome_email(user_email, username):
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Welcome to AV Postory! 🎉', 
@@ -92,16 +94,91 @@ def send_welcome_email(user_email, username):
                   recipients=[user_email],
                   reply_to='noreply@avpostory.com')
     
+    # Generate public URLs for the logo and login button
+    logo_url = get_public_link('static', filename='images/logo.png')
+    login_url = get_public_link('auth.login')
+    current_year = datetime.now().year
+    
+    # Plain text fallback for older email clients
     msg.body = f'''Hello {username},
 
 Welcome to AV Postory! We are absolutely thrilled to have you join our community.
 
-Your account has been successfully created. You can now set up your profile, browse the feed, connect with others, and share your first story with the world.
+AV Postory is a next-generation social publishing platform designed for clarity and connection. We provide a distraction-free environment where writers, developers, and thinkers can share their stories, code, and ideas.
+
+Here is what you can do next:
+- Complete your profile
+- Browse the feed
+- Connect with others via real-time chat
+- Share your first story
+
+Go to AV Postory: {login_url}
 
 If you ever need anything, just reply to this email!
 
 Best regards,
 The AV Postory Team'''
+
+    # Beautiful HTML Version
+    msg.html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0f172a; line-height: 1.6; padding: 20px; margin: 0; }}
+            .container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+            .logo {{ text-align: center; margin-bottom: 30px; }}
+            .logo img {{ max-height: 70px; border-radius: 8px; }}
+            h1 {{ color: #4f46e5; font-size: 26px; text-align: center; margin-bottom: 20px; font-weight: 700; }}
+            p {{ font-size: 16px; color: #475569; margin-bottom: 20px; }}
+            .highlight-box {{ background-color: #f1f5f9; padding: 25px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #4f46e5; }}
+            .highlight-box p {{ margin-top: 0; font-weight: 600; color: #0f172a; }}
+            .highlight-box ul {{ margin: 0; padding-left: 20px; }}
+            .highlight-box li {{ margin-bottom: 12px; color: #334155; }}
+            .highlight-box li strong {{ color: #0f172a; }}
+            .btn-container {{ text-align: center; margin-top: 35px; margin-bottom: 35px; }}
+            .btn {{ background: linear-gradient(135deg, #4f46e5, #4338ca); color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }}
+            .footer {{ text-align: center; font-size: 13px; color: #94a3b8; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="logo">
+                <img src="{logo_url}" alt="AV Postory Logo">
+            </div>
+            
+            <h1>Welcome to AV Postory, {username}! 🎉</h1>
+            
+            <p>We are absolutely thrilled to have you join our community.</p>
+            
+            <p><strong>AV Postory</strong> is a next-generation social publishing platform designed for clarity and connection. We provide a distraction-free environment where writers, developers, and thinkers can share their stories, code, and ideas with a community that cares.</p>
+            
+            <div class="highlight-box">
+                <p>Ready to get started? Here is what you can do next:</p>
+                <ul>
+                    <li><strong>Complete your profile:</strong> Add a bio, profile picture, and your social links to let people know who you are.</li>
+                    <li><strong>Browse the feed:</strong> Discover interesting stories and perspectives from other creators.</li>
+                    <li><strong>Connect:</strong> Follow users you find interesting and engage via real-time chat.</li>
+                    <li><strong>Share your voice:</strong> Write and publish your very first story.</li>
+                </ul>
+            </div>
+
+            <div class="btn-container">
+                <a href="{login_url}" class="btn">Go to your Dashboard</a>
+            </div>
+
+            <p>If you have any questions, feedback, or need help navigating the platform, simply reply to this email. We are always here to help!</p>
+            
+            <p>Best regards,<br><strong style="color: #0f172a;">The AV Postory Team</strong></p>
+
+            <div class="footer">
+                &copy; {current_year} AV Postory. All rights reserved.<br>
+                You are receiving this email because you recently created an account on our platform.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
     
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
@@ -228,18 +305,8 @@ def finish_signup():
             # ==========================================
             # 🚀 NEW: WELCOME MESSAGES
             # ==========================================
-            # 1. Automated Chat Message (Inside the app)
-            welcome_text = "Welcome to AV Postory! 🎉 We are so incredibly excited to have you here. Feel free to set up your profile, browse the feed, and share your first story with the world!"
             
-            welcome_msg = ChatMessage(
-                text=welcome_text, 
-                sender_id=1, # Admin account ID
-                recipient_id=new_user.id
-            )
-            db.session.add(welcome_msg)
-            db.session.commit()
-
-            # 2. Real Welcome Email to their Gmail account
+            # 1. Real Welcome HTML Email to their Gmail account
             try:
                 send_welcome_email(email, username)
             except Exception as e:
@@ -263,7 +330,7 @@ def finish_signup():
 @auth.route('/confirm_email/<token>')
 def confirm_email(token):
     try:
-        email = s.loads(token, salt='email-confirm', max_age=3600)
+        email = get_serializer().loads(token, salt='email-confirm', max_age=3600)
         user = User.query.filter_by(email=email).first()
         if user:
             user.is_verified = True
@@ -329,7 +396,7 @@ def reset_token(token):
         flash('Logged out for security. Please create your new password.', category='info')
         
     try:
-        email = s.loads(token, salt='password-reset', max_age=1800)
+        email = get_serializer().loads(token, salt='password-reset', max_age=1800)
     except SignatureExpired:
         flash('The token is expired.', category='error')
         return redirect(url_for('auth.reset_request'))

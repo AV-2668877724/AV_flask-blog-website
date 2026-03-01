@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from flask_socketio import SocketIO
 from flask_compress import Compress
+from sqlalchemy.orm import joinedload # ✅ FIX: Added joinedload for N+1 query optimization
 
 db = SQLAlchemy()
 mail = Mail()
@@ -90,7 +91,8 @@ def create_app():
                 unread_messages = Message.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
                 
-                latest_notifs = Notification.query.filter_by(recipient_id=current_user.id)\
+                # ✅ FIX: Added joinedload(Notification.visitor) to stop the N+1 database leak
+                latest_notifs = Notification.query.options(joinedload(Notification.visitor)).filter_by(recipient_id=current_user.id)\
                     .order_by(Notification.date_created.desc()).limit(5).all()
             except:
                 pass 
