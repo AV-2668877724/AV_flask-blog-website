@@ -6,6 +6,8 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
     />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+
     <title>{% block title %}{% endblock %}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -56,7 +58,7 @@
     ></script>
 
     <script
-      src="{{ url_for('static', filename='index.js') }}?v=24"
+      src="{{ url_for('static', filename='index.js') }}?v=25"
       defer
     ></script>
 
@@ -132,7 +134,7 @@
         transform: translateY(-12px) scale(0.95);
       }
 
-      /* 5. ✅ NEW: Premium Search Bar Styling */
+      /* 5. Premium Search Bar Styling */
       .search-bar-wrapper {
         background-color: var(--bg-input);
         border-radius: 50px; /* Full pill shape */

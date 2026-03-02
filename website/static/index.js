@@ -3,6 +3,12 @@
    ========================================= */
 const TRUNCATE_HEIGHT = 320;
 
+// 🚀 NEW: Get CSRF Token from meta tag
+const getCsrfToken = () => {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute('content') : "";
+};
+
 function truncatePosts() {
   document.querySelectorAll(".post-text").forEach((el) => {
     if (el.dataset.processed) return;
@@ -81,6 +87,21 @@ function debounce(func, wait) {
    MAIN DOM LOAD LOGIC
    ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
+  const csrfToken = getCsrfToken();
+
+  // 🚀 NEW: Auto-Inject CSRF Token into all standard POST forms (Saves you hours of editing HTML!)
+  if (csrfToken) {
+    document.querySelectorAll("form").forEach((form) => {
+      if (form.method.toUpperCase() === "POST" && !form.querySelector('input[name="csrf_token"]')) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "csrf_token";
+        input.value = csrfToken;
+        form.appendChild(input);
+      }
+    });
+  }
+
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
 
@@ -108,7 +129,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const badge = document.getElementById("notifBadge");
       if (badge) {
         badge.style.display = "none";
-        fetch("/api/mark-notifications-read", { method: "POST" }).catch((err) =>
+        fetch("/api/mark-notifications-read", { 
+          method: "POST",
+          headers: { "X-CSRFToken": getCsrfToken() }
+        }).catch((err) =>
           console.error("Error marking read:", err),
         );
       }
@@ -132,6 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
+          // GET requests do not need CSRF
           const response = await fetch(`/api/search-users?q=${query}`);
           const users = await response.json();
           searchResults.innerHTML = "";
@@ -260,7 +285,10 @@ function like(postId) {
     icon.classList.add("far");
   }
 
-  fetch(`/like-post/${postId}`, { method: "POST" })
+  fetch(`/like-post/${postId}`, { 
+    method: "POST",
+    headers: { "X-CSRFToken": getCsrfToken() }
+  })
     .then((res) => res.json())
     .then((data) => {
       countEl.innerText = data.likes;
@@ -309,7 +337,10 @@ function likeComment(commentId, btn) {
     setTimeout(() => (icon.style.transform = "scale(1)"), 200);
   }
 
-  fetch(`/like-comment/${commentId}`, { method: "POST" })
+  fetch(`/like-comment/${commentId}`, { 
+    method: "POST",
+    headers: { "X-CSRFToken": getCsrfToken() }
+  })
     .then((res) => res.json())
     .then((data) => {
       countSpan.innerText = data.likes;
@@ -439,7 +470,10 @@ function checkSignupUsername() {
 
   fetch("/check-username-signup", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCsrfToken()
+    },
     body: JSON.stringify({ username: username }),
   })
     .then((res) => res.json())
@@ -495,7 +529,10 @@ function checkUsername() {
 
   fetch("/check-username", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCsrfToken()
+    },
     body: JSON.stringify({ username }),
   })
     .then((res) => res.json())
@@ -553,7 +590,7 @@ window.addEventListener("pageshow", function (event) {
   }
 });
 
-// ✅ FIX: AJAX Comments via Individual Post Fetch
+// AJAX Comments via Individual Post Fetch
 document.addEventListener("submit", async function (e) {
   const form = e.target;
 
@@ -572,10 +609,14 @@ document.addEventListener("submit", async function (e) {
 
     try {
       const formData = new FormData(form);
-      // 1. Submit the comment to the server
-      await fetch(form.action, { method: "POST", body: formData });
+      
+      // 🚀 NEW: Add CSRF Header to FormData Submission
+      await fetch(form.action, { 
+        method: "POST", 
+        body: formData,
+        headers: { "X-CSRFToken": getCsrfToken() }
+      });
 
-      // 2. Fetch the specific post page directly (guarantees we find the post HTML)
       const postResponse = await fetch(`/post/${postId}`);
       if (postResponse.ok) {
         const html = await postResponse.text();
@@ -625,7 +666,7 @@ document.addEventListener("submit", async function (e) {
   }
 });
 
-// ✅ FIX: AJAX Comment Deletion via Individual Post Fetch
+// AJAX Comment Deletion via Individual Post Fetch
 document.addEventListener("click", async function (e) {
   const deleteBtn = e.target.closest(".ajax-delete-comment");
   if (deleteBtn) {
@@ -639,10 +680,9 @@ document.addEventListener("click", async function (e) {
     deleteBtn.style.pointerEvents = "none";
 
     try {
-      // 1. Delete the comment
+      // Deletion is a GET request here, no CSRF needed
       await fetch(deleteBtn.href);
 
-      // 2. Fetch the updated post page
       const postResponse = await fetch(`/post/${postId}`);
       if (postResponse.ok) {
         const html = await postResponse.text();
@@ -871,7 +911,10 @@ document.addEventListener("DOMContentLoaded", function () {
 function deleteMessage(msgId, btnElement) {
   if (!confirm("Delete this message for me?")) return;
 
-  fetch(`/api/delete-message/${msgId}`, { method: "POST" })
+  fetch(`/api/delete-message/${msgId}`, { 
+    method: "POST",
+    headers: { "X-CSRFToken": getCsrfToken() }
+  })
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
@@ -916,7 +959,10 @@ function removeSocialLink(url) {
 
   fetch("/profile/remove-social", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCsrfToken()
+    },
     body: JSON.stringify({ url: url }),
   })
     .then((res) => res.json())
@@ -931,7 +977,10 @@ function toggleFollow(userId, btn) {
   const isFollowing = btn.innerText.trim() === "Following";
   const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
 
-  fetch(url, { method: "POST" })
+  fetch(url, { 
+    method: "POST",
+    headers: { "X-CSRFToken": getCsrfToken() }
+  })
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {

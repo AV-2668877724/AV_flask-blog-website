@@ -103,9 +103,12 @@ content %}
               style="color: var(--text-main); font-size: 0.95rem"
             >
               <strong class="fw-bold">{{ n.visitor.username }}</strong>
-              {% if n.action == 'like' %} liked your story. {% elif n.action ==
-              'comment' %} commented on your story. {% elif n.action == 'follow'
-              %} started following you. {% endif %}
+
+              {% if n.is_grouped %} and
+              <strong>{{ n.others_text }} others</strong>
+              {% endif %} {% if n.action == 'like' %} liked your story. {% elif
+              n.action == 'comment' %} commented on your story. {% elif n.action
+              == 'follow' %} started following you. {% endif %}
             </p>
             <div class="text-muted fw-bold" style="font-size: 0.75rem">
               {{ n.date_created | timeago }}
