@@ -7,12 +7,14 @@ import os
 from datetime import datetime
 from flask_socketio import SocketIO
 from flask_compress import Compress
-from sqlalchemy.orm import joinedload # ✅ FIX: Added joinedload for N+1 query optimization
+from sqlalchemy.orm import joinedload 
+from flask_wtf.csrf import CSRFProtect # 🚀 NEW: Import CSRF protection
 
 db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
 socketio = SocketIO() 
+csrf = CSRFProtect() # 🚀 NEW: Initialize CSRF globally
 
 def create_app():
     app = Flask(__name__)
@@ -21,15 +23,13 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # ⚡ PERFORMANCE: Cache Static Files (Images/CSS) for 1 Year
-    # This tells the browser: "Don't ask for the logo/css again for 1 year"
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
     
     # ⚡ PERFORMANCE: Database Connection Pooling
-    # Prevents "Database Locked" errors and speeds up queries under load
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_size': 20,       # Keep 20 connections ready
-        'pool_recycle': 3600,  # Refresh them every hour
-        'pool_pre_ping': True  # Ensure connection is alive before using
+        'pool_size': 20,       
+        'pool_recycle': 3600,  
+        'pool_pre_ping': True  
     }
     
     # EMAIL CONFIGURATION
@@ -42,7 +42,6 @@ def create_app():
     mail.init_app(app)
     
     # ⚡ PERFORMANCE: Enable Gzip Compression
-    # Compresses responses (HTML/JSON) to be ~70% smaller
     Compress(app) 
     
     # UPLOAD FOLDER
@@ -54,6 +53,7 @@ def create_app():
 
     db.init_app(app)
     socketio.init_app(app)
+    csrf.init_app(app) # 🚀 NEW: Bind CSRF protection to the Flask app
 
     # BLUEPRINTS
     from .views import views
@@ -84,14 +84,12 @@ def create_app():
         
         if current_user.is_authenticated:
             try:
-                # Note: These queries are now fast thanks to models.py indexes
                 unread_notifs = Notification.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
                 
                 unread_messages = Message.query.filter_by(
                     recipient_id=current_user.id, is_read=False).count()
                 
-                # ✅ FIX: Added joinedload(Notification.visitor) to stop the N+1 database leak
                 latest_notifs = Notification.query.options(joinedload(Notification.visitor)).filter_by(recipient_id=current_user.id)\
                     .order_by(Notification.date_created.desc()).limit(5).all()
             except:

@@ -17,6 +17,7 @@ import secrets
 from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
 from sqlalchemy import or_, func
+import bleach # 🚀 NEW: Added bleach for XSS protection
 
 views = Blueprint('views', __name__)
 
@@ -26,6 +27,29 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 # =================================================
 # HELPER FUNCTIONS
 # =================================================
+
+# 🚀 NEW: HTML Sanitization Configuration for Quill.js
+QUILL_ALLOWED_TAGS = [
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'a', 
+    'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+    'blockquote', 'span', 'pre'
+]
+
+QUILL_ALLOWED_ATTRIBUTES = {
+    'a': ['href', 'target', 'rel'],
+    '*': ['class'] # Allows Quill's formatting classes like 'ql-align-center'
+}
+
+def sanitize_html(html_content):
+    """Strips dangerous tags/attributes from user-submitted HTML."""
+    if not html_content:
+        return html_content
+    return bleach.clean(
+        html_content,
+        tags=QUILL_ALLOWED_TAGS,
+        attributes=QUILL_ALLOWED_ATTRIBUTES,
+        strip=True # Removes the bad tags entirely instead of escaping them
+    )
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -168,18 +192,21 @@ def home():
 @login_required
 def create_post():
     if request.method == 'POST':
-        text = request.form.get('text')
+        raw_text = request.form.get('text')
         cover_image_file = request.files.get('cover_image')
         cover_image_name = None
 
-        if not text:
+        if not raw_text:
             flash('Post content cannot be empty!', category='error')
         else:
+            # 🚀 FIX: Sanitize the HTML content to prevent XSS attacks
+            clean_text = sanitize_html(raw_text)
+            
             if cover_image_file and cover_image_file.filename != '':
                 cover_image_name = compress_image(cover_image_file, 'posts', width=1080)
             
             post = Post(
-                text=text, 
+                text=clean_text, 
                 author=current_user.id, 
                 cover_image=cover_image_name,
                 date_created=datetime.now() 
@@ -202,15 +229,17 @@ def edit_post(id):
         return redirect(url_for('views.home'))
 
     if request.method == "POST":
-        text = request.form.get('text')
+        raw_text = request.form.get('text')
         file = request.files.get('cover_image') 
         
-        if not text:
+        if not raw_text:
             flash("Post content cannot be empty.", category='error')
         else:
-            post.text = text
+            # 🚀 FIX: Sanitize the HTML content on edit to prevent XSS attacks
+            post.text = sanitize_html(raw_text)
+            
             if file and file.filename != '' and allowed_file(file.filename):
-                # 🚀 NEW: Clean up the old cover image before saving the new one
+                # Clean up the old cover image before saving the new one
                 if post.cover_image:
                     old_path = os.path.join(current_app.root_path, 'static/uploads/posts', post.cover_image)
                     if os.path.exists(old_path):
@@ -427,7 +456,7 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # 🚀 NEW: Clean up old profile picture before saving the new one
+        # Clean up old profile picture before saving the new one
         if current_user.profile_pic:
             old_path = os.path.join(current_app.root_path, 'static/uploads/avatars', current_user.profile_pic)
             if os.path.exists(old_path):
@@ -676,7 +705,6 @@ def admin_permanent_delete_post(post_id):
         
     post = Post.query.get(post_id)
     if post:
-        # 🚀 NEW: Delete the post's cover image when the post is permanently deleted by admin
         if post.cover_image:
             old_path = os.path.join(current_app.root_path, 'static/uploads/posts', post.cover_image)
             if os.path.exists(old_path):
@@ -848,7 +876,6 @@ def search_users_api():
     if not q:
         return jsonify([])
 
-    # ✅ FIX: Added User.is_admin == False to hide admins from the dropdown
     users = User.query.filter(
         User.username.ilike(f'%{q}%'),
         User.is_admin == False 
@@ -1006,7 +1033,7 @@ def update_cover_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # 🚀 NEW: Clean up old cover picture before saving the new one
+        # Clean up old cover picture before saving the new one
         if current_user.cover_pic:
             old_path = os.path.join(current_app.root_path, 'static/uploads/posts', current_user.cover_pic)
             if os.path.exists(old_path):
@@ -1072,7 +1099,7 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    # 🚀 FIX: Ensure we only load messages that haven't been deleted by the user
+    # Ensure we only load messages that haven't been deleted by the user
     messages = Message.query.options(
         joinedload(Message.sender), 
         joinedload(Message.recipient)
