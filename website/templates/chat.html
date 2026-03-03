@@ -211,7 +211,11 @@ endblock %} {% block content %}
           <h5 class="fw-bold mb-0" style="color: var(--text-main)">
             {{ recipient.username }}
           </h5>
-          <small style="color: var(--primary); font-weight: 600">Active</small>
+          {% if recipient.is_online %}
+          <small id="userStatusText" style="color: var(--primary); font-weight: 600;">Online</small>
+          {% else %}
+          <small id="userStatusText" style="color: var(--text-muted); font-weight: 600;">Offline</small>
+          {% endif %}
         </div>
       </a>
       <a
@@ -303,25 +307,29 @@ endblock %} {% block content %}
 
 <script>
   // ==========================================
-  // 🚀 FIXED: BULLETPROOF INSTANT DELETION
+  // 🚀 FIXED: BULLETPROOF INSTANT DELETION WITH CSRF
   // ==========================================
   window.removeChatMessage = function (event, msgId) {
-    event.preventDefault(); // Stop any unintended bubbling
+    event.preventDefault(); 
 
     if (confirm("Are you sure you want to delete this message?")) {
       const msgElement = document.getElementById(`msg-${msgId}`);
 
-      // 1. Instantly dim the message so it feels responsive
       if (msgElement) {
         msgElement.style.opacity = "0.5";
         msgElement.style.pointerEvents = "none";
       }
 
-      // 2. Process deletion in the background
+      // ✅ Fetch the CSRF token from the meta tag in base.html
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
       fetch(`/api/delete-message/${msgId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), // Send an empty body to keep Flask's strict JSON parser happy!
+        headers: { 
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken 
+        },
+        body: JSON.stringify({}), 
       })
         .then((res) => {
           if (!res.ok) throw new Error("Server rejected the request.");
@@ -329,13 +337,11 @@ endblock %} {% block content %}
         })
         .then((data) => {
           if (data.success) {
-            // Permanently remove from DOM instantly
             if (msgElement) {
               msgElement.style.display = "none";
               msgElement.remove();
             }
           } else {
-            // Revert the dimming if backend says no
             if (msgElement) {
               msgElement.style.opacity = "1";
               msgElement.style.pointerEvents = "auto";
@@ -349,9 +355,7 @@ endblock %} {% block content %}
             msgElement.style.pointerEvents = "auto";
           }
           console.error("Deletion Error:", err);
-          alert(
-            "Something went wrong trying to delete the message. Please check your connection.",
-          );
+          alert("Something went wrong trying to delete the message. Please check your connection.");
         });
     }
   };
@@ -361,13 +365,46 @@ endblock %} {% block content %}
     const chatForm = document.getElementById("chatForm");
     const inputField = document.getElementById("chatInputField");
 
-    let lastMessageId = parseInt(
-      "{% if messages %}{{ messages[-1].id }}{% else %}0{% endif %}",
-    );
     const currentUserId = parseInt("{{ current_user.id }}");
     const recipientId = parseInt("{{ recipient.id }}");
 
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // ==========================================
+    // 🚀 FIXED: IMPLEMENTED SOCKET.IO FOR CHAT
+    // ==========================================
+    const socket = io();
+
+    // 1. Listen for incoming messages in real-time
+    socket.on("receive_message", function (msg) {
+        const msgSender = parseInt(msg.sender_id);
+        const msgRecipient = parseInt(msg.recipient_id);
+
+        // Ensure we only append messages for this specific conversation
+        if (
+            (msgSender === currentUserId && msgRecipient === recipientId) ||
+            (msgSender === recipientId && msgRecipient === currentUserId)
+        ) {
+            const isMine = msgSender === currentUserId;
+            appendMessageToUI(msg.text, msg.time, isMine, msg.id);
+        }
+    });
+
+    // 2. Listen for Real-Time Online/Offline Status Changes
+    socket.on("user_status_change", function (data) {
+        if (data.user_id == recipientId) {
+            const statusText = document.getElementById("userStatusText");
+            if (statusText) {
+                if (data.status === "online") {
+                    statusText.innerText = "Online";
+                    statusText.style.color = "var(--primary)";
+                } else {
+                    statusText.innerText = "Offline";
+                    statusText.style.color = "var(--text-muted)";
+                }
+            }
+        }
+    });
 
     // Dynamically draw bubbles
     function appendMessageToUI(text, time, isMine, msgId) {
@@ -407,44 +444,17 @@ endblock %} {% block content %}
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // REAL TIME POLLING
-    setInterval(() => {
-      fetch(`/api/get-messages/${recipientId}?last_id=${lastMessageId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.length > 0) {
-            data.forEach((msg) => {
-              if (msg.id > lastMessageId) lastMessageId = msg.id;
-              const isMine = msg.sender_id === currentUserId;
-              appendMessageToUI(msg.text, msg.time, isMine, msg.id);
-            });
-          }
-        })
-        .catch((err) => console.error("Polling error:", err));
-    }, 2500);
-
-    // SEND MESSAGE
+    // 3. SEND MESSAGE
     if (chatForm) {
       chatForm.addEventListener("submit", function (e) {
         e.preventDefault();
 
         const text = inputField.value.trim();
         if (!text) return;
-        inputField.value = "";
+        inputField.value = ""; // Clear immediately for snappy UX
 
-        fetch(this.action, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text, recipient: recipientId }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              if (data.id > lastMessageId) lastMessageId = data.id;
-              appendMessageToUI(data.text, data.time, true, data.id);
-            }
-          })
-          .catch((error) => console.error("Error:", error));
+        // Emit via WebSocket to bypass CSRF entirely and instantly broadcast
+        socket.emit("send_message", { recipient_id: recipientId, text: text });
       });
     }
   });

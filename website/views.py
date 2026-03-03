@@ -373,59 +373,20 @@ def like(post_id):
 @views.route('/notifications')
 @login_required
 def notifications():
-    # 1. Fetch ALL unread notifications
-    unread_notifs = Notification.query.options(joinedload(Notification.visitor))\
-        .filter_by(recipient_id=current_user.id, is_read=False)\
-        .order_by(Notification.date_created.desc()).all()
-        
-    # 2. Fetch TOP 5 read notifications
-    read_notifs = Notification.query.options(joinedload(Notification.visitor))\
-        .filter_by(recipient_id=current_user.id, is_read=True)\
-        .order_by(Notification.date_created.desc()).limit(5).all()
-        
-    all_notifs = unread_notifs + read_notifs
-    
-    # 3. Smart Grouping Logic
-    grouped_notifs = []
-    seen_groups = set()
-    
-    for n in all_notifs:
-        if n.post_id and n.action in ['like', 'comment']:
-            group_key = (n.post_id, n.action)
-            if group_key in seen_groups:
-                continue 
-            
-            # Count total actions of this type for this post
-            if n.action == 'like':
-                total = Like.query.filter_by(post_id=n.post_id).count()
-            else:
-                total = Comment.query.filter_by(post_id=n.post_id, is_deleted=False).count()
-            
-            if total > 5:
-                seen_groups.add(group_key)
-                n.is_grouped = True
-                others_count = total - 1
-                
-                # Format counts like 10+, 50+, 1k+
-                if others_count >= 1000:
-                    n.others_text = f"{others_count // 1000}k+"
-                elif others_count >= 50:
-                    n.others_text = "50+"
-                elif others_count >= 10:
-                    n.others_text = "10+"
-                else:
-                    n.others_text = str(others_count)
-            else:
-                n.is_grouped = False
-                
-        else:
-            n.is_grouped = False
-            
-        grouped_notifs.append(n)
-        
-    grouped_notifs.sort(key=lambda x: x.date_created, reverse=True)
-    
-    return render_template("notifications.html", user=current_user, notifications=grouped_notifs)
+    # ⚡ PERFORMANCE: Load the 'visitor' (User who triggered notif) immediately
+    notifs = Notification.query.options(joinedload(Notification.visitor))\
+        .filter_by(recipient_id=current_user.id)\
+        .order_by(Notification.date_created.desc()).limit(50).all()
+    return render_template("notifications.html", user=current_user, notifications=notifs)
+
+@views.route('/api/mark-notifications-read', methods=['POST'])
+@login_required
+def mark_notifications_read():
+    unread_notifs = Notification.query.filter_by(recipient_id=current_user.id, is_read=False).all()
+    for n in unread_notifs:
+        n.is_read = True
+    db.session.commit()
+    return jsonify({'success': True})
 
 # =================================================
 # PROFILE & SETTINGS

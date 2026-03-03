@@ -3,11 +3,11 @@
    ========================================= */
 const TRUNCATE_HEIGHT = 320;
 
-// 🚀 NEW: Get CSRF Token from meta tag
-const getCsrfToken = () => {
+// 🚀 NEW: Helper function to grab the CSRF token from base.html
+function getCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta ? meta.getAttribute('content') : "";
-};
+  return meta ? meta.getAttribute('content') : '';
+}
 
 function truncatePosts() {
   document.querySelectorAll(".post-text").forEach((el) => {
@@ -87,21 +87,6 @@ function debounce(func, wait) {
    MAIN DOM LOAD LOGIC
    ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
-  const csrfToken = getCsrfToken();
-
-  // 🚀 NEW: Auto-Inject CSRF Token into all standard POST forms (Saves you hours of editing HTML!)
-  if (csrfToken) {
-    document.querySelectorAll("form").forEach((form) => {
-      if (form.method.toUpperCase() === "POST" && !form.querySelector('input[name="csrf_token"]')) {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "csrf_token";
-        input.value = csrfToken;
-        form.appendChild(input);
-      }
-    });
-  }
-
   const darkToggle = document.getElementById("darkToggle");
   const saved = localStorage.getItem("darkMode") === "true";
 
@@ -131,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         fetch("/api/mark-notifications-read", { 
           method: "POST",
-          headers: { "X-CSRFToken": getCsrfToken() }
+          headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
         }).catch((err) =>
           console.error("Error marking read:", err),
         );
@@ -156,8 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-          // GET requests do not need CSRF
-          const response = await fetch(`/api/search-users?q=${query}`);
+          const response = await fetch(`/api/search-users?q=${query}`); // GET request, no CSRF needed
           const users = await response.json();
           searchResults.innerHTML = "";
 
@@ -287,7 +271,7 @@ function like(postId) {
 
   fetch(`/like-post/${postId}`, { 
     method: "POST",
-    headers: { "X-CSRFToken": getCsrfToken() }
+    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
     .then((data) => {
@@ -339,7 +323,7 @@ function likeComment(commentId, btn) {
 
   fetch(`/like-comment/${commentId}`, { 
     method: "POST",
-    headers: { "X-CSRFToken": getCsrfToken() }
+    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
     .then((data) => {
@@ -472,7 +456,7 @@ function checkSignupUsername() {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken()
+      "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
     },
     body: JSON.stringify({ username: username }),
   })
@@ -531,7 +515,7 @@ function checkUsername() {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken()
+      "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
     },
     body: JSON.stringify({ username }),
   })
@@ -590,7 +574,7 @@ window.addEventListener("pageshow", function (event) {
   }
 });
 
-// AJAX Comments via Individual Post Fetch
+// ✅ FIX: AJAX Comments via Individual Post Fetch
 document.addEventListener("submit", async function (e) {
   const form = e.target;
 
@@ -609,14 +593,14 @@ document.addEventListener("submit", async function (e) {
 
     try {
       const formData = new FormData(form);
-      
-      // 🚀 NEW: Add CSRF Header to FormData Submission
+      // 1. Submit the comment to the server
       await fetch(form.action, { 
         method: "POST", 
-        body: formData,
-        headers: { "X-CSRFToken": getCsrfToken() }
+        headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
+        body: formData 
       });
 
+      // 2. Fetch the specific post page directly (guarantees we find the post HTML)
       const postResponse = await fetch(`/post/${postId}`);
       if (postResponse.ok) {
         const html = await postResponse.text();
@@ -666,7 +650,7 @@ document.addEventListener("submit", async function (e) {
   }
 });
 
-// AJAX Comment Deletion via Individual Post Fetch
+// ✅ FIX: AJAX Comment Deletion via Individual Post Fetch
 document.addEventListener("click", async function (e) {
   const deleteBtn = e.target.closest(".ajax-delete-comment");
   if (deleteBtn) {
@@ -680,9 +664,10 @@ document.addEventListener("click", async function (e) {
     deleteBtn.style.pointerEvents = "none";
 
     try {
-      // Deletion is a GET request here, no CSRF needed
+      // 1. Delete the comment (assuming your backend handles this via GET based on your anchor tag)
       await fetch(deleteBtn.href);
 
+      // 2. Fetch the updated post page
       const postResponse = await fetch(`/post/${postId}`);
       if (postResponse.ok) {
         const html = await postResponse.text();
@@ -908,12 +893,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// ✅ FIX: In case you are still using this version of deleteMessage from index.js
 function deleteMessage(msgId, btnElement) {
   if (!confirm("Delete this message for me?")) return;
 
   fetch(`/api/delete-message/${msgId}`, { 
     method: "POST",
-    headers: { "X-CSRFToken": getCsrfToken() }
+    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
     .then((data) => {
@@ -961,7 +947,7 @@ function removeSocialLink(url) {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken()
+      "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
     },
     body: JSON.stringify({ url: url }),
   })
@@ -979,7 +965,7 @@ function toggleFollow(userId, btn) {
 
   fetch(url, { 
     method: "POST",
-    headers: { "X-CSRFToken": getCsrfToken() }
+    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
     .then((data) => {
