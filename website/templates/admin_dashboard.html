@@ -329,6 +329,7 @@ block content %}
                         class="d-inline-flex gap-2 align-items-center"
                         onsubmit="return injectAdminPassword(this);"
                       >
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                         {% if u.is_active %}
                         <button
                           class="btn btn-warning btn-sm text-dark fw-bold rounded-pill shadow-sm"
@@ -356,6 +357,7 @@ block content %}
                         "
                         class="d-inline-flex ms-2"
                       >
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button
                           class="btn btn-outline-danger btn-sm rounded-circle shadow-sm"
                           style="width: 32px; height: 32px"
@@ -439,6 +441,7 @@ block content %}
                         "
                         class="d-inline-flex gap-2"
                       >
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                         <button
                           class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm"
                         >
@@ -508,6 +511,7 @@ block content %}
                           class="d-inline-flex gap-2"
                           onsubmit="return injectAdminPassword(this);"
                         >
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                           <button
                             class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm"
                           >
@@ -526,6 +530,7 @@ block content %}
                           "
                           class="d-inline-flex gap-2"
                         >
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                           <button
                             class="btn btn-dark btn-sm rounded-circle shadow-sm"
                             style="width: 32px; height: 32px"
@@ -622,6 +627,7 @@ block content %}
                         "
                         class="d-inline-flex gap-2"
                       >
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                         <button
                           class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm"
                         >
@@ -636,6 +642,7 @@ block content %}
                           class="d-inline-flex gap-2"
                           onsubmit="return injectAdminPassword(this);"
                         >
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                           <button
                             class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm"
                           >
@@ -654,6 +661,7 @@ block content %}
                             );
                           "
                         >
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                           <button
                             class="btn btn-dark btn-sm rounded-circle shadow-sm"
                             style="width: 32px; height: 32px"

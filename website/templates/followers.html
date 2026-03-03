@@ -157,7 +157,14 @@
     }
 
     // Backend sync
-    fetch(url, { method: "POST" })
+    // Backend sync - 🚀 FIX: Added CSRF Token Header
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(url, { 
+        method: "POST",
+        credentials: 'same-origin',
+        headers: { "X-CSRFToken": csrfToken }
+    })
       .then((res) => res.json())
       .then((data) => {
         if (!data.success) {

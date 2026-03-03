@@ -12,12 +12,16 @@ from werkzeug.security import check_password_hash
 from sqlalchemy.orm import joinedload, subqueryload 
 import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
-from PIL import Image
 import secrets
 from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
 from sqlalchemy import or_, func
-import bleach # 🚀 NEW: Added bleach for XSS protection
+import bleach 
+
+# 🚀 NEW: Import Cloudinary
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
 
 views = Blueprint('views', __name__)
 
@@ -28,7 +32,6 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 # HELPER FUNCTIONS
 # =================================================
 
-# 🚀 NEW: HTML Sanitization Configuration for Quill.js
 QUILL_ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'a', 
     'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
@@ -37,69 +40,71 @@ QUILL_ALLOWED_TAGS = [
 
 QUILL_ALLOWED_ATTRIBUTES = {
     'a': ['href', 'target', 'rel'],
-    '*': ['class'] # Allows Quill's formatting classes like 'ql-align-center'
+    '*': ['class'] 
 }
 
 def sanitize_html(html_content):
-    """Strips dangerous tags/attributes from user-submitted HTML."""
     if not html_content:
         return html_content
     return bleach.clean(
         html_content,
         tags=QUILL_ALLOWED_TAGS,
         attributes=QUILL_ALLOWED_ATTRIBUTES,
-        strip=True # Removes the bad tags entirely instead of escaping them
+        strip=True 
     )
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def compress_image(form_picture, folder, width=None, height=None):
-    random_hex = secrets.token_hex(8)
-    picture_fn = random_hex + ".webp"
+# 🚀 NEW: Cloudinary Upload Function
+def upload_to_cloudinary(file, folder_name, width=None, height=None):
+    """
+    Uploads an image to Cloudinary and returns the secure URL.
+    Cloudinary handles compression and conversion to modern formats automatically.
+    """
+    # Configure Cloudinary using env variables
+    cloudinary.config(
+        cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
+        api_key = os.getenv('CLOUDINARY_API_KEY'),
+        api_secret = os.getenv('CLOUDINARY_API_SECRET'),
+        secure = True
+    )
     
-    app = current_app
-    upload_path = os.path.join(app.root_path, 'static/uploads', folder, picture_fn)
-
-    if not os.path.exists(os.path.dirname(upload_path)):
-        os.makedirs(os.path.dirname(upload_path))
-
     try:
-        i = Image.open(form_picture)
-        if i.mode in ('P', 'RGBA'):
-            i = i.convert('RGBA')
-
-        if width and height:
-            i.thumbnail((width, height))
-        elif width:
-            w_percent = (width / float(i.size[0]))
-            h_size = int((float(i.size[1]) * float(w_percent)))
-            i = i.resize((width, h_size), Image.Resampling.LANCZOS)
+        # Build transformation options for auto-optimization
+        transformations = {
+            "fetch_format": "auto",
+            "quality": "auto"
+        }
         
-        # ⚡ SPEED BOOST: Lower quality from 80 -> 60 (Huge size reduction)
-        i.save(upload_path, 'WEBP', quality=60, optimize=True)
-        return picture_fn
+        if width and height:
+            transformations["width"] = width
+            transformations["height"] = height
+            transformations["crop"] = "fill"
+        elif width:
+            transformations["width"] = width
+            transformations["crop"] = "scale"
+            
+        upload_result = cloudinary.uploader.upload(
+            file,
+            folder=f"av_postory/{folder_name}",
+            transformation=transformations
+        )
+        return upload_result.get("secure_url")
     except Exception as e:
-        print(f"Error compressing image: {e}")
+        print(f"Cloudinary upload error: {e}")
         return None
 
 def enrich_posts(posts):
-    """
-    Efficiently calculates counts and 'liked' status for posts/comments
-    using data already fetched by joinedload/subqueryload.
-    """
     for post in posts:
-        # These lists are already populated by subqueryload
         post.likes_count = len(post.likes)
         
-        # Filter deleted comments in Python (faster than separate DB query)
         active_comments = [c for c in post.comments if not c.is_deleted]
         post.active_comments_count = len(active_comments)
         
         post.liked = False
         if current_user.is_authenticated:
-            # Check if current user ID is in the pre-fetched likes list
             post.liked = any(l.author == current_user.id for l in post.likes)
         
         for comment in active_comments:
@@ -108,7 +113,6 @@ def enrich_posts(posts):
             if current_user.is_authenticated:
                 comment.liked = any(l.author == current_user.id for l in comment.likes)
         
-        # Override the relationship for the template to only show active ones
         post.comments = active_comments
         
     return posts
@@ -169,18 +173,16 @@ def detect_platform(url: str) -> str:
 def home():
     page = request.args.get('page', 1, type=int)
     
-    # ⚡ PERFORMANCE: Filter out deleted posts at DB level to reduce memory usage
     pagination = Post.query\
         .filter(or_(Post.is_deleted == False, Post.is_deleted == None))\
         .options(
-            joinedload(Post.user),              # Author (Join)
-            subqueryload(Post.likes),           # Likes (Subquery)
-            subqueryload(Post.comments).joinedload(Comment.user) # Comments + Authors
+            joinedload(Post.user),              
+            subqueryload(Post.likes),           
+            subqueryload(Post.comments).joinedload(Comment.user) 
         )\
         .order_by(Post.date_created.desc())\
         .paginate(page=page, per_page=10)
 
-    # Use helper to process logic fast
     posts = enrich_posts(pagination.items)
 
     if request.args.get('ajax'):
@@ -194,21 +196,21 @@ def create_post():
     if request.method == 'POST':
         raw_text = request.form.get('text')
         cover_image_file = request.files.get('cover_image')
-        cover_image_name = None
+        cover_image_url = None
 
         if not raw_text:
             flash('Post content cannot be empty!', category='error')
         else:
-            # 🚀 FIX: Sanitize the HTML content to prevent XSS attacks
             clean_text = sanitize_html(raw_text)
             
             if cover_image_file and cover_image_file.filename != '':
-                cover_image_name = compress_image(cover_image_file, 'posts', width=1080)
+                # 🚀 Upload to Cloudinary instead of local file system
+                cover_image_url = upload_to_cloudinary(cover_image_file, 'posts', width=1080)
             
             post = Post(
                 text=clean_text, 
                 author=current_user.id, 
-                cover_image=cover_image_name,
+                cover_image=cover_image_url,
                 date_created=datetime.now() 
             )
             
@@ -235,18 +237,14 @@ def edit_post(id):
         if not raw_text:
             flash("Post content cannot be empty.", category='error')
         else:
-            # 🚀 FIX: Sanitize the HTML content on edit to prevent XSS attacks
             post.text = sanitize_html(raw_text)
             
             if file and file.filename != '' and allowed_file(file.filename):
-                # Clean up the old cover image before saving the new one
-                if post.cover_image:
-                    old_path = os.path.join(current_app.root_path, 'static/uploads/posts', post.cover_image)
-                    if os.path.exists(old_path):
-                        os.remove(old_path)
-
-                new_filename = compress_image(file, 'posts', width=1080)
-                post.cover_image = new_filename
+                # 🚀 Upload to Cloudinary. 
+                # (Note: Cloudinary handles overwriting beautifully, we just update the DB URL)
+                new_image_url = upload_to_cloudinary(file, 'posts', width=1080)
+                if new_image_url:
+                    post.cover_image = new_image_url
                 
             db.session.commit()
             flash("Post updated!", category='success')
@@ -264,7 +262,6 @@ def posts(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
     
-    # ⚡ PERFORMANCE: Optimized Query
     pagination = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
@@ -373,11 +370,55 @@ def like(post_id):
 @views.route('/notifications')
 @login_required
 def notifications():
-    # ⚡ PERFORMANCE: Load the 'visitor' (User who triggered notif) immediately
-    notifs = Notification.query.options(joinedload(Notification.visitor))\
-        .filter_by(recipient_id=current_user.id)\
-        .order_by(Notification.date_created.desc()).limit(50).all()
-    return render_template("notifications.html", user=current_user, notifications=notifs)
+    unread_notifs = Notification.query.options(joinedload(Notification.visitor))\
+        .filter_by(recipient_id=current_user.id, is_read=False)\
+        .order_by(Notification.date_created.desc()).limit(30).all()
+        
+    read_notifs = Notification.query.options(joinedload(Notification.visitor))\
+        .filter_by(recipient_id=current_user.id, is_read=True)\
+        .order_by(Notification.date_created.desc()).limit(100).all()
+        
+    def process_groups(notifs):
+        grouped = []
+        seen = {}
+        
+        for n in notifs:
+            if n.post_id and n.action in ['like', 'comment']:
+                key = (n.action, n.post_id)
+                if key not in seen:
+                    n.is_grouped = False
+                    n.others_count = 0
+                    seen[key] = n
+                    grouped.append(n)
+                else:
+                    seen[key].is_grouped = True
+                    seen[key].others_count += 1
+            else:
+                n.is_grouped = False
+                grouped.append(n)
+        
+        for n in grouped:
+            if getattr(n, 'is_grouped', False):
+                c = n.others_count
+                if c >= 1000:
+                    n.others_text = "1k+"
+                elif c >= 50:
+                    n.others_text = "50+"
+                elif c >= 10:
+                    n.others_text = "10+"
+                elif c >= 5:
+                    n.others_text = "5+"
+                else:
+                    n.others_text = str(c)
+        return grouped
+
+    grouped_unread = process_groups(unread_notifs)
+    grouped_read = process_groups(read_notifs)[:5] 
+    
+    final_notifs = grouped_unread + grouped_read
+    final_notifs.sort(key=lambda x: x.date_created, reverse=True)
+
+    return render_template("notifications.html", user=current_user, notifications=final_notifs)
 
 @views.route('/api/mark-notifications-read', methods=['POST'])
 @login_required
@@ -400,17 +441,12 @@ def profile(username):
         flash('No user with that username exists.', category='error')
         return redirect(url_for('views.home'))
 
-    # ==========================================
-    # ✅ FIX: PREVENT NORMAL USERS FROM VIEWING ADMIN PROFILE
-    # ==========================================
     if user.is_admin and not current_user.is_admin:
         flash('This profile is private and cannot be viewed.', category='error')
         return redirect(url_for('views.home'))
-    # ==========================================
 
     page = request.args.get('page', 1, type=int)
     
-    # ⚡ PERFORMANCE: Profile Posts Query
     pagination = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
@@ -421,7 +457,6 @@ def profile(username):
 
     posts = enrich_posts(pagination.items)
     
-    # Simple count queries are usually fast enough
     followers_count = Follow.query.filter_by(following_id=user.id).count()
     following_count = Follow.query.filter_by(follower_id=user.id).count()
     total_posts = Post.query.filter_by(author=user.id, is_deleted=False).count()
@@ -456,17 +491,14 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # Clean up old profile picture before saving the new one
-        if current_user.profile_pic:
-            old_path = os.path.join(current_app.root_path, 'static/uploads/avatars', current_user.profile_pic)
-            if os.path.exists(old_path):
-                os.remove(old_path)
-
-        # Resize to 300x300 for avatars to save space
-        filename = compress_image(file, 'avatars', width=300, height=300)
-        current_user.profile_pic = filename
-        db.session.commit()
-        flash('Profile picture updated!', category='success')
+        # 🚀 Upload to Cloudinary
+        image_url = upload_to_cloudinary(file, 'avatars', width=300, height=300)
+        if image_url:
+            current_user.profile_pic = image_url
+            db.session.commit()
+            flash('Profile picture updated!', category='success')
+        else:
+            flash('Error uploading to cloud storage.', category='error')
     else:
         flash('Invalid file type. Please upload a JPG, PNG, or WEBP image.', category='error')
         
@@ -705,11 +737,6 @@ def admin_permanent_delete_post(post_id):
         
     post = Post.query.get(post_id)
     if post:
-        if post.cover_image:
-            old_path = os.path.join(current_app.root_path, 'static/uploads/posts', post.cover_image)
-            if os.path.exists(old_path):
-                os.remove(old_path)
-        
         db.session.delete(post)
         db.session.commit()
         flash("Post permanently deleted.", category='success')
@@ -737,18 +764,15 @@ def admin_delete_comment(comment_id):
 @views.route('/admin-permanent-delete-comment/<int:comment_id>', methods=['POST'])
 @login_required
 def admin_permanent_delete_comment(comment_id):
-    # Security Check: Ensure user is admin
     if not current_user.is_admin:
         flash("Access denied.", category='error')
         return redirect(url_for('views.home'))
 
-    # Security Check: Verify Admin Password from the Modal
     admin_password = request.form.get('admin_password')
     if not check_password_hash(current_user.password, admin_password):
         flash("Invalid admin password.", category='error')
         return redirect(url_for('views.admin_dashboard'))
 
-    # Find and permanently delete the comment
     comment = Comment.query.get(comment_id)
     if comment:
         db.session.delete(comment)
@@ -898,7 +922,6 @@ def search_page():
     posts = []
     
     if query:
-        # 1. Attempt EXACT phrase match first
         users = User.query.filter(
             User.username.ilike(f"%{query}%"),
             User.is_admin == False
@@ -913,7 +936,6 @@ def search_page():
             subqueryload(Post.comments).joinedload(Comment.user)
         ).order_by(Post.date_created.desc()).all()
 
-        # 2. RELATED SEARCH: If exact phrase fails, break query into words
         words = query.split()
         if not users and not posts and len(words) > 1:
             user_conditions = [User.username.ilike(f"%{word}%") for word in words]
@@ -933,32 +955,27 @@ def search_page():
                 subqueryload(Post.comments).joinedload(Comment.user)
             ).order_by(Post.date_created.desc()).all()
 
-        # 3. SMART FILL: If results are less than 5, supplement with random content!
         if len(users) < 5 or len(posts) < 5:
-            
-            # Track what we already found so we don't show duplicates
             found_user_ids = [u.id for u in users]
-            found_user_ids.append(current_user.id) # Never recommend the logged-in user to themselves
+            found_user_ids.append(current_user.id) 
             
             found_post_ids = [p.id for p in posts]
             added_recommendations = False
             
-            # If less than 5 users found -> Add 5 more random users
             if len(users) < 5:
                 extra_users = User.query.filter(
                     User.is_admin == False,
-                    ~User.id.in_(found_user_ids) # Exclude users already in the list
+                    ~User.id.in_(found_user_ids) 
                 ).order_by(func.random()).limit(5).all()
                 
                 if extra_users:
                     users.extend(extra_users)
                     added_recommendations = True
                     
-            # If less than 5 posts found -> Add 10 more random posts
             if len(posts) < 5:
                 extra_posts = Post.query.filter(
                     Post.is_deleted == False,
-                    ~Post.id.in_(found_post_ids) # Exclude posts already in the list
+                    ~Post.id.in_(found_post_ids) 
                 ).options(
                     joinedload(Post.user),
                     subqueryload(Post.likes),
@@ -973,7 +990,6 @@ def search_page():
                 flash(f"Showing results for '{query}' along with some recommended content!", category='info')
 
     else:
-        # 4. Explore Mode: If they navigated to Search without typing anything, show random mix
         users = User.query.filter(
             User.is_admin == False,
             User.id != current_user.id
@@ -986,7 +1002,6 @@ def search_page():
                 subqueryload(Post.comments).joinedload(Comment.user)
             ).order_by(func.random()).limit(10).all()
     
-    # Enrich the final post list (process likes, comments, etc.)
     if posts:
         posts = enrich_posts(posts)
 
@@ -1033,16 +1048,14 @@ def update_cover_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # Clean up old cover picture before saving the new one
-        if current_user.cover_pic:
-            old_path = os.path.join(current_app.root_path, 'static/uploads/posts', current_user.cover_pic)
-            if os.path.exists(old_path):
-                os.remove(old_path)
-        
-        filename = compress_image(file, 'posts', width=1080, height=600)
-        current_user.cover_pic = filename
-        db.session.commit()
-        flash('Cover photo updated!', category='success')
+        # 🚀 Upload to Cloudinary
+        image_url = upload_to_cloudinary(file, 'posts', width=1080, height=600)
+        if image_url:
+            current_user.cover_pic = image_url
+            db.session.commit()
+            flash('Cover photo updated!', category='success')
+        else:
+            flash('Error uploading to cloud storage.', category='error')
     else:
         flash('Invalid file type.', category='error')
         
@@ -1071,7 +1084,6 @@ def like_comment(comment_id):
 
 @views.route("/post/<id>")
 def post_view(id):
-    # ⚡ PERFORMANCE: Single Post Query
     post = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
@@ -1099,7 +1111,6 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    # Ensure we only load messages that haven't been deleted by the user
     messages = Message.query.options(
         joinedload(Message.sender), 
         joinedload(Message.recipient)
@@ -1122,7 +1133,6 @@ def inbox():
     
     return render_template("inbox.html", user=current_user, chats=list(conversations.values()))
 
-# 1. Chat Page Route
 @views.route('/chat/<username>')
 @login_required
 def chat(username):
@@ -1143,7 +1153,7 @@ def chat(username):
             msg.is_read = True
         db.session.commit()
 
-    messages = Message.query.filter(
+    messages_desc = Message.query.filter(
         or_(
             and_(
                 Message.sender_id == current_user.id,
@@ -1156,11 +1166,43 @@ def chat(username):
                 Message.visible_to_recipient == True 
             )
         )
-    ).order_by(Message.date_created.asc()).all() 
+    ).order_by(Message.date_created.desc()).limit(50).all() 
+    
+    messages = list(reversed(messages_desc))
 
     return render_template("chat.html", user=current_user, recipient=recipient, messages=messages)
 
-# 2. Delete Message API
+@views.route('/api/chat-history/<int:recipient_id>')
+@login_required
+def chat_history(recipient_id):
+    offset = request.args.get('offset', 50, type=int)
+    
+    older_messages_desc = Message.query.filter(
+        or_(
+            and_(
+                Message.sender_id == current_user.id, 
+                Message.recipient_id == recipient_id,
+                Message.visible_to_sender == True
+            ),
+            and_(
+                Message.sender_id == recipient_id, 
+                Message.recipient_id == current_user.id,
+                Message.visible_to_recipient == True
+            )
+        )
+    ).order_by(Message.date_created.desc()).offset(offset).limit(50).all()
+
+    data = []
+    for msg in older_messages_desc:
+        data.append({
+            'id': msg.id,
+            'text': msg.text,
+            'sender_id': msg.sender_id,
+            'time': msg.date_created.strftime("%I:%M %p") 
+        })
+    
+    return jsonify(data)
+
 @views.route('/api/delete-message/<id>', methods=['POST'])
 @login_required
 def delete_message(id):
@@ -1178,7 +1220,6 @@ def delete_message(id):
     db.session.commit()
     return jsonify({'success': True})
 
-# 3. New Messages API
 @views.route('/api/get-messages/<int:recipient_id>')
 @login_required
 def get_new_messages(recipient_id):
@@ -1210,7 +1251,6 @@ def get_new_messages(recipient_id):
     
     return jsonify(data)
 
-# 4. Send Message API
 @views.route('/api/send-message', methods=['POST'])
 @login_required
 def send_message():
@@ -1243,7 +1283,6 @@ def internal_server_error(e):
 
 @views.route('/about')
 def about():
-    # ⚡ PERFORMANCE: Cache Static Page (1 Hour)
     resp = make_response(render_template("about.html", user=current_user))
     resp.headers['Cache-Control'] = 'public, max-age=3600'
     return resp

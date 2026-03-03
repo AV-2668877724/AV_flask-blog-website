@@ -116,7 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
         badge.style.display = "none";
         fetch("/api/mark-notifications-read", { 
           method: "POST",
-          headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
+          credentials: 'same-origin',
+          headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
         }).catch((err) =>
           console.error("Error marking read:", err),
         );
@@ -271,7 +272,8 @@ function like(postId) {
 
   fetch(`/like-post/${postId}`, { 
     method: "POST",
-    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
+    credentials: 'same-origin',
+    headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
     .then((data) => {
@@ -323,7 +325,8 @@ function likeComment(commentId, btn) {
 
   fetch(`/like-comment/${commentId}`, { 
     method: "POST",
-    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
+    credentials: 'same-origin',
+    headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
     .then((data) => {
@@ -454,6 +457,7 @@ function checkSignupUsername() {
 
   fetch("/check-username-signup", {
     method: "POST",
+    credentials: 'same-origin',
     headers: { 
       "Content-Type": "application/json",
       "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
@@ -513,6 +517,7 @@ function checkUsername() {
 
   fetch("/check-username", {
     method: "POST",
+    credentials: 'same-origin',
     headers: { 
       "Content-Type": "application/json",
       "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
@@ -595,7 +600,8 @@ document.addEventListener("submit", async function (e) {
       const formData = new FormData(form);
       // 1. Submit the comment to the server
       await fetch(form.action, { 
-        method: "POST", 
+        method: "POST",
+        credentials: 'same-origin', 
         headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
         body: formData 
       });
@@ -899,6 +905,7 @@ function deleteMessage(msgId, btnElement) {
 
   fetch(`/api/delete-message/${msgId}`, { 
     method: "POST",
+    credentials: 'same-origin',
     headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
@@ -945,6 +952,7 @@ function removeSocialLink(url) {
 
   fetch("/profile/remove-social", {
     method: "POST",
+    credentials: 'same-origin',
     headers: { 
       "Content-Type": "application/json",
       "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
@@ -965,6 +973,7 @@ function toggleFollow(userId, btn) {
 
   fetch(url, { 
     method: "POST",
+    credentials: 'same-origin',
     headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())

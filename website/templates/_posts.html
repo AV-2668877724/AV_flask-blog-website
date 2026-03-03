@@ -18,7 +18,7 @@
       >
         {% if post.user.profile_pic %}
         <img
-          src="{{ url_for('static', filename='uploads/avatars/' + post.user.profile_pic) }}"
+          src="{% if 'http' in post.user.profile_pic %}{{ post.user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + post.user.profile_pic) }}{% endif %}"
           class="rounded-circle shadow-sm"
           width="48"
           height="48"
@@ -163,7 +163,7 @@
     {% if post.cover_image %}
     <div class="px-3 px-md-4 pb-3 pt-2 text-center overflow-hidden">
       <img
-        src="{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}"
+        src="{% if 'http' in post.cover_image %}{{ post.cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}{% endif %}"
         class="img-fluid w-100 shadow-sm"
         style="
           object-fit: cover;
@@ -245,9 +245,11 @@
           class="d-flex gap-3 mb-4 align-items-center ajax-comment-form"
           data-post-id="{{ post.id }}"
         >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
           {% if user.profile_pic %}
           <img
-            src="{{ url_for('static', filename='uploads/avatars/' + user.profile_pic) }}"
+            src="{% if 'http' in user.profile_pic %}{{ user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + user.profile_pic) }}{% endif %}"
             class="rounded-circle shadow-sm d-none d-sm-block flex-shrink-0"
             width="40"
             height="40"
@@ -304,7 +306,7 @@
             >
               {% if comment.user.profile_pic %}
               <img
-                src="{{ url_for('static', filename='uploads/avatars/' + comment.user.profile_pic) }}"
+                src="{% if 'http' in comment.user.profile_pic %}{{ comment.user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + comment.user.profile_pic) }}{% endif %}"
                 class="rounded-circle shadow-sm"
                 width="34"
                 height="34"

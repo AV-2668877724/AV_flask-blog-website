@@ -58,7 +58,7 @@
     ></script>
 
     <script
-      src="{{ url_for('static', filename='index.js') }}?v=25"
+      src="{{ url_for('static', filename='index.js') }}?v=27"
       defer
     ></script>
 
@@ -320,7 +320,7 @@
             >
               {% if current_user.profile_pic %}
               <img
-                src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
+                src="{% if 'http' in current_user.profile_pic %}{{ current_user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
                 class="user-avatar-nav border border-2 border-white shadow-sm"
                 style="
                   width: 38px;
@@ -498,7 +498,7 @@
       >
         {% if current_user.profile_pic %}
         <img
-          src="{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}"
+          src="{% if 'http' in current_user.profile_pic %}{{ current_user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
           class="rounded-circle shadow-sm"
           style="
             width: 32px;
@@ -687,6 +687,11 @@
               Your feedback helps us improve.
             </p>
             <form method="POST" action="/deactivate-account">
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
               <div class="mb-3">
                 <label
                   class="form-label fw-bold small"

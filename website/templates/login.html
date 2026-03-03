@@ -89,6 +89,7 @@ block content %}
       </div>
 
       <form method="POST" id="loginForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-floating mb-3">
           <input
             type="email"

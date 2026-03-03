@@ -55,11 +55,11 @@ Profile{% endblock %} {% block content %}
       >
         {% if profile_user.cover_pic %}
         <img
-          src="{{ url_for('static', filename='uploads/posts/' + profile_user.cover_pic) }}"
+          src="{% if 'http' in profile_user.cover_pic %}{{ profile_user.cover_pic }}{% else %}{{ url_for('static', filename='uploads/posts/' + profile_user.cover_pic) }}{% endif %}"
           class="w-100 h-100 object-fit-cover"
           alt="Cover Photo"
           onclick="viewFullSize(this.src)"
-          style="cursor: pointer"
+          style="cursor: pointer; object-fit: cover"
         />
         {% else %}
         <div class="w-100 h-100 bg-secondary bg-gradient"></div>
@@ -83,7 +83,7 @@ Profile{% endblock %} {% block content %}
           <div class="position-relative">
             {% if profile_user.profile_pic %}
             <img
-              src="{{ url_for('static', filename='uploads/avatars/' + profile_user.profile_pic) }}"
+              src="{% if 'http' in profile_user.profile_pic %}{{ profile_user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + profile_user.profile_pic) }}{% endif %}"
               class="rounded-circle border border-4 border-white shadow-sm bg-white"
               width="120"
               height="120"
@@ -245,7 +245,6 @@ Profile{% endblock %} {% block content %}
                         >Change Username</a
                       >
                     </li>
-                    
                   </ul>
                 </div>
 
@@ -306,7 +305,6 @@ Profile{% endblock %} {% block content %}
                         ><i class="fas fa-link me-2"></i> Add Social Link</a
                       >
                     </li>
-                    
                   </ul>
                 </div>
 
@@ -392,6 +390,7 @@ Profile{% endblock %} {% block content %}
         ></button>
       </div>
       <form action="{{ url_for('views.edit_bio') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body">
           <textarea
             name="bio"
@@ -433,6 +432,7 @@ Profile{% endblock %} {% block content %}
         ></button>
       </div>
       <form action="{{ url_for('views.change_username') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label text-muted small fw-bold"
@@ -505,6 +505,7 @@ Profile{% endblock %} {% block content %}
         method="POST"
         enctype="multipart/form-data"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body text-center">
           <div
             class="upload-area p-4 border border-2 border-dashed rounded-3 bg-light mb-3"
@@ -557,6 +558,7 @@ Profile{% endblock %} {% block content %}
         method="POST"
         enctype="multipart/form-data"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body">
           <input
             type="file"
@@ -589,6 +591,7 @@ Profile{% endblock %} {% block content %}
         ></button>
       </div>
       <form action="{{ url_for('views.add_social_link') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label text-muted small fw-bold">URL</label>
@@ -650,6 +653,7 @@ Profile{% endblock %} {% block content %}
         ></button>
       </div>
       <form action="{{ url_for('views.deactivate_account') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body">
           <p class="text-muted">
             We're sorry to see you go. Please tell us why:
@@ -711,17 +715,28 @@ Profile{% endblock %} {% block content %}
 </div>
 
 <script>
-  // ✅ FIX: Move all modals to the body to prevent unclickable overlay bugs
-  document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll('.modal').forEach(function(modal) {
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".modal").forEach(function (modal) {
       document.body.appendChild(modal);
     });
   });
-  
+
+  // 🚀 FIX: Helper to get CSRF token for fetch requests
+  function getCsrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute("content") : "";
+  }
+
   function toggleFollow(userId, btn) {
     const isFollowing = btn.classList.contains("btn-outline-secondary");
     const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
-    fetch(url, { method: "POST" })
+
+    // 🚀 FIX: Added CSRF headers to fetch
+    fetch(url, {
+      method: "POST",
+      credentials: 'same-origin',
+      headers: { "X-CSRFToken": getCsrfToken() },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -735,16 +750,24 @@ Profile{% endblock %} {% block content %}
             btn.textContent = "Following";
           }
           const countEl = document.getElementById("followersCount");
-          let count = parseInt(countEl.innerText);
-          countEl.innerText = isFollowing ? count - 1 : count + 1;
+          // Add safety check in case element isn't found
+          if (countEl) {
+            let count = parseInt(countEl.innerText);
+            countEl.innerText = isFollowing ? count - 1 : count + 1;
+          }
         }
       });
   }
 
   function removeSocialLink(url) {
+    // 🚀 FIX: Added CSRF headers to fetch
     fetch("/profile/remove-social", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      credentials: 'same-origin',
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
       body: JSON.stringify({ url: url }),
     })
       .then((res) => res.json())
@@ -765,9 +788,14 @@ Profile{% endblock %} {% block content %}
       return;
     }
 
+    // 🚀 FIX: Added CSRF headers to fetch
     fetch("/check-username", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      credentials: 'same-origin',
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCsrfToken(),
+      },
       body: JSON.stringify({ username: input.value }),
     })
       .then((res) => res.json())

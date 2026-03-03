@@ -4,6 +4,7 @@ from . import socketio, db
 from .models import Message, User
 from flask_socketio import emit, join_room, leave_room
 from datetime import datetime
+import bleach # 🚀 FIX 1: Import bleach for XSS protection
 
 # ==================================================
 # SOCKET.IO EVENT HANDLERS
@@ -48,13 +49,22 @@ def handle_send_message_event(data):
     if not current_user.is_authenticated: return
 
     recipient_id = data.get('recipient_id')
-    text = data.get('text', '').strip()
+    raw_text = data.get('text', '').strip()
     
-    if not text or not recipient_id: return
+    if not raw_text or not recipient_id: return
+    
+    # 🚀 FIX 5: Validate recipient exists (IDOR Prevention)
+    recipient = User.query.get(recipient_id)
+    if not recipient: return
+
+    # 🚀 FIX 1: Sanitize chat input (XSS Prevention)
+    # We strip all HTML tags from chat to ensure no malicious scripts are executed
+    clean_text = bleach.clean(raw_text, tags=[], attributes={}, strip=True)
+    if not clean_text: return # Prevent sending empty messages if they only typed HTML
     
     # 1. Save to Database
     new_message = Message(
-        text=text, 
+        text=clean_text, 
         sender_id=current_user.id, 
         recipient_id=recipient_id,
         visible_to_sender=True,
@@ -71,7 +81,7 @@ def handle_send_message_event(data):
         'text': new_message.text,
         'sender_id': current_user.id,
         'recipient_id': recipient_id,
-        'time': new_message.date_created.strftime("%H:%M")
+        'time': new_message.date_created.strftime("%I:%M %p") # Match 12-hour format of UI
     }
     
     # 3. Emit to both parties
@@ -81,6 +91,5 @@ def handle_send_message_event(data):
     # Send to Sender's Other Tabs (Room)
     emit('receive_message', msg_data, room=str(current_user.id))
     
-    # ✅ FIX: Send to Sender's Current Tab (Direct Reply)
-    # This ensures the user sees the message immediately even if room joining failed
+    # Send to Sender's Current Tab (Direct Reply)
     emit('receive_message', msg_data)

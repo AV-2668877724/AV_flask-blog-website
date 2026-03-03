@@ -94,6 +94,7 @@ content %}
         id="editPostForm"
         onsubmit="return validateEditForm();"
       >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="text" id="hiddenInput" />
 
         <div class="mb-5 shadow-sm" style="border-radius: 16px">
@@ -116,7 +117,7 @@ content %}
             {% if post.cover_image %}
             <div class="position-relative d-inline-block mb-3">
               <img
-                src="{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}"
+                src="{% if 'http' in post.cover_image %}{{ post.cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}{% endif %}"
                 class="img-fluid rounded-3 shadow-sm"
                 style="max-height: 200px; object-fit: cover"
                 alt="Current Cover"

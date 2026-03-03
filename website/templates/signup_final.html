@@ -64,6 +64,7 @@ endblock %} {% block content %}
       </div>
 
       <form method="POST" id="finalSignupForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="mb-3">
           <label class="form-label fw-bold small text-muted ms-1"
             >Choose Username</label

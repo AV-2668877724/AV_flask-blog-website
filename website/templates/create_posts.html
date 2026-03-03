@@ -145,6 +145,7 @@ content %}
         enctype="multipart/form-data"
         onsubmit="return validatePostForm();"
       >
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="text" id="hiddenInput" />
 
         <div class="mb-4">
