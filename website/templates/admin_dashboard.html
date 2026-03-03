@@ -274,7 +274,7 @@ block content %}
                       <div class="d-flex align-items-center gap-3">
                         {% if u.profile_pic %}
                         <img
-                          src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
+                          src="{% if 'http' in u.profile_pic %}{{ u.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}{% endif %}"
                           class="rounded-circle shadow-sm"
                           style="width: 40px; height: 40px; object-fit: cover"
                         />
@@ -305,7 +305,14 @@ block content %}
                             style="font-size: 0.7rem"
                             >Deactivated</span
                           >
+                          {% if u.deactivation_reason %}
+                          <div class="mt-2 text-muted" style="font-size: 0.75rem; max-width: 250px; font-weight: normal; line-height: 1.4; background-color: var(--bg-input); padding: 6px 10px; border-radius: 8px;">
+                            <strong>Reason:</strong> {{ u.deactivation_reason }}
+                          </div>
+                          {% endif %}
+
                           {% else %}
+
                           <span
                             class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill mt-1"
                             style="font-size: 0.7rem"

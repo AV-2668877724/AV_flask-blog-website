@@ -332,7 +332,9 @@ def delete_comment(comment_id):
     comment = Comment.query.filter_by(id=comment_id).first()
     if not comment:
         flash('Comment does not exist.', category='error')
-    elif current_user.id != comment.author and current_user.id != comment.post.author and not current_user.is_admin:
+    # 🚀 FIX: Removed 'current_user.id != comment.post.author' 
+    # Now ONLY the comment author or an Admin can delete it.
+    elif current_user.id != comment.author and not current_user.is_admin:
         flash('You do not have permission to delete this comment.', category='error')
     else:
         comment.is_deleted = True

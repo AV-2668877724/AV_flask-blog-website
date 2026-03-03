@@ -387,8 +387,7 @@
                   <span class="like-count ms-1">{{ comment.likes_count }}</span>
                 </button>
 
-                {% if user.is_authenticated and (user.id == comment.author or
-                user.id == post.author or user.is_admin) %}
+                {% if user.is_authenticated and (user.id == comment.author or user.is_admin) %}
                 <a
                   href="{{ url_for('views.delete_comment', comment_id=comment.id) }}"
                   class="text-danger text-decoration-none small fw-bold opacity-75 hover-opacity-100 ajax-delete-comment"

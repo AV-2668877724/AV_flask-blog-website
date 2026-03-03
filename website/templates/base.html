@@ -674,8 +674,10 @@
             background-color: var(--bg-card);
           "
         >
-          <div class="modal-header bg-danger-subtle text-danger border-0">
-            <h5 class="modal-title fw-bold">We're sorry to see you go</h5>
+          <div class="modal-header border-0 pb-0 mt-2 px-4">
+            <h5 class="modal-title fw-bold text-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>We're sorry to see you go
+            </h5>
             <button
               type="button"
               class="btn-close"
@@ -686,7 +688,11 @@
             <p class="text-muted small text-center mb-4">
               Your feedback helps us improve.
             </p>
-            <form method="POST" action="/deactivate-account">
+            <form
+              method="POST"
+              action="/deactivate-account"
+              id="deactivateForm"
+            >
               <input
                 type="hidden"
                 name="csrf_token"
@@ -703,6 +709,7 @@
                   class="form-select shadow-sm bg-light border-0"
                   style="border-radius: 12px; color: var(--text-main)"
                   required
+                  onchange="toggleDeactivateDetails(this)"
                 >
                   <option value="" selected disabled>Select a reason...</option>
                   <option value="privacy">Privacy concerns</option>
@@ -712,20 +719,67 @@
               </div>
               <textarea
                 name="details"
-                class="form-control mb-4 shadow-sm bg-light border-0"
+                id="deactivateDetailsBox"
+                class="form-control mb-4 shadow-sm bg-light border-0 d-none"
                 rows="2"
                 style="border-radius: 12px; color: var(--text-main)"
-                placeholder="Optional details..."
+                placeholder="Please tell us more..."
               ></textarea>
+
               <div class="d-grid">
                 <button
-                  type="submit"
+                  type="button"
                   class="btn btn-danger btn-lg rounded-pill shadow-sm fw-bold"
+                  onclick="triggerFinalPlea()"
                 >
-                  Confirm Deactivation
+                  Continue
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="finalPleaModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div
+          class="modal-content border-0 shadow-lg text-center p-4 p-md-5"
+          style="border-radius: 20px; background-color: var(--bg-card)"
+        >
+          <div class="modal-body">
+            <i
+              class="fas fa-heart-broken text-danger mb-4"
+              style="font-size: 4rem; opacity: 0.8"
+            ></i>
+            <h3
+              class="fw-bold font-heading mb-3"
+              style="color: var(--text-main)"
+            >
+              Please don't go!
+            </h3>
+            <p class="text-muted mb-4" style="line-height: 1.6">
+              You are a valued part of the AV Postory community. If you leave,
+              your stories, comments, and interactions will be hidden, and we
+              will genuinely miss you.
+              <br /><br />Are you absolutely sure you want to do this?
+            </p>
+            <div class="d-flex flex-column gap-3">
+              <button
+                type="button"
+                class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm"
+                data-bs-dismiss="modal"
+              >
+                <i class="fas fa-home me-2"></i> I'll Stay!
+              </button>
+              <button
+                type="button"
+                class="btn btn-link text-danger fw-bold text-decoration-none"
+                onclick="submitDeactivationForm()"
+              >
+                Yes, I'm sure. Deactivate my account.
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -801,6 +855,42 @@
           });
         }
       });
+
+      // 🚀 NEW: Two-step Deactivation Logic
+      function triggerFinalPlea() {
+        const form = document.getElementById("deactivateForm");
+        if (!form.checkValidity()) {
+          form.reportValidity(); // Forces user to select a reason before seeing the plea
+          return;
+        }
+
+        // Hide the first modal
+        const deactModal = bootstrap.Modal.getInstance(
+          document.getElementById("deactivateModal"),
+        );
+        if (deactModal) deactModal.hide();
+
+        // Show the emotional plea modal
+        const pleaModal = new bootstrap.Modal(
+          document.getElementById("finalPleaModal"),
+        );
+        pleaModal.show();
+      }
+
+      function submitDeactivationForm() {
+        document.getElementById("deactivateForm").submit();
+      }
+
+      // 🚀 NEW: Show details box only if "Other" is selected
+      function toggleDeactivateDetails(selectElement) {
+        const detailsBox = document.getElementById("deactivateDetailsBox");
+        if (selectElement.value === "other") {
+          detailsBox.classList.remove("d-none"); // Show the box
+        } else {
+          detailsBox.classList.add("d-none"); // Hide the box
+          detailsBox.value = ""; // Clear text if they change their mind
+        }
+      }
     </script>
   </body>
 </html>

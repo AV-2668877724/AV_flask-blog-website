@@ -5,7 +5,7 @@ content %}
 
 <style>
   /* =========================================
-     PREMIUM QUILL EDITOR STYLES (Matched with create_posts)
+     PREMIUM QUILL EDITOR STYLES
      ========================================= */
   .editor-wrapper {
     border-radius: 20px;
@@ -62,6 +62,58 @@ content %}
   body.dark-mode .ql-snow .ql-toolbar button:hover .ql-stroke {
     stroke: var(--primary);
   }
+
+  /* =========================================
+     INTERACTIVE IMAGE UPLOAD ZONE
+     ========================================= */
+  .image-upload-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    background-color: var(--bg-input);
+    transition: all var(--trans-smooth);
+  }
+  .image-upload-zone:hover {
+    border-color: var(--primary);
+    background-color: var(--primary-glow);
+    transform: translateY(-2px);
+  }
+
+  .cover-preview-wrapper {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .cover-preview-wrapper img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    display: block;
+  }
+  .btn-remove-cover {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-remove-cover:hover {
+    background: rgba(220, 53, 69, 0.9);
+    transform: scale(1.1);
+  }
 </style>
 
 <div class="row justify-content-center fade-in-up">
@@ -97,55 +149,105 @@ content %}
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="text" id="hiddenInput" />
 
-        <div class="mb-5 shadow-sm" style="border-radius: 16px">
-          <div class="editor-wrapper">
-            <div id="editor-container">{{ content_to_edit|safe }}</div>
-          </div>
-        </div>
+        <div class="mb-4">
+          <label
+            class="form-label fw-bold small text-uppercase"
+            style="color: var(--text-muted); letter-spacing: 0.5px"
+          >
+            Cover Image <span class="fw-normal text-lowercase">(Optional)</span>
+          </label>
 
-        <h5 class="fw-bold font-heading mb-3" style="color: var(--text-main)">
-          Cover Image
-        </h5>
-        <div
-          class="p-4 border border-2 border-dashed rounded-4 mb-4"
-          style="
-            border-color: var(--border-color) !important;
-            background-color: var(--bg-input);
-          "
-        >
-          <div class="text-center">
-            {% if post.cover_image %}
-            <div class="position-relative d-inline-block mb-3">
-              <img
-                src="{% if 'http' in post.cover_image %}{{ post.cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}{% endif %}"
-                class="img-fluid rounded-3 shadow-sm"
-                style="max-height: 200px; object-fit: cover"
-                alt="Current Cover"
-              />
-            </div>
-            <div class="small mt-2 fw-bold text-muted">
-              <i class="fas fa-sync-alt me-1"></i> Uploading a new image will
-              replace this one.
-            </div>
-            {% else %}
+          <div
+            id="uploadZone"
+            class="image-upload-zone"
+            onclick="document.getElementById('coverImageInput').click()"
+            {%
+            if
+            post.cover_image
+            %}style="display: none;"
+            {%
+            else
+            %}style="display: block;"
+            {%
+            endif
+            %}
+          >
+            <i
+              class="fas fa-images fa-2x mb-2"
+              style="color: var(--text-muted); opacity: 0.6"
+            ></i>
+            <h6 class="fw-bold mb-1" style="color: var(--text-main)">
+              Click to browse files
+            </h6>
             <div
-              class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
-              style="width: 60px; height: 60px"
+              class="small fw-bold opacity-75"
+              style="color: var(--text-muted)"
             >
-              <i class="fas fa-image fa-2x opacity-50"></i>
+              Supported: JPG, PNG, WEBP (Max 5MB)
             </div>
-            <p class="mb-0 text-muted fw-bold">No image currently attached.</p>
+          </div>
+
+          <input
+            type="file"
+            name="cover_image"
+            id="coverImageInput"
+            class="d-none"
+            accept="image/*"
+            onchange="handleCoverPreview(this)"
+          />
+
+          <div
+            id="coverPreviewContainer"
+            class="cover-preview-wrapper mt-3"
+            {%
+            if
+            post.cover_image
+            %}style="display: block;"
+            {%
+            else
+            %}style="display: none;"
+            {%
+            endif
+            %}
+          >
+            <img
+              id="coverPreview"
+              src="{% if post.cover_image %}{% if 'http' in post.cover_image %}{{ post.cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + post.cover_image) }}{% endif %}{% endif %}"
+              alt="Cover Preview"
+            />
+            <button
+              type="button"
+              class="btn-remove-cover"
+              onclick="removeCoverImage()"
+              title="Remove or Change Image"
+            >
+              <i class="fas fa-times"></i>
+            </button>
+            {% if post.cover_image %}
+            <div
+              class="small mt-2 fw-bold text-center text-muted w-100 position-absolute bottom-0 mb-3"
+              style="
+                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+                color: white !important;
+              "
+            >
+              <i class="fas fa-sync-alt me-1"></i> Removing or uploading a new
+              image will replace this one.
+            </div>
             {% endif %}
           </div>
         </div>
 
         <div class="mb-4">
-          <input
-            type="file"
-            name="cover_image"
-            class="form-control bg-light border-0 py-3 rounded-4 shadow-sm"
-            accept="image/*"
-          />
+          <label
+            class="form-label fw-bold small text-uppercase"
+            style="color: var(--text-muted); letter-spacing: 0.5px"
+          >
+            Your Story
+          </label>
+          <div class="editor-wrapper shadow-sm">
+            <div id="editor-container">{{ content_to_edit|safe }}</div>
+          </div>
         </div>
 
         <div
@@ -154,9 +256,10 @@ content %}
         >
           <button
             type="submit"
-            class="btn btn-primary rounded-pill fw-bold px-5 py-2 shadow-sm w-100 w-md-auto"
+            class="btn btn-primary rounded-pill fw-bold px-5 py-2 shadow-sm w-100 w-md-auto d-flex align-items-center justify-content-center gap-2"
           >
-            Save Changes
+            <i class="fas fa-save" style="font-size: 0.9rem"></i>
+            <span>Save Changes</span>
           </button>
         </div>
       </form>
@@ -206,6 +309,30 @@ content %}
       return true;
     };
   });
+
+  // =========================================
+  // IMAGE PREVIEW LOGIC
+  // =========================================
+  function handleCoverPreview(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        document.getElementById("coverPreview").src = e.target.result;
+        document.getElementById("coverPreviewContainer").style.display =
+          "block";
+        document.getElementById("uploadZone").style.display = "none";
+      };
+
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function removeCoverImage() {
+    document.getElementById("coverImageInput").value = "";
+    document.getElementById("coverPreviewContainer").style.display = "none";
+    document.getElementById("uploadZone").style.display = "block";
+  }
 </script>
 
 {% endblock %}
