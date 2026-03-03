@@ -30,7 +30,7 @@ content %}
           <div class="position-relative flex-shrink-0">
             {% if chat.user.profile_pic %}
             <img
-              src="{{ url_for('static', filename='uploads/avatars/' + chat.user.profile_pic) }}"
+              src="{% if 'http' in chat.user.profile_pic %}{{ chat.user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + chat.user.profile_pic) }}{% endif %}"
               class="rounded-circle shadow-sm"
               width="56"
               height="56"

@@ -198,7 +198,7 @@ endblock %} {% block content %}
       >
         {% if recipient.profile_pic %}
         <img
-          src="{{ user.profile_pic }}"
+          src="{% if 'http' in recipient.profile_pic %}{{ recipient.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + recipient.profile_pic) }}{% endif %}"
           class="chat-avatar shadow-sm"
           alt="{{ recipient.username }}"
         />
