@@ -187,7 +187,9 @@
             alt="Logo"
             class="nav-logo shadow-sm"
           />
-          <span class="brand-text d-none d-sm-block fw-bold">AV Postory</span>
+          <span class="brand-text fw-bold" style="color: var(--text-main)"
+            >AV Postory</span
+          >
         </a>
 
         <div
@@ -284,7 +286,7 @@
                 {% if latest_notifs %} {% for n in latest_notifs %}
                 <li>
                   <a
-                    href="{% if n.post_id %}{{ url_for('views.home', _anchor='post-wrapper-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
+                    href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}{{ url_for('views.home', _anchor='post-wrapper-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
                     class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
                   >
                     <div class="lh-sm">
@@ -292,7 +294,8 @@
                         <strong>{{ n.visitor.username }}</strong>
                         {% if n.action == 'like' %} liked your post. {% elif
                         n.action == 'comment' %} commented. {% elif n.action ==
-                        'follow' %} followed you. {% endif %}
+                        'follow' %} followed you. {% elif n.action == 'message'
+                        %} sent you a message. {% endif %}
                       </p>
                       <small class="text-muted small-text"
                         >{{ n.date_created | timeago }}</small
@@ -320,7 +323,7 @@
             >
               {% if current_user.profile_pic %}
               <img
-                src="{% if 'http' in current_user.profile_pic %}{{ current_user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
+                src="{% if current_user.profile_pic.startswith('http') %}{{ current_user.profile_pic | replace('http://', 'https://') }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
                 class="user-avatar-nav border border-2 border-white shadow-sm"
                 style="
                   width: 38px;
@@ -328,6 +331,7 @@
                   border-radius: 50%;
                   object-fit: cover;
                 "
+                referrerpolicy="no-referrer"
               />
               {% else %}
               <div
@@ -464,6 +468,7 @@
     </footer>
 
     {% if current_user.is_authenticated %}
+
     <nav class="mobile-nav d-md-none">
       <a href="{{ url_for('views.home') }}" class="mobile-nav-item"
         ><i class="bi bi-house-door-fill"></i
@@ -480,36 +485,70 @@
         class="mobile-nav-add text-decoration-none"
         ><i class="bi bi-plus-lg"></i
       ></a>
+
       <a
         href="{{ url_for('views.notifications') }}"
         class="mobile-nav-item position-relative"
+        id="mobileNotifBtn"
       >
         <i class="bi bi-bell-fill"></i>
-        {% if unread_count and unread_count > 0 %}
+        {% if (unread_count and unread_count > 0) or (unread_messages and
+        unread_messages > 0) %}
         <span
-          class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm"
+          class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm mobile-notif-badge"
           style="width: 10px; height: 10px; margin-top: 8px; margin-left: -5px"
         ></span>
         {% endif %}
       </a>
+
       <a
         href="{{ url_for('views.profile', username=current_user.username) }}"
-        class="mobile-nav-item"
+        class="mobile-nav-item position-relative d-inline-block"
+        id="mobileNavProfileLink"
       >
         {% if current_user.profile_pic %}
-        <img
-          src="{% if 'http' in current_user.profile_pic %}{{ current_user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
+        <div
+          id="mobileNavAvatar"
           class="rounded-circle shadow-sm"
           style="
             width: 32px;
             height: 32px;
-            object-fit: cover;
+            border: 2px solid var(--border-color);
+            background-size: cover;
+            background-position: center;
+            background-color: var(--bg-input);
+          "
+        ></div>
+
+        <div
+          id="mobileAvatarData"
+          class="d-none"
+          data-url="{% if current_user.profile_pic.startswith('http') %}{{ current_user.profile_pic | replace('http://', 'https://') }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
+        ></div>
+
+        <script>
+          // JS runs after render to inject the image securely via CSS
+          document.addEventListener("DOMContentLoaded", function () {
+            const dataDiv = document.getElementById("mobileAvatarData");
+            const avatarDiv = document.getElementById("mobileNavAvatar");
+            if (dataDiv && avatarDiv) {
+              avatarDiv.style.backgroundImage = `url('${dataDiv.dataset.url}')`;
+            }
+          });
+        </script>
+        {% else %}
+        <div
+          class="rounded-circle shadow-sm fw-bold text-white d-flex align-items-center justify-content-center"
+          style="
+            width: 32px;
+            height: 32px;
+            font-size: 1rem;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
             border: 2px solid var(--border-color);
           "
-          alt="Me"
-        />
-        {% else %}
-        <i class="bi bi-person-circle"></i>
+        >
+          {{ current_user.username[0]|upper }}
+        </div>
         {% endif %}
       </a>
     </nav>
@@ -567,63 +606,6 @@
       </div>
     </div>
 
-    <div
-      class="toast-container position-fixed bottom-0 end-0 p-3"
-      id="toastContainer"
-      style="z-index: 1090; margin-bottom: 70px"
-    >
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-
-      <div
-        class="toast align-items-center border-0 shadow-lg {% if category == 'error' %}text-bg-danger{% elif category == 'signup_success' %}text-bg-success{% else %}text-bg-dark{% endif %}"
-        role="alert"
-        aria-live="assertive"
-        aria-atomic="true"
-        style="border-radius: 12px"
-      >
-        <div class="d-flex">
-          <div class="toast-body fw-bold">{{ message }}</div>
-          <button
-            type="button"
-            class="btn-close btn-close-white me-2 m-auto"
-            data-bs-dismiss="toast"
-          ></button>
-        </div>
-      </div>
-
-      {% if category == 'signup_success' %}
-      <script>
-        document.addEventListener("DOMContentLoaded", function () {
-          var duration = 3 * 1000;
-          var end = Date.now() + duration;
-
-          (function frame() {
-            confetti({
-              particleCount: 5,
-              angle: 60,
-              spread: 55,
-              origin: { x: 0 },
-              colors: ["#4f46e5", "#6366f1", "#ffffff"],
-            });
-            confetti({
-              particleCount: 5,
-              angle: 120,
-              spread: 55,
-              origin: { x: 1 },
-              colors: ["#4f46e5", "#6366f1", "#ffffff"],
-            });
-
-            if (Date.now() < end) {
-              requestAnimationFrame(frame);
-            }
-          })();
-        });
-      </script>
-      {% endif %} {% endfor %} {% endif %} {% endwith %}
-    </div>
-
-    {% if current_user.is_authenticated %}
     <div class="modal fade" id="logoutModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div
@@ -676,7 +658,8 @@
         >
           <div class="modal-header border-0 pb-0 mt-2 px-4">
             <h5 class="modal-title fw-bold text-danger">
-              <i class="fas fa-exclamation-triangle me-2"></i>We're sorry to see you go
+              <i class="fas fa-exclamation-triangle me-2"></i>We're sorry to see
+              you go
             </h5>
             <button
               type="button"
@@ -784,7 +767,62 @@
         </div>
       </div>
     </div>
-    {% endif %}
+
+    <div
+      class="toast-container position-fixed bottom-0 end-0 p-3"
+      id="toastContainer"
+      style="z-index: 1090; margin-bottom: 70px"
+    >
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+
+      <div
+        class="toast align-items-center border-0 shadow-lg {% if category == 'error' %}text-bg-danger{% elif category == 'signup_success' %}text-bg-success{% else %}text-bg-dark{% endif %}"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+        style="border-radius: 12px"
+      >
+        <div class="d-flex">
+          <div class="toast-body fw-bold">{{ message }}</div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+
+      {% if category == 'signup_success' %}
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          var duration = 3 * 1000;
+          var end = Date.now() + duration;
+
+          (function frame() {
+            confetti({
+              particleCount: 5,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0 },
+              colors: ["#4f46e5", "#6366f1", "#ffffff"],
+            });
+            confetti({
+              particleCount: 5,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1 },
+              colors: ["#4f46e5", "#6366f1", "#ffffff"],
+            });
+
+            if (Date.now() < end) {
+              requestAnimationFrame(frame);
+            }
+          })();
+        });
+      </script>
+      {% endif %} {% endfor %} {% endif %} {% endwith %}
+    </div>
 
     <div
       class="modal fade"
@@ -837,6 +875,15 @@
           });
         }
 
+        // 🚀 FIX: Instantly hide mobile notification red dot on tap
+        const mobileNotifBtn = document.getElementById("mobileNotifBtn");
+        if (mobileNotifBtn) {
+          mobileNotifBtn.addEventListener("click", function () {
+            const badge = this.querySelector(".mobile-notif-badge");
+            if (badge) badge.style.display = "none";
+          });
+        }
+
         const searchModal = document.getElementById("mobileSearchModal");
         if (searchModal) {
           searchModal.addEventListener("shown.bs.modal", function () {
@@ -856,7 +903,6 @@
         }
       });
 
-      // 🚀 NEW: Two-step Deactivation Logic
       function triggerFinalPlea() {
         const form = document.getElementById("deactivateForm");
         if (!form.checkValidity()) {
@@ -881,7 +927,6 @@
         document.getElementById("deactivateForm").submit();
       }
 
-      // 🚀 NEW: Show details box only if "Other" is selected
       function toggleDeactivateDetails(selectElement) {
         const detailsBox = document.getElementById("deactivateDetailsBox");
         if (selectElement.value === "other") {

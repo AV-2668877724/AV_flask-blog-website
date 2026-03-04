@@ -420,6 +420,12 @@ def notifications():
     final_notifs = grouped_unread + grouped_read
     final_notifs.sort(key=lambda x: x.date_created, reverse=True)
 
+    # 🚀 FIX: Mark all fetched unread notifications as read in the database
+    if unread_notifs:
+        for notif in unread_notifs:
+            notif.is_read = True
+        db.session.commit()
+
     return render_template("notifications.html", user=current_user, notifications=final_notifs)
 
 @views.route('/api/mark-notifications-read', methods=['POST'])

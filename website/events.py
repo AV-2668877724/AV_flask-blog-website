@@ -1,7 +1,7 @@
 from flask import request
 from flask_login import current_user
 from . import socketio, db
-from .models import Message, User
+from .models import Message, User, Notification # 🚀 ADDED Notification model
 from flask_socketio import emit, join_room, leave_room
 from datetime import datetime
 import bleach # 🚀 FIX 1: Import bleach for XSS protection
@@ -74,6 +74,26 @@ def handle_send_message_event(data):
     
     db.session.add(new_message)
     db.session.commit()
+    
+    # ==========================================
+    # 🚀 NEW: Create Notification for the Message
+    # ==========================================
+    existing_notif = Notification.query.filter_by(
+        visitor_id=current_user.id, 
+        recipient_id=recipient_id, 
+        action='message', 
+        is_read=False
+    ).first()
+    
+    if not existing_notif:
+        notif = Notification(
+            visitor_id=current_user.id, 
+            recipient_id=recipient_id, 
+            action='message', 
+            date_created=datetime.utcnow()
+        )
+        db.session.add(notif)
+        db.session.commit()
     
     # 2. Prepare Payload
     msg_data = {

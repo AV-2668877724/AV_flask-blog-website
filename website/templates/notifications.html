@@ -1,6 +1,5 @@
 {% extends "base.html" %} {% block title %}Notifications{% endblock %} {% block
 content %}
-
 <style>
   /* Move dynamic background to a CSS class to fix VS Code linting errors */
   .notif-unread {
@@ -36,33 +35,26 @@ content %}
     >
       <div class="list-group list-group-flush">
         {% for n in notifications %}
-
         <a
-          href="{% if n.post_id %}/home#post-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}"
+          href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}/home#post-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}"
           class="list-group-item list-group-item-action p-3 p-md-4 border-bottom d-flex align-items-center gap-3 transition-all hover-opacity-100 {% if not n.is_read %}notif-unread{% else %}notif-read{% endif %}"
           style="border-color: var(--border-color) !important"
         >
           <div class="position-relative flex-shrink-0">
             {% if n.visitor.profile_pic %}
             <img
-              src="{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}"
+              src="{% if 'http' in n.visitor.profile_pic %}{{ n.visitor.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}{% endif %}"
               class="rounded-circle shadow-sm"
-              style="
-                width: 48px;
-                height: 48px;
-                object-fit: cover;
-                border: 2px solid var(--bg-card);
-              "
+              style="width: 50px; height: 50px; object-fit: cover"
             />
             {% else %}
             <div
               class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
               style="
-                width: 48px;
-                height: 48px;
-                font-size: 1.1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
                 background: linear-gradient(135deg, var(--primary), #4f46e5);
-                border: 2px solid var(--bg-card);
               "
             >
               {{ n.visitor.username[0]|upper }}
@@ -93,6 +85,11 @@ content %}
                 class="fas fa-user-plus text-success"
                 style="font-size: 0.65rem"
               ></i>
+              {% elif n.action == 'message' %}
+              <i
+                class="fas fa-envelope text-info"
+                style="font-size: 0.65rem"
+              ></i>
               {% endif %}
             </div>
           </div>
@@ -108,7 +105,8 @@ content %}
               <strong>{{ n.others_text }} others</strong>
               {% endif %} {% if n.action == 'like' %} liked your story. {% elif
               n.action == 'comment' %} commented on your story. {% elif n.action
-              == 'follow' %} started following you. {% endif %}
+              == 'follow' %} started following you. {% elif n.action ==
+              'message' %} sent you a new message. {% endif %}
             </p>
             <div class="text-muted fw-bold" style="font-size: 0.75rem">
               {{ n.date_created | timeago }}
@@ -124,7 +122,9 @@ content %}
           </div>
           {% endif %}
         </a>
+
         {% else %}
+
         <div class="text-center py-5 my-4">
           <div
             class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3"
@@ -135,8 +135,9 @@ content %}
           <h5 class="fw-bold font-heading mb-1" style="color: var(--text-main)">
             No notifications
           </h5>
-          <p class="text-muted small mb-0">You're all caught up!</p>
+          <p class="text-muted">You're all caught up!</p>
         </div>
+
         {% endfor %}
       </div>
     </div>
