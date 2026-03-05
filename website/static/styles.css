@@ -310,13 +310,30 @@ body.dark-mode .dropdown-menu {
   box-shadow: var(--shadow-md);
 }
 
-body.dark-mode .dropdown-item {
+/* Standard dropdown items */
+body.dark-mode .dropdown-item:not(.text-danger):not(.text-warning) {
   color: var(--text-main) !important;
 }
 
-body.dark-mode .dropdown-item:hover {
+body.dark-mode .dropdown-item:not(.text-danger):not(.text-warning):hover {
   background-color: var(--bg-input) !important;
   color: var(--primary) !important;
+}
+
+/* Maintain Red for Deactivate & Logout with custom hover */
+body.dark-mode .dropdown-item.text-danger {
+  color: #ff6b6b !important; /* Softer red for dark mode */
+}
+body.dark-mode .dropdown-item.text-danger:hover {
+  background-color: rgba(255, 107, 107, 0.1) !important;
+}
+
+/* Maintain Yellow for Admin Dashboard with custom hover */
+body.dark-mode .dropdown-item.text-warning {
+  color: #ffc107 !important;
+}
+body.dark-mode .dropdown-item.text-warning:hover {
+  background-color: rgba(255, 193, 7, 0.1) !important;
 }
 
 body.dark-mode .modal-content {

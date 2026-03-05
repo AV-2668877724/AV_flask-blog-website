@@ -113,7 +113,8 @@ def create_app():
     @app.template_filter('timeago')
     def timeago(dt):
         if dt is None: return ""
-        now = datetime.now()
+        # 🚀 FIX: Use utcnow() so it perfectly matches the database timestamps
+        now = datetime.utcnow() 
         if dt.tzinfo is not None:
             dt = dt.replace(tzinfo=None)
         

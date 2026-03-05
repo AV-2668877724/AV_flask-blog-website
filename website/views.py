@@ -135,7 +135,7 @@ def create_notification(visitor_id, recipient_id, action, post_id=None):
             recipient_id=recipient_id, 
             action=action, 
             post_id=post_id,
-            date_created=datetime.now()
+            date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
         )
         db.session.add(notif)
         db.session.commit()
@@ -211,7 +211,7 @@ def create_post():
                 text=clean_text, 
                 author=current_user.id, 
                 cover_image=cover_image_url,
-                date_created=datetime.now() 
+                date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
             )
             
             db.session.add(post)
@@ -314,7 +314,7 @@ def create_comment(post_id):
                 text=text, 
                 author=current_user.id, 
                 post_id=post_id,
-                date_created=datetime.now()
+                date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
             )
             
             db.session.add(comment)
@@ -357,7 +357,7 @@ def like(post_id):
         db.session.delete(like)
         db.session.commit()
     else:
-        like = Like(author=current_user.id, post_id=post_id, date_created=datetime.now())
+        like = Like(author=current_user.id, post_id=post_id, date_created=datetime.utcnow()) # 🚀 FIX: Synchronized to UTC
         db.session.add(like)
         db.session.commit()
         liked = True
@@ -841,7 +841,7 @@ def follow_user(user_id):
         
     existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
     if not existing:
-        new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.now())
+        new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.utcnow()) # 🚀 FIX: Synchronized to UTC
         db.session.add(new_follow)
         db.session.commit()
         create_notification(current_user.id, user_id, 'follow')
@@ -1083,7 +1083,7 @@ def like_comment(comment_id):
         db.session.delete(like)
         liked = False
     else:
-        like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.now())
+        like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.utcnow()) # 🚀 FIX: Synchronized to UTC
         db.session.add(like)
         liked = True
 
@@ -1266,9 +1266,17 @@ def send_message():
     recipient_id = data.get('recipient')
     text = data.get('text')
     
-    new_message = Message(text=text, sender_id=current_user.id, recipient_id=recipient_id)
+    new_message = Message(
+        text=text, 
+        sender_id=current_user.id, 
+        recipient_id=recipient_id,
+        date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
+    )
     db.session.add(new_message)
     db.session.commit()
+    
+    # 🚀 NEW: Create a notification for the message so the red dot appears!
+    create_notification(current_user.id, recipient_id, 'message')
     
     return jsonify({
         'success': True, 
