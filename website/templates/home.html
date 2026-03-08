@@ -1,5 +1,17 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
 %}
+
+<style>
+  /* 🚀 FIX: Ensure mobile search text and placeholder adapt to dark mode */
+  .mobile-home-search {
+    color: var(--text-main) !important;
+  }
+  .mobile-home-search::placeholder {
+    color: var(--text-muted) !important;
+    opacity: 0.8; /* Makes the placeholder slightly softer */
+  }
+</style>
+
 <div class="row justify-content-center">
   <div class="col-lg-9 col-xl-8 mx-auto">
     <div class="d-md-none mb-4 fade-in-up">
@@ -23,8 +35,8 @@
           <input
             type="search"
             name="q"
-            class="form-control border-0 bg-transparent py-3 shadow-none"
-            placeholder="Search people & posts..."
+            class="form-control border-0 bg-transparent py-3 shadow-none mobile-home-search"
+            placeholder="Search"
             autocomplete="off"
             required
             style="font-weight: 500"
@@ -49,7 +61,9 @@
         >
           <i class="bi bi-journal-richtext fa-2x"></i>
         </div>
-        <h4 class="fw-bold font-heading mb-2">Your Feed is Empty</h4>
+        <h4 class="fw-bold font-heading mb-2" style="color: var(--text-main)">
+          Your Feed is Empty
+        </h4>
         <p class="text-muted mb-4">
           Follow some creators or publish your first story to get started.
         </p>
