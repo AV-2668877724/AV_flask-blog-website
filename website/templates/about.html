@@ -1,6 +1,39 @@
 {% extends 'base.html' %} {% block title %}About Us - AV Postory{% endblock %}
 {% block content %}
 
+<style>
+  .tech-badge {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--trans-smooth);
+  }
+  .tech-badge:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+
+  /* 🚀 FIX: Adaptive button for GitHub and X/Twitter */
+  .btn-theme-adaptive {
+    border: 1px solid var(--text-main);
+    color: var(--text-main) !important;
+    background-color: transparent;
+    transition: all var(--trans-smooth);
+  }
+  .btn-theme-adaptive:hover {
+    background-color: var(--text-main);
+    color: var(--bg-card) !important;
+  }
+</style>
+
 <div class="row justify-content-center py-5 text-center">
   <div class="col-lg-8">
     <img
@@ -9,7 +42,12 @@
       style="height: 80px; width: auto"
     />
 
-    <h1 class="display-4 font-heading fw-bold mb-2">About Us</h1>
+    <h1
+      class="display-4 font-heading fw-bold mb-2"
+      style="color: var(--text-main)"
+    >
+      About Us
+    </h1>
     <h5 class="text-primary mb-4">Welcome to AV Postory</h5>
 
     <p class="lead text-secondary mb-4" style="line-height: 1.8">
@@ -23,16 +61,22 @@
 
 <div class="row justify-content-center mb-5">
   <div class="col-lg-10">
-    <div class="card border-0 shadow-sm p-4 p-md-5">
+    <div
+      class="card border-0 shadow-sm p-4 p-md-5"
+      style="background-color: var(--bg-card); border-radius: 24px"
+    >
       <div class="row align-items-center g-5">
         <div class="col-md-6">
-          <h3 class="fw-bold font-heading mb-3">Our Story</h3>
-          <p class="text-secondary" style="line-height: 1.8">
+          <h3 class="fw-bold font-heading mb-3" style="color: var(--text-main)">
+            Our Story
+          </h3>
+          <p class="text-muted" style="line-height: 1.8">
             In a world of fleeting tweets and algorithmic noise, we felt
-            something was missing: **Depth**. What started as a personal coding
-            challenge evolved into a mission to restore the art of blogging.
+            something was missing: <strong>Depth</strong>. What started as a
+            personal coding challenge evolved into a mission to restore the art
+            of blogging.
           </p>
-          <p class="text-secondary" style="line-height: 1.8">
+          <p class="text-muted" style="line-height: 1.8">
             We built AV Postory to be the bridge between technical documentation
             and personal storytelling. It is not just a website; it is a canvas
             for your intellectual journey.
@@ -41,7 +85,7 @@
 
         <div class="col-md-6">
           <div
-            class="p-4 rounded-3 text-center border shadow-sm h-100 d-flex flex-column justify-content-center"
+            class="p-4 rounded-4 text-center border-0 shadow-sm h-100 d-flex flex-column justify-content-center"
             style="background-color: var(--bg-input)"
           >
             <i class="fas fa-quote-left text-primary mb-3 fa-2x"></i>
@@ -63,17 +107,24 @@
 </div>
 
 <div class="row justify-content-center mb-5">
-  <div class="col-12 text-center mb-4">
-    <h3 class="fw-bold font-heading">Why Write Here?</h3>
+  <div class="col-12 text-center mb-4 mt-4">
+    <h3 class="fw-bold font-heading" style="color: var(--text-main)">
+      Why Write Here?
+    </h3>
     <p class="text-muted">Explore the features that make AV Postory unique.</p>
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
       <div class="mb-3 text-primary">
         <i class="fas fa-pen-nib fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Rich Writing Experience</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">
+        Rich Writing Experience
+      </h5>
       <p class="text-muted small">
         Our editor allows you to format thoughts with headings, lists, code
         blocks, and bold text effortlessly.
@@ -82,37 +133,48 @@
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
       <div class="mb-3 text-success">
-        <i class="fas fa-shield-alt fa-2x"></i>
+        <i class="fas fa-comments fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Privacy First</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Real-Time Chat</h5>
       <p class="text-muted small">
-        You control your data. Edit, delete, or hide your posts anytime. Secure
-        authentication keeps you safe.
+        Connect instantly with other users through our built-in, live messaging
+        system powered by WebSockets.
       </p>
     </div>
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
       <div class="mb-3 text-warning">
-        <i class="fas fa-users fa-2x"></i>
+        <i class="fas fa-bell fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Community Core</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">
+        Live Notifications
+      </h5>
       <p class="text-muted small">
-        Connect with like-minded individuals through our Follow system, Likes,
-        and real-time Comments.
+        Never miss a beat. Get instant alerts for new likes, comments, follows,
+        and messages across all your devices.
       </p>
     </div>
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
       <div class="mb-3 text-info">
         <i class="fas fa-moon fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Dark Mode</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Dark Mode</h5>
       <p class="text-muted small">
         Read comfortably at night. Our seamless Dark Mode protects your eyes and
         looks stunning.
@@ -121,37 +183,62 @@
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
       <div class="mb-3 text-danger">
         <i class="fas fa-id-card fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Custom Profiles</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Custom Profiles</h5>
       <p class="text-muted small">
-        Make it yours. Add a bio, cover photo, avatar, and link your social
-        media profiles.
+        Make it yours. Add a bio, cover photo, avatar, and dynamically link your
+        social media profiles.
       </p>
     </div>
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
       <div class="mb-3 text-primary">
         <i class="fas fa-search fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Smart Search</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Smart Search</h5>
       <p class="text-muted small">
         Find users and content instantly with our live search feature. Never
-        lose track of a friend.
+        lose track of a friend or story.
       </p>
     </div>
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
+      <div class="mb-3" style="color: #8b5cf6">
+        <i class="fas fa-shield-alt fa-2x"></i>
+      </div>
+      <h5 class="fw-bold" style="color: var(--text-main)">Ironclad Security</h5>
+      <p class="text-muted small">
+        Fully protected against XSS and CSRF attacks, backed by secure OTP email
+        verification and strict data sanitization.
+      </p>
+    </div>
+  </div>
+
+  <div class="col-md-4 mb-4">
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
       <div class="mb-3 text-secondary">
         <i class="fas fa-ban fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Distraction Free</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Distraction Free</h5>
       <p class="text-muted small">
         No ads, no pop-ups, no trackers. A clean interface designed purely for
         reading and writing.
@@ -160,27 +247,17 @@
   </div>
 
   <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
-      <div class="mb-3 text-dark">
-        <i class="fas fa-file-signature fa-2x"></i>
+    <div
+      class="card border-0 shadow-sm p-4 h-100 text-center"
+      style="background-color: var(--bg-card); border-radius: 20px"
+    >
+      <div class="mb-3" style="color: #f97316">
+        <i class="fas fa-cloud-upload-alt fa-2x"></i>
       </div>
-      <h5 class="fw-bold">Total Ownership</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Cloud Optimized</h5>
       <p class="text-muted small">
-        Your words belong to you. We do not claim copyright over your stories or
-        code snippets.
-      </p>
-    </div>
-  </div>
-
-  <div class="col-md-4 mb-4">
-    <div class="card border-0 shadow-sm p-4 h-100 text-center">
-      <div class="mb-3 text-warning">
-        <i class="fas fa-bolt fa-2x"></i>
-      </div>
-      <h5 class="fw-bold">Blazing Fast</h5>
-      <p class="text-muted small">
-        Built on a lightweight Python stack, ensuring your pages load instantly
-        on any device.
+        Images are securely uploaded, compressed, and delivered at blazing
+        speeds using Cloudinary CDN.
       </p>
     </div>
   </div>
@@ -188,7 +265,10 @@
 
 <div class="row justify-content-center mb-5">
   <div class="col-lg-10">
-    <div class="card border-0 shadow-sm bg-primary text-white overflow-hidden">
+    <div
+      class="card border-0 shadow-sm bg-primary text-white overflow-hidden"
+      style="border-radius: 24px"
+    >
       <div class="card-body p-5 text-center position-relative">
         <div
           class="position-absolute top-0 start-0 w-100 h-100"
@@ -209,7 +289,7 @@
 
         <a
           href="mailto:support@avpostory.com"
-          class="btn btn-light text-primary fw-bold px-4 py-2 shadow-sm position-relative"
+          class="btn btn-light text-primary fw-bold px-4 py-2 rounded-pill shadow-sm position-relative transition-all"
         >
           <i class="fas fa-envelope me-2"></i> Email Support to Reactivate
         </a>
@@ -223,34 +303,50 @@
 </div>
 
 <div class="row justify-content-center mb-5">
-  <div class="col-lg-8 text-center">
-    <h3 class="fw-bold font-heading mb-4">Built With Modern Tech</h3>
+  <div class="col-lg-10 text-center">
+    <h3 class="fw-bold font-heading mb-4" style="color: var(--text-main)">
+      Built With Modern Tech
+    </h3>
     <p class="text-muted mb-4">
-      AV Postory is powered by a robust stack ensuring speed and reliability.
+      AV Postory is powered by a robust, scalable stack ensuring speed and
+      reliability.
     </p>
 
     <div class="d-flex flex-wrap justify-content-center gap-3">
       <div class="tech-badge">
-        <i class="fab fa-python fa-lg"></i> Python (Flask)
+        <i class="fab fa-python fa-lg" style="color: #3776ab"></i> Python
+        (Flask)
       </div>
       <div class="tech-badge">
-        <i class="fas fa-database fa-lg"></i> SQLite / SQLAlchemy
+        <i class="fas fa-plug fa-lg text-warning"></i> WebSockets (Socket.IO)
       </div>
       <div class="tech-badge">
-        <i class="fab fa-bootstrap fa-lg"></i> Bootstrap 5
+        <i class="fas fa-database fa-lg text-secondary"></i> SQLite / SQLAlchemy
       </div>
       <div class="tech-badge">
-        <i class="fab fa-js fa-lg"></i> JavaScript (ES6)
+        <i class="fas fa-cloud fa-lg text-info"></i> Cloudinary API
       </div>
       <div class="tech-badge">
-        <i class="fas fa-pen-fancy fa-lg"></i> Quill.js API
+        <i class="fab fa-bootstrap fa-lg" style="color: #7952b3"></i> Bootstrap
+        5
+      </div>
+      <div class="tech-badge">
+        <i class="fab fa-js fa-lg text-warning"></i> Vanilla JS (ES6)
+      </div>
+      <div class="tech-badge">
+        <i class="fas fa-shield-alt fa-lg text-success"></i> WTForms / Bleach
       </div>
     </div>
   </div>
 </div>
 
-<div class="mt-5 pt-5 border-top text-center">
-  <h4 class="fw-bold mb-4 font-heading">Connect with the Creator</h4>
+<div
+  class="mt-5 pt-5 border-top text-center"
+  style="border-color: var(--border-color) !important"
+>
+  <h4 class="fw-bold mb-4 font-heading" style="color: var(--text-main)">
+    Connect with the Creator
+  </h4>
   <p class="text-muted mb-4">
     Have questions, bugs to report, or ideas to share? Reach out directly.
   </p>
@@ -259,7 +355,7 @@
     <a
       href="https://github.com/AV-2668877724"
       target="_blank"
-      class="btn btn-outline-dark px-3 rounded-pill d-flex align-items-center gap-2"
+      class="btn btn-theme-adaptive px-3 rounded-pill d-flex align-items-center gap-2"
       title="GitHub"
     >
       <i class="fab fa-github fa-lg"></i>
@@ -279,7 +375,7 @@
     <a
       href="https://x.com/av_indian007"
       target="_blank"
-      class="btn btn-outline-dark px-3 rounded-pill d-flex align-items-center gap-2"
+      class="btn btn-theme-adaptive px-3 rounded-pill d-flex align-items-center gap-2"
       title="X / Twitter"
     >
       <i class="fab fa-twitter fa-lg"></i>
