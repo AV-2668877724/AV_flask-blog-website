@@ -47,14 +47,16 @@ def get_public_link(endpoint, token=None, **kwargs):
     """Generates a link and forces the Ngrok URL if running locally."""
     if token:
         kwargs['token'] = token
+        
+    # Generate the standard Flask link
     link = url_for(endpoint, _external=True, **kwargs)
     
-    # YOUR NGROK URL (Update this if it changes!)
+    # YOUR NGROK URL
     PUBLIC_DOMAIN = "https://arjun-diffusible-nonfamiliarly.ngrok-free.dev"
     
-    if "127.0.0.1" in link or "localhost" in link:
-        link = link.replace("http://127.0.0.1:8000", PUBLIC_DOMAIN)
-        link = link.replace("http://localhost:8000", PUBLIC_DOMAIN)
+    # 🚀 FIX: Dynamically catch ANY local address and port (e.g., 5000, 8000) 
+    # and safely replace it with your Ngrok domain.
+    link = re.sub(r'http://(127\.0\.0\.1|localhost)(:\d+)?', PUBLIC_DOMAIN, link)
         
     return link
 
@@ -72,21 +74,64 @@ def send_verification_email(user_email):
     
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
+# 🚀 UPGRADED: Beautiful HTML Password Reset Email
 def send_reset_email(user_email):
     token = get_serializer().dumps(user_email, salt='password-reset')
-    link = get_public_link('auth.reset_token', token=token)
+    link = get_public_link('auth.forgot_password_token', token=token) 
     
     sender_email = os.getenv('MAIL_USERNAME')
-    msg = Message('Password Reset Request', 
+    msg = Message('Password Reset Request - AV Postory', 
                   sender=sender_email, 
                   recipients=[user_email],
                   reply_to='noreply@avpostory.com')
+                  
+    logo_url = get_public_link('static', filename='images/logo.png')
+    current_year = datetime.utcnow().year
     
-    msg.body = f'To reset your password, click the following link: {link}'
+    msg.body = f'''To reset your password, click the following link: {link}\nIf you did not request this, please ignore this email.'''
+
+    msg.html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ font-family: 'Inter', Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0f172a; line-height: 1.6; padding: 20px; margin: 0; }}
+            .container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+            .logo {{ text-align: center; margin-bottom: 30px; }}
+            .logo img {{ max-height: 70px; border-radius: 8px; }}
+            h1 {{ color: #4f46e5; font-size: 24px; text-align: center; margin-bottom: 20px; font-weight: 700; }}
+            p {{ font-size: 16px; color: #475569; margin-bottom: 20px; text-align: center; }}
+            .btn-container {{ text-align: center; margin-top: 35px; margin-bottom: 35px; }}
+            .btn {{ background: linear-gradient(135deg, #4f46e5, #4338ca); color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 50px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }}
+            .footer {{ text-align: center; font-size: 13px; color: #94a3b8; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="logo">
+                <img src="{logo_url}" alt="AV Postory Logo">
+            </div>
+            
+            <h1>Reset Your Password</h1>
+            
+            <p>We received a request to reset your password for your AV Postory account. Click the button below to choose a new password.</p>
+            
+            <div class="btn-container">
+                <a href="{link}" class="btn">Reset Password</a>
+            </div>
+
+            <p style="font-size: 14px;">If you did not request a password reset, you can safely ignore this email. Your account is completely secure and no changes will be made.<br><br>Please note: This link will expire in 30 minutes.</p>
+
+            <div class="footer">
+                &copy; {current_year} AV Postory. All rights reserved.
+            </div>
+        </div>
+    </body>
+    </html>
+    """
     
     Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
 
-# 🚀 NEW: Send Beautiful HTML Welcome Email
 def send_welcome_email(user_email, username):
     sender_email = os.getenv('MAIL_USERNAME')
     msg = Message('Welcome to AV Postory! 🎉', 
@@ -94,32 +139,12 @@ def send_welcome_email(user_email, username):
                   recipients=[user_email],
                   reply_to='noreply@avpostory.com')
     
-    # Generate public URLs for the logo and login button
     logo_url = get_public_link('static', filename='images/logo.png')
     login_url = get_public_link('auth.login')
-    current_year = datetime.now().year
+    current_year = datetime.utcnow().year
     
-    # Plain text fallback for older email clients
-    msg.body = f'''Hello {username},
+    msg.body = f'''Hello {username},\nWelcome to AV Postory! Go to AV Postory: {login_url}'''
 
-Welcome to AV Postory! We are absolutely thrilled to have you join our community.
-
-AV Postory is a next-generation social publishing platform designed for clarity and connection. We provide a distraction-free environment where writers, developers, and thinkers can share their stories, code, and ideas.
-
-Here is what you can do next:
-- Complete your profile
-- Browse the feed
-- Connect with others via real-time chat
-- Share your first story
-
-Go to AV Postory: {login_url}
-
-If you ever need anything, just reply to this email!
-
-Best regards,
-The AV Postory Team'''
-
-    # Beautiful HTML Version
     msg.html = f"""
     <!DOCTYPE html>
     <html>
@@ -297,16 +322,11 @@ def finish_signup():
             new_user = User(email=email, username=username, 
                             password=generate_password_hash(password, method='scrypt'), 
                             is_verified=True,
-                            date_created=datetime.now())
+                            date_created=datetime.utcnow())
             
             db.session.add(new_user)
             db.session.commit()
             
-            # ==========================================
-            # 🚀 NEW: WELCOME MESSAGES
-            # ==========================================
-            
-            # 1. Real Welcome HTML Email to their Gmail account
             try:
                 send_welcome_email(email, username)
             except Exception as e:
@@ -318,7 +338,6 @@ def finish_signup():
             session.pop('signup_otp', None)
             session.pop('email_verified', None)
             
-            # Trigger the Confetti!
             flash('Welcome to AV Postory! Your account is ready.', category='signup_success')
             return redirect(url_for('views.home'))
 
@@ -360,7 +379,7 @@ def login():
                     flash('Please verify your email first.', category='error')
                     return render_template("login.html", user=current_user)
 
-                user.last_login = datetime.now()
+                user.last_login = datetime.utcnow()
                 db.session.commit()
 
                 login_user(user, remember=True)
@@ -373,24 +392,29 @@ def login():
 
     return render_template("login.html", user=current_user)
 
-@auth.route('/reset_password', methods=['GET', 'POST'])
-def reset_request():
+# ==========================================
+#  FORGOT PASSWORD ROUTES (Using your template names)
+# ==========================================
+@auth.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('views.home'))
+        
     if request.method == 'POST':
         email = request.form.get('email')
         user = User.query.filter_by(email=email).first()
+        
         if user:
             send_reset_email(email)
-            flash('An email has been sent with instructions to reset your password.', category='success')
-            return redirect(url_for('auth.login'))
-        else:
-            flash('No account found with that email.', category='error')
+            
+        flash('If an account with that email exists, a password reset link has been sent.', category='info')
+        return redirect(url_for('auth.login'))
+        
+    # 🚀 FIX: Now pointing to your existing reset_request.html template!
     return render_template('reset_request.html', user=current_user)
 
-# ==========================================
-#  RESET TOKEN 
-# ==========================================
-@auth.route('/reset_password/<token>', methods=['GET', 'POST'])
-def reset_token(token):
+@auth.route('/reset-password/<token>', methods=['GET', 'POST'])
+def forgot_password_token(token):
     if current_user.is_authenticated:
         logout_user()
         flash('Logged out for security. Please create your new password.', category='info')
@@ -398,11 +422,11 @@ def reset_token(token):
     try:
         email = get_serializer().loads(token, salt='password-reset', max_age=1800)
     except SignatureExpired:
-        flash('The token is expired.', category='error')
-        return redirect(url_for('auth.reset_request'))
+        flash('The password reset link is expired.', category='error')
+        return redirect(url_for('auth.forgot_password'))
     except Exception:
-        flash('Invalid token.', category='error')
-        return redirect(url_for('auth.reset_request'))
+        flash('Invalid password reset token.', category='error')
+        return redirect(url_for('auth.forgot_password'))
 
     if request.method == 'POST':
         password = request.form.get('password')
@@ -416,13 +440,17 @@ def reset_token(token):
             user = User.query.filter_by(email=email).first()
             if user:
                 if check_password_hash(user.password, password):
-                    flash('Your new password cannot be the same as your current password. Please choose a different one.', category='error')
+                    flash('Your new password cannot be the same as your current password.', category='error')
                 else:
                     user.password = generate_password_hash(password, method='scrypt')
                     db.session.commit()
-                    flash('Your password has been updated! You can now login.', category='success')
+                    flash('Your password has been successfully updated! You can now log in.', category='success')
                     return redirect(url_for('auth.login'))
+            else:
+                flash('User not found.', category='error')
+                return redirect(url_for('auth.forgot_password'))
 
+    # 🚀 FIX: Now pointing to your existing reset_token.html template!
     return render_template('reset_token.html', token=token, user=current_user)
 
 @auth.route('/logout')

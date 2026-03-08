@@ -15,10 +15,9 @@ from sqlalchemy.orm.attributes import flag_modified
 import secrets
 from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
-from sqlalchemy import or_, func
 import bleach 
 
-# 🚀 NEW: Import Cloudinary
+# 🚀 Cloudinary Integration
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
@@ -57,13 +56,11 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# 🚀 NEW: Cloudinary Upload Function
+
 def upload_to_cloudinary(file, folder_name, width=None, height=None):
     """
     Uploads an image to Cloudinary and returns the secure URL.
-    Cloudinary handles compression and conversion to modern formats automatically.
     """
-    # Configure Cloudinary using env variables
     cloudinary.config(
         cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
         api_key = os.getenv('CLOUDINARY_API_KEY'),
@@ -72,7 +69,6 @@ def upload_to_cloudinary(file, folder_name, width=None, height=None):
     )
     
     try:
-        # Build transformation options for auto-optimization
         transformations = {
             "fetch_format": "auto",
             "quality": "auto"
@@ -95,6 +91,39 @@ def upload_to_cloudinary(file, folder_name, width=None, height=None):
     except Exception as e:
         print(f"Cloudinary upload error: {e}")
         return None
+
+def delete_from_cloudinary(image_url):
+    """
+    Extracts the public_id from a Cloudinary URL and deletes the file from the cloud
+    to save storage space.
+    """
+    if not image_url or 'res.cloudinary.com' not in image_url:
+        return
+    
+    # 🚀 CRITICAL FIX: Added Cloudinary credentials here so deletions don't fail!
+    cloudinary.config(
+        cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
+        api_key = os.getenv('CLOUDINARY_API_KEY'),
+        api_secret = os.getenv('CLOUDINARY_API_SECRET'),
+        secure = True
+    )
+    
+    try:
+        path = image_url.split('/upload/')[1]
+        
+        if path.startswith('v') and '/' in path:
+            version_str = path.split('/')[0]
+            if version_str[1:].isdigit():
+                path = path.split('/', 1)[1]
+        
+        public_id = path.rsplit('.', 1)[0]
+        
+        cloudinary.uploader.destroy(public_id)
+        print(f"✅ Deleted from Cloudinary: {public_id}")
+        
+    except Exception as e:
+        print(f"❌ Cloudinary deletion error: {e}")
+
 
 def enrich_posts(posts):
     for post in posts:
@@ -135,7 +164,7 @@ def create_notification(visitor_id, recipient_id, action, post_id=None):
             recipient_id=recipient_id, 
             action=action, 
             post_id=post_id,
-            date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
+            date_created=datetime.utcnow() 
         )
         db.session.add(notif)
         db.session.commit()
@@ -204,14 +233,13 @@ def create_post():
             clean_text = sanitize_html(raw_text)
             
             if cover_image_file and cover_image_file.filename != '':
-                # 🚀 Upload to Cloudinary instead of local file system
                 cover_image_url = upload_to_cloudinary(cover_image_file, 'posts', width=1080)
             
             post = Post(
                 text=clean_text, 
                 author=current_user.id, 
                 cover_image=cover_image_url,
-                date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
+                date_created=datetime.utcnow() 
             )
             
             db.session.add(post)
@@ -240,10 +268,9 @@ def edit_post(id):
             post.text = sanitize_html(raw_text)
             
             if file and file.filename != '' and allowed_file(file.filename):
-                # 🚀 Upload to Cloudinary. 
-                # (Note: Cloudinary handles overwriting beautifully, we just update the DB URL)
                 new_image_url = upload_to_cloudinary(file, 'posts', width=1080)
                 if new_image_url:
+                    delete_from_cloudinary(post.cover_image)
                     post.cover_image = new_image_url
                 
             db.session.commit()
@@ -314,7 +341,7 @@ def create_comment(post_id):
                 text=text, 
                 author=current_user.id, 
                 post_id=post_id,
-                date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
+                date_created=datetime.utcnow() 
             )
             
             db.session.add(comment)
@@ -332,8 +359,6 @@ def delete_comment(comment_id):
     comment = Comment.query.filter_by(id=comment_id).first()
     if not comment:
         flash('Comment does not exist.', category='error')
-    # 🚀 FIX: Removed 'current_user.id != comment.post.author' 
-    # Now ONLY the comment author or an Admin can delete it.
     elif current_user.id != comment.author and not current_user.is_admin:
         flash('You do not have permission to delete this comment.', category='error')
     else:
@@ -357,7 +382,7 @@ def like(post_id):
         db.session.delete(like)
         db.session.commit()
     else:
-        like = Like(author=current_user.id, post_id=post_id, date_created=datetime.utcnow()) # 🚀 FIX: Synchronized to UTC
+        like = Like(author=current_user.id, post_id=post_id, date_created=datetime.utcnow()) 
         db.session.add(like)
         db.session.commit()
         liked = True
@@ -420,7 +445,6 @@ def notifications():
     final_notifs = grouped_unread + grouped_read
     final_notifs.sort(key=lambda x: x.date_created, reverse=True)
 
-    # 🚀 FIX: Mark all fetched unread notifications as read in the database
     if unread_notifs:
         for notif in unread_notifs:
             notif.is_read = True
@@ -499,9 +523,10 @@ def update_profile_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # 🚀 Upload to Cloudinary
         image_url = upload_to_cloudinary(file, 'avatars', width=300, height=300)
         if image_url:
+            delete_from_cloudinary(current_user.profile_pic)
+            
             current_user.profile_pic = image_url
             db.session.commit()
             flash('Profile picture updated!', category='success')
@@ -664,6 +689,10 @@ def admin_delete_user(user_id):
         if user_to_delete.is_admin:
              flash("Cannot delete another admin", category='error')
         else:
+            # 🚀 NEW: Wipe their profile and cover photos from Cloudinary forever!
+            delete_from_cloudinary(user_to_delete.profile_pic)
+            delete_from_cloudinary(user_to_delete.cover_pic)
+            
             db.session.delete(user_to_delete)
             db.session.commit()
             flash(f"User {user_to_delete.username} deleted permanently.", category='success')
@@ -745,6 +774,7 @@ def admin_permanent_delete_post(post_id):
         
     post = Post.query.get(post_id)
     if post:
+        delete_from_cloudinary(post.cover_image)
         db.session.delete(post)
         db.session.commit()
         flash("Post permanently deleted.", category='success')
@@ -841,7 +871,7 @@ def follow_user(user_id):
         
     existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
     if not existing:
-        new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.utcnow()) # 🚀 FIX: Synchronized to UTC
+        new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.utcnow()) 
         db.session.add(new_follow)
         db.session.commit()
         create_notification(current_user.id, user_id, 'follow')
@@ -1056,9 +1086,10 @@ def update_cover_pic():
         return redirect(url_for('views.profile', username=current_user.username))
         
     if file and allowed_file(file.filename):
-        # 🚀 Upload to Cloudinary
         image_url = upload_to_cloudinary(file, 'posts', width=1080, height=600)
         if image_url:
+            delete_from_cloudinary(current_user.cover_pic)
+            
             current_user.cover_pic = image_url
             db.session.commit()
             flash('Cover photo updated!', category='success')
@@ -1083,7 +1114,7 @@ def like_comment(comment_id):
         db.session.delete(like)
         liked = False
     else:
-        like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.utcnow()) # 🚀 FIX: Synchronized to UTC
+        like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.utcnow()) 
         db.session.add(like)
         liked = True
 
@@ -1264,18 +1295,23 @@ def get_new_messages(recipient_id):
 def send_message():
     data = request.json
     recipient_id = data.get('recipient')
-    text = data.get('text')
+    
+    # 🚀 CRITICAL FIX: Re-added bleach sanitization here to prevent XSS attacks in chat!
+    raw_text = data.get('text')
+    if not raw_text:
+        return jsonify({'success': False}), 400
+        
+    text = bleach.clean(raw_text, tags=[], strip=True)
     
     new_message = Message(
         text=text, 
         sender_id=current_user.id, 
         recipient_id=recipient_id,
-        date_created=datetime.utcnow() # 🚀 FIX: Synchronized to UTC
+        date_created=datetime.utcnow() 
     )
     db.session.add(new_message)
     db.session.commit()
     
-    # 🚀 NEW: Create a notification for the message so the red dot appears!
     create_notification(current_user.id, recipient_id, 'message')
     
     return jsonify({

@@ -71,6 +71,28 @@ block content %}
   .password-toggle:hover {
     color: var(--primary);
   }
+
+  /* Adaptive Input Styling for Dark Mode */
+  .auth-input {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px;
+  }
+
+  /* 🚀 FIX: Stop placeholder and label from overlapping in floating forms! */
+  .form-floating > .auth-input::placeholder {
+    color: transparent !important;
+  }
+  .form-floating > .auth-input:focus::placeholder {
+    color: var(--text-muted) !important;
+  }
+
+  /* 🚀 FIX: Hide Edge/Browser native password eye icon */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
 </style>
 
 <div class="auth-wrapper fade-in-up">
@@ -89,31 +111,32 @@ block content %}
       </div>
 
       <form method="POST" id="loginForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="form-floating mb-3">
           <input
             type="email"
-            class="form-control"
+            class="form-control auth-input shadow-sm"
             id="emailInput"
             name="email"
             placeholder="name@example.com"
             required
             autocomplete="email"
           />
-          <label for="emailInput">Email address</label>
+          <label for="emailInput" class="text-muted">Email address</label>
         </div>
 
         <div class="form-floating mb-2 position-relative">
           <input
             type="password"
-            class="form-control"
+            class="form-control auth-input shadow-sm"
             id="passwordInput"
             name="password"
             placeholder="Password"
             required
             autocomplete="current-password"
+            style="padding-right: 40px"
           />
-          <label for="passwordInput">Password</label>
+          <label for="passwordInput" class="text-muted">Password</label>
           <button
             type="button"
             class="password-toggle"
@@ -126,7 +149,7 @@ block content %}
 
         <div class="text-end mb-4">
           <a
-            href="{{ url_for('auth.reset_request') }}"
+            href="{{ url_for('auth.forgot_password') }}"
             class="text-decoration-none small fw-bold"
             style="color: var(--primary)"
           >
