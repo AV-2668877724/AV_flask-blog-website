@@ -912,9 +912,18 @@ def following_list(username):
 # ACCOUNT DEACTIVATION
 # =================================================
 
+# =================================================
+# ACCOUNT DEACTIVATION
+# =================================================
+
 @views.route('/deactivate-account', methods=['POST'])
 @login_required
 def deactivate_account():
+    # 🚀 FIX: Prevent the Admin from deactivating their own account
+    if current_user.is_admin:
+        flash("Admin accounts cannot be deactivated. You are the boss!", category='error')
+        return redirect(url_for('views.profile', username=current_user.username))
+
     reason = request.form.get('reason')
     details = request.form.get('details')
     full_reason = f"Reason: {reason} | Details: {details}" if details else reason
