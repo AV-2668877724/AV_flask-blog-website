@@ -119,7 +119,7 @@ def send_reset_email(user_email):
                 <a href="{link}" class="btn">Reset Password</a>
             </div>
 
-            <p style="font-size: 14px;">If you did not request a password reset, you can safely ignore this email. Your account is completely secure and no changes will be made.<br><br>Please note: This link will expire in 30 minutes.</p>
+            <p style="font-size: 14px;">If you did not request a password reset, you can safely ignore this email. Your account is completely secure and no changes will be made.<br><br>Please note: This link will expire in 10 minutes.</p>
 
             <div class="footer">
                 &copy; {current_year} AV Postory. All rights reserved.
@@ -420,7 +420,7 @@ def forgot_password_token(token):
         flash('Logged out for security. Please create your new password.', category='info')
         
     try:
-        email = get_serializer().loads(token, salt='password-reset', max_age=1800)
+        email = get_serializer().loads(token, salt='password-reset', max_age=600)
     except SignatureExpired:
         flash('The password reset link is expired.', category='error')
         return redirect(url_for('auth.forgot_password'))
