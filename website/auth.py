@@ -47,16 +47,13 @@ def get_public_link(endpoint, token=None, **kwargs):
     """Generates a link and forces the Ngrok URL if running locally."""
     if token:
         kwargs['token'] = token
-        
-    # Generate the standard Flask link
     link = url_for(endpoint, _external=True, **kwargs)
     
-    # YOUR NGROK URL
+    # YOUR NGROK URL (Update this if it changes!)
     PUBLIC_DOMAIN = "https://arjun-diffusible-nonfamiliarly.ngrok-free.dev"
     
-    # 🚀 FIX: Dynamically catch ANY local address and port (e.g., 5000, 8000) 
-    # and safely replace it with your Ngrok domain.
-    link = re.sub(r'http://(127\.0\.0\.1|localhost)(:\d+)?', PUBLIC_DOMAIN, link)
+    # 🚀 FIX: Dynamically catch ANY local address and port
+    link = re.sub(r'https?://(127\.0\.0\.1|localhost)(:\d+)?', PUBLIC_DOMAIN, link)
         
     return link
 
@@ -85,7 +82,9 @@ def send_reset_email(user_email):
                   recipients=[user_email],
                   reply_to='noreply@avpostory.com')
                   
-    logo_url = get_public_link('static', filename='images/logo.png')
+    # 🚀 FIX: Embedded Cloudinary Logo
+    logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png" 
+    
     current_year = datetime.utcnow().year
     
     msg.body = f'''To reset your password, click the following link: {link}\nIf you did not request this, please ignore this email.'''
@@ -139,7 +138,9 @@ def send_welcome_email(user_email, username):
                   recipients=[user_email],
                   reply_to='noreply@avpostory.com')
     
-    logo_url = get_public_link('static', filename='images/logo.png')
+    # 🚀 FIX: Embedded Cloudinary Logo
+    logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png"
+    
     login_url = get_public_link('auth.login')
     current_year = datetime.utcnow().year
     
@@ -393,7 +394,7 @@ def login():
     return render_template("login.html", user=current_user)
 
 # ==========================================
-#  FORGOT PASSWORD ROUTES (Using your template names)
+#  FORGOT PASSWORD ROUTES
 # ==========================================
 @auth.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
@@ -410,7 +411,6 @@ def forgot_password():
         flash('If an account with that email exists, a password reset link has been sent.', category='info')
         return redirect(url_for('auth.login'))
         
-    # 🚀 FIX: Now pointing to your existing reset_request.html template!
     return render_template('reset_request.html', user=current_user)
 
 @auth.route('/reset-password/<token>', methods=['GET', 'POST'])
@@ -450,7 +450,6 @@ def forgot_password_token(token):
                 flash('User not found.', category='error')
                 return redirect(url_for('auth.forgot_password'))
 
-    # 🚀 FIX: Now pointing to your existing reset_token.html template!
     return render_template('reset_token.html', token=token, user=current_user)
 
 @auth.route('/logout')
