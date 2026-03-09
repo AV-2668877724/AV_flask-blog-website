@@ -81,18 +81,17 @@ block content %}
     background-color: transparent !important;
   }
 
-  /* ✅ FIX: Floating Label Visibility in Dark Mode */
+  /* Floating Label Visibility in Dark Mode */
   body.dark-mode .form-floating > label {
-    color: #a1a1aa !important; /* Muted gray so it's visible before clicking */
+    color: #a1a1aa !important;
   }
   body.dark-mode .form-floating > .form-control:focus ~ label,
   body.dark-mode
     .form-floating
     > .form-control:not(:placeholder-shown)
     ~ label {
-    color: var(--primary) !important; /* Turns cool blue when you click it */
+    color: var(--primary) !important;
   }
-  /* Fixes the white background "cutout" Bootstrap applies to floating labels */
   body.dark-mode .form-floating > .form-control:focus ~ label::after,
   body.dark-mode
     .form-floating
@@ -306,12 +305,21 @@ block content %}
                             >Deactivated</span
                           >
                           {% if u.deactivation_reason %}
-                          <div class="mt-2 text-muted" style="font-size: 0.75rem; max-width: 250px; font-weight: normal; line-height: 1.4; background-color: var(--bg-input); padding: 6px 10px; border-radius: 8px;">
+                          <div
+                            class="mt-2 text-muted"
+                            style="
+                              font-size: 0.75rem;
+                              max-width: 250px;
+                              font-weight: normal;
+                              line-height: 1.4;
+                              background-color: var(--bg-input);
+                              padding: 6px 10px;
+                              border-radius: 8px;
+                            "
+                          >
                             <strong>Reason:</strong> {{ u.deactivation_reason }}
                           </div>
-                          {% endif %}
-
-                          {% else %}
+                          {% endif %} {% else %}
 
                           <span
                             class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill mt-1"
@@ -336,7 +344,11 @@ block content %}
                         class="d-inline-flex gap-2 align-items-center"
                         onsubmit="return injectAdminPassword(this);"
                       >
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input
+                          type="hidden"
+                          name="csrf_token"
+                          value="{{ csrf_token() }}"
+                        />
                         {% if u.is_active %}
                         <button
                           class="btn btn-warning btn-sm text-dark fw-bold rounded-pill shadow-sm"
@@ -364,7 +376,11 @@ block content %}
                         "
                         class="d-inline-flex ms-2"
                       >
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input
+                          type="hidden"
+                          name="csrf_token"
+                          value="{{ csrf_token() }}"
+                        />
                         <button
                           class="btn btn-outline-danger btn-sm rounded-circle shadow-sm"
                           style="width: 32px; height: 32px"
@@ -410,7 +426,7 @@ block content %}
                 <thead>
                   <tr>
                     <th class="ps-4 py-3">Author</th>
-                    <th class="py-3">Content Snippet</th>
+                    <th class="py-3">Post Content</th>
                     <th class="py-3">Date</th>
                     <th class="text-end pe-4 py-3">Action</th>
                   </tr>
@@ -424,12 +440,20 @@ block content %}
                     >
                       {{ p.user.username }}
                     </td>
-                    <td class="py-3" style="max-width: 300px">
-                      <span
-                        class="text-truncate d-block"
-                        style="color: var(--text-muted)"
-                        >{{ p.text[:60] | striptags }}...</span
+                    <td class="py-3" style="max-width: 350px">
+                      <span style="color: var(--text-muted)"
+                        >{{ p.text[:80] | striptags }}...</span
                       >
+                      <button
+                        type="button"
+                        class="btn btn-link btn-sm p-0 ms-1 fw-bold text-decoration-none"
+                        data-bs-toggle="modal"
+                        data-bs-target="#viewPostModal-{{ p.id }}"
+                      >
+                        <i class="fas fa-expand-arrows-alt me-1"></i>View Full
+                      </button>
+
+                      <span class="d-none">{{ p.text | striptags }}</span>
                     </td>
                     <td class="py-3">
                       <small style="color: var(--text-muted)"
@@ -448,7 +472,11 @@ block content %}
                         "
                         class="d-inline-flex gap-2"
                       >
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input
+                          type="hidden"
+                          name="csrf_token"
+                          value="{{ csrf_token() }}"
+                        />
                         <button
                           class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm"
                         >
@@ -487,7 +515,7 @@ block content %}
                 <thead>
                   <tr>
                     <th class="ps-4 py-3">Author</th>
-                    <th class="py-3">Content Snippet</th>
+                    <th class="py-3">Post Content</th>
                     <th class="py-3">Original Date</th>
                     <th class="text-end pe-4 py-3">Action</th>
                   </tr>
@@ -498,12 +526,20 @@ block content %}
                     <td class="ps-4 py-3 fw-bold text-danger">
                       {{ p.user.username }}
                     </td>
-                    <td class="py-3" style="max-width: 300px">
-                      <span
-                        class="text-truncate d-block"
-                        style="color: var(--text-muted)"
-                        ><del>{{ p.text[:60] | striptags }}...</del></span
+                    <td class="py-3" style="max-width: 350px">
+                      <span style="color: var(--text-muted)"
+                        ><del>{{ p.text[:80] | striptags }}...</del></span
                       >
+                      <button
+                        type="button"
+                        class="btn btn-link btn-sm text-danger p-0 ms-1 fw-bold text-decoration-none"
+                        data-bs-toggle="modal"
+                        data-bs-target="#viewDelPostModal-{{ p.id }}"
+                      >
+                        <i class="fas fa-expand-arrows-alt me-1"></i>View Full
+                      </button>
+
+                      <span class="d-none">{{ p.text | striptags }}</span>
                     </td>
                     <td class="py-3">
                       <small style="color: var(--text-muted)"
@@ -518,7 +554,11 @@ block content %}
                           class="d-inline-flex gap-2"
                           onsubmit="return injectAdminPassword(this);"
                         >
-                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                          <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="{{ csrf_token() }}"
+                          />
                           <button
                             class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm"
                           >
@@ -537,7 +577,11 @@ block content %}
                           "
                           class="d-inline-flex gap-2"
                         >
-                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                          <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="{{ csrf_token() }}"
+                          />
                           <button
                             class="btn btn-dark btn-sm rounded-circle shadow-sm"
                             style="width: 32px; height: 32px"
@@ -634,7 +678,11 @@ block content %}
                         "
                         class="d-inline-flex gap-2"
                       >
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        <input
+                          type="hidden"
+                          name="csrf_token"
+                          value="{{ csrf_token() }}"
+                        />
                         <button
                           class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm"
                         >
@@ -649,7 +697,11 @@ block content %}
                           class="d-inline-flex gap-2"
                           onsubmit="return injectAdminPassword(this);"
                         >
-                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                          <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="{{ csrf_token() }}"
+                          />
                           <button
                             class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm"
                           >
@@ -668,7 +720,11 @@ block content %}
                             );
                           "
                         >
-                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                          <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="{{ csrf_token() }}"
+                          />
                           <button
                             class="btn btn-dark btn-sm rounded-circle shadow-sm"
                             style="width: 32px; height: 32px"
@@ -761,20 +817,159 @@ block content %}
   </div>
 </div>
 
+{% for p in active_posts %}
+<div
+  class="modal fade"
+  id="viewPostModal-{{ p.id }}"
+  tabindex="-1"
+  aria-hidden="true"
+  style="white-space: normal"
+>
+  <div
+    class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"
+  >
+    <div
+      class="modal-content"
+      style="
+        background-color: var(--bg-card);
+        border-color: var(--border-color) !important;
+      "
+    >
+      <div
+        class="modal-header"
+        style="border-bottom: 1px solid var(--border-color) !important"
+      >
+        <h5
+          class="modal-title fw-bold font-heading"
+          style="color: var(--text-main)"
+        >
+          Post by {{ p.user.username }}
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body p-4">
+        {% if p.cover_image %}
+        <div class="text-center mb-4">
+          <img
+            src="{% if 'http' in p.cover_image %}{{ p.cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + p.cover_image) }}{% endif %}"
+            class="img-fluid rounded shadow-sm border"
+            style="
+              max-height: 400px;
+              object-fit: cover;
+              border-color: var(--border-color) !important;
+            "
+          />
+        </div>
+        {% endif %}
+
+        <div
+          style="color: var(--text-main); font-size: 1.05rem; line-height: 1.6"
+        >
+          {{ p.text | safe }}
+        </div>
+      </div>
+      <div
+        class="modal-footer"
+        style="border-top: 1px solid var(--border-color) !important"
+      >
+        <button
+          type="button"
+          class="btn btn-secondary rounded-pill px-4 fw-bold"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %} {% for p in deleted_posts %}
+<div
+  class="modal fade"
+  id="viewDelPostModal-{{ p.id }}"
+  tabindex="-1"
+  aria-hidden="true"
+  style="white-space: normal"
+>
+  <div
+    class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"
+  >
+    <div
+      class="modal-content border-danger"
+      style="background-color: var(--bg-card); border-width: 2px"
+    >
+      <div
+        class="modal-header"
+        style="border-bottom: 1px solid var(--border-color) !important"
+      >
+        <h5 class="modal-title fw-bold text-danger font-heading">
+          <i class="fas fa-trash-alt me-2"></i>Deleted Post by {{
+          p.user.username }}
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body p-4">
+        {% if p.cover_image %}
+        <div class="text-center mb-4">
+          <img
+            src="{% if 'http' in p.cover_image %}{{ p.cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + p.cover_image) }}{% endif %}"
+            class="img-fluid rounded shadow-sm border border-danger border-opacity-50"
+            style="max-height: 400px; object-fit: cover"
+          />
+        </div>
+        {% endif %}
+
+        <div
+          style="color: var(--text-main); font-size: 1.05rem; line-height: 1.6"
+        >
+          {{ p.text | safe }}
+        </div>
+      </div>
+      <div
+        class="modal-footer"
+        style="border-top: 1px solid var(--border-color) !important"
+      >
+        <button
+          type="button"
+          class="btn btn-secondary rounded-pill px-4 fw-bold"
+          data-bs-dismiss="modal"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
 <script>
   // Live Local Filter Logic
   document.addEventListener("DOMContentLoaded", function () {
     const filterInput = document.getElementById("adminLiveFilter");
 
     filterInput.addEventListener("keyup", function () {
-      const query = this.value.toLowerCase();
+      // 🚀 FIX: Clean the search query (crush all weird spaces/newlines into one normal space)
+      const query = this.value.toLowerCase().trim().replace(/\s+/g, ' ');
+
       const activePane = document.querySelector(".tab-pane.active");
       if (!activePane) return;
 
       const rows = activePane.querySelectorAll("tr.admin-data-row");
 
       rows.forEach((row) => {
-        const textContext = row.textContent.toLowerCase();
+        // 🚀 FIX: Clean the row text to match the cleaned query perfectly
+        const textContext = row.textContent.toLowerCase().replace(/\s+/g, ' ');
+        
         if (textContext.includes(query)) {
           row.style.display = "";
         } else {
@@ -794,13 +989,14 @@ block content %}
         });
       });
 
-    // Move modal to body to fix stacking issues
-    const adminModal = document.getElementById("adminPasswordModal");
-    if (adminModal) {
-      document.body.appendChild(adminModal);
-    }
+    // Move ALL modals to the body to prevent the blurry backdrop trap!
+    const allModals = document.querySelectorAll(".modal");
+    allModals.forEach((modal) => {
+      document.body.appendChild(modal);
+    });
   });
 
+  // Admin Password Logic
   let pendingForm = null;
 
   function injectAdminPassword(form) {
