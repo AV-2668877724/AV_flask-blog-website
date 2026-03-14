@@ -67,7 +67,7 @@ class User(db.Model, UserMixin):
     
     # Online Status
     is_online = db.Column(db.Boolean, default=False)
-    last_seen = db.Column(db.DateTime(timezone=True), default=func.now())
+    last_seen = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
     
     # Relationships
     posts = db.relationship('Post', backref='user', passive_deletes=True)
@@ -91,7 +91,7 @@ class Post(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     
     # Index for the Home Feed sorting
-    date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)    
     
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     likes = db.relationship('Like', backref='post', cascade="all, delete-orphan", passive_deletes=True)
@@ -109,7 +109,7 @@ class Message(db.Model):
     text = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     
-    date_created = db.Column(db.DateTime(timezone=True), default=func.now(), index=True)    
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)    
     
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')

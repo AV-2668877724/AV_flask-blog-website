@@ -1246,7 +1246,7 @@ def chat_history(recipient_id):
             'id': msg.id,
             'text': msg.text,
             'sender_id': msg.sender_id,
-            'time': msg.date_created.strftime("%I:%M %p") 
+            'time': msg.date_created.isoformat() + 'Z' # 🚀 FIX
         })
     
     return jsonify(data)
@@ -1294,7 +1294,7 @@ def get_new_messages(recipient_id):
             'id': msg.id,
             'text': msg.text,
             'sender_id': msg.sender_id,
-            'time': msg.date_created.strftime("%H:%M") 
+            'time': msg.date_created.isoformat() + 'Z' # 🚀 FIX
         })
     
     return jsonify(data)
@@ -1327,9 +1327,9 @@ def send_message():
         'success': True, 
         'id': new_message.id, 
         'text': new_message.text, 
-        'time': new_message.date_created.strftime("%H:%M") 
+        'time': new_message.date_created.isoformat() + 'Z' # 🚀 FIX
     })
-
+    
 # =================================================
 # ERROR HANDLERS
 # =================================================

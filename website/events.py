@@ -100,8 +100,9 @@ def handle_send_message_event(data):
         'id': new_message.id,
         'text': new_message.text,
         'sender_id': current_user.id,
+        'sender_username': current_user.username, # 🚀 NEW: Send the username to the frontend!
         'recipient_id': recipient_id,
-        'time': new_message.date_created.strftime("%I:%M %p") # Match 12-hour format of UI
+        'time': new_message.date_created.isoformat() + 'Z' 
     }
     
     # 3. Emit to both parties

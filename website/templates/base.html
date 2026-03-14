@@ -58,7 +58,7 @@
     ></script>
 
     <script
-      src="{{ url_for('static', filename='index.js') }}?v=27"
+      src="{{ url_for('static', filename='index.js') }}?v=28"
       defer
     ></script>
 
@@ -769,9 +769,9 @@
     </div>
 
     <div
-      class="toast-container position-fixed bottom-0 end-0 p-3"
+      class="toast-container position-fixed top-0 end-0 p-3"
       id="toastContainer"
-      style="z-index: 1090; margin-bottom: 70px"
+      style="z-index: 1090; margin-top: 70px"
     >
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %} {% for category, message in messages %}
@@ -875,7 +875,6 @@
           });
         }
 
-        // 🚀 FIX: Instantly hide mobile notification red dot on tap
         const mobileNotifBtn = document.getElementById("mobileNotifBtn");
         if (mobileNotifBtn) {
           mobileNotifBtn.addEventListener("click", function () {
@@ -906,17 +905,15 @@
       function triggerFinalPlea() {
         const form = document.getElementById("deactivateForm");
         if (!form.checkValidity()) {
-          form.reportValidity(); // Forces user to select a reason before seeing the plea
+          form.reportValidity();
           return;
         }
 
-        // Hide the first modal
         const deactModal = bootstrap.Modal.getInstance(
           document.getElementById("deactivateModal"),
         );
         if (deactModal) deactModal.hide();
 
-        // Show the emotional plea modal
         const pleaModal = new bootstrap.Modal(
           document.getElementById("finalPleaModal"),
         );
@@ -930,12 +927,78 @@
       function toggleDeactivateDetails(selectElement) {
         const detailsBox = document.getElementById("deactivateDetailsBox");
         if (selectElement.value === "other") {
-          detailsBox.classList.remove("d-none"); // Show the box
+          detailsBox.classList.remove("d-none");
         } else {
-          detailsBox.classList.add("d-none"); // Hide the box
-          detailsBox.value = ""; // Clear text if they change their mind
+          detailsBox.classList.add("d-none");
+          detailsBox.value = "";
         }
       }
     </script>
+
+    {% if current_user.is_authenticated %}
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Connect to Socket.IO globally
+        const globalSocket = io();
+        const myUserId = parseInt("{{ current_user.id }}");
+
+        globalSocket.on("receive_message", function (msg) {
+          // 1. Check if WE are the recipient of this new message
+          if (parseInt(msg.recipient_id) === myUserId) {
+            
+            // 2. Smarter check: Only hide if we are CURRENTLY chatting with the sender
+            const currentPath = window.location.pathname;
+            const senderName = msg.sender_username || "Someone";
+            const isChattingWithSender = currentPath.includes('/chat/') && currentPath.includes(senderName);
+
+            if (!isChattingWithSender) {
+                // 3. Truncate the text if it's super long
+                let shortText = msg.text.length > 40 ? msg.text.substring(0, 40) + "..." : msg.text;
+                
+                // 4. Create a completely custom, beautiful Message Toast
+                const container = document.getElementById("toastContainer");
+                if (container) {
+                    const toastId = 'msg-toast-' + Date.now();
+                    const toastHtml = `
+                    <div id="${toastId}" class="toast border-0 shadow-lg fade-in-up" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s;">
+                        <div class="toast-header" style="background-color: var(--primary); color: white; border-bottom: none;">
+                            <i class="fas fa-envelope me-2"></i>
+                            <strong class="me-auto">Message from ${senderName}</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body" style="background-color: var(--bg-card); color: var(--text-main); font-size: 0.95rem;">
+                            ${shortText}
+                        </div>
+                    </div>`;
+
+                    // Inject the toast into the container
+                    container.insertAdjacentHTML('beforeend', toastHtml);
+                    const toastElement = document.getElementById(toastId);
+
+                    // Add hover effect
+                    toastElement.addEventListener('mouseenter', () => toastElement.style.transform = 'scale(1.02)');
+                    toastElement.addEventListener('mouseleave', () => toastElement.style.transform = 'scale(1)');
+
+                    // 5. Make it clickable! Jumps straight to the chat
+                    toastElement.addEventListener('click', (e) => {
+                        // Don't redirect if they just clicked the 'X' close button
+                        if (!e.target.classList.contains('btn-close')) {
+                            window.location.href = '/chat/' + senderName;
+                        }
+                    });
+
+                    // 6. Show the toast for 4 seconds
+                    const bsToast = new bootstrap.Toast(toastElement, { delay: 4000 });
+                    bsToast.show();
+
+                    // 7. Clean up the DOM after it hides
+                    toastElement.addEventListener("hidden.bs.toast", () => toastElement.remove());
+                }
+            }
+          }
+        });
+      });
+    </script>
+    {% endif %}
   </body>
 </html>

@@ -6,7 +6,7 @@ const TRUNCATE_HEIGHT = 320;
 // 🚀 NEW: Helper function to grab the CSRF token from base.html
 function getCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
-  return meta ? meta.getAttribute('content') : '';
+  return meta ? meta.getAttribute("content") : "";
 }
 
 function truncatePosts() {
@@ -114,13 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const badge = document.getElementById("notifBadge");
       if (badge) {
         badge.style.display = "none";
-        fetch("/api/mark-notifications-read", { 
+        fetch("/api/mark-notifications-read", {
           method: "POST",
-          credentials: 'same-origin',
+          credentials: "same-origin",
           headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
-        }).catch((err) =>
-          console.error("Error marking read:", err),
-        );
+        }).catch((err) => console.error("Error marking read:", err));
       }
     });
   }
@@ -270,9 +268,9 @@ function like(postId) {
     icon.classList.add("far");
   }
 
-  fetch(`/like-post/${postId}`, { 
+  fetch(`/like-post/${postId}`, {
     method: "POST",
-    credentials: 'same-origin',
+    credentials: "same-origin",
     headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
@@ -323,9 +321,9 @@ function likeComment(commentId, btn) {
     setTimeout(() => (icon.style.transform = "scale(1)"), 200);
   }
 
-  fetch(`/like-comment/${commentId}`, { 
+  fetch(`/like-comment/${commentId}`, {
     method: "POST",
-    credentials: 'same-origin',
+    credentials: "same-origin",
     headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
@@ -347,6 +345,11 @@ function likeComment(commentId, btn) {
    TIME AGO FORMATTER
    ========================================= */
 function timeAgoFromISO(isoString) {
+  if (!isoString) return "";
+
+  // 🚀 FIX: Ensure a 'Z' is appended so JS knows this is UTC time, preventing the 5-hour gap
+  if (!isoString.endsWith("Z")) isoString += "Z";
+
   const now = new Date();
   const then = new Date(isoString);
   const diffSeconds = Math.floor((now - then) / 1000);
@@ -457,10 +460,10 @@ function checkSignupUsername() {
 
   fetch("/check-username-signup", {
     method: "POST",
-    credentials: 'same-origin',
-    headers: { 
+    credentials: "same-origin",
+    headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
+      "X-CSRFToken": getCsrfToken(), // 🚀 ADDED CSRF TOKEN
     },
     body: JSON.stringify({ username: username }),
   })
@@ -517,10 +520,10 @@ function checkUsername() {
 
   fetch("/check-username", {
     method: "POST",
-    credentials: 'same-origin',
-    headers: { 
+    credentials: "same-origin",
+    headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
+      "X-CSRFToken": getCsrfToken(), // 🚀 ADDED CSRF TOKEN
     },
     body: JSON.stringify({ username }),
   })
@@ -599,11 +602,11 @@ document.addEventListener("submit", async function (e) {
     try {
       const formData = new FormData(form);
       // 1. Submit the comment to the server
-      await fetch(form.action, { 
+      await fetch(form.action, {
         method: "POST",
-        credentials: 'same-origin', 
+        credentials: "same-origin",
         headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
-        body: formData 
+        body: formData,
       });
 
       // 2. Fetch the specific post page directly (guarantees we find the post HTML)
@@ -799,132 +802,8 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* =========================================
-   REAL-TIME CHAT & PRESENCE (SOCKET.IO)
+   IMAGE & LINK HELPERS
    ========================================= */
-document.addEventListener("DOMContentLoaded", function () {
-  const chatForm = document.getElementById("chatForm");
-  const chatBox = document.getElementById("chat-box");
-
-  if (chatForm && chatBox) {
-    const socket = io();
-    const recipientId = chatForm.dataset.recipient;
-    chatBox.scrollTop = chatBox.scrollHeight;
-
-    socket.on("receive_message", function (msg) {
-      const msgSender = String(msg.sender_id);
-      const msgRecipient = String(msg.recipient_id);
-      const currentChatPartner = String(recipientId);
-
-      if (
-        msgSender === currentChatPartner ||
-        msgRecipient === currentChatPartner
-      ) {
-        appendMessageToChat(msg);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    });
-
-    socket.on("user_status_change", function (data) {
-      if (data.user_id == recipientId) {
-        const statusContainer = document.getElementById(
-          `status-container-${recipientId}`,
-        );
-        const statusText = document.getElementById(
-          `status-text-${recipientId}`,
-        );
-        const icon = statusContainer
-          ? statusContainer.querySelector("i")
-          : null;
-
-        if (statusContainer && statusText && icon) {
-          if (data.status === "online") {
-            icon.className = "fas fa-circle text-success";
-            statusText.innerText = "Online";
-          } else {
-            icon.className = "fas fa-circle text-secondary";
-            statusText.innerText =
-              "Last seen " + (data.last_seen || "recently");
-          }
-        }
-      }
-    });
-
-    chatForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      const messageInput = document.getElementById("messageInput");
-      const text = messageInput.value.trim();
-      if (!text) return;
-      socket.emit("send_message", { recipient_id: recipientId, text: text });
-      messageInput.value = "";
-    });
-
-    function appendMessageToChat(msg) {
-      if (document.querySelector(`.message-row[data-msg-id="${msg.id}"]`))
-        return;
-
-      const isMe = String(msg.sender_id) !== String(recipientId);
-      let html = "";
-
-      if (isMe) {
-        html = `
-            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-end" data-msg-id="${msg.id}">
-                <div class="d-flex align-items-end justify-content-end w-100">
-                    <button class="btn btn-sm btn-link text-muted p-0 me-2 opacity-50 hover-opacity-100 delete-btn" 
-                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
-                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
-                    </button>
-                    <div class="msg-bubble msg-sent">
-                        ${msg.text}
-                        <div class="text-white-50 text-end mt-1" style="font-size: 0.65rem; font-weight: 600;">${msg.time} <i class="fas fa-check-double ms-1"></i></div>
-                    </div>
-                </div>
-            </div>`;
-      } else {
-        html = `
-            <div class="d-flex w-100 mb-3 align-items-end message-row justify-content-start" data-msg-id="${msg.id}">
-                <div class="d-flex align-items-end justify-content-start w-100">
-                    <div class="msg-bubble msg-received shadow-sm">
-                        ${msg.text}
-                        <div class="text-muted text-end mt-1" style="font-size: 0.65rem; font-weight: 600;">${msg.time}</div>
-                    </div>
-                    <button class="btn btn-sm btn-link text-muted p-0 ms-2 opacity-50 hover-opacity-100 delete-btn" 
-                            onclick="deleteMessage('${msg.id}', this)" title="Delete for me">
-                        <i class="fas fa-trash-alt" style="font-size: 0.8rem;"></i>
-                    </button>
-                </div>
-            </div>`;
-      }
-      chatBox.insertAdjacentHTML("beforeend", html);
-    }
-  }
-});
-
-// ✅ FIX: In case you are still using this version of deleteMessage from index.js
-function deleteMessage(msgId, btnElement) {
-  if (!confirm("Delete this message for me?")) return;
-
-  fetch(`/api/delete-message/${msgId}`, { 
-    method: "POST",
-    credentials: 'same-origin',
-    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        const messageRow =
-          btnElement.closest(".message-row") ||
-          btnElement.closest(".d-flex.w-100");
-        if (messageRow) {
-          messageRow.style.transition = "opacity 0.3s";
-          messageRow.style.opacity = "0";
-          setTimeout(() => messageRow.remove(), 300);
-        }
-      } else {
-        alert("Error deleting message");
-      }
-    })
-    .catch((err) => console.error(err));
-}
 
 function previewImage(input, imgId) {
   if (input.files && input.files[0]) {
@@ -952,10 +831,10 @@ function removeSocialLink(url) {
 
   fetch("/profile/remove-social", {
     method: "POST",
-    credentials: 'same-origin',
-    headers: { 
+    credentials: "same-origin",
+    headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken() // 🚀 ADDED CSRF TOKEN
+      "X-CSRFToken": getCsrfToken(), // 🚀 ADDED CSRF TOKEN
     },
     body: JSON.stringify({ url: url }),
   })
@@ -971,10 +850,10 @@ function toggleFollow(userId, btn) {
   const isFollowing = btn.innerText.trim() === "Following";
   const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
 
-  fetch(url, { 
+  fetch(url, {
     method: "POST",
-    credentials: 'same-origin',
-    headers: { "X-CSRFToken": getCsrfToken() } // 🚀 ADDED CSRF TOKEN
+    credentials: "same-origin",
+    headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
   })
     .then((res) => res.json())
     .then((data) => {
