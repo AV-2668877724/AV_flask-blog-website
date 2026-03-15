@@ -624,6 +624,8 @@ block content %}
                   <tr>
                     <th class="ps-4 py-3">Author</th>
                     <th class="py-3">Comment</th>
+                    <th class="py-3">On Post By</th>
+                    <th class="py-3">Date & Time</th>
                     <th class="py-3">Status</th>
                     <th class="text-end pe-4 py-3">Action</th>
                   </tr>
@@ -637,21 +639,53 @@ block content %}
                     >
                       {{ c.user.username }}
                     </td>
-                    <td class="py-3" style="max-width: 300px">
+                    <td class="py-3" style="max-width: 250px">
                       <span
-                        class="text-truncate d-block"
-                        style="color: var(--text-main)"
+                        class="d-block"
+                        style="
+                          color: var(--text-main);
+                          white-space: normal;
+                          word-wrap: break-word;
+                        "
                       >
                         {% if c.is_deleted %}<del class="text-muted"
                           >{{ c.text }}</del
                         >{% else %}{{ c.text }}{% endif %}
                       </span>
+                    </td>
+
+                    <td class="py-3">
+                      {% if c.post %}
+                      <a
+                        href="{{ url_for('views.profile', username=c.post.user.username) }}"
+                        target="_blank"
+                        class="text-decoration-none fw-bold text-primary"
+                      >
+                        @{{ c.post.user.username }}
+                      </a>
+                      {% else %}
+                      <span
+                        class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary rounded-pill"
+                        style="font-size: 0.7rem"
+                        >Deleted Post</span
+                      >
+                      {% endif %}
                       <small
-                        class="text-primary d-block fw-bold mt-1"
+                        class="d-block text-muted mt-1"
                         style="font-size: 0.75rem"
-                        >On post #{{ c.post_id }}</small
+                        >Post #{{ c.post_id }}</small
                       >
                     </td>
+
+                    <td class="py-3 text-muted small">
+                      <div class="fw-bold">
+                        {{ c.date_created.strftime('%b %d, %Y') }}
+                      </div>
+                      <div style="font-size: 0.75rem">
+                        {{ c.date_created.strftime('%I:%M %p') }}
+                      </div>
+                    </td>
+
                     <td class="py-3">
                       {% if c.is_deleted %}
                       <span
@@ -739,7 +773,7 @@ block content %}
                   </tr>
                   {% else %}
                   <tr>
-                    <td colspan="4" class="text-center py-5 text-muted fw-bold">
+                    <td colspan="6" class="text-center py-5 text-muted fw-bold">
                       No comments found.
                     </td>
                   </tr>
@@ -958,8 +992,7 @@ block content %}
     const filterInput = document.getElementById("adminLiveFilter");
 
     filterInput.addEventListener("keyup", function () {
-      // 🚀 FIX: Clean the search query (crush all weird spaces/newlines into one normal space)
-      const query = this.value.toLowerCase().trim().replace(/\s+/g, ' ');
+      const query = this.value.toLowerCase().trim().replace(/\s+/g, " ");
 
       const activePane = document.querySelector(".tab-pane.active");
       if (!activePane) return;
@@ -967,9 +1000,8 @@ block content %}
       const rows = activePane.querySelectorAll("tr.admin-data-row");
 
       rows.forEach((row) => {
-        // 🚀 FIX: Clean the row text to match the cleaned query perfectly
-        const textContext = row.textContent.toLowerCase().replace(/\s+/g, ' ');
-        
+        const textContext = row.textContent.toLowerCase().replace(/\s+/g, " ");
+
         if (textContext.includes(query)) {
           row.style.display = "";
         } else {
