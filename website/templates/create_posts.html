@@ -145,7 +145,7 @@ content %}
         enctype="multipart/form-data"
         onsubmit="return validatePostForm();"
       >
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="text" id="hiddenInput" />
 
         <div class="mb-4">
@@ -172,7 +172,7 @@ content %}
               class="small fw-bold opacity-75"
               style="color: var(--text-muted)"
             >
-              Supported: JPG, PNG, WEBP (Max 5MB)
+              Supported: JPG, JPEG, PNG, WEBP (Max 5MB)
             </div>
           </div>
 
@@ -180,9 +180,12 @@ content %}
             type="file"
             name="cover_image"
             id="coverImageInput"
-            class="d-none"
-            accept="image/*"
-            onchange="handleCoverPreview(this)"
+            class="d-none crop-upload"
+            accept=".jpg, .jpeg, .png, .webp"
+            data-aspect-ratio="free"
+            data-preview-target="coverPreview"
+            data-preview-container="coverPreviewContainer"
+            data-upload-zone="uploadZone"
           />
 
           <div id="coverPreviewContainer" class="cover-preview-wrapper mt-3">
@@ -262,20 +265,6 @@ content %}
   // =========================================
   // 2. IMAGE PREVIEW LOGIC
   // =========================================
-  function handleCoverPreview(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-
-      reader.onload = function (e) {
-        document.getElementById("coverPreview").src = e.target.result;
-        document.getElementById("coverPreviewContainer").style.display =
-          "block";
-        document.getElementById("uploadZone").style.display = "none";
-      };
-
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
 
   function removeCoverImage() {
     document.getElementById("coverImageInput").value = "";

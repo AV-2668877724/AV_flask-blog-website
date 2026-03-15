@@ -44,6 +44,15 @@
       href="{{ url_for('static', filename='styles.css') }}?v=15"
     />
 
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"
+      rel="stylesheet"
+    />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"
+      defer
+    ></script>
+
     <script
       src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
       defer
@@ -527,7 +536,6 @@
         ></div>
 
         <script>
-          // JS runs after render to inject the image securely via CSS
           document.addEventListener("DOMContentLoaded", function () {
             const dataDiv = document.getElementById("mobileAvatarData");
             const avatarDiv = document.getElementById("mobileNavAvatar");
@@ -855,6 +863,63 @@
       </div>
     </div>
 
+    <div
+      class="modal fade"
+      id="cropModal"
+      tabindex="-1"
+      data-bs-backdrop="static"
+    >
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div
+          class="modal-content"
+          style="
+            background-color: var(--bg-card);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+          "
+        >
+          <div class="modal-header border-0">
+            <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+              Crop Image
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              id="cancelCropBtn"
+            ></button>
+          </div>
+          <div
+            class="modal-body p-0 bg-dark position-relative d-flex justify-content-center align-items-center"
+            style="height: 60vh"
+          >
+            <img
+              id="cropperImage"
+              style="max-width: 100%; max-height: 100%; display: block"
+            />
+          </div>
+          <div class="modal-footer border-0">
+            <button
+              type="button"
+              class="btn btn-light rounded-pill px-4 fw-bold shadow-sm"
+              data-bs-dismiss="modal"
+              style="background-color: var(--bg-input); color: var(--text-main)"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
+              id="applyCropBtn"
+            >
+              Apply Crop
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script>
       window.addEventListener("pageshow", function (event) {
         var historyTraversal =
@@ -935,31 +1000,161 @@
       }
     </script>
 
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        let cropper = null;
+        let currentFileInput = null;
+        let currentPreviewTarget = null;
+        let currentPreviewContainer = null;
+        let currentUploadZone = null;
+
+        document.addEventListener("change", function (e) {
+          if (e.target && e.target.classList.contains("crop-upload")) {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+              const file = files[0];
+              currentFileInput = e.target;
+
+              currentPreviewTarget = document.getElementById(
+                e.target.getAttribute("data-preview-target"),
+              );
+              currentPreviewContainer = document.getElementById(
+                e.target.getAttribute("data-preview-container"),
+              );
+              currentUploadZone = document.getElementById(
+                e.target.getAttribute("data-upload-zone"),
+              );
+
+              const reader = new FileReader();
+              reader.onload = function (event) {
+                const image = document.getElementById("cropperImage");
+                image.src = event.target.result;
+
+                const cropModal = new bootstrap.Modal(
+                  document.getElementById("cropModal"),
+                );
+                cropModal.show();
+
+                document.getElementById("cropModal").addEventListener(
+                  "shown.bs.modal",
+                  function () {
+                    if (cropper) cropper.destroy();
+
+                    let ratio = e.target.getAttribute("data-aspect-ratio");
+                    let options = {
+                      viewMode: 1,
+                      autoCropArea: 1,
+                      responsive: true,
+                      background: false,
+                    };
+
+                    // Aspect Ratios: 1 for Square, 1.7777 for 16:9, free for unconstrained
+                    if (ratio && ratio !== "free") {
+                      options.aspectRatio = parseFloat(ratio);
+                    }
+
+                    cropper = new Cropper(image, options);
+                  },
+                  { once: true },
+                );
+              };
+              reader.readAsDataURL(file);
+            }
+          }
+        });
+
+        document
+          .getElementById("applyCropBtn")
+          .addEventListener("click", function () {
+            if (!cropper) return;
+
+            const btn = document.getElementById("applyCropBtn");
+            const originalText = btn.innerHTML;
+            btn.innerHTML =
+              '<i class="fas fa-spinner fa-spin me-2"></i>Cropping...';
+            btn.disabled = true;
+
+            cropper
+              .getCroppedCanvas({
+                maxWidth: 1920,
+                maxHeight: 1920,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: "high",
+              })
+              .toBlob(
+                function (blob) {
+                  // Securely replace the selected file in the input tag
+                  const newFile = new File([blob], "cropped_image.jpg", {
+                    type: "image/jpeg",
+                    lastModified: Date.now(),
+                  });
+                  const dataTransfer = new DataTransfer();
+                  dataTransfer.items.add(newFile);
+                  currentFileInput.files = dataTransfer.files;
+
+                  // Live update the preview images
+                  if (currentPreviewTarget) {
+                    const previewUrl = URL.createObjectURL(blob);
+                    currentPreviewTarget.src = previewUrl;
+                    currentPreviewTarget.classList.remove("d-none");
+                    currentPreviewTarget.style.display = "block";
+
+                    if (currentPreviewContainer)
+                      currentPreviewContainer.style.display = "block";
+                    if (currentUploadZone)
+                      currentUploadZone.style.display = "none";
+                  }
+
+                  bootstrap.Modal.getInstance(
+                    document.getElementById("cropModal"),
+                  ).hide();
+                  cropper.destroy();
+                  cropper = null;
+
+                  btn.innerHTML = originalText;
+                  btn.disabled = false;
+                },
+                "image/jpeg",
+                0.9,
+              );
+          });
+
+        document
+          .getElementById("cropModal")
+          .addEventListener("hidden.bs.modal", function () {
+            if (cropper) {
+              cropper.destroy();
+              cropper = null;
+            }
+          });
+      });
+    </script>
+
     {% if current_user.is_authenticated %}
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // Connect to Socket.IO globally
         const globalSocket = io();
         const myUserId = parseInt("{{ current_user.id }}");
 
         globalSocket.on("receive_message", function (msg) {
-          // 1. Check if WE are the recipient of this new message
           if (parseInt(msg.recipient_id) === myUserId) {
-            
-            // 2. Smarter check: Only hide if we are CURRENTLY chatting with the sender
             const currentPath = window.location.pathname;
             const senderName = msg.sender_username || "Someone";
-            const isChattingWithSender = currentPath.includes('/chat/') && currentPath.includes(senderName);
+
+            const isChattingWithSender =
+              currentPath.includes("/chat/") &&
+              currentPath.includes(senderName);
 
             if (!isChattingWithSender) {
-                // 3. Truncate the text if it's super long
-                let shortText = msg.text.length > 40 ? msg.text.substring(0, 40) + "..." : msg.text;
-                
-                // 4. Create a completely custom, beautiful Message Toast
-                const container = document.getElementById("toastContainer");
-                if (container) {
-                    const toastId = 'msg-toast-' + Date.now();
-                    const toastHtml = `
+              let shortText =
+                msg.text.length > 40
+                  ? msg.text.substring(0, 40) + "..."
+                  : msg.text;
+
+              const container = document.getElementById("toastContainer");
+              if (container) {
+                const toastId = "msg-toast-" + Date.now();
+                const toastHtml = `
                     <div id="${toastId}" class="toast border-0 shadow-lg fade-in-up" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s;">
                         <div class="toast-header" style="background-color: var(--primary); color: white; border-bottom: none;">
                             <i class="fas fa-envelope me-2"></i>
@@ -971,29 +1166,33 @@
                         </div>
                     </div>`;
 
-                    // Inject the toast into the container
-                    container.insertAdjacentHTML('beforeend', toastHtml);
-                    const toastElement = document.getElementById(toastId);
+                container.insertAdjacentHTML("beforeend", toastHtml);
+                const toastElement = document.getElementById(toastId);
 
-                    // Add hover effect
-                    toastElement.addEventListener('mouseenter', () => toastElement.style.transform = 'scale(1.02)');
-                    toastElement.addEventListener('mouseleave', () => toastElement.style.transform = 'scale(1)');
+                toastElement.addEventListener(
+                  "mouseenter",
+                  () => (toastElement.style.transform = "scale(1.02)"),
+                );
+                toastElement.addEventListener(
+                  "mouseleave",
+                  () => (toastElement.style.transform = "scale(1)"),
+                );
 
-                    // 5. Make it clickable! Jumps straight to the chat
-                    toastElement.addEventListener('click', (e) => {
-                        // Don't redirect if they just clicked the 'X' close button
-                        if (!e.target.classList.contains('btn-close')) {
-                            window.location.href = '/chat/' + senderName;
-                        }
-                    });
+                toastElement.addEventListener("click", (e) => {
+                  if (!e.target.classList.contains("btn-close")) {
+                    window.location.href = "/chat/" + senderName;
+                  }
+                });
 
-                    // 6. Show the toast for 4 seconds
-                    const bsToast = new bootstrap.Toast(toastElement, { delay: 4000 });
-                    bsToast.show();
+                const bsToast = new bootstrap.Toast(toastElement, {
+                  delay: 4000,
+                });
+                bsToast.show();
 
-                    // 7. Clean up the DOM after it hides
-                    toastElement.addEventListener("hidden.bs.toast", () => toastElement.remove());
-                }
+                toastElement.addEventListener("hidden.bs.toast", () =>
+                  toastElement.remove(),
+                );
+              }
             }
           }
         });

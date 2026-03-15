@@ -512,16 +512,29 @@ Profile{% endblock %} {% block content %}
             onclick="document.getElementById('avatarInput').click()"
             style="cursor: pointer"
           >
-            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-            <p class="mb-0 text-muted small">Click to upload image</p>
+            <i
+              class="fas fa-images fa-2x mb-2"
+              style="color: var(--text-muted); opacity: 0.6"
+            ></i>
+            <h6 class="fw-bold mb-1" style="color: var(--text-main)">
+              Click to select image
+            </h6>
+            <div
+              class="small fw-bold opacity-75"
+              style="color: var(--text-muted)"
+            >
+              Supported: JPG, JPEG, PNG, WEBP
+            </div>
           </div>
+
           <input
             type="file"
             name="profile_pic"
             id="avatarInput"
-            class="d-none"
+            class="d-none crop-upload"
             accept="image/*"
-            onchange="previewImage(this, 'avatarPreview')"
+            data-aspect-ratio="1"
+            data-preview-target="avatarPreview"
           />
           <img
             id="avatarPreview"
@@ -563,11 +576,27 @@ Profile{% endblock %} {% block content %}
           <input
             type="file"
             name="cover_pic"
-            class="form-control"
+            class="form-control crop-upload"
             accept="image/*"
             required
+            data-aspect-ratio="1.7777"
+            data-preview-target="coverPicPreview"
           />
-          <div class="form-text">Recommended size: 1080x400 pixels</div>
+
+          <div class="form-text mb-1">Recommended size: 1080x400 pixels</div>
+          <div
+            class="small fw-bold opacity-75 mb-3"
+            style="color: var(--text-muted)"
+          >
+            Supported: JPG, JPEG, PNG, WEBP
+          </div>
+
+          <img
+            id="coverPicPreview"
+            src="#"
+            class="img-fluid rounded-3 d-none mt-3 border"
+            style="object-fit: cover; width: 100%"
+          />
         </div>
         <div class="modal-footer border-0">
           <button type="submit" class="btn btn-primary rounded-pill">
@@ -721,7 +750,6 @@ Profile{% endblock %} {% block content %}
     });
   });
 
-  // 🚀 FIX: Helper to get CSRF token for fetch requests
   function getCsrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
     return meta ? meta.getAttribute("content") : "";
@@ -731,10 +759,9 @@ Profile{% endblock %} {% block content %}
     const isFollowing = btn.classList.contains("btn-outline-secondary");
     const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
 
-    // 🚀 FIX: Added CSRF headers to fetch
     fetch(url, {
       method: "POST",
-      credentials: 'same-origin',
+      credentials: "same-origin",
       headers: { "X-CSRFToken": getCsrfToken() },
     })
       .then((res) => res.json())
@@ -750,7 +777,6 @@ Profile{% endblock %} {% block content %}
             btn.textContent = "Following";
           }
           const countEl = document.getElementById("followersCount");
-          // Add safety check in case element isn't found
           if (countEl) {
             let count = parseInt(countEl.innerText);
             countEl.innerText = isFollowing ? count - 1 : count + 1;
@@ -760,10 +786,9 @@ Profile{% endblock %} {% block content %}
   }
 
   function removeSocialLink(url) {
-    // 🚀 FIX: Added CSRF headers to fetch
     fetch("/profile/remove-social", {
       method: "POST",
-      credentials: 'same-origin',
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCsrfToken(),
@@ -788,10 +813,9 @@ Profile{% endblock %} {% block content %}
       return;
     }
 
-    // 🚀 FIX: Added CSRF headers to fetch
     fetch("/check-username", {
       method: "POST",
-      credentials: 'same-origin',
+      credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
         "X-CSRFToken": getCsrfToken(),
@@ -808,18 +832,6 @@ Profile{% endblock %} {% block content %}
           btn.disabled = true;
         }
       });
-  }
-
-  function previewImage(input, imgId) {
-    if (input.files && input.files[0]) {
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        const img = document.getElementById(imgId);
-        img.src = e.target.result;
-        img.classList.remove("d-none");
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
   }
 </script>
 
