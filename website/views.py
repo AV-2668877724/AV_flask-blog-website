@@ -56,7 +56,6 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
 def upload_to_cloudinary(file, folder_name, width=None, height=None):
     """
     Uploads an image to Cloudinary and returns the secure URL.
@@ -123,7 +122,6 @@ def delete_from_cloudinary(image_url):
         
     except Exception as e:
         print(f"❌ Cloudinary deletion error: {e}")
-
 
 def enrich_posts(posts):
     # 🚀 NEW: Pre-fetch all user IDs the current user is following for performance
@@ -920,10 +918,6 @@ def following_list(username):
 # ACCOUNT DEACTIVATION
 # =================================================
 
-# =================================================
-# ACCOUNT DEACTIVATION
-# =================================================
-
 @views.route('/deactivate-account', methods=['POST'])
 @login_required
 def deactivate_account():
@@ -1061,7 +1055,6 @@ def search_page():
         posts = enrich_posts(posts)
 
     return render_template("search.html", user=current_user, users=users, posts=posts, query=query)
-
 
 @views.route('/profile/remove-social', methods=['POST'])
 @login_required
@@ -1254,7 +1247,7 @@ def chat_history(recipient_id):
             'id': msg.id,
             'text': msg.text,
             'sender_id': msg.sender_id,
-            'time': msg.date_created.isoformat() + 'Z' # 🚀 FIX
+            'time': msg.date_created.isoformat() + 'Z' 
         })
     
     return jsonify(data)
@@ -1302,7 +1295,7 @@ def get_new_messages(recipient_id):
             'id': msg.id,
             'text': msg.text,
             'sender_id': msg.sender_id,
-            'time': msg.date_created.isoformat() + 'Z' # 🚀 FIX
+            'time': msg.date_created.isoformat() + 'Z' 
         })
     
     return jsonify(data)
@@ -1335,7 +1328,7 @@ def send_message():
         'success': True, 
         'id': new_message.id, 
         'text': new_message.text, 
-        'time': new_message.date_created.isoformat() + 'Z' # 🚀 FIX
+        'time': new_message.date_created.isoformat() + 'Z' 
     })
     
 # =================================================

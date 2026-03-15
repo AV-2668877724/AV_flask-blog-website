@@ -10,6 +10,30 @@
 
     <title>{% block title %}{% endblock %}</title>
 
+    {% block og_meta %}
+    <meta property="og:title" content="AV Postory" />
+    <meta
+      property="og:description"
+      content="Share your stories and connect with the community."
+    />
+    <meta
+      property="og:image"
+      content="{{ url_for('static', filename='images/logo.png', _external=True) }}"
+    />
+    <meta property="og:url" content="{{ request.url }}" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AV Postory" />
+    <meta
+      name="twitter:description"
+      content="Share your stories and connect with the community."
+    />
+    <meta
+      name="twitter:image"
+      content="{{ url_for('static', filename='images/logo.png', _external=True) }}"
+    />
+    {% endblock %}
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -1128,6 +1152,27 @@
             }
           });
       });
+
+      // 🚀 NEW: Universal Mobile-Friendly Share Function
+      function sharePost(author, postId) {
+        const url = window.location.origin + "/post/" + postId;
+        if (navigator.share) {
+          navigator
+            .share({
+              title: "AV Postory",
+              text: "Check out this story by " + author + " on AV Postory!",
+              url: url,
+            })
+            .catch((error) => console.log("Error sharing:", error));
+        } else {
+          navigator.clipboard.writeText(url);
+          if (typeof showToast === "function") {
+            showToast("Link copied!");
+          } else {
+            alert("Link copied to clipboard!");
+          }
+        }
+      }
     </script>
 
     {% if current_user.is_authenticated %}

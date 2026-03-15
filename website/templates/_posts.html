@@ -247,7 +247,7 @@
       <button
         class="btn btn-icon text-muted"
         style="width: 36px; height: 36px; background: transparent; border: none"
-        onclick="navigator.clipboard.writeText(window.location.origin + '/post/{{ post.id }}'); showToast('Link copied!');"
+        onclick="sharePost('{{ post.user.username|escape }}', '{{ post.id }}')"
         title="Share link"
       >
         <i class="fas fa-share" style="font-size: 1.1rem"></i>
