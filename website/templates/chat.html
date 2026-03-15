@@ -1,9 +1,10 @@
 {% extends "base.html" %} {% block title %}Chat with {{ recipient.username }}{%
 endblock %} {% block content %}
 <style>
-  /* Hide the global footer to prevent scroll issues */
+  /* 🚀 FIX: Hide BOTH the global footer and the mobile bottom navigation bar */
   footer,
-  .footer {
+  .footer,
+  .mobile-nav {
     display: none !important;
   }
 
@@ -13,10 +14,10 @@ endblock %} {% block content %}
     background-color: var(--bg-main);
   }
 
-  /* 🚀 Full-Screen Edge-to-Edge Chat Layout */
+  /* Full-Screen Edge-to-Edge Chat Layout */
   .chat-wrapper {
     position: fixed;
-    top: 65px; /* Adjust if your desktop navbar height is different */
+    top: 65px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -24,14 +25,6 @@ endblock %} {% block content %}
     display: flex;
     justify-content: center;
     background-color: var(--bg-main);
-  }
-
-  /* Mobile adjustment */
-  @media (max-width: 768px) {
-    .chat-wrapper {
-      top: 60px;
-      bottom: 0px;
-    }
   }
 
   .chat-card {
@@ -58,7 +51,7 @@ endblock %} {% block content %}
     z-index: 10;
   }
 
-  /* 🚀 Universal Back Button Styling */
+  /* Universal Back Button Styling */
   .btn-back {
     display: flex;
     align-items: center;
@@ -120,7 +113,7 @@ endblock %} {% block content %}
   .msg-container {
     display: flex;
     flex-direction: column;
-    max-width: 80%; /* Let bubbles stretch a bit more on full screen */
+    max-width: 80%;
   }
 
   .msg-bubble {
@@ -179,6 +172,8 @@ endblock %} {% block content %}
     background-color: var(--bg-card);
     border-top: 1px solid var(--border-color);
     padding: 1rem 1.5rem;
+    /* 🚀 FIX: iOS Safe Area support so it doesn't get hidden behind the home swipe bar */
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     z-index: 10;
   }
 
@@ -193,8 +188,8 @@ endblock %} {% block content %}
     padding: 0.6rem 3.5rem 0.6rem 1.5rem;
     transition: all var(--trans-smooth);
     width: 100%;
-    max-width: 1200px; /* Keeps the typing area from becoming absurdly wide on 4K monitors */
-    margin: 0 auto; /* Centers the input bar */
+    max-width: 1200px;
+    margin: 0 auto;
   }
   .chat-input-wrapper:focus-within {
     border-color: var(--primary);
@@ -231,6 +226,21 @@ endblock %} {% block content %}
   .btn-send:hover {
     background: #4338ca;
     transform: translateY(-50%) scale(1.05);
+  }
+
+  /* 🚀 FIX: Mobile specific adjustments for the chat area */
+  @media (max-width: 768px) {
+    .chat-wrapper {
+      top: 60px; /* Adjust for mobile navbar */
+      bottom: 0px;
+    }
+    .chat-input-area {
+      padding: 0.8rem 1rem;
+      padding-bottom: calc(0.8rem + env(safe-area-inset-bottom));
+    }
+    .chat-header {
+      padding: 0.8rem 1rem;
+    }
   }
 </style>
 
