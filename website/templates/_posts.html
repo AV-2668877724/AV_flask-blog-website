@@ -72,6 +72,27 @@
           >
             {{ post.date_created|timeago }}
           </span>
+
+          {% if user.is_authenticated and user.id != post.author %}
+          <span
+            class="mx-2 text-muted opacity-50 d-none d-sm-inline"
+            style="font-size: 0.8rem"
+            >•</span
+          >
+          <button
+            class="btn {{ 'btn-outline-secondary' if post.user_is_followed else 'btn-primary shadow-sm' }} btn-sm rounded-pill px-3 py-0 fw-bold transition-all mt-1 mt-sm-0"
+            style="
+              font-size: 0.75rem;
+              border-width: 1px;
+              height: 24px;
+              display: inline-flex;
+              align-items: center;
+            "
+            onclick="toggleFollow('{{ post.author }}', this)"
+          >
+            {{ 'Following' if post.user_is_followed else 'Follow' }}
+          </button>
+          {% endif %}
         </div>
         {% if post.is_edited %}
         <div class="text-muted mt-1" style="font-size: 0.75rem">
@@ -387,7 +408,8 @@
                   <span class="like-count ms-1">{{ comment.likes_count }}</span>
                 </button>
 
-                {% if user.is_authenticated and (user.id == comment.author or user.is_admin) %}
+                {% if user.is_authenticated and (user.id == comment.author or
+                user.is_admin) %}
                 <a
                   href="{{ url_for('views.delete_comment', comment_id=comment.id) }}"
                   class="text-danger text-decoration-none small fw-bold opacity-75 hover-opacity-100 ajax-delete-comment"

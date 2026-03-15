@@ -126,6 +126,11 @@ def delete_from_cloudinary(image_url):
 
 
 def enrich_posts(posts):
+    # 🚀 NEW: Pre-fetch all user IDs the current user is following for performance
+    following_ids = set()
+    if current_user.is_authenticated:
+        following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
+
     for post in posts:
         post.likes_count = len(post.likes)
         
@@ -133,8 +138,11 @@ def enrich_posts(posts):
         post.active_comments_count = len(active_comments)
         
         post.liked = False
+        post.user_is_followed = False # 🚀 NEW: Default state
+        
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
+            post.user_is_followed = post.author in following_ids # 🚀 NEW: Check if following
         
         for comment in active_comments:
             comment.likes_count = len(comment.likes)
