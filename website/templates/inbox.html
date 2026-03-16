@@ -72,6 +72,7 @@ content %}
             </div>
             <p
               class="mb-0 text-truncate {{ 'fw-bold text-dark' if chat.unread else 'text-muted' }}"
+              id="msg-text-{{ chat.user.id }}"
               style="font-size: 0.95rem"
             >
               {% if chat.last_message.sender_id == user.id %}
@@ -79,6 +80,26 @@ content %}
                 ><i class="fas fa-reply fa-xs me-1"></i>You:</span
               >
               {% endif %} {{ chat.last_message.text }}
+            </p>
+
+            <p
+              class="mb-0 text-primary fw-bold d-none"
+              id="typing-text-{{ chat.user.id }}"
+              style="font-size: 0.95rem"
+            >
+              <span
+                class="typing-dot"
+                style="background-color: var(--primary)"
+              ></span>
+              <span
+                class="typing-dot"
+                style="background-color: var(--primary)"
+              ></span>
+              <span
+                class="typing-dot"
+                style="background-color: var(--primary)"
+              ></span>
+              <span class="ms-1">typing...</span>
             </p>
           </div>
         </a>
@@ -103,4 +124,42 @@ content %}
     </div>
   </div>
 </div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 🚀 Initialize socket connection on the Inbox page
+    const socket = io();
+
+    // Listen for typing events to toggle the text
+    socket.on("user_typing", function (data) {
+      const msgText = document.getElementById("msg-text-" + data.user_id);
+      const typingText = document.getElementById("typing-text-" + data.user_id);
+
+      if (msgText && typingText) {
+        if (data.is_typing) {
+          msgText.classList.add("d-none");
+          typingText.classList.remove("d-none");
+        } else {
+          msgText.classList.remove("d-none");
+          typingText.classList.add("d-none");
+        }
+      }
+    });
+
+    // Instantly hide the typing indicator and update text if a message actually arrives
+    socket.on("receive_message", function (msg) {
+      const msgText = document.getElementById("msg-text-" + msg.sender_id);
+      const typingText = document.getElementById(
+        "typing-text-" + msg.sender_id,
+      );
+
+      if (msgText && typingText) {
+        typingText.classList.add("d-none");
+        msgText.classList.remove("d-none");
+        msgText.classList.add("fw-bold", "text-dark"); // Make it bold to show it's unread
+        msgText.classList.remove("text-muted");
+        msgText.innerHTML = msg.text;
+      }
+    });
+  });
+</script>
 {% endblock %}

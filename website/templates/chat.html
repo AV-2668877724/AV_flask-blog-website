@@ -172,7 +172,6 @@ endblock %} {% block content %}
     background-color: var(--bg-card);
     border-top: 1px solid var(--border-color);
     padding: 1rem 1.5rem;
-    /* 🚀 FIX: iOS Safe Area support so it doesn't get hidden behind the home swipe bar */
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));
     z-index: 10;
   }
@@ -228,10 +227,10 @@ endblock %} {% block content %}
     transform: translateY(-50%) scale(1.05);
   }
 
-  /* 🚀 FIX: Mobile specific adjustments for the chat area */
+  /* Mobile specific adjustments */
   @media (max-width: 768px) {
     .chat-wrapper {
-      top: 60px; /* Adjust for mobile navbar */
+      top: 60px;
       bottom: 0px;
     }
     .chat-input-area {
@@ -240,6 +239,34 @@ endblock %} {% block content %}
     }
     .chat-header {
       padding: 0.8rem 1rem;
+    }
+  }
+
+  /* Typing Indicator Animation */
+  .typing-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    margin: 0 2px;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+  }
+  .typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+  .typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  @keyframes typingBounce {
+    0%,
+    80%,
+    100% {
+      transform: scale(0);
+    }
+    40% {
+      transform: scale(1);
     }
   }
 </style>
@@ -321,10 +348,18 @@ endblock %} {% block content %}
           </button>
           <div class="msg-bubble shadow-sm">{{ msg.text }}</div>
         </div>
-        <div
-          class="msg-time local-time-formatter"
-          data-iso="{{ msg.date_created.isoformat() }}Z"
-        ></div>
+        <div class="d-flex justify-content-end align-items-center mt-1">
+          <div
+            class="msg-time local-time-formatter"
+            data-iso="{{ msg.date_created.isoformat() }}Z"
+            style="margin-top: 0"
+          ></div>
+          <i
+            id="tick-{{ msg.id }}"
+            class="fas {% if msg.is_read %}fa-check-double text-info{% else %}fa-check text-muted{% endif %} ms-1 msg-tick"
+            style="font-size: 0.7rem"
+          ></i>
+        </div>
       </div>
       {% else %}
       <div class="msg-container msg-theirs" id="msg-{{ msg.id }}">
@@ -358,14 +393,24 @@ endblock %} {% block content %}
         <p class="text-muted small">Start the conversation below.</p>
       </div>
       {% endif %}
+
+      <div
+        class="msg-container msg-theirs d-none"
+        id="typingIndicator"
+        style="margin-bottom: 5px"
+      >
+        <div class="d-flex align-items-center justify-content-start gap-2">
+          <div class="msg-bubble shadow-sm" style="padding: 0.6rem 1rem">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="chat-input-area">
-      <form
-        action="{{ url_for('views.send_message') }}"
-        method="POST"
-        id="chatForm"
-      >
+      <form id="chatForm" onsubmit="event.preventDefault()">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="chat-input-wrapper shadow-sm">
           <input
@@ -448,6 +493,7 @@ endblock %} {% block content %}
     const chatForm = document.getElementById("chatForm");
     const inputField = document.getElementById("chatInputField");
     const spinner = document.getElementById("historyLoadingSpinner");
+    const typingIndicator = document.getElementById("typingIndicator");
 
     const currentUserId = parseInt("{{ current_user.id }}");
     const recipientId = parseInt("{{ recipient.id }}");
@@ -455,6 +501,10 @@ endblock %} {% block content %}
     let messageOffset = 50;
     let allMessagesLoaded = false;
     let isLoadingHistory = false;
+
+    // 🚀 FIX: Declare these ONLY ONCE at the top of the scope
+    let typingTimeout = null;
+    let isCurrentlyTyping = false;
 
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 
@@ -518,7 +568,10 @@ endblock %} {% block content %}
                 <button type="button" class="btn btn-link text-white-50 p-0 msg-actions hover-opacity-100" onclick="removeChatMessage(event, '${msgId}')"><i class="fas fa-trash-alt" style="font-size: 0.85rem;"></i></button>
                 <div class="msg-bubble shadow-sm">${text}</div>
               </div>
-              <div class="msg-time">${time}</div>`;
+              <div class="d-flex justify-content-end align-items-center mt-1">
+                <div class="msg-time" style="margin-top: 0;">${time}</div>
+                <i id="tick-${msgId}" class="fas fa-check text-muted ms-1 msg-tick" style="font-size: 0.7rem;"></i>
+              </div>`;
       } else {
         newMsg.innerHTML = `
               <div class="d-flex align-items-center justify-content-start gap-2">
@@ -532,6 +585,65 @@ endblock %} {% block content %}
 
     const socket = io();
 
+    // --- READ RECEIPTS LOGIC ---
+    socket.emit("chat_opened", { sender_id: recipientId });
+
+    socket.on("all_messages_read", function (data) {
+      if (data.reader_id === recipientId) {
+        document.querySelectorAll(".msg-tick").forEach((tick) => {
+          tick.className = "fas fa-check-double text-info ms-1 msg-tick";
+        });
+      }
+    });
+
+    socket.on("single_message_read", function (data) {
+      if (data.reader_id === recipientId) {
+        const tick = document.getElementById("tick-" + data.msg_id);
+        if (tick) {
+          tick.className = "fas fa-check-double text-info ms-1 msg-tick";
+        }
+      }
+    });
+
+    // --- TYPING INDICATOR LOGIC ---
+    // (Notice we don't declare 'let typingTimeout' again here!)
+
+    if (inputField) {
+      inputField.addEventListener("input", function () {
+        if (!isCurrentlyTyping) {
+          socket.emit("typing", { recipient_id: recipientId, is_typing: true });
+          isCurrentlyTyping = true;
+        }
+
+        clearTimeout(typingTimeout);
+
+        typingTimeout = setTimeout(() => {
+          socket.emit("typing", {
+            recipient_id: recipientId,
+            is_typing: false,
+          });
+          isCurrentlyTyping = false;
+        }, 1500);
+      });
+    }
+
+    window.addEventListener("beforeunload", function () {
+      if (isCurrentlyTyping) {
+        socket.emit("typing", { recipient_id: recipientId, is_typing: false });
+      }
+    });
+
+    socket.on("user_typing", function (data) {
+      if (data.user_id === recipientId) {
+        if (data.is_typing) {
+          typingIndicator.classList.remove("d-none");
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        } else {
+          typingIndicator.classList.add("d-none");
+        }
+      }
+    });
+
     socket.on("receive_message", function (msg) {
       const msgSender = parseInt(msg.sender_id);
       const msgRecipient = parseInt(msg.recipient_id);
@@ -542,6 +654,14 @@ endblock %} {% block content %}
       ) {
         const isMine = msgSender === currentUserId;
         appendMessageToUI(msg.text, formatLocalTime(msg.time), isMine, msg.id);
+
+        if (!isMine && typingIndicator) {
+          typingIndicator.classList.add("d-none");
+        }
+
+        if (!isMine) {
+          socket.emit("message_read", { msg_id: msg.id, sender_id: msgSender });
+        }
       }
     });
 
@@ -573,7 +693,10 @@ endblock %} {% block content %}
                 <button type="button" class="btn btn-link text-white-50 p-0 msg-actions hover-opacity-100" onclick="removeChatMessage(event, '${msgId}')"><i class="fas fa-trash-alt" style="font-size: 0.85rem;"></i></button>
                 <div class="msg-bubble shadow-sm">${text}</div>
               </div>
-              <div class="msg-time">${time}</div>`;
+              <div class="d-flex justify-content-end align-items-center mt-1">
+                <div class="msg-time" style="margin-top: 0;">${time}</div>
+                <i id="tick-${msgId}" class="fas fa-check text-muted ms-1 msg-tick" style="font-size: 0.7rem;"></i>
+              </div>`;
       } else {
         newMsg.innerHTML = `
               <div class="d-flex align-items-center justify-content-start gap-2">
@@ -586,7 +709,12 @@ endblock %} {% block content %}
       const emptyState = document.getElementById("emptyChatState");
       if (emptyState) emptyState.remove();
 
-      chatContainer.appendChild(newMsg);
+      if (typingIndicator) {
+        chatContainer.insertBefore(newMsg, typingIndicator);
+      } else {
+        chatContainer.appendChild(newMsg);
+      }
+
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
@@ -597,6 +725,8 @@ endblock %} {% block content %}
         if (!text) return;
         inputField.value = "";
         messageOffset++;
+
+        socket.emit("typing", { recipient_id: recipientId, is_typing: false });
         socket.emit("send_message", { recipient_id: recipientId, text: text });
       });
     }

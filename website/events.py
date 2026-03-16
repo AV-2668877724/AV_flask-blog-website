@@ -114,3 +114,42 @@ def handle_send_message_event(data):
     
     # Send to Sender's Current Tab (Direct Reply)
     emit('receive_message', msg_data)
+    
+@socketio.on('typing')
+def handle_typing(data):
+    if not current_user.is_authenticated: return
+    
+    recipient_id = data.get('recipient_id')
+    is_typing = data.get('is_typing', False)
+    
+    if not recipient_id: return
+    
+    # Broadcast the typing status strictly to the recipient's private room
+    emit('user_typing', {
+        'user_id': current_user.id,
+        'is_typing': is_typing
+    }, room=str(recipient_id))
+    
+@socketio.on('chat_opened')
+def handle_chat_opened(data):
+    if not current_user.is_authenticated: return
+    sender_id = data.get('sender_id')
+    
+    if sender_id:
+        # Tell the sender that current_user has opened the chat, so turn all ticks blue!
+        emit('all_messages_read', {'reader_id': current_user.id}, room=str(sender_id))
+
+@socketio.on('message_read')
+def handle_message_read(data):
+    if not current_user.is_authenticated: return
+    msg_id = data.get('msg_id')
+    sender_id = data.get('sender_id')
+    
+    if msg_id and sender_id:
+        msg = Message.query.get(msg_id)
+        # Ensure we are the recipient of this message before marking it read
+        if msg and msg.recipient_id == current_user.id:
+            msg.is_read = True
+            db.session.commit()
+            # Tell the sender to turn this specific tick blue
+            emit('single_message_read', {'msg_id': msg_id, 'reader_id': current_user.id}, room=str(sender_id))
