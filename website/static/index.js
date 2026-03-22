@@ -3,7 +3,6 @@
    ========================================= */
 const TRUNCATE_HEIGHT = 320;
 
-// 🚀 NEW: Helper function to grab the CSRF token from base.html
 function getCsrfToken() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta ? meta.getAttribute("content") : "";
@@ -14,7 +13,7 @@ function truncatePosts() {
     if (el.dataset.processed) return;
 
     setTimeout(() => {
-      el.offsetHeight; // Force reflow
+      el.offsetHeight;
       if (el.scrollHeight > TRUNCATE_HEIGHT) {
         const postId = el.id.replace("post-text-", "");
         const fade = document.getElementById(`fade-overlay-${postId}`);
@@ -71,9 +70,6 @@ window.toggleReadMore = function (postId, btn) {
   }
 };
 
-/**
- * ⚡ PERFORMANCE: Debounce Function
- */
 function debounce(func, wait) {
   let timeout;
   return function (...args) {
@@ -117,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/mark-notifications-read", {
           method: "POST",
           credentials: "same-origin",
-          headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
+          headers: { "X-CSRFToken": getCsrfToken() },
         }).catch((err) => console.error("Error marking read:", err));
       }
     });
@@ -140,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-          const response = await fetch(`/api/search-users?q=${query}`); // GET request, no CSRF needed
+          const response = await fetch(`/api/search-users?q=${query}`);
           const users = await response.json();
           searchResults.innerHTML = "";
 
@@ -271,7 +267,7 @@ function like(postId) {
   fetch(`/like-post/${postId}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
+    headers: { "X-CSRFToken": getCsrfToken() },
   })
     .then((res) => res.json())
     .then((data) => {
@@ -287,6 +283,51 @@ function like(postId) {
     .catch(() => showToast("Network error", true))
     .finally(() => (btn.dataset.loading = "false"));
 }
+
+/* =========================================
+   SAVE POST LOGIC 🚀 (NEW)
+   ========================================= */
+window.savePost = function (postId, btn) {
+  if (btn.dataset.loading === "true") return;
+  btn.dataset.loading = "true";
+
+  const icon = btn.querySelector("i");
+  const isSaved = icon.classList.contains("fas");
+
+  if (isSaved) {
+    icon.classList.remove("fas", "text-primary");
+    icon.classList.add("far");
+  } else {
+    icon.classList.remove("far");
+    icon.classList.add("fas", "text-primary");
+    icon.style.transform = "scale(1.2)";
+    setTimeout(() => (icon.style.transform = "scale(1)"), 200);
+  }
+
+  fetch(`/save-post/${postId}`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "X-CSRFToken": getCsrfToken() },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.saved) {
+        icon.classList.add("fas", "text-primary");
+        icon.classList.remove("far");
+        if (typeof showToast === "function")
+          showToast("Post saved to your bookmarks!");
+      } else {
+        icon.classList.add("far");
+        icon.classList.remove("fas", "text-primary");
+        if (typeof showToast === "function")
+          showToast("Post removed from bookmarks.");
+      }
+    })
+    .catch(() => {
+      if (typeof showToast === "function") showToast("Network error", true);
+    })
+    .finally(() => (btn.dataset.loading = "false"));
+};
 
 /* =========================================
    LIKE COMMENT LOGIC
@@ -324,7 +365,7 @@ function likeComment(commentId, btn) {
   fetch(`/like-comment/${commentId}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
+    headers: { "X-CSRFToken": getCsrfToken() },
   })
     .then((res) => res.json())
     .then((data) => {
@@ -347,7 +388,6 @@ function likeComment(commentId, btn) {
 function timeAgoFromISO(isoString) {
   if (!isoString) return "";
 
-  // 🚀 FIX: Ensure a 'Z' is appended so JS knows this is UTC time, preventing the 5-hour gap
   if (!isoString.endsWith("Z")) isoString += "Z";
 
   const now = new Date();
@@ -438,7 +478,7 @@ function resetAdminFilter(sectionId) {
 }
 
 /* =========================================
-   USERNAME AVAILABILITY (SIGNUP ONLY)
+   USERNAME AVAILABILITY
    ========================================= */
 function checkSignupUsername() {
   const usernameInput = document.getElementById("signupUsername");
@@ -463,7 +503,7 @@ function checkSignupUsername() {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken(), // 🚀 ADDED CSRF TOKEN
+      "X-CSRFToken": getCsrfToken(),
     },
     body: JSON.stringify({ username: username }),
   })
@@ -523,7 +563,7 @@ function checkUsername() {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken(), // 🚀 ADDED CSRF TOKEN
+      "X-CSRFToken": getCsrfToken(),
     },
     body: JSON.stringify({ username }),
   })
@@ -582,7 +622,6 @@ window.addEventListener("pageshow", function (event) {
   }
 });
 
-// ✅ FIX: AJAX Comments via Individual Post Fetch
 document.addEventListener("submit", async function (e) {
   const form = e.target;
 
@@ -601,15 +640,13 @@ document.addEventListener("submit", async function (e) {
 
     try {
       const formData = new FormData(form);
-      // 1. Submit the comment to the server
       await fetch(form.action, {
         method: "POST",
         credentials: "same-origin",
-        headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
+        headers: { "X-CSRFToken": getCsrfToken() },
         body: formData,
       });
 
-      // 2. Fetch the specific post page directly (guarantees we find the post HTML)
       const postResponse = await fetch(`/post/${postId}`);
       if (postResponse.ok) {
         const html = await postResponse.text();
@@ -651,7 +688,6 @@ document.addEventListener("submit", async function (e) {
     return;
   }
 
-  // Normal Form Handlers
   if (e.defaultPrevented) return;
   if (form.id === "chatForm") return;
   if (form.checkValidity()) {
@@ -659,7 +695,6 @@ document.addEventListener("submit", async function (e) {
   }
 });
 
-// ✅ FIX: AJAX Comment Deletion via Individual Post Fetch
 document.addEventListener("click", async function (e) {
   const deleteBtn = e.target.closest(".ajax-delete-comment");
   if (deleteBtn) {
@@ -673,10 +708,8 @@ document.addEventListener("click", async function (e) {
     deleteBtn.style.pointerEvents = "none";
 
     try {
-      // 1. Delete the comment (assuming your backend handles this via GET based on your anchor tag)
       await fetch(deleteBtn.href);
 
-      // 2. Fetch the updated post page
       const postResponse = await fetch(`/post/${postId}`);
       if (postResponse.ok) {
         const html = await postResponse.text();
@@ -714,7 +747,6 @@ document.addEventListener("click", async function (e) {
     return;
   }
 
-  // Preloader target logic
   const target = e.target.closest("a");
   if (target) {
     const href = target.getAttribute("href");
@@ -834,7 +866,7 @@ function removeSocialLink(url) {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken(), // 🚀 ADDED CSRF TOKEN
+      "X-CSRFToken": getCsrfToken(),
     },
     body: JSON.stringify({ url: url }),
   })
@@ -853,7 +885,7 @@ function toggleFollow(userId, btn) {
   fetch(url, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() }, // 🚀 ADDED CSRF TOKEN
+    headers: { "X-CSRFToken": getCsrfToken() },
   })
     .then((res) => res.json())
     .then((data) => {

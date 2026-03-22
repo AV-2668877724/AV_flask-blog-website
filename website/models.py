@@ -3,7 +3,7 @@ from flask_login import UserMixin
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
 from datetime import datetime
-from sqlalchemy import Index  # ✅ NEW: Imported Index for performance
+from sqlalchemy import Index  
 
 # =====================================================
 # Notification Model
@@ -31,8 +31,6 @@ class Notification(db.Model):
     post = db.relationship('Post', lazy=True)
 
     # ⚡ PERFORMANCE: Composite Index
-    # This allows the DB to instantly count unread notifications for a specific user
-    # without scanning the whole table.
     __table_args__ = (
         Index('idx_notif_recipient_read', 'recipient_id', 'is_read'),
     )
@@ -45,7 +43,7 @@ class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     
-    # Auth Details (Indexed for fast login)
+    # Auth Details
     username = db.Column(db.String(150), unique=True, index=True)
     email = db.Column(db.String(150), unique=True, index=True)
     password = db.Column(db.String(150), nullable=False)
@@ -73,6 +71,7 @@ class User(db.Model, UserMixin):
     posts = db.relationship('Post', backref='user', passive_deletes=True)
     comments = db.relationship('Comment', backref='user', passive_deletes=True)
     likes = db.relationship('Like', backref='user', passive_deletes=True)
+    saved_posts = db.relationship('SavedPost', backref='user_saved', passive_deletes=True) # 🚀 NEW
     
 # =====================================================
 # Post Model
@@ -95,6 +94,7 @@ class Post(db.Model):
     
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     likes = db.relationship('Like', backref='post', cascade="all, delete-orphan", passive_deletes=True)
+    saved_by = db.relationship('SavedPost', backref='post_saved', cascade="all, delete-orphan", passive_deletes=True) # 🚀 NEW
     
     def likes_count(self):
         return len(self.likes)
@@ -118,7 +118,6 @@ class Message(db.Model):
     visible_to_recipient = db.Column(db.Boolean, default=True)
 
     # ⚡ PERFORMANCE: Composite Index
-    # Instant lookup for "Unread Messages for User X"
     __table_args__ = (
         Index('idx_msg_recipient_read', 'recipient_id', 'is_read'),
     )
@@ -142,6 +141,14 @@ class Like(db.Model):
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+
+# 🚀 NEW: SavedPost Model
+class SavedPost(db.Model):
+    __tablename__ = 'saved_post'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
 
 class Follow(db.Model):
     __tablename__ = 'follow'

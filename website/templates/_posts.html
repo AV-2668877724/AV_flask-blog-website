@@ -242,6 +242,29 @@
             >{{ post.active_comments_count }}</span
           >
         </button>
+
+        <button
+          class="btn btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-2 fw-bold transition-all"
+          id="save-button-{{ post.id }}"
+          title="Save Post"
+          {%
+          if
+          user.is_authenticated
+          %}
+          onclick="savePost('{{ post.id }}', this)"
+          {%
+          else
+          %}
+          onclick="window.location.href = '/login'"
+          {%
+          endif
+          %}
+        >
+          <i
+            class="{{ 'fas text-primary' if post.saved else 'far' }} fa-bookmark"
+            style="font-size: 1.35rem"
+          ></i>
+        </button>
       </div>
 
       <button
@@ -428,3 +451,52 @@
   </div>
 </div>
 {% endfor %}
+
+<script>
+  if (typeof window.savePost !== "function") {
+    window.savePost = function (postId, btn) {
+      if (btn.dataset.loading === "true") return;
+      btn.dataset.loading = "true";
+
+      const icon = btn.querySelector("i");
+      const isSaved = icon.classList.contains("fas");
+
+      if (isSaved) {
+        icon.classList.remove("fas", "text-primary");
+        icon.classList.add("far");
+      } else {
+        icon.classList.remove("far");
+        icon.classList.add("fas", "text-primary");
+        icon.style.transform = "scale(1.2)";
+        setTimeout(() => (icon.style.transform = "scale(1)"), 200);
+      }
+
+      const meta = document.querySelector('meta[name="csrf-token"]');
+      const csrfToken = meta ? meta.getAttribute("content") : "";
+
+      fetch(`/save-post/${postId}`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "X-CSRFToken": csrfToken },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.saved) {
+            icon.classList.add("fas", "text-primary");
+            icon.classList.remove("far");
+            if (typeof showToast === "function")
+              showToast("Post saved to your bookmarks!");
+          } else {
+            icon.classList.add("far");
+            icon.classList.remove("fas", "text-primary");
+            if (typeof showToast === "function")
+              showToast("Post removed from bookmarks.");
+          }
+        })
+        .catch(() => {
+          if (typeof showToast === "function") showToast("Network error", true);
+        })
+        .finally(() => (btn.dataset.loading = "false"));
+    };
+  }
+</script>

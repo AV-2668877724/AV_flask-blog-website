@@ -8,13 +8,13 @@ from datetime import datetime
 from flask_socketio import SocketIO
 from flask_compress import Compress
 from sqlalchemy.orm import joinedload 
-from flask_wtf.csrf import CSRFProtect # 🚀 NEW: Import CSRF protection
+from flask_wtf.csrf import CSRFProtect 
 
 db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
 socketio = SocketIO() 
-csrf = CSRFProtect() # 🚀 NEW: Initialize CSRF globally
+csrf = CSRFProtect() 
 
 def create_app():
     app = Flask(__name__)
@@ -53,7 +53,7 @@ def create_app():
 
     db.init_app(app)
     socketio.init_app(app)
-    csrf.init_app(app) # 🚀 NEW: Bind CSRF protection to the Flask app
+    csrf.init_app(app) 
 
     # BLUEPRINTS
     from .views import views
@@ -62,8 +62,8 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    # DB CREATION
-    from .models import User, Post, Comment, Like, Notification, Follow, Message
+    # DB CREATION (🚀 NEW: Added SavedPost)
+    from .models import User, Post, Comment, Like, Notification, Follow, Message, SavedPost
     create_database(app)
 
     # LOGIN MANAGER
@@ -113,7 +113,6 @@ def create_app():
     @app.template_filter('timeago')
     def timeago(dt):
         if dt is None: return ""
-        # 🚀 FIX: Use utcnow() so it perfectly matches the database timestamps
         now = datetime.utcnow() 
         if dt.tzinfo is not None:
             dt = dt.replace(tzinfo=None)

@@ -44,6 +44,17 @@ Profile{% endblock %} {% block content %}
   body.dark-mode .text-success {
     color: #75b798 !important;
   }
+
+  /* 🚀 NEW: Formatter-Safe Active Tab Classes */
+  .profile-tab {
+    border-radius: 50px;
+    transition: all 0.2s ease;
+  }
+  .profile-tab.active-tab {
+    background-color: var(--primary) !important;
+    color: #ffffff !important;
+    font-weight: bold;
+  }
 </style>
 
 <div class="row justify-content-center">
@@ -216,7 +227,6 @@ Profile{% endblock %} {% block content %}
                 class="d-flex gap-2 w-100 w-md-auto justify-content-start justify-content-md-end flex-wrap mt-2 mt-md-0"
               >
                 {% if user.id == profile_user.id %}
-
                 <div class="dropdown d-none d-md-block">
                   <button
                     class="btn btn-outline-secondary btn-sm"
@@ -344,8 +354,46 @@ Profile{% endblock %} {% block content %}
       </div>
     </div>
 
-    <h5 class="fw-bold mb-3 text-dark ps-2">Posts</h5>
-    {% if posts %} {% include "_posts.html" %}
+    <ul
+      class="nav nav-pills nav-fill mb-4 border-bottom pb-2"
+      style="border-color: var(--border-color) !important"
+    >
+      <li class="nav-item">
+        <a
+          class="nav-link profile-tab {% if not tab or tab == 'posts' %}active-tab{% else %}text-muted{% endif %}"
+          href="{{ url_for('views.profile', username=profile_user.username, tab='posts') }}"
+        >
+          <i class="fas fa-file-alt me-1"></i> Stories
+        </a>
+      </li>
+
+      {% if current_user.id == profile_user.id %}
+      <li class="nav-item">
+        <a
+          class="nav-link profile-tab {% if tab == 'saved' %}active-tab{% else %}text-muted{% endif %}"
+          href="{{ url_for('views.profile', username=profile_user.username, tab='saved') }}"
+        >
+          <i class="fas fa-bookmark me-1"></i> Saved
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+
+    {% if posts|length == 0 %}
+    <div class="text-center py-5 text-muted fade-in-up">
+      <i
+        class="{% if tab == 'saved' %}fas fa-bookmark{% else %}far fa-folder-open{% endif %} fa-3x mb-3 opacity-50"
+      ></i>
+      {% if tab == 'saved' %}
+      <h5 class="fw-bold text-dark">No saved posts yet.</h5>
+      <p>Go find some interesting stories to read later!</p>
+      {% else %}
+      <h5 class="fw-bold text-dark">No posts yet.</h5>
+      <p>When {{ profile_user.username }} posts, it will show up here.</p>
+      {% endif %}
+    </div>
+    {% else %}
+    <div id="posts-container">{% include "_posts.html" %}</div>
 
     <nav class="mt-4">
       <ul class="pagination justify-content-center">
@@ -353,7 +401,7 @@ Profile{% endblock %} {% block content %}
         <li class="page-item">
           <a
             class="page-link rounded-pill border-0 shadow-sm mx-1"
-            href="{{ url_for('views.profile', username=profile_user.username, page=pagination.prev_num) }}"
+            href="{{ url_for('views.profile', username=profile_user.username, tab=request.args.get('tab', 'posts'), page=pagination.prev_num) }}"
             >Previous</a
           >
         </li>
@@ -361,19 +409,13 @@ Profile{% endblock %} {% block content %}
         <li class="page-item">
           <a
             class="page-link rounded-pill border-0 shadow-sm mx-1"
-            href="{{ url_for('views.profile', username=profile_user.username, page=pagination.next_num) }}"
+            href="{{ url_for('views.profile', username=profile_user.username, tab=request.args.get('tab', 'posts'), page=pagination.next_num) }}"
             >Next</a
           >
         </li>
         {% endif %}
       </ul>
     </nav>
-
-    {% else %}
-    <div class="text-center py-5 text-muted">
-      <i class="far fa-folder-open fa-3x mb-3 opacity-50"></i>
-      <p>No posts yet.</p>
-    </div>
     {% endif %}
   </div>
 </div>
@@ -526,7 +568,6 @@ Profile{% endblock %} {% block content %}
               Supported: JPG, JPEG, PNG, WEBP
             </div>
           </div>
-
           <input
             type="file"
             name="profile_pic"
@@ -582,7 +623,6 @@ Profile{% endblock %} {% block content %}
             data-aspect-ratio="1.7777"
             data-preview-target="coverPicPreview"
           />
-
           <div class="form-text mb-1">Recommended size: 1080x400 pixels</div>
           <div
             class="small fw-bold opacity-75 mb-3"
@@ -590,7 +630,6 @@ Profile{% endblock %} {% block content %}
           >
             Supported: JPG, JPEG, PNG, WEBP
           </div>
-
           <img
             id="coverPicPreview"
             src="#"

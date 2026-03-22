@@ -4,7 +4,7 @@ from flask import (
     flash, redirect, url_for, abort, jsonify, current_app, make_response
 )
 from flask_login import login_required, current_user, logout_user
-from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message
+from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message, SavedPost
 from sqlalchemy.exc import IntegrityError
 from . import db
 from sqlalchemy import func, or_, desc, and_
@@ -17,14 +17,12 @@ from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
 import bleach 
 
-# 🚀 Cloudinary Integration
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
 
 views = Blueprint('views', __name__)
 
-# Allowed Image Extensions
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
 # =================================================
@@ -57,9 +55,6 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def upload_to_cloudinary(file, folder_name, width=None, height=None):
-    """
-    Uploads an image to Cloudinary and returns the secure URL.
-    """
     cloudinary.config(
         cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
         api_key = os.getenv('CLOUDINARY_API_KEY'),
@@ -92,14 +87,9 @@ def upload_to_cloudinary(file, folder_name, width=None, height=None):
         return None
 
 def delete_from_cloudinary(image_url):
-    """
-    Extracts the public_id from a Cloudinary URL and deletes the file from the cloud
-    to save storage space.
-    """
     if not image_url or 'res.cloudinary.com' not in image_url:
         return
     
-    # 🚀 CRITICAL FIX: Added Cloudinary credentials here so deletions don't fail!
     cloudinary.config(
         cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
         api_key = os.getenv('CLOUDINARY_API_KEY'),
@@ -124,10 +114,12 @@ def delete_from_cloudinary(image_url):
         print(f"❌ Cloudinary deletion error: {e}")
 
 def enrich_posts(posts):
-    # 🚀 NEW: Pre-fetch all user IDs the current user is following for performance
     following_ids = set()
+    saved_post_ids = set() # 🚀 NEW
+    
     if current_user.is_authenticated:
         following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
+        saved_post_ids = {s.post_id for s in SavedPost.query.filter_by(user_id=current_user.id).all()} # 🚀 NEW
 
     for post in posts:
         post.likes_count = len(post.likes)
@@ -136,11 +128,13 @@ def enrich_posts(posts):
         post.active_comments_count = len(active_comments)
         
         post.liked = False
-        post.user_is_followed = False # 🚀 NEW: Default state
+        post.user_is_followed = False 
+        post.saved = False # 🚀 NEW
         
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
-            post.user_is_followed = post.author in following_ids # 🚀 NEW: Check if following
+            post.user_is_followed = post.author in following_ids
+            post.saved = post.id in saved_post_ids # 🚀 NEW
         
         for comment in active_comments:
             comment.likes_count = len(comment.likes)
@@ -174,10 +168,6 @@ def create_notification(visitor_id, recipient_id, action, post_id=None):
         )
         db.session.add(notif)
         db.session.commit()
-
-# =================================================
-# SOCIAL LINK AUTO-DETECTION
-# =================================================
 
 SOCIAL_PATTERNS = {
     "github": r"github\.com",
@@ -330,7 +320,7 @@ def delete_post(id):
     return redirect(request.referrer or url_for('views.home'))
 
 # =================================================
-# COMMENTS & LIKES
+# COMMENTS, LIKES & SAVES
 # =================================================
 
 @views.route("/create-comment/<post_id>", methods=['POST'])
@@ -395,6 +385,28 @@ def like(post_id):
         create_notification(current_user.id, post.author, 'like', post.id)
 
     return jsonify({"likes": len(post.likes), "liked": liked})
+
+# 🚀 NEW: Save/Bookmark Post API
+@views.route("/save-post/<post_id>", methods=['POST'])
+@login_required
+def save_post(post_id):
+    post = Post.query.filter_by(id=post_id).first()
+    if not post:
+        return jsonify({'error': 'Post not found'}), 404
+
+    saved_post = SavedPost.query.filter_by(user_id=current_user.id, post_id=post_id).first()
+    saved = False
+
+    if saved_post:
+        db.session.delete(saved_post)
+        db.session.commit()
+    else:
+        new_save = SavedPost(user_id=current_user.id, post_id=post_id, date_created=datetime.utcnow()) 
+        db.session.add(new_save)
+        db.session.commit()
+        saved = True
+
+    return jsonify({"saved": saved})
 
 # =================================================
 # NOTIFICATIONS SYSTEM
@@ -484,14 +496,27 @@ def profile(username):
         return redirect(url_for('views.home'))
 
     page = request.args.get('page', 1, type=int)
-    
-    pagination = Post.query.options(
-        joinedload(Post.user),
-        subqueryload(Post.likes),
-        subqueryload(Post.comments).joinedload(Comment.user)
-    ).filter_by(author=user.id, is_deleted=False)\
-    .order_by(Post.date_created.desc())\
-    .paginate(page=page, per_page=5, error_out=False)
+    tab = request.args.get('tab', 'posts') # 🚀 NEW: Get active tab
+
+    # 🚀 NEW: Handle "Saved Posts" tab securely
+    if tab == 'saved' and current_user.id == user.id:
+        pagination = Post.query.join(SavedPost, SavedPost.post_id == Post.id)\
+            .options(
+                joinedload(Post.user),
+                subqueryload(Post.likes),
+                subqueryload(Post.comments).joinedload(Comment.user)
+            ).filter(SavedPost.user_id == user.id, Post.is_deleted == False)\
+            .order_by(SavedPost.date_created.desc())\
+            .paginate(page=page, per_page=5, error_out=False)
+    else:
+        tab = 'posts' # Default back to 'posts' if looking at someone else's profile
+        pagination = Post.query.options(
+            joinedload(Post.user),
+            subqueryload(Post.likes),
+            subqueryload(Post.comments).joinedload(Comment.user)
+        ).filter_by(author=user.id, is_deleted=False)\
+        .order_by(Post.date_created.desc())\
+        .paginate(page=page, per_page=5, error_out=False)
 
     posts = enrich_posts(pagination.items)
     
@@ -513,7 +538,8 @@ def profile(username):
         followers_count=followers_count,
         following_count=following_count,
         total_posts=total_posts,
-        is_following=is_following
+        is_following=is_following,
+        tab=tab # 🚀 NEW: Send active tab down to the UI
     )
     
 @views.route('/update-profile-pic', methods=['POST'])
@@ -555,10 +581,6 @@ def edit_bio():
         flash('Bio updated!', category='success')
     return redirect(url_for('views.profile', username=current_user.username))
 
-
-# =========================================================
-# 🚫 RESERVED USERNAME LIST (Global)
-# =========================================================
 RESERVED_USERNAMES = {
     'avpostory','av_postory','home', 'login', 'logout', 'sign-up', 'signup', 'register',
     'inbox', 'chat', 'messages', 'notifications', 'search', 'explore',
@@ -595,7 +617,6 @@ def check_username():
         return jsonify({'available': False, 'message': 'This username already exists.'})
     
     return jsonify({'available': True, 'message': 'This username is unique and you can take it.'})
-
 
 @views.route('/change-username', methods=['POST'])
 @login_required
@@ -695,7 +716,6 @@ def admin_delete_user(user_id):
         if user_to_delete.is_admin:
              flash("Cannot delete another admin", category='error')
         else:
-            # 🚀 NEW: Wipe their profile and cover photos from Cloudinary forever!
             delete_from_cloudinary(user_to_delete.profile_pic)
             delete_from_cloudinary(user_to_delete.cover_pic)
             
@@ -803,7 +823,6 @@ def admin_delete_comment(comment_id):
         db.session.commit()
         flash("Comment hidden.", category='success')
     return redirect(url_for('views.admin_dashboard'))
-
 
 @views.route('/admin-permanent-delete-comment/<int:comment_id>', methods=['POST'])
 @login_required
@@ -921,7 +940,6 @@ def following_list(username):
 @views.route('/deactivate-account', methods=['POST'])
 @login_required
 def deactivate_account():
-    # 🚀 FIX: Prevent the Admin from deactivating their own account
     if current_user.is_admin:
         flash("Admin accounts cannot be deactivated. You are the boss!", category='error')
         return redirect(url_for('views.profile', username=current_user.username))
@@ -1306,7 +1324,6 @@ def send_message():
     data = request.json
     recipient_id = data.get('recipient')
     
-    # 🚀 CRITICAL FIX: Re-added bleach sanitization here to prevent XSS attacks in chat!
     raw_text = data.get('text')
     if not raw_text:
         return jsonify({'success': False}), 400
