@@ -6,7 +6,7 @@ from flask import (
 from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message, SavedPost
 from sqlalchemy.exc import IntegrityError
-from . import db
+from . import db, limiter # 🚀 NEW: Imported limiter
 from sqlalchemy import func, or_, desc, and_
 from werkzeug.security import check_password_hash
 from sqlalchemy.orm import joinedload, subqueryload 
@@ -123,7 +123,7 @@ def enrich_posts(posts):
 
     for post in posts:
         post.likes_count = len(post.likes)
-        post.saves_count = len(post.saved_by) # 🚀 NEW: Get total bookmark count
+        post.saves_count = len(post.saved_by)
         
         active_comments = [c for c in post.comments if not c.is_deleted]
         post.active_comments_count = len(active_comments)
@@ -218,6 +218,7 @@ def home():
 
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("5 per minute") # 🚀 SPAM PROTECTION
 def create_post():
     if request.method == 'POST':
         raw_text = request.form.get('text')
@@ -248,6 +249,7 @@ def create_post():
 
 @views.route("/edit-post/<id>", methods=['GET', 'POST'])
 @login_required
+@limiter.limit("10 per minute") # 🚀 SPAM PROTECTION
 def edit_post(id):
     post = Post.query.get_or_404(id)
 
@@ -326,6 +328,7 @@ def delete_post(id):
 
 @views.route("/create-comment/<post_id>", methods=['POST'])
 @login_required
+@limiter.limit("20 per minute") # 🚀 SPAM PROTECTION
 def create_comment(post_id):
     text = request.form.get('text')
 
@@ -367,6 +370,7 @@ def delete_comment(comment_id):
 
 @views.route("/like-post/<post_id>", methods=['POST'])
 @login_required
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION (Allow reasonable rapid clicking but prevent bot looping)
 def like(post_id):
     post = Post.query.filter_by(id=post_id).first()
     like = Like.query.filter_by(author=current_user.id, post_id=post_id).first()
@@ -389,6 +393,7 @@ def like(post_id):
 
 @views.route("/save-post/<post_id>", methods=['POST'])
 @login_required
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
 def save_post(post_id):
     post = Post.query.filter_by(id=post_id).first()
     if not post:
@@ -406,7 +411,6 @@ def save_post(post_id):
         db.session.commit()
         saved = True
 
-    # 🚀 NEW: Send back the updated saves_count so JS can display the number
     saves_count = len(post.saved_by)
     return jsonify({"saved": saved, "saves_count": saves_count})
 
@@ -545,6 +549,7 @@ def profile(username):
     
 @views.route('/update-profile-pic', methods=['POST'])
 @login_required
+@limiter.limit("10 per hour") # 🚀 SPAM PROTECTION
 def update_profile_pic():
     if 'profile_pic' not in request.files:
         flash('No file provided.', category='error')
@@ -572,6 +577,7 @@ def update_profile_pic():
 
 @views.route('/edit-bio', methods=['POST'])
 @login_required
+@limiter.limit("20 per hour") # 🚀 SPAM PROTECTION
 def edit_bio():
     new_bio = request.form.get('bio')
     if len(new_bio) > 300:
@@ -592,6 +598,7 @@ RESERVED_USERNAMES = {
 }
 
 @views.route('/check-username', methods=['POST'])
+@limiter.limit("30 per minute") # 🚀 SPAM PROTECTION
 def check_username():
     data = request.get_json()
     username = data.get('username')
@@ -621,6 +628,7 @@ def check_username():
 
 @views.route('/change-username', methods=['POST'])
 @login_required
+@limiter.limit("5 per day") # 🚀 SPAM PROTECTION
 def change_username():
     new_username = request.form.get('username')
     
@@ -653,6 +661,7 @@ def change_username():
 
 @views.route('/add-social-link', methods=['POST'])
 @login_required
+@limiter.limit("20 per hour") # 🚀 SPAM PROTECTION
 def add_social_link():
     link = request.form.get('new_link')
     if not link:
@@ -888,6 +897,7 @@ def admin_restore_post(post_id):
 
 @views.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
 def follow_user(user_id):
     user_to_follow = User.query.get(user_id)
     if not user_to_follow:
@@ -908,6 +918,7 @@ def follow_user(user_id):
 
 @views.route('/unfollow/<int:user_id>', methods=['POST'])
 @login_required
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
 def unfollow_user(user_id):
     follow_record = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
     if follow_record:
@@ -963,6 +974,7 @@ def deactivate_account():
 # =================================================
 
 @views.route('/api/search-users', methods=['GET'])
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
 def search_users_api():
     q = request.args.get('q', '').strip()
     if not q:
@@ -1103,6 +1115,7 @@ def remove_social():
 
 @views.route('/update-cover-pic', methods=['POST'])
 @login_required
+@limiter.limit("10 per hour") # 🚀 SPAM PROTECTION
 def update_cover_pic():
     if 'cover_pic' not in request.files:
         flash('No file provided.', category='error')
@@ -1131,6 +1144,7 @@ def update_cover_pic():
 
 @views.route("/like-comment/<comment_id>", methods=['POST'])
 @login_required
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
 def like_comment(comment_id):
     comment = Comment.query.filter_by(id=comment_id).first()
     if not comment:
@@ -1242,6 +1256,7 @@ def chat(username):
 
 @views.route('/api/chat-history/<int:recipient_id>')
 @login_required
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
 def chat_history(recipient_id):
     offset = request.args.get('offset', 50, type=int)
     
@@ -1321,6 +1336,7 @@ def get_new_messages(recipient_id):
 
 @views.route('/api/send-message', methods=['POST'])
 @login_required
+@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION (Maximum 1 msg per sec average)
 def send_message():
     data = request.json
     recipient_id = data.get('recipient')
@@ -1352,6 +1368,17 @@ def send_message():
 # =================================================
 # ERROR HANDLERS
 # =================================================
+
+# 🚀 NEW: Rate Limit (Spam Protection) Global Error Handler
+@views.app_errorhandler(429)
+def ratelimit_handler(e):
+    # If it's an API request (JS fetch), return JSON
+    if request.is_json or request.path.startswith('/api/') or request.path.startswith('/like') or request.path.startswith('/save'):
+        return jsonify({'error': f"Slow down! {e.description}", 'success': False}), 429
+    
+    # If it's a normal page load (form submission), show a flash message
+    flash(f"Whoa there! You are doing that too fast. {e.description}", category='error')
+    return redirect(request.referrer or url_for('views.home'))
 
 @views.app_errorhandler(404)
 def page_not_found(e):

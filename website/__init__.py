@@ -10,11 +10,22 @@ from flask_compress import Compress
 from sqlalchemy.orm import joinedload 
 from flask_wtf.csrf import CSRFProtect 
 
+# 🚀 NEW: Import Flask-Limiter for Spam Protection
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
 socketio = SocketIO() 
 csrf = CSRFProtect() 
+
+# 🚀 NEW: Initialize Limiter globally
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=["1000 per day", "100 per hour"], # Global fallback limit
+    storage_uri="memory://" # Uses local memory, perfect for a single-server setup
+)
 
 def create_app():
     app = Flask(__name__)
@@ -54,6 +65,9 @@ def create_app():
     db.init_app(app)
     socketio.init_app(app)
     csrf.init_app(app) 
+    
+    # 🚀 NEW: Bind Limiter to the App
+    limiter.init_app(app)
 
     # BLUEPRINTS
     from .views import views
@@ -62,7 +76,7 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    # DB CREATION (🚀 NEW: Added SavedPost)
+    # DB CREATION
     from .models import User, Post, Comment, Like, Notification, Follow, Message, SavedPost
     create_database(app)
 

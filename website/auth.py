@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from .models import User, Message as ChatMessage 
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db, mail
+from . import db, mail, limiter # 🚀 NEW: Imported limiter
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
@@ -213,6 +213,7 @@ def send_welcome_email(user_email, username):
 #  STEP 1: ENTER EMAIL
 # ==========================================
 @auth.route('/sign-up', methods=['GET', 'POST'])
+@limiter.limit("10 per hour") # 🚀 SPAM PROTECTION
 def sign_up():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -245,6 +246,7 @@ def sign_up():
 #  STEP 2: VERIFY OTP
 # ==========================================
 @auth.route('/sign-up/verify', methods=['GET', 'POST'])
+@limiter.limit("15 per hour") # 🚀 SPAM PROTECTION
 def verify_otp():
     if 'signup_email' not in session:
         return redirect(url_for('auth.sign_up'))
@@ -266,6 +268,7 @@ def verify_otp():
 #  CHECK USERNAME (API)
 # ==========================================
 @auth.route('/check-username-signup', methods=['POST'])
+@limiter.limit("30 per minute") # 🚀 SPAM PROTECTION (Prevent mass username scanning)
 def check_username_signup():
     data = request.json
     username = data.get('username', '').strip().lower()
@@ -291,6 +294,7 @@ def check_username_signup():
 #  STEP 3: FINISH SIGNUP
 # ==========================================
 @auth.route('/sign-up/finish', methods=['GET', 'POST'])
+@limiter.limit("5 per hour") # 🚀 SPAM PROTECTION
 def finish_signup():
     if not session.get('email_verified'):
         return redirect(url_for('auth.sign_up'))
@@ -365,6 +369,7 @@ def confirm_email(token):
     return redirect(url_for('auth.login'))
 
 @auth.route('/login', methods=['GET', 'POST'])
+@limiter.limit("20 per minute") # 🚀 SPAM PROTECTION (Anti brute-force)
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -397,6 +402,7 @@ def login():
 #  FORGOT PASSWORD ROUTES
 # ==========================================
 @auth.route('/forgot-password', methods=['GET', 'POST'])
+@limiter.limit("5 per hour") # 🚀 SPAM PROTECTION
 def forgot_password():
     if current_user.is_authenticated:
         return redirect(url_for('views.home'))
@@ -414,6 +420,7 @@ def forgot_password():
     return render_template('reset_request.html', user=current_user)
 
 @auth.route('/reset-password/<token>', methods=['GET', 'POST'])
+@limiter.limit("5 per hour") # 🚀 SPAM PROTECTION
 def forgot_password_token(token):
     if current_user.is_authenticated:
         logout_user()
