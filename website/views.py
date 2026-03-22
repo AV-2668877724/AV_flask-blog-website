@@ -115,26 +115,27 @@ def delete_from_cloudinary(image_url):
 
 def enrich_posts(posts):
     following_ids = set()
-    saved_post_ids = set() # 🚀 NEW
+    saved_post_ids = set() 
     
     if current_user.is_authenticated:
         following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
-        saved_post_ids = {s.post_id for s in SavedPost.query.filter_by(user_id=current_user.id).all()} # 🚀 NEW
+        saved_post_ids = {s.post_id for s in SavedPost.query.filter_by(user_id=current_user.id).all()} 
 
     for post in posts:
         post.likes_count = len(post.likes)
+        post.saves_count = len(post.saved_by) # 🚀 NEW: Get total bookmark count
         
         active_comments = [c for c in post.comments if not c.is_deleted]
         post.active_comments_count = len(active_comments)
         
         post.liked = False
         post.user_is_followed = False 
-        post.saved = False # 🚀 NEW
+        post.saved = False 
         
         if current_user.is_authenticated:
             post.liked = any(l.author == current_user.id for l in post.likes)
             post.user_is_followed = post.author in following_ids
-            post.saved = post.id in saved_post_ids # 🚀 NEW
+            post.saved = post.id in saved_post_ids 
         
         for comment in active_comments:
             comment.likes_count = len(comment.likes)
@@ -386,7 +387,6 @@ def like(post_id):
 
     return jsonify({"likes": len(post.likes), "liked": liked})
 
-# 🚀 NEW: Save/Bookmark Post API
 @views.route("/save-post/<post_id>", methods=['POST'])
 @login_required
 def save_post(post_id):
@@ -406,7 +406,9 @@ def save_post(post_id):
         db.session.commit()
         saved = True
 
-    return jsonify({"saved": saved})
+    # 🚀 NEW: Send back the updated saves_count so JS can display the number
+    saves_count = len(post.saved_by)
+    return jsonify({"saved": saved, "saves_count": saves_count})
 
 # =================================================
 # NOTIFICATIONS SYSTEM
@@ -496,9 +498,8 @@ def profile(username):
         return redirect(url_for('views.home'))
 
     page = request.args.get('page', 1, type=int)
-    tab = request.args.get('tab', 'posts') # 🚀 NEW: Get active tab
+    tab = request.args.get('tab', 'posts') 
 
-    # 🚀 NEW: Handle "Saved Posts" tab securely
     if tab == 'saved' and current_user.id == user.id:
         pagination = Post.query.join(SavedPost, SavedPost.post_id == Post.id)\
             .options(
@@ -509,7 +510,7 @@ def profile(username):
             .order_by(SavedPost.date_created.desc())\
             .paginate(page=page, per_page=5, error_out=False)
     else:
-        tab = 'posts' # Default back to 'posts' if looking at someone else's profile
+        tab = 'posts' 
         pagination = Post.query.options(
             joinedload(Post.user),
             subqueryload(Post.likes),
@@ -539,7 +540,7 @@ def profile(username):
         following_count=following_count,
         total_posts=total_posts,
         is_following=is_following,
-        tab=tab # 🚀 NEW: Send active tab down to the UI
+        tab=tab 
     )
     
 @views.route('/update-profile-pic', methods=['POST'])

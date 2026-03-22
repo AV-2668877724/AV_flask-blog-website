@@ -264,6 +264,9 @@
             class="{{ 'fas text-primary' if post.saved else 'far' }} fa-bookmark"
             style="font-size: 1.35rem"
           ></i>
+          <span id="saves-count-{{ post.id }}" style="font-size: 0.95rem">
+            {% if post.saves_count > 0 %}{{ post.saves_count }}{% endif %}
+          </span>
         </button>
       </div>
 
@@ -481,6 +484,7 @@
       })
         .then((res) => res.json())
         .then((data) => {
+          // Toast Notification
           if (data.saved) {
             icon.classList.add("fas", "text-primary");
             icon.classList.remove("far");
@@ -491,6 +495,12 @@
             icon.classList.remove("fas", "text-primary");
             if (typeof showToast === "function")
               showToast("Post removed from bookmarks.");
+          }
+
+          // 🚀 UPDATE THE NUMBER dynamically
+          const countSpan = document.getElementById(`saves-count-${postId}`);
+          if (countSpan) {
+            countSpan.innerText = data.saves_count > 0 ? data.saves_count : "";
           }
         })
         .catch(() => {
