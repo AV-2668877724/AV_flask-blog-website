@@ -20,7 +20,7 @@ class Notification(db.Model):
     recipient_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=True)
     
-    action = db.Column(db.String(50), nullable=False) # 'like', 'comment', 'follow'
+    action = db.Column(db.String(50), nullable=False) # 'like', 'comment', 'follow', 'mention'
     is_read = db.Column(db.Boolean, default=False, index=True)
     
     # Single Index (Faster sorting)
@@ -71,10 +71,10 @@ class User(db.Model, UserMixin):
     posts = db.relationship('Post', backref='user', passive_deletes=True)
     comments = db.relationship('Comment', backref='user', passive_deletes=True)
     likes = db.relationship('Like', backref='user', passive_deletes=True)
-    saved_posts = db.relationship('SavedPost', backref='user_saved', passive_deletes=True) # 🚀 NEW
+    saved_posts = db.relationship('SavedPost', backref='user_saved', passive_deletes=True) 
     
 # =====================================================
-# Post Model
+# Post & Interaction Models
 # =====================================================
 
 class Post(db.Model):
@@ -94,7 +94,7 @@ class Post(db.Model):
     
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     likes = db.relationship('Like', backref='post', cascade="all, delete-orphan", passive_deletes=True)
-    saved_by = db.relationship('SavedPost', backref='post_saved', cascade="all, delete-orphan", passive_deletes=True) # 🚀 NEW
+    saved_by = db.relationship('SavedPost', backref='post_saved', cascade="all, delete-orphan", passive_deletes=True) 
     
     def likes_count(self):
         return len(self.likes)
@@ -125,7 +125,9 @@ class Message(db.Model):
 class Comment(db.Model):
     __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(200), nullable=False)
+    
+    # 🚀 FIX: Upgraded to db.Text to safely hold auto-generated HTML anchor tags for mentions
+    text = db.Column(db.Text, nullable=False) 
     
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
@@ -142,7 +144,6 @@ class Like(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
 
-# 🚀 NEW: SavedPost Model
 class SavedPost(db.Model):
     __tablename__ = 'saved_post'
     id = db.Column(db.Integer, primary_key=True)

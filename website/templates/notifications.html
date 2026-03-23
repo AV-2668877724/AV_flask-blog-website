@@ -90,6 +90,8 @@ content %}
                 class="fas fa-envelope text-info"
                 style="font-size: 0.65rem"
               ></i>
+              {% elif n.action == 'mention' %}
+              <i class="fas fa-at text-warning" style="font-size: 0.65rem"></i>
               {% endif %}
             </div>
           </div>
@@ -106,7 +108,8 @@ content %}
               {% endif %} {% if n.action == 'like' %} liked your story. {% elif
               n.action == 'comment' %} commented on your story. {% elif n.action
               == 'follow' %} started following you. {% elif n.action ==
-              'message' %} sent you a new message. {% endif %}
+              'message' %} sent you a new message. {% elif n.action == 'mention'
+              %} mentioned you in a story. {% endif %}
             </p>
             <div class="text-muted fw-bold" style="font-size: 0.75rem">
               {{ n.date_created | timeago }}

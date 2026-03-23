@@ -6,7 +6,7 @@ from flask import (
 from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message, SavedPost
 from sqlalchemy.exc import IntegrityError
-from . import db, limiter # 🚀 NEW: Imported limiter
+from . import db, limiter 
 from sqlalchemy import func, or_, desc, and_
 from werkzeug.security import check_password_hash
 from sqlalchemy.orm import joinedload, subqueryload 
@@ -36,7 +36,7 @@ QUILL_ALLOWED_TAGS = [
 ]
 
 QUILL_ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'target', 'rel'],
+    'a': ['href', 'target', 'rel', 'class'],
     '*': ['class'] 
 }
 
@@ -49,6 +49,39 @@ def sanitize_html(html_content):
         attributes=QUILL_ALLOWED_ATTRIBUTES,
         strip=True 
     )
+
+# 🚀 NEW: Auto-link Hashtags and Mentions safely
+def process_text_links(text):
+    if not text:
+        return text
+    
+    # 1. Un-linkify our existing generated links to prevent "double-wrapping" on edits
+    text = re.sub(r'<a[^>]*href="/search-page\?q=[^>]*>([^<]+)</a>', r'\1', text)
+    text = re.sub(r'<a[^>]*href="/profile/[^>]*>([^<]+)</a>', r'\1', text)
+    
+    # 2. Wrap Hashtags: Matches #word and turns it into a search link
+    text = re.sub(r'(?<![\w&])#([a-zA-Z0-9_]+)', r'<a href="/search-page?q=\1" class="text-primary text-decoration-none fw-bold">#\1</a>', text)
+    
+    # 3. Wrap Mentions: Matches @username and turns it into a profile link
+    text = re.sub(r'(?<![\w&])@([a-zA-Z0-9_.]+)', r'<a href="/profile/\1" class="text-primary text-decoration-none fw-bold">@\1</a>', text)
+    
+    return text
+
+# 🚀 NEW: Notify users when they are mentioned
+def notify_mentions(text, post_id, current_user_id):
+    if not text:
+        return
+    # Find all unique @usernames in the text
+    mentioned_usernames = set(re.findall(r'(?<![\w&])@([a-zA-Z0-9_.]+)', text))
+    
+    for uname in mentioned_usernames:
+        # Case-insensitive lookup for the user
+        mentioned_user = User.query.filter(func.lower(User.username) == uname.lower()).first()
+        
+        # Prevent notifying yourself
+        if mentioned_user and mentioned_user.id != current_user_id:
+            create_notification(current_user_id, mentioned_user.id, 'mention', post_id)
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -123,7 +156,7 @@ def enrich_posts(posts):
 
     for post in posts:
         post.likes_count = len(post.likes)
-        post.saves_count = len(post.saved_by)
+        post.saves_count = len(post.saved_by) 
         
         active_comments = [c for c in post.comments if not c.is_deleted]
         post.active_comments_count = len(active_comments)
@@ -218,7 +251,7 @@ def home():
 
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
-@limiter.limit("5 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("5 per minute")
 def create_post():
     if request.method == 'POST':
         raw_text = request.form.get('text')
@@ -228,13 +261,15 @@ def create_post():
         if not raw_text:
             flash('Post content cannot be empty!', category='error')
         else:
+            # 🚀 UPDATED: Sanitize first, THEN apply mention/hashtag links
             clean_text = sanitize_html(raw_text)
+            final_text = process_text_links(clean_text)
             
             if cover_image_file and cover_image_file.filename != '':
                 cover_image_url = upload_to_cloudinary(cover_image_file, 'posts', width=1080)
             
             post = Post(
-                text=clean_text, 
+                text=final_text, 
                 author=current_user.id, 
                 cover_image=cover_image_url,
                 date_created=datetime.utcnow() 
@@ -242,6 +277,10 @@ def create_post():
             
             db.session.add(post)
             db.session.commit()
+            
+            # 🚀 NEW: Trigger Mention Notifications
+            notify_mentions(raw_text, post.id, current_user.id)
+            
             flash('Post created successfully!', category='success')
             return redirect(url_for('views.home'))
 
@@ -249,7 +288,7 @@ def create_post():
 
 @views.route("/edit-post/<id>", methods=['GET', 'POST'])
 @login_required
-@limiter.limit("10 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("10 per minute")
 def edit_post(id):
     post = Post.query.get_or_404(id)
 
@@ -264,7 +303,8 @@ def edit_post(id):
         if not raw_text:
             flash("Post content cannot be empty.", category='error')
         else:
-            post.text = sanitize_html(raw_text)
+            # 🚀 UPDATED: Process links safely during edits
+            post.text = process_text_links(sanitize_html(raw_text))
             
             if file and file.filename != '' and allowed_file(file.filename):
                 new_image_url = upload_to_cloudinary(file, 'posts', width=1080)
@@ -273,6 +313,7 @@ def edit_post(id):
                     post.cover_image = new_image_url
                 
             db.session.commit()
+            notify_mentions(raw_text, post.id, current_user.id)
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
 
@@ -328,7 +369,7 @@ def delete_post(id):
 
 @views.route("/create-comment/<post_id>", methods=['POST'])
 @login_required
-@limiter.limit("20 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("20 per minute")
 def create_comment(post_id):
     text = request.form.get('text')
 
@@ -337,8 +378,12 @@ def create_comment(post_id):
     else:
         post = Post.query.filter_by(id=post_id).first()
         if post:
+            # 🚀 UPDATED: Sanitize completely, THEN add our custom safe Anchor tags
+            clean_text = bleach.clean(text, tags=[], strip=True)
+            final_text = process_text_links(clean_text)
+            
             comment = Comment(
-                text=text, 
+                text=final_text, 
                 author=current_user.id, 
                 post_id=post_id,
                 date_created=datetime.utcnow() 
@@ -346,7 +391,10 @@ def create_comment(post_id):
             
             db.session.add(comment)
             db.session.commit()
+            
             create_notification(current_user.id, post.author, 'comment', post.id)
+            notify_mentions(text, post.id, current_user.id) # 🚀 Notify Mentions in Comments
+            
             flash('Comment added!', category='success')
         else:
             flash('Post does not exist.', category='error')
@@ -370,7 +418,7 @@ def delete_comment(comment_id):
 
 @views.route("/like-post/<post_id>", methods=['POST'])
 @login_required
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION (Allow reasonable rapid clicking but prevent bot looping)
+@limiter.limit("60 per minute") 
 def like(post_id):
     post = Post.query.filter_by(id=post_id).first()
     like = Like.query.filter_by(author=current_user.id, post_id=post_id).first()
@@ -393,7 +441,7 @@ def like(post_id):
 
 @views.route("/save-post/<post_id>", methods=['POST'])
 @login_required
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("60 per minute")
 def save_post(post_id):
     post = Post.query.filter_by(id=post_id).first()
     if not post:
@@ -434,7 +482,8 @@ def notifications():
         seen = {}
         
         for n in notifs:
-            if n.post_id and n.action in ['like', 'comment']:
+            # 🚀 UPDATED: Included 'mention' in the grouping logic so you don't get spammed if mentioned 100 times in a thread
+            if n.post_id and n.action in ['like', 'comment', 'mention']:
                 key = (n.action, n.post_id)
                 if key not in seen:
                     n.is_grouped = False
@@ -549,7 +598,7 @@ def profile(username):
     
 @views.route('/update-profile-pic', methods=['POST'])
 @login_required
-@limiter.limit("10 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("10 per hour") 
 def update_profile_pic():
     if 'profile_pic' not in request.files:
         flash('No file provided.', category='error')
@@ -577,7 +626,7 @@ def update_profile_pic():
 
 @views.route('/edit-bio', methods=['POST'])
 @login_required
-@limiter.limit("20 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("20 per hour") 
 def edit_bio():
     new_bio = request.form.get('bio')
     if len(new_bio) > 300:
@@ -598,7 +647,7 @@ RESERVED_USERNAMES = {
 }
 
 @views.route('/check-username', methods=['POST'])
-@limiter.limit("30 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("30 per minute") 
 def check_username():
     data = request.get_json()
     username = data.get('username')
@@ -628,7 +677,7 @@ def check_username():
 
 @views.route('/change-username', methods=['POST'])
 @login_required
-@limiter.limit("5 per day") # 🚀 SPAM PROTECTION
+@limiter.limit("5 per day") 
 def change_username():
     new_username = request.form.get('username')
     
@@ -661,7 +710,7 @@ def change_username():
 
 @views.route('/add-social-link', methods=['POST'])
 @login_required
-@limiter.limit("20 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("20 per hour") 
 def add_social_link():
     link = request.form.get('new_link')
     if not link:
@@ -897,7 +946,7 @@ def admin_restore_post(post_id):
 
 @views.route('/follow/<int:user_id>', methods=['POST'])
 @login_required
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("60 per minute") 
 def follow_user(user_id):
     user_to_follow = User.query.get(user_id)
     if not user_to_follow:
@@ -918,7 +967,7 @@ def follow_user(user_id):
 
 @views.route('/unfollow/<int:user_id>', methods=['POST'])
 @login_required
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("60 per minute") 
 def unfollow_user(user_id):
     follow_record = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
     if follow_record:
@@ -974,7 +1023,7 @@ def deactivate_account():
 # =================================================
 
 @views.route('/api/search-users', methods=['GET'])
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("60 per minute") 
 def search_users_api():
     q = request.args.get('q', '').strip()
     if not q:
@@ -1115,7 +1164,7 @@ def remove_social():
 
 @views.route('/update-cover-pic', methods=['POST'])
 @login_required
-@limiter.limit("10 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("10 per hour") 
 def update_cover_pic():
     if 'cover_pic' not in request.files:
         flash('No file provided.', category='error')
@@ -1144,7 +1193,7 @@ def update_cover_pic():
 
 @views.route("/like-comment/<comment_id>", methods=['POST'])
 @login_required
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("60 per minute") 
 def like_comment(comment_id):
     comment = Comment.query.filter_by(id=comment_id).first()
     if not comment:
@@ -1256,7 +1305,7 @@ def chat(username):
 
 @views.route('/api/chat-history/<int:recipient_id>')
 @login_required
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION
+@limiter.limit("60 per minute") 
 def chat_history(recipient_id):
     offset = request.args.get('offset', 50, type=int)
     
@@ -1336,7 +1385,7 @@ def get_new_messages(recipient_id):
 
 @views.route('/api/send-message', methods=['POST'])
 @login_required
-@limiter.limit("60 per minute") # 🚀 SPAM PROTECTION (Maximum 1 msg per sec average)
+@limiter.limit("60 per minute") 
 def send_message():
     data = request.json
     recipient_id = data.get('recipient')
@@ -1369,14 +1418,11 @@ def send_message():
 # ERROR HANDLERS
 # =================================================
 
-# 🚀 NEW: Rate Limit (Spam Protection) Global Error Handler
 @views.app_errorhandler(429)
 def ratelimit_handler(e):
-    # If it's an API request (JS fetch), return JSON
     if request.is_json or request.path.startswith('/api/') or request.path.startswith('/like') or request.path.startswith('/save'):
         return jsonify({'error': f"Slow down! {e.description}", 'success': False}), 429
     
-    # If it's a normal page load (form submission), show a flash message
     flash(f"Whoa there! You are doing that too fast. {e.description}", category='error')
     return redirect(request.referrer or url_for('views.home'))
 

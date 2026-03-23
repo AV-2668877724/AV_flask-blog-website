@@ -395,6 +395,7 @@
                 >
                   {{ comment.user.username }}
                 </a>
+
                 <p
                   class="mb-0"
                   style="
@@ -403,7 +404,7 @@
                     line-height: 1.4;
                   "
                 >
-                  {{ comment.text }}
+                  {{ comment.text|safe }}
                 </p>
               </div>
 
@@ -484,7 +485,6 @@
       })
         .then((res) => res.json())
         .then((data) => {
-          // Toast Notification
           if (data.saved) {
             icon.classList.add("fas", "text-primary");
             icon.classList.remove("far");
@@ -497,7 +497,6 @@
               showToast("Post removed from bookmarks.");
           }
 
-          // 🚀 UPDATE THE NUMBER dynamically
           const countSpan = document.getElementById(`saves-count-${postId}`);
           if (countSpan) {
             countSpan.innerText = data.saves_count > 0 ? data.saves_count : "";
