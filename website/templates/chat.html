@@ -1,43 +1,72 @@
 {% extends "base.html" %} {% block title %}Chat with {{ recipient.username }}{%
 endblock %} {% block content %}
 <style>
-  /* 🚀 FIX: Hide BOTH the global footer and the mobile bottom navigation bar */
+  /* 🚀 ULTIMATE FULL-SCREEN FIX: Hide everything from base.html */
+  nav,
+  .navbar,
   footer,
   .footer,
-  .mobile-nav {
+  .mobile-nav,
+  body > p,
+  .text-center.mt-4,
+  .text-muted.small {
     display: none !important;
   }
 
-  /* Lock the body so the background page cannot scroll behind the chat */
-  body {
-    overflow: hidden !important;
-    background-color: var(--bg-main);
+  /* 🚀 NUKE BOOTSTRAP CONTAINER CONSTRAINTS FROM BASE.HTML */
+  html,
+  body,
+  main,
+  .container,
+  .container-fluid,
+  .row,
+  .col,
+  .pb-5,
+  .pt-4 {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 
-  /* Full-Screen Edge-to-Edge Chat Layout */
+  /* Lock the body so absolutely nothing else can scroll or show */
+  body {
+    overflow: hidden !important;
+    background-color: var(--bg-main) !important;
+  }
+
+  /* 🚀 FIX: Forced to cover 100vw/100vh with box-sizing */
   .chat-wrapper {
-    position: fixed;
-    top: 65px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1040;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 999999 !important;
     display: flex;
     justify-content: center;
     background-color: var(--bg-main);
+    box-sizing: border-box !important;
   }
 
+  /* 🚀 FIX: Removed all max-width constraints */
   .chat-card {
     background-color: var(--bg-card);
-    width: 100%;
-    max-width: 100%; /* Stretches 100% across the screen */
-    height: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     border: none !important;
-    border-radius: 0;
-    box-shadow: none;
+    border-radius: 0 !important;
+    box-shadow: none !important;
   }
 
   /* Chat Header */
@@ -124,7 +153,7 @@ endblock %} {% block content %}
     word-wrap: break-word;
   }
 
-  /* 🚀 NEW: Link Preview Overrides for Chat Bubbles */
+  /* Link Preview Overrides for Chat Bubbles */
   .msg-bubble .card {
     margin-top: 10px;
     margin-bottom: 5px;
@@ -137,7 +166,7 @@ endblock %} {% block content %}
     color: #000 !important;
   }
   .msg-mine a.text-primary {
-    color: #ffd166 !important; /* Make mentions/tags pop on the blue bubble */
+    color: #ffd166 !important;
   }
 
   .msg-actions {
@@ -203,7 +232,6 @@ endblock %} {% block content %}
     padding: 0.6rem 3.5rem 0.6rem 1.5rem;
     transition: all var(--trans-smooth);
     width: 100%;
-    max-width: 1200px;
     margin: 0 auto;
   }
   .chat-input-wrapper:focus-within {
@@ -245,10 +273,6 @@ endblock %} {% block content %}
 
   /* Mobile specific adjustments */
   @media (max-width: 768px) {
-    .chat-wrapper {
-      top: 60px;
-      bottom: 0px;
-    }
     .chat-input-area {
       padding: 0.8rem 1rem;
       padding-bottom: calc(0.8rem + env(safe-area-inset-bottom));
@@ -668,7 +692,6 @@ endblock %} {% block content %}
         (msgSender === recipientId && msgRecipient === currentUserId)
       ) {
         const isMine = msgSender === currentUserId;
-        // InnerHTML is used below, so the HTML renders cleanly!
         appendMessageToUI(msg.text, formatLocalTime(msg.time), isMine, msg.id);
 
         if (!isMine && typingIndicator) {
