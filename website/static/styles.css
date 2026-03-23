@@ -351,3 +351,10 @@ body.dark-mode input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important;
   -webkit-text-fill-color: var(--text-main) !important;
 }
+/* 🚀 FIX: Make placeholder text readable in Dark Mode */
+body.dark-mode .form-control::placeholder,
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.8 !important;
+}
