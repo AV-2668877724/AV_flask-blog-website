@@ -17,6 +17,9 @@ from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
 import bleach 
 
+import requests
+from bs4 import BeautifulSoup
+
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
@@ -32,12 +35,16 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 QUILL_ALLOWED_TAGS = [
     'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'a', 
     'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
-    'blockquote', 'span', 'pre'
+    'blockquote', 'span', 'pre', 'div', 'img' 
 ]
 
 QUILL_ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'target', 'rel', 'class'],
-    '*': ['class'] 
+    'a': ['href', 'target', 'rel', 'class', 'style'],
+    'img': ['src', 'class', 'style'],
+    'div': ['class', 'style'],
+    'p': ['class', 'style'],
+    'h6': ['class', 'style'],
+    '*': ['class', 'style'] 
 }
 
 def sanitize_html(html_content):
@@ -50,35 +57,114 @@ def sanitize_html(html_content):
         strip=True 
     )
 
-# 🚀 NEW: Auto-link Hashtags and Mentions safely
+def generate_link_preview(url):
+    try:
+        # Prevent local network scanning 
+        if "localhost" in url or "127.0.0.1" in url or not url.startswith("http"):
+            return ""
+            
+        # 🚀 NEW: Special bypass specifically for YouTube Links using their API
+        if "youtube.com" in url or "youtu.be" in url:
+            oembed_url = f"https://www.youtube.com/oembed?url={url}&format=json"
+            response = requests.get(oembed_url, timeout=3)
+            
+            if response.status_code == 200:
+                data = response.json()
+                t = data.get("title", "YouTube Video")
+                i = data.get("thumbnail_url", "")
+                author = data.get("author_name", "")
+                
+                return f"""
+                <div class="og-link-preview-wrapper mt-3 mb-2">
+                    <div class="card shadow-sm" style="border-radius: 12px; overflow: hidden; max-width: 500px; border: 1px solid var(--border-color); background-color: var(--bg-card);">
+                        <a href="{url}" target="_blank" class="text-decoration-none" style="color: inherit;">
+                            <div class="position-relative" style="height: 200px; overflow: hidden; background-color: #000;">
+                                <img src="{i}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;">
+                                <div class="position-absolute top-50 start-50 translate-middle">
+                                    <i class="fab fa-youtube text-danger" style="font-size: 3.5rem; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); background: white; border-radius: 30px; line-height: 1;"></i>
+                                </div>
+                            </div>
+                            <div class="p-3" style="background-color: var(--bg-card);">
+                                <h6 class="fw-bold mb-1 text-truncate" style="color: var(--text-main); font-size: 0.95rem;">{t}</h6>
+                                <p class="small text-muted mb-0"><i class="fas fa-video me-1"></i> {author}</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>"""
+
+        # 🚀 STANDARD WEBSITES: Fallback to Beautiful Soup scraping
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        response = requests.get(url, headers=headers, timeout=2.5)
+        
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            title = soup.find("meta", property="og:title")
+            description = soup.find("meta", property="og:description")
+            image = soup.find("meta", property="og:image")
+            
+            t = title["content"] if title and title.get("content") else soup.title.string if soup.title else ""
+            d = description["content"] if description and description.get("content") else ""
+            i = image["content"] if image and image.get("content") else ""
+            
+            if t and i:
+                return f"""
+                <div class="og-link-preview-wrapper mt-3 mb-2">
+                    <div class="card shadow-sm" style="border-radius: 12px; overflow: hidden; max-width: 500px; border: 1px solid var(--border-color); background-color: var(--bg-card);">
+                        <a href="{url}" target="_blank" class="text-decoration-none" style="color: inherit;">
+                            <div style="height: 200px; overflow: hidden; background-color: #f8f9fa;">
+                                <img src="{i}" style="width: 100%; height: 100%; object-fit: cover;">
+                            </div>
+                            <div class="p-3" style="background-color: var(--bg-card);">
+                                <h6 class="fw-bold mb-1 text-truncate" style="color: var(--text-main); font-size: 0.95rem;">{t}</h6>
+                                <p class="small text-muted mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{d}</p>
+                                <div class="small mt-2" style="color: var(--primary); font-weight: 600;"><i class="fas fa-external-link-alt me-1"></i>Visit link</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>"""
+    except Exception as e:
+        print(f"Link Preview Error for {url}: {e}")
+        pass
+    return ""
+
 def process_text_links(text):
     if not text:
         return text
     
-    # 1. Un-linkify our existing generated links to prevent "double-wrapping" on edits
+    text = re.sub(r'<div class="og-link-preview-wrapper">.*?', '', text, flags=re.DOTALL)
+    
     text = re.sub(r'<a[^>]*href="/search-page\?q=[^>]*>([^<]+)</a>', r'\1', text)
     text = re.sub(r'<a[^>]*href="/profile/[^>]*>([^<]+)</a>', r'\1', text)
     
-    # 2. Wrap Hashtags: Matches #word and turns it into a search link
+    first_url = None
+    anchor_match = re.search(r'<a[^>]*href="(https?://[^"]+)"', text)
+    if anchor_match:
+        first_url = anchor_match.group(1)
+    else:
+        raw_match = re.search(r'(https?://[^\s<]+)', text)
+        if raw_match:
+            first_url = raw_match.group(1)
+            text = re.sub(r'(?<!href=")(https?://[^\s<]+)', r'<a href="\1" target="_blank" class="text-primary text-decoration-none">\1</a>', text)
+
     text = re.sub(r'(?<![\w&])#([a-zA-Z0-9_]+)', r'<a href="/search-page?q=\1" class="text-primary text-decoration-none fw-bold">#\1</a>', text)
     
-    # 3. Wrap Mentions: Matches @username and turns it into a profile link
     text = re.sub(r'(?<![\w&])@([a-zA-Z0-9_.]+)', r'<a href="/profile/\1" class="text-primary text-decoration-none fw-bold">@\1</a>', text)
     
+    if first_url:
+        preview_html = generate_link_preview(first_url)
+        if preview_html:
+            text += preview_html
+
     return text
 
-# 🚀 NEW: Notify users when they are mentioned
 def notify_mentions(text, post_id, current_user_id):
     if not text:
         return
-    # Find all unique @usernames in the text
     mentioned_usernames = set(re.findall(r'(?<![\w&])@([a-zA-Z0-9_.]+)', text))
     
     for uname in mentioned_usernames:
-        # Case-insensitive lookup for the user
         mentioned_user = User.query.filter(func.lower(User.username) == uname.lower()).first()
-        
-        # Prevent notifying yourself
         if mentioned_user and mentioned_user.id != current_user_id:
             create_notification(current_user_id, mentioned_user.id, 'mention', post_id)
 
@@ -261,7 +347,6 @@ def create_post():
         if not raw_text:
             flash('Post content cannot be empty!', category='error')
         else:
-            # 🚀 UPDATED: Sanitize first, THEN apply mention/hashtag links
             clean_text = sanitize_html(raw_text)
             final_text = process_text_links(clean_text)
             
@@ -278,7 +363,6 @@ def create_post():
             db.session.add(post)
             db.session.commit()
             
-            # 🚀 NEW: Trigger Mention Notifications
             notify_mentions(raw_text, post.id, current_user.id)
             
             flash('Post created successfully!', category='success')
@@ -303,7 +387,6 @@ def edit_post(id):
         if not raw_text:
             flash("Post content cannot be empty.", category='error')
         else:
-            # 🚀 UPDATED: Process links safely during edits
             post.text = process_text_links(sanitize_html(raw_text))
             
             if file and file.filename != '' and allowed_file(file.filename):
@@ -378,7 +461,6 @@ def create_comment(post_id):
     else:
         post = Post.query.filter_by(id=post_id).first()
         if post:
-            # 🚀 UPDATED: Sanitize completely, THEN add our custom safe Anchor tags
             clean_text = bleach.clean(text, tags=[], strip=True)
             final_text = process_text_links(clean_text)
             
@@ -393,7 +475,7 @@ def create_comment(post_id):
             db.session.commit()
             
             create_notification(current_user.id, post.author, 'comment', post.id)
-            notify_mentions(text, post.id, current_user.id) # 🚀 Notify Mentions in Comments
+            notify_mentions(text, post.id, current_user.id) 
             
             flash('Comment added!', category='success')
         else:
@@ -482,7 +564,6 @@ def notifications():
         seen = {}
         
         for n in notifs:
-            # 🚀 UPDATED: Included 'mention' in the grouping logic so you don't get spammed if mentioned 100 times in a thread
             if n.post_id and n.action in ['like', 'comment', 'mention']:
                 key = (n.action, n.post_id)
                 if key not in seen:
@@ -1394,10 +1475,11 @@ def send_message():
     if not raw_text:
         return jsonify({'success': False}), 400
         
-    text = bleach.clean(raw_text, tags=[], strip=True)
+    clean_text = bleach.clean(raw_text, tags=[], strip=True)
+    final_text = process_text_links(clean_text)
     
     new_message = Message(
-        text=text, 
+        text=final_text, 
         sender_id=current_user.id, 
         recipient_id=recipient_id,
         date_created=datetime.utcnow() 

@@ -6,6 +6,9 @@ from flask_socketio import emit, join_room, leave_room
 from datetime import datetime
 import bleach # 🚀 FIX 1: Import bleach for XSS protection
 
+# 🚀 IMPORT THE PROCESSOR FROM VIEWS FOR LINK PREVIEWS & TAGS
+from .views import process_text_links
+
 # ==================================================
 # SOCKET.IO EVENT HANDLERS
 # ==================================================
@@ -62,9 +65,12 @@ def handle_send_message_event(data):
     clean_text = bleach.clean(raw_text, tags=[], attributes={}, strip=True)
     if not clean_text: return # Prevent sending empty messages if they only typed HTML
     
+    # 🚀 NEW: Generate Link Previews, Mentions, and Hashtags!
+    final_text = process_text_links(clean_text)
+    
     # 1. Save to Database
     new_message = Message(
-        text=clean_text, 
+        text=final_text, 
         sender_id=current_user.id, 
         recipient_id=recipient_id,
         visible_to_sender=True,
