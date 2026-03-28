@@ -6,7 +6,9 @@ from flask import (
 from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message, SavedPost
 from sqlalchemy.exc import IntegrityError
-from . import db, limiter 
+
+from . import db, limiter
+
 from sqlalchemy import func, or_, desc, and_
 from werkzeug.security import check_password_hash
 from sqlalchemy.orm import joinedload, subqueryload 
@@ -59,11 +61,9 @@ def sanitize_html(html_content):
 
 def generate_link_preview(url):
     try:
-        # Prevent local network scanning 
         if "localhost" in url or "127.0.0.1" in url or not url.startswith("http"):
             return ""
             
-        # 🚀 NEW: Special bypass specifically for YouTube Links using their API
         if "youtube.com" in url or "youtu.be" in url:
             oembed_url = f"https://www.youtube.com/oembed?url={url}&format=json"
             response = requests.get(oembed_url, timeout=3)
@@ -92,7 +92,6 @@ def generate_link_preview(url):
                     </div>
                 </div>"""
 
-        # 🚀 STANDARD WEBSITES: Fallback to Beautiful Soup scraping
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
         response = requests.get(url, headers=headers, timeout=2.5)
         
@@ -149,7 +148,15 @@ def process_text_links(text):
 
     text = re.sub(r'(?<![\w&])#([a-zA-Z0-9_]+)', r'<a href="/search-page?q=\1" class="text-primary text-decoration-none fw-bold">#\1</a>', text)
     
-    text = re.sub(r'(?<![\w&])@([a-zA-Z0-9_.]+)', r'<a href="/profile/\1" class="text-primary text-decoration-none fw-bold">@\1</a>', text)
+    # MENTIONS
+    def replace_mention(match):
+        uname = match.group(1)
+        u = User.query.filter(func.lower(User.username) == uname.lower()).first()
+        if u:
+            return f'<a href="/profile/{u.username}" class="text-primary text-decoration-none fw-bold">@{u.username}</a>'
+        return match.group(0) 
+    
+    text = re.sub(r'(?<![\w&])@([a-zA-Z0-9_.]+)', replace_mention, text)
     
     if first_url:
         preview_html = generate_link_preview(first_url)
@@ -168,7 +175,6 @@ def notify_mentions(text, post_id, current_user_id):
         if mentioned_user and mentioned_user.id != current_user_id:
             create_notification(current_user_id, mentioned_user.id, 'mention', post_id)
 
-
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -182,11 +188,7 @@ def upload_to_cloudinary(file, folder_name, width=None, height=None):
     )
     
     try:
-        transformations = {
-            "fetch_format": "auto",
-            "quality": "auto"
-        }
-        
+        transformations = {"fetch_format": "auto", "quality": "auto"}
         if width and height:
             transformations["width"] = width
             transformations["height"] = height
@@ -218,16 +220,13 @@ def delete_from_cloudinary(image_url):
     
     try:
         path = image_url.split('/upload/')[1]
-        
         if path.startswith('v') and '/' in path:
             version_str = path.split('/')[0]
             if version_str[1:].isdigit():
                 path = path.split('/', 1)[1]
         
         public_id = path.rsplit('.', 1)[0]
-        
         cloudinary.uploader.destroy(public_id)
-        print(f"✅ Deleted from Cloudinary: {public_id}")
         
     except Exception as e:
         print(f"❌ Cloudinary deletion error: {e}")
@@ -370,7 +369,7 @@ def create_post():
 
     return render_template('create_posts.html', user=current_user)
 
-@views.route("/edit-post/<id>", methods=['GET', 'POST'])
+@views.route("/edit-post/<int:id>", methods=['GET', 'POST'])
 @login_required
 @limiter.limit("10 per minute")
 def edit_post(id):
@@ -406,7 +405,7 @@ def edit_post(id):
 
     return render_template("edit_post.html", user=current_user, post=post, content_to_edit=content_to_edit)
 
-@views.route("/posts/<username>")
+@views.route("/posts/<string:username>")
 @login_required
 def posts(username):
     user = User.query.filter_by(username=username).first_or_404()
@@ -427,17 +426,15 @@ def posts(username):
         user=current_user,
         posts=posts,
         pagination=pagination,
-        username=username
+        username=user.username
     )
 
-@views.route("/delete-post/<id>")
+@views.route("/delete-post/<int:id>")
 @login_required
 def delete_post(id):
-    post = Post.query.get(id)
+    post = Post.query.get_or_404(id)
     
-    if not post:
-        flash("Post does not exist.", category='error')
-    elif current_user.id != post.author and not current_user.is_admin:
+    if current_user.id != post.author and not current_user.is_admin:
         flash("You do not have permission to delete this post.", category='error')
     else:
         post.is_deleted = True
@@ -450,14 +447,14 @@ def delete_post(id):
 # COMMENTS, LIKES & SAVES
 # =================================================
 
-@views.route("/create-comment/<post_id>", methods=['POST'])
+@views.route("/create-comment/<int:post_id>", methods=['POST'])
 @login_required
 @limiter.limit("20 per minute")
 def create_comment(post_id):
     text = request.form.get('text')
 
     if not text:
-        flash('Comment cannot be empty.', category='error')
+        flash('Invalid submission.', category='error')
     else:
         post = Post.query.filter_by(id=post_id).first()
         if post:
@@ -483,13 +480,12 @@ def create_comment(post_id):
 
     return redirect(url_for('views.home'))
 
-@views.route("/delete-comment/<comment_id>")
+@views.route("/delete-comment/<int:comment_id>")
 @login_required
 def delete_comment(comment_id):
-    comment = Comment.query.filter_by(id=comment_id).first()
-    if not comment:
-        flash('Comment does not exist.', category='error')
-    elif current_user.id != comment.author and not current_user.is_admin:
+    comment = Comment.query.get_or_404(comment_id)
+    
+    if current_user.id != comment.author and not current_user.is_admin:
         flash('You do not have permission to delete this comment.', category='error')
     else:
         comment.is_deleted = True
@@ -498,15 +494,12 @@ def delete_comment(comment_id):
 
     return redirect(request.referrer or url_for('views.home'))
 
-@views.route("/like-post/<post_id>", methods=['POST'])
+@views.route("/like-post/<int:post_id>", methods=['POST'])
 @login_required
 @limiter.limit("60 per minute") 
 def like(post_id):
-    post = Post.query.filter_by(id=post_id).first()
+    post = Post.query.get_or_404(post_id)
     like = Like.query.filter_by(author=current_user.id, post_id=post_id).first()
-
-    if not post:
-        return jsonify({'error': 'Post not found'}), 404
 
     liked = False
     if like:
@@ -521,14 +514,11 @@ def like(post_id):
 
     return jsonify({"likes": len(post.likes), "liked": liked})
 
-@views.route("/save-post/<post_id>", methods=['POST'])
+@views.route("/save-post/<int:post_id>", methods=['POST'])
 @login_required
 @limiter.limit("60 per minute")
 def save_post(post_id):
-    post = Post.query.filter_by(id=post_id).first()
-    if not post:
-        return jsonify({'error': 'Post not found'}), 404
-
+    post = Post.query.get_or_404(post_id)
     saved_post = SavedPost.query.filter_by(user_id=current_user.id, post_id=post_id).first()
     saved = False
 
@@ -619,13 +609,10 @@ def mark_notifications_read():
 # PROFILE & SETTINGS
 # =================================================
 
-@views.route("/profile/<username>")
+@views.route("/profile/<string:username>")
 @login_required
 def profile(username):
-    user = User.query.filter_by(username=username).first()
-    if not user:
-        flash('No user with that username exists.', category='error')
-        return redirect(url_for('views.home'))
+    user = User.query.filter_by(username=username).first_or_404()
 
     if user.is_admin and not current_user.is_admin:
         flash('This profile is private and cannot be viewed.', category='error')
@@ -839,7 +826,7 @@ def admin_dashboard():
         comments=comments,
         user=current_user
     )
-    
+
 @views.route('/admin/delete-user/<int:user_id>', methods=['POST'])
 @login_required
 def admin_delete_user(user_id):
@@ -851,29 +838,25 @@ def admin_delete_user(user_id):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
-    user_to_delete = User.query.get(user_id)
-    if user_to_delete:
-        if user_to_delete.is_admin:
-             flash("Cannot delete another admin", category='error')
-        else:
-            delete_from_cloudinary(user_to_delete.profile_pic)
-            delete_from_cloudinary(user_to_delete.cover_pic)
-            
-            db.session.delete(user_to_delete)
-            db.session.commit()
-            flash(f"User {user_to_delete.username} deleted permanently.", category='success')
+    user_to_delete = User.query.get_or_404(user_id)
+    if user_to_delete.is_admin:
+         flash("Cannot delete another admin", category='error')
     else:
-        flash("User not found", category='error')
+        delete_from_cloudinary(user_to_delete.profile_pic)
+        delete_from_cloudinary(user_to_delete.cover_pic)
+        
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        flash(f"User {user_to_delete.username} deleted permanently.", category='success')
+        
     return redirect(url_for('views.admin_dashboard'))
 
-@views.route("/restore-post/<id>")
+@views.route("/restore-post/<int:id>")
 @login_required
 def restore_post(id):
-    post = Post.query.get(id)
+    post = Post.query.get_or_404(id)
     
-    if not post:
-        flash("Post does not exist.", category='error')
-    elif not current_user.is_admin:
+    if not current_user.is_admin:
         flash("Only Admins can restore posts.", category='error')
     else:
         post.is_deleted = False
@@ -893,10 +876,7 @@ def admin_toggle_user_status(user_id):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
 
-    user = User.query.get(user_id)
-    if not user:
-        flash('User not found', category='error')
-        return redirect(url_for('views.admin_dashboard'))
+    user = User.query.get_or_404(user_id)
     
     if user.is_admin:
         flash('Cannot deactivate an admin.', category='error')
@@ -920,11 +900,10 @@ def admin_delete_post(post_id):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
-    post = Post.query.get(post_id)
-    if post:
-        post.is_deleted = True
-        db.session.commit()
-        flash("Post moved to trash.", category='success')
+    post = Post.query.get_or_404(post_id)
+    post.is_deleted = True
+    db.session.commit()
+    flash("Post moved to trash.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin/permanent-delete-post/<int:post_id>', methods=['POST'])
@@ -938,12 +917,11 @@ def admin_permanent_delete_post(post_id):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
-    post = Post.query.get(post_id)
-    if post:
-        delete_from_cloudinary(post.cover_image)
-        db.session.delete(post)
-        db.session.commit()
-        flash("Post permanently deleted.", category='success')
+    post = Post.query.get_or_404(post_id)
+    delete_from_cloudinary(post.cover_image)
+    db.session.delete(post)
+    db.session.commit()
+    flash("Post permanently deleted.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin/delete-comment/<int:comment_id>', methods=['POST'])
@@ -957,11 +935,10 @@ def admin_delete_comment(comment_id):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
-    comment = Comment.query.get(comment_id)
-    if comment:
-        comment.is_deleted = True
-        db.session.commit()
-        flash("Comment hidden.", category='success')
+    comment = Comment.query.get_or_404(comment_id)
+    comment.is_deleted = True
+    db.session.commit()
+    flash("Comment hidden.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin-permanent-delete-comment/<int:comment_id>', methods=['POST'])
@@ -976,13 +953,10 @@ def admin_permanent_delete_comment(comment_id):
         flash("Invalid admin password.", category='error')
         return redirect(url_for('views.admin_dashboard'))
 
-    comment = Comment.query.get(comment_id)
-    if comment:
-        db.session.delete(comment)
-        db.session.commit()
-        flash('Comment permanently deleted.', category='success')
-    else:
-        flash('Comment not found.', category='error')
+    comment = Comment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    flash('Comment permanently deleted.', category='success')
         
     return redirect(url_for('views.admin_dashboard'))
 
@@ -997,11 +971,10 @@ def admin_restore_comment(comment_id):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
-    comment = Comment.query.get(comment_id)
-    if comment:
-        comment.is_deleted = False
-        db.session.commit()
-        flash("Comment restored.", category='success')
+    comment = Comment.query.get_or_404(comment_id)
+    comment.is_deleted = False
+    db.session.commit()
+    flash("Comment restored.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
 @views.route('/admin/restore-post/<int:post_id>', methods=['POST'])
@@ -1014,11 +987,10 @@ def admin_restore_post(post_id):
         flash("Incorrect password", category='error')
         return redirect(url_for('views.admin_dashboard'))
         
-    post = Post.query.get(post_id)
-    if post:
-        post.is_deleted = False
-        db.session.commit()
-        flash("Post restored.", category='success')
+    post = Post.query.get_or_404(post_id)
+    post.is_deleted = False
+    db.session.commit()
+    flash("Post restored.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
 # =================================================
@@ -1029,9 +1001,7 @@ def admin_restore_post(post_id):
 @login_required
 @limiter.limit("60 per minute") 
 def follow_user(user_id):
-    user_to_follow = User.query.get(user_id)
-    if not user_to_follow:
-        return jsonify({'error': 'User not found'}), 404
+    user_to_follow = User.query.get_or_404(user_id)
     if user_to_follow.id == current_user.id:
         return jsonify({'error': 'Cannot follow self'}), 400
         
@@ -1057,7 +1027,7 @@ def unfollow_user(user_id):
         return jsonify({'success': True, 'action': 'unfollowed'})
     return jsonify({'success': False, 'message': 'Not following'})
 
-@views.route("/followers/<username>")
+@views.route("/followers/<string:username>")
 @login_required
 def followers_list(username):
     user = User.query.filter_by(username=username).first_or_404()
@@ -1066,7 +1036,7 @@ def followers_list(username):
     following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
     return render_template("followers.html", profile_user=user, users=followers, following_ids=following_ids, title="Followers")
 
-@views.route("/following/<username>")
+@views.route("/following/<string:username>")
 @login_required
 def following_list(username):
     user = User.query.filter_by(username=username).first_or_404()
@@ -1119,7 +1089,7 @@ def search_users_api():
     for u in users:
         results.append({
             'username': u.username,
-            'profile_pic': u.profile_pic
+            'profile_pic': u.profile_pic,
         })
     return jsonify(results)
 
@@ -1272,14 +1242,11 @@ def update_cover_pic():
         
     return redirect(url_for('views.profile', username=current_user.username))
 
-@views.route("/like-comment/<comment_id>", methods=['POST'])
+@views.route("/like-comment/<int:comment_id>", methods=['POST'])
 @login_required
 @limiter.limit("60 per minute") 
 def like_comment(comment_id):
-    comment = Comment.query.filter_by(id=comment_id).first()
-    if not comment:
-        return jsonify({'error': 'Comment not found'}), 404
-
+    comment = Comment.query.get_or_404(comment_id)
     like = CommentLike.query.filter_by(author=current_user.id, comment_id=comment_id).first()
     liked = False
 
@@ -1294,17 +1261,13 @@ def like_comment(comment_id):
     db.session.commit()
     return jsonify({"likes": len(comment.likes), "liked": liked})
 
-@views.route("/post/<id>")
+@views.route("/post/<int:id>")
 def post_view(id):
     post = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
         subqueryload(Post.comments).joinedload(Comment.user)
-    ).get(id)
-    
-    if not post:
-        flash('Post does not exist.', category='error')
-        return redirect(url_for('views.home'))
+    ).get_or_404(id)
     
     posts = enrich_posts([post])
     
@@ -1345,14 +1308,10 @@ def inbox():
     
     return render_template("inbox.html", user=current_user, chats=list(conversations.values()))
 
-@views.route('/chat/<username>')
+@views.route('/chat/<string:username>')
 @login_required
 def chat(username):
-    recipient = User.query.filter_by(username=username).first()
-    
-    if not recipient:
-        flash('User not found.', category='error')
-        return redirect(url_for('views.home'))
+    recipient = User.query.filter_by(username=username).first_or_404()
 
     unread_msgs = Message.query.filter_by(
         sender_id=recipient.id, 
@@ -1408,7 +1367,7 @@ def chat_history(recipient_id):
     data = []
     for msg in older_messages_desc:
         data.append({
-            'id': msg.id,
+            'id': msg.id, 
             'text': msg.text,
             'sender_id': msg.sender_id,
             'time': msg.date_created.isoformat() + 'Z' 
@@ -1416,12 +1375,10 @@ def chat_history(recipient_id):
     
     return jsonify(data)
 
-@views.route('/api/delete-message/<id>', methods=['POST'])
+@views.route('/api/delete-message/<int:id>', methods=['POST'])
 @login_required
 def delete_message(id):
-    msg = Message.query.get(id)
-    if not msg:
-        return jsonify({'error': 'Message not found'}), 404
+    msg = Message.query.get_or_404(id)
 
     if msg.sender_id == current_user.id:
         msg.visible_to_sender = False 
@@ -1436,7 +1393,7 @@ def delete_message(id):
 @views.route('/api/get-messages/<int:recipient_id>')
 @login_required
 def get_new_messages(recipient_id):
-    last_id = request.args.get('last_id', 0, type=int)
+    last_id = request.args.get('last_id', 0, type=int) 
 
     new_messages = Message.query.filter(
         or_(
@@ -1470,9 +1427,9 @@ def get_new_messages(recipient_id):
 def send_message():
     data = request.json
     recipient_id = data.get('recipient')
-    
     raw_text = data.get('text')
-    if not raw_text:
+    
+    if not raw_text or not recipient_id:
         return jsonify({'success': False}), 400
         
     clean_text = bleach.clean(raw_text, tags=[], strip=True)
@@ -1491,7 +1448,7 @@ def send_message():
     
     return jsonify({
         'success': True, 
-        'id': new_message.id, 
+        'id': new_message.id,
         'text': new_message.text, 
         'time': new_message.date_created.isoformat() + 'Z' 
     })

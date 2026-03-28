@@ -161,7 +161,10 @@
         >
           {{ post.text|safe }}
         </div>
-        <div class="fade-overlay" id="fade-overlay-{{ post.id }}"></div>
+        <div
+          class="fade-overlay"
+          id="fade-overlay-{{ post.id }}"
+        ></div>
       </div>
       <div
         role="button"
@@ -227,7 +230,9 @@
               style="font-size: 1.4rem"
             ></i>
           </span>
-          <span id="likes-count-{{ post.id }}" style="font-size: 0.95rem"
+          <span
+            id="likes-count-{{ post.id }}"
+            style="font-size: 0.95rem"
             >{{ post.likes_count }}</span
           >
         </button>
@@ -264,7 +269,10 @@
             class="{{ 'fas text-primary' if post.saved else 'far' }} fa-bookmark"
             style="font-size: 1.35rem"
           ></i>
-          <span id="saves-count-{{ post.id }}" style="font-size: 0.95rem">
+          <span
+            id="saves-count-{{ post.id }}"
+            style="font-size: 0.95rem"
+          >
             {% if post.saves_count > 0 %}{{ post.saves_count }}{% endif %}
           </span>
         </button>
@@ -395,7 +403,6 @@
                 >
                   {{ comment.user.username }}
                 </a>
-
                 <p
                   class="mb-0"
                   style="
@@ -497,7 +504,9 @@
               showToast("Post removed from bookmarks.");
           }
 
-          const countSpan = document.getElementById(`saves-count-${postId}`);
+          const countSpan = document.getElementById(
+            `saves-count-${postId}`,
+          );
           if (countSpan) {
             countSpan.innerText = data.saves_count > 0 ? data.saves_count : "";
           }
