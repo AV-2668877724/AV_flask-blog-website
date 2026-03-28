@@ -53,25 +53,54 @@
     </div>
 
     <div id="posts-container" class="post-feed">
-      {% if posts %} {% include "_posts.html" %} {% else %}
-      <div class="text-center py-5 my-5">
-        <div
-          class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-4"
-          style="width: 80px; height: 80px"
-        >
-          <i class="bi bi-journal-richtext fa-2x"></i>
+      {% if posts %} 
+        {% include "_posts.html" %} 
+      {% else %}
+      
+      <div class="py-5 my-4 fade-in-up" style="background-color: var(--bg-card); border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+        <div class="text-center px-3 mb-4">
+          <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 70px; height: 70px">
+            <i class="fas fa-user-friends fa-2x"></i>
+          </div>
+          <h4 class="fw-bold font-heading mb-2" style="color: var(--text-main)">Welcome to AV Postory!</h4>
+          <p class="text-muted mx-auto" style="max-width: 500px;">Your feed is currently empty. Follow some of our top creators to start seeing amazing stories, or publish your own!</p>
         </div>
-        <h4 class="fw-bold font-heading mb-2" style="color: var(--text-main)">
-          Your Feed is Empty
-        </h4>
-        <p class="text-muted mb-4">
-          Follow some creators or publish your first story to get started.
-        </p>
-        <a
-          href="{{ url_for('views.create_post') }}"
-          class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
-          >Write a Story</a
-        >
+
+        {% if suggested_users %}
+        <div class="px-4 px-md-5 mb-5">
+          <h6 class="fw-bold text-muted text-uppercase small mb-3" style="letter-spacing: 0.5px;">Suggested Creators</h6>
+          <div class="row g-3">
+            {% for u in suggested_users %}
+            <div class="col-6 col-md-4">
+              <div class="card h-100 border text-center shadow-sm" style="border-radius: 16px; background-color: var(--bg-input); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-body p-3 d-flex flex-column">
+                  <a href="{{ url_for('views.profile', username=u.username) }}" class="text-decoration-none flex-grow-1 mb-2">
+                    {% if u.profile_pic %}
+                    <img src="{% if 'http' in u.profile_pic %}{{ u.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}{% endif %}" class="rounded-circle shadow-sm mb-2" style="width: 64px; height: 64px; object-fit: cover; border: 2px solid var(--bg-card);">
+                    {% else %}
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold shadow-sm mb-2 mx-auto" style="width: 64px; height: 64px; font-size: 1.5rem; background: linear-gradient(135deg, var(--primary), #4f46e5); border: 2px solid var(--bg-card);">
+                      {{ u.username[0]|upper }}
+                    </div>
+                    {% endif %}
+                    <h6 class="fw-bold text-truncate mb-0" style="color: var(--text-main); font-size: 0.95rem;">{{ u.username }}</h6>
+                    {% if u.bio %}
+                    <p class="small text-muted text-truncate mb-0 mt-1" style="font-size: 0.75rem;">{{ u.bio }}</p>
+                    {% endif %}
+                  </a>
+                  <button class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-bold mt-auto" onclick="toggleFollow('{{ u.id }}', this)">Follow</button>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="text-center px-3">
+          <a href="{{ url_for('views.create_post') }}" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+            <i class="fas fa-pen-nib"></i> Write Your First Story
+          </a>
+        </div>
       </div>
       {% endif %}
     </div>

@@ -328,11 +328,26 @@ def home():
         .paginate(page=page, per_page=10)
 
     posts = enrich_posts(pagination.items)
+    
+    # 🚀 NEW: Fetch Suggested Users if the feed is empty
+    suggested_users = []
+    if not posts and page == 1:
+        # 1. Get IDs of users the current user already follows
+        followed_ids = [f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()]
+        followed_ids.append(current_user.id) # Add themselves so they aren't suggested to themselves
+        
+        # 2. Query up to 6 random active users they don't follow
+        suggested_users = User.query.filter(
+            ~User.id.in_(followed_ids),
+            User.is_admin == False
+        ).order_by(func.random()).limit(6).all()
 
     if request.args.get('ajax'):
         return render_template('_posts.html', posts=posts, user=current_user)
         
-    return render_template("home.html", posts=posts, pagination=pagination, user=current_user)
+    # Pass the suggested_users array to the template
+    return render_template("home.html", posts=posts, pagination=pagination, user=current_user, suggested_users=suggested_users)
+
 
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
