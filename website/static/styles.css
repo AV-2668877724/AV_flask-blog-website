@@ -358,3 +358,23 @@ body.dark-mode textarea::placeholder {
   color: var(--text-muted) !important;
   opacity: 0.8 !important;
 }
+
+/* Drag and Drop Visual Feedback */
+.upload-zone-drop.drag-over {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-glow) !important;
+  color: var(--primary) !important;
+  transform: scale(1.02);
+  box-shadow: 0 10px 30px var(--shadow-color);
+}
+
+.upload-zone-drop.drag-over i {
+  color: var(--primary) !important;
+  animation: bounce 0.5s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+

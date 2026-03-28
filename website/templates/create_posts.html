@@ -158,7 +158,7 @@ content %}
 
           <div
             id="uploadZone"
-            class="image-upload-zone"
+            class="image-upload-zone upload-zone-drop"
             onclick="document.getElementById('coverImageInput').click()"
           >
             <i
@@ -166,7 +166,7 @@ content %}
               style="color: var(--text-muted); opacity: 0.6"
             ></i>
             <h6 class="fw-bold mb-1" style="color: var(--text-main)">
-              Click to browse files
+              Click to browse files or drag here
             </h6>
             <div
               class="small fw-bold opacity-75"
@@ -246,57 +246,77 @@ content %}
 
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 <script>
-  // =========================================
-  // 1. INITIALIZE QUILL JS
-  // =========================================
-  var quill = new Quill("#editor-container", {
-    theme: "snow",
-    placeholder: "Start typing your masterpiece...",
-    modules: {
-      toolbar: [
-        [{ header: [2, 3, false] }],
-        ["bold", "italic", "underline", "link", "blockquote"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["clean"],
-      ],
-    },
-  });
+  document.addEventListener("DOMContentLoaded", function () {
+    // 1. Initialize Quill
+    var quill = new Quill("#editor-container", {
+      theme: "snow",
+      placeholder: "Start typing your masterpiece...",
+      modules: {
+        toolbar: [
+          [{ header: [2, 3, false] }],
+          ["bold", "italic", "underline", "link", "blockquote"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["clean"],
+        ],
+      },
+    });
 
-  // =========================================
-  // 2. IMAGE PREVIEW LOGIC
-  // =========================================
+    // 🚀 NEW: UNSAVED CHANGES WARNING LOGIC
+    let isSubmitting = false;
 
-  function removeCoverImage() {
-    document.getElementById("coverImageInput").value = "";
-    document.getElementById("coverPreviewContainer").style.display = "none";
-    document.getElementById("uploadZone").style.display = "block";
-  }
+    window.addEventListener("beforeunload", function (e) {
+      // If they are intentionally submitting the form, let them go!
+      if (isSubmitting) return undefined;
 
-  // =========================================
-  // 3. FORM VALIDATION & SUBMISSION
-  // =========================================
-  function validatePostForm() {
-    var html = quill.root.innerHTML;
-    var text = quill.getText().trim();
-
-    if (text.length === 0) {
-      if (typeof showToast === "function") {
-        showToast("Content cannot be empty!", true);
-      } else {
-        alert("Content cannot be empty!");
+      // Check if they typed anything
+      var text = quill.getText().trim();
+      if (text.length > 0) {
+        var confirmationMessage =
+          "You have unsaved changes. Are you sure you want to leave?";
+        e.returnValue = confirmationMessage; // Required for most modern browsers
+        return confirmationMessage; // Required for older browsers
       }
-      return false;
-    }
+    });
 
-    // Inject quill HTML into hidden input for backend to process
-    document.getElementById("hiddenInput").value = html;
+    // =========================================
+    // 2. IMAGE PREVIEW LOGIC
+    // =========================================
+    window.removeCoverImage = function () {
+      document.getElementById("coverImageInput").value = "";
+      document.getElementById("coverPreviewContainer").style.display = "none";
+      document.getElementById("uploadZone").style.display = "block";
+    };
 
-    // Change button state to loading
-    const btn = document.querySelector('button[type="submit"]');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Publishing...';
-    btn.disabled = true;
+    // =========================================
+    // 3. FORM VALIDATION & SUBMISSION
+    // =========================================
+    window.validatePostForm = function () {
+      var html = quill.root.innerHTML;
+      var text = quill.getText().trim();
 
-    return true;
-  }
+      if (text.length === 0) {
+        if (typeof showToast === "function") {
+          showToast("Content cannot be empty!", true);
+        } else {
+          alert("Content cannot be empty!");
+        }
+        return false;
+      }
+
+      // 🚀 NEW: Disable the unsaved changes warning right before submitting
+      isSubmitting = true;
+
+      // Inject quill HTML into hidden input for backend to process
+      document.getElementById("hiddenInput").value = html;
+
+      // Change button state to loading
+      const btn = document.querySelector('button[type="submit"]');
+      btn.innerHTML =
+        '<i class="fas fa-spinner fa-spin me-2"></i>Publishing...';
+      btn.disabled = true;
+
+      return true;
+    };
+  });
 </script>
 {% endblock %}

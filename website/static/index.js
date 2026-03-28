@@ -915,3 +915,81 @@ window.addEventListener("pageshow", function (event) {
     window.location.reload();
   }
 });
+
+/* =========================================
+   Drag & Drop Image Upload Logic 🚀 (FIXED)
+   ========================================= */
+document.addEventListener("DOMContentLoaded", function () {
+  const dropZones = document.querySelectorAll(".upload-zone-drop");
+
+  dropZones.forEach((zone) => {
+    // 1. Prevent default behaviors for all drag events
+    ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+      zone.addEventListener(eventName, preventDefaults, false);
+      document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    // 2. Add/Remove visual feedback class when dragging over
+    ["dragenter", "dragover"].forEach((eventName) => {
+      zone.addEventListener(
+        eventName,
+        () => zone.classList.add("drag-over"),
+        false
+      );
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      zone.addEventListener(
+        eventName,
+        () => zone.classList.remove("drag-over"),
+        false
+      );
+    });
+
+    // 3. Handle the drop event
+    zone.addEventListener("drop", handleDrop, false);
+
+    // 4. Also allow clicking to trigger upload (accessibility)
+    zone.addEventListener("click", () => {
+      // Find the file input related to this zone (located just below it in create/edit html)
+      const fileInput = zone.parentElement.querySelector('input[type="file"]');
+      if (fileInput) fileInput.click();
+    });
+  });
+
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+
+    if (files && files.length > 0) {
+      const droppedFile = files[0];
+
+      // Quick validation: Check if it's an image
+      if (!droppedFile.type.startsWith("image/")) {
+        if (typeof showToast === "function") {
+          showToast("Invalid file type. Please upload an image.", true);
+        } else {
+          alert("Invalid file type. Please upload an image.");
+        }
+        return;
+      }
+
+      // 4. Securely pass the dropped file to the crop-upload input
+      const fileInput = this.parentElement.querySelector('input[type="file"]');
+      if (fileInput) {
+        const dataTransfer = new DataTransfer();
+        dataTransfer.items.add(droppedFile);
+        fileInput.files = dataTransfer.files;
+
+        // Manually dispatch a 'change' event to trigger the crop logic in base.html
+        const event = new Event("change", { bubbles: true });
+        fileInput.dispatchEvent(event);
+      }
+    }
+  }
+});
