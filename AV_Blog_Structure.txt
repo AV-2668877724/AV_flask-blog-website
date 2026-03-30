@@ -58,3 +58,6 @@ AV_Postory/
         │
         ├── 404.html         
         └── 500.html
+
+
+This is complete structure of project.

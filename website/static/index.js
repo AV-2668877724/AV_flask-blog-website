@@ -879,9 +879,11 @@ function removeSocialLink(url) {
 }
 
 function toggleFollow(userId, btn) {
+  // 1. Determine the current state based on the button that was clicked
   const isFollowing = btn.innerText.trim() === "Following";
   const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
 
+  // 2. Perform the server request
   fetch(url, {
     method: "POST",
     credentials: "same-origin",
@@ -890,20 +892,38 @@ function toggleFollow(userId, btn) {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        if (data.action === "followed") {
-          btn.innerText = "Following";
-          btn.classList.remove("btn-primary");
-          btn.classList.add("btn-outline-secondary");
-        } else {
-          btn.innerText = "Follow";
-          btn.classList.remove("btn-outline-secondary");
-          btn.classList.add("btn-primary");
+        // 🚀 NEW: Find EVERY follow button on the page for this specific user
+        // We look for buttons that use this userId in their onclick attribute
+        const allUserButtons = document.querySelectorAll(`button[onclick*="toggleFollow('${userId}'"]`);
+
+        allUserButtons.forEach((userBtn) => {
+          if (data.action === "followed") {
+            userBtn.innerText = "Following";
+            userBtn.classList.remove("btn-primary", "shadow-sm");
+            userBtn.classList.add("btn-outline-secondary");
+          } else {
+            userBtn.innerText = "Follow";
+            userBtn.classList.remove("btn-outline-secondary");
+            userBtn.classList.add("btn-primary", "shadow-sm");
+          }
+        });
+        
+        // Optional: Show a toast confirmation
+        if (typeof showToast === "function") {
+          showToast(data.action === "followed" ? "User followed" : "User unfollowed");
         }
       } else {
-        alert(data.message || "Error processing request");
+        if (typeof showToast === "function") {
+          showToast(data.message || "Error processing request", true);
+        } else {
+          alert(data.message || "Error processing request");
+        }
       }
     })
-    .catch((err) => console.error("Error:", err));
+    .catch((err) => {
+      console.error("Error:", err);
+      if (typeof showToast === "function") showToast("Network error", true);
+    });
 }
 
 window.addEventListener("pageshow", function (event) {
