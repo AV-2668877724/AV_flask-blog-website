@@ -1,10 +1,11 @@
 from flask import request
 from flask_login import current_user
 from . import socketio, db
-from .models import Message, User, Notification # 🚀 ADDED Notification model
+from .models import Message, User, Notification, Block # 🚀 ADDED Block model
 from flask_socketio import emit, join_room, leave_room
 from datetime import datetime
 import bleach # 🚀 FIX 1: Import bleach for XSS protection
+from sqlalchemy import or_, and_ # 🚀 ADDED for block logic
 
 # 🚀 IMPORT THE PROCESSOR FROM VIEWS FOR LINK PREVIEWS & TAGS
 from .views import process_text_links
@@ -60,6 +61,20 @@ def handle_send_message_event(data):
     recipient = User.query.get(recipient_id)
     if not recipient: return
 
+    # ==========================================
+    # 🚀 NEW: Block Validation
+    # ==========================================
+    # Prevent message if either user has blocked the other
+    is_blocked = Block.query.filter(
+        or_(
+            and_(Block.blocker_id == current_user.id, Block.blocked_id == recipient_id),
+            and_(Block.blocker_id == recipient_id, Block.blocked_id == current_user.id)
+        )
+    ).first()
+    
+    if is_blocked:
+        return # Silently drop the message
+
     # 🚀 FIX 1: Sanitize chat input (XSS Prevention)
     # We strip all HTML tags from chat to ensure no malicious scripts are executed
     clean_text = bleach.clean(raw_text, tags=[], attributes={}, strip=True)
@@ -82,7 +97,7 @@ def handle_send_message_event(data):
     db.session.commit()
     
     # ==========================================
-    # 🚀 NEW: Create Notification for the Message
+    # 🚀 Create Notification for the Message
     # ==========================================
     existing_notif = Notification.query.filter_by(
         visitor_id=current_user.id, 
@@ -130,6 +145,19 @@ def handle_typing(data):
     
     if not recipient_id: return
     
+    # ==========================================
+    # 🚀 NEW: Block Validation for Typing Status
+    # ==========================================
+    is_blocked = Block.query.filter(
+        or_(
+            and_(Block.blocker_id == current_user.id, Block.blocked_id == recipient_id),
+            and_(Block.blocker_id == recipient_id, Block.blocked_id == current_user.id)
+        )
+    ).first()
+    
+    if is_blocked:
+        return
+
     # Broadcast the typing status strictly to the recipient's private room
     emit('user_typing', {
         'user_id': current_user.id,

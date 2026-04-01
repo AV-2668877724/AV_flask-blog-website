@@ -10,9 +10,10 @@ from flask_compress import Compress
 from sqlalchemy.orm import joinedload 
 from flask_wtf.csrf import CSRFProtect 
 
-# 🚀 NEW: Import Flask-Limiter for Spam Protection
+# 🚀 Imports for Spam Protection & Migrations
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
 mail = Mail()
@@ -20,12 +21,13 @@ DB_NAME = "database.db"
 socketio = SocketIO() 
 csrf = CSRFProtect() 
 
-# 🚀 NEW: Initialize Limiter globally
+# Initialize Limiter and Migrate globally
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["1000 per day", "100 per hour"], # Global fallback limit
-    storage_uri="memory://" # Uses local memory, perfect for a single-server setup
+    default_limits=["1000 per day", "100 per hour"], 
+    storage_uri="memory://" 
 )
+migrate = Migrate() # 🚀 NEW: Initialize Migrate
 
 def create_app():
     app = Flask(__name__)
@@ -65,9 +67,10 @@ def create_app():
     db.init_app(app)
     socketio.init_app(app)
     csrf.init_app(app) 
-    
-    # 🚀 NEW: Bind Limiter to the App
     limiter.init_app(app)
+    
+    # 🚀 NEW: Bind Migrate to the App and Database
+    migrate.init_app(app, db)
 
     # BLUEPRINTS
     from .views import views
@@ -76,9 +79,11 @@ def create_app():
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    # DB CREATION
-    from .models import User, Post, Comment, Like, Notification, Follow, Message, SavedPost
-    create_database(app)
+    # DB CREATION (Import models so Alembic can see them)
+    from .models import User, Post, Comment, Like, Notification, Follow, Message, SavedPost, Block, Report
+    
+    # 🚀 REPLACED: We no longer use db.create_all() here. Flask-Migrate handles this now.
+    # create_database(app) 
 
     # LOGIN MANAGER
     login_manager = LoginManager()
@@ -157,9 +162,10 @@ def create_app():
     
     return app
 
-def create_database(app):
-    with app.app_context():
-        db_path = path.join(app.root_path, DB_NAME)
-        if not path.exists(db_path):
-            db.create_all()
-            print('Database Created Successfully!')
+# 🚀 REPLACED: Kept commented out for reference, but migrations do this safely now.
+# def create_database(app):
+#     with app.app_context():
+#         db_path = path.join(app.root_path, DB_NAME)
+#         if not path.exists(db_path):
+#             db.create_all()
+#             print('Database Created Successfully!')

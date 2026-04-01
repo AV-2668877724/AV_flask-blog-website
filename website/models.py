@@ -72,6 +72,7 @@ class User(db.Model, UserMixin):
     comments = db.relationship('Comment', backref='user', passive_deletes=True)
     likes = db.relationship('Like', backref='user', passive_deletes=True)
     saved_posts = db.relationship('SavedPost', backref='user_saved', passive_deletes=True) 
+    reports_filed = db.relationship('Report', backref='reporter', passive_deletes=True)
     
 # =====================================================
 # Post & Interaction Models
@@ -95,6 +96,7 @@ class Post(db.Model):
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     likes = db.relationship('Like', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     saved_by = db.relationship('SavedPost', backref='post_saved', cascade="all, delete-orphan", passive_deletes=True) 
+    reports = db.relationship('Report', backref='reported_post', cascade="all, delete-orphan", passive_deletes=True)
     
     def likes_count(self):
         return len(self.likes)
@@ -136,6 +138,7 @@ class Comment(db.Model):
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
     
     likes = db.relationship('CommentLike', backref='comment', passive_deletes=True)
+    reports = db.relationship('Report', backref='reported_comment', cascade="all, delete-orphan", passive_deletes=True)
 
 class Like(db.Model):
     __tablename__ = 'like'
@@ -163,3 +166,27 @@ class CommentLike(db.Model):
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
     comment_id = db.Column(db.Integer, db.ForeignKey('comment.id', ondelete="CASCADE"), nullable=False, index=True)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+
+# =====================================================
+# Safety & Moderation Models 🚀 NEW
+# =====================================================
+
+class Block(db.Model):
+    __tablename__ = 'block'
+    id = db.Column(db.Integer, primary_key=True)
+    blocker_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    blocked_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+
+class Report(db.Model):
+    __tablename__ = 'report'
+    id = db.Column(db.Integer, primary_key=True)
+    reporter_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    
+    # A report can be for a post OR a comment. 
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id', ondelete='CASCADE'), nullable=True)
+    
+    reason = db.Column(db.String(200), nullable=False)
+    is_resolved = db.Column(db.Boolean, default=False)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)

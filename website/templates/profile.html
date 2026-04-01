@@ -45,7 +45,7 @@ Profile{% endblock %} {% block content %}
     color: #75b798 !important;
   }
 
-  /* 🚀 NEW: Formatter-Safe Active Tab Classes */
+  /* Formatter-Safe Active Tab Classes */
   .profile-tab {
     border-radius: 50px;
     transition: all 0.2s ease;
@@ -224,7 +224,7 @@ Profile{% endblock %} {% block content %}
               </div>
 
               <div
-                class="d-flex gap-2 w-100 w-md-auto justify-content-start justify-content-md-end flex-wrap mt-2 mt-md-0"
+                class="d-flex gap-2 w-100 w-md-auto justify-content-start justify-content-md-end flex-wrap mt-2 mt-md-0 align-items-center"
               >
                 {% if user.id == profile_user.id %}
                 <div class="dropdown d-none d-md-block">
@@ -344,6 +344,19 @@ Profile{% endblock %} {% block content %}
                     <i class="far fa-comment-dots"></i>
                     <span class="d-none d-sm-inline ms-1">Message</span>
                   </a>
+
+                  <div class="dropdown d-inline-block">
+                    <button class="btn btn-light btn-sm rounded-circle border shadow-sm" style="width: 32px; height: 32px; padding: 0;" data-bs-toggle="dropdown">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                      <li>
+                        <a class="dropdown-item text-danger fw-bold" href="#" onclick="blockUser('{{ profile_user.id }}')">
+                          <i class="fas fa-ban me-2"></i> Block User
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
 
                 {% endif %}

@@ -879,11 +879,9 @@ function removeSocialLink(url) {
 }
 
 function toggleFollow(userId, btn) {
-  // 1. Determine the current state based on the button that was clicked
   const isFollowing = btn.innerText.trim() === "Following";
   const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
 
-  // 2. Perform the server request
   fetch(url, {
     method: "POST",
     credentials: "same-origin",
@@ -892,8 +890,6 @@ function toggleFollow(userId, btn) {
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        // 🚀 NEW: Find EVERY follow button on the page for this specific user
-        // We look for buttons that use this userId in their onclick attribute
         const allUserButtons = document.querySelectorAll(`button[onclick*="toggleFollow('${userId}'"]`);
 
         allUserButtons.forEach((userBtn) => {
@@ -908,7 +904,6 @@ function toggleFollow(userId, btn) {
           }
         });
         
-        // Optional: Show a toast confirmation
         if (typeof showToast === "function") {
           showToast(data.action === "followed" ? "User followed" : "User unfollowed");
         }
@@ -937,19 +932,17 @@ window.addEventListener("pageshow", function (event) {
 });
 
 /* =========================================
-   Drag & Drop Image Upload Logic 🚀 (FIXED)
+   Drag & Drop Image Upload Logic 
    ========================================= */
 document.addEventListener("DOMContentLoaded", function () {
   const dropZones = document.querySelectorAll(".upload-zone-drop");
 
   dropZones.forEach((zone) => {
-    // 1. Prevent default behaviors for all drag events
     ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
       zone.addEventListener(eventName, preventDefaults, false);
       document.body.addEventListener(eventName, preventDefaults, false);
     });
 
-    // 2. Add/Remove visual feedback class when dragging over
     ["dragenter", "dragover"].forEach((eventName) => {
       zone.addEventListener(
         eventName,
@@ -966,12 +959,9 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     });
 
-    // 3. Handle the drop event
     zone.addEventListener("drop", handleDrop, false);
 
-    // 4. Also allow clicking to trigger upload (accessibility)
     zone.addEventListener("click", () => {
-      // Find the file input related to this zone (located just below it in create/edit html)
       const fileInput = zone.parentElement.querySelector('input[type="file"]');
       if (fileInput) fileInput.click();
     });
@@ -989,7 +979,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (files && files.length > 0) {
       const droppedFile = files[0];
 
-      // Quick validation: Check if it's an image
       if (!droppedFile.type.startsWith("image/")) {
         if (typeof showToast === "function") {
           showToast("Invalid file type. Please upload an image.", true);
@@ -999,17 +988,81 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      // 4. Securely pass the dropped file to the crop-upload input
       const fileInput = this.parentElement.querySelector('input[type="file"]');
       if (fileInput) {
         const dataTransfer = new DataTransfer();
         dataTransfer.items.add(droppedFile);
         fileInput.files = dataTransfer.files;
 
-        // Manually dispatch a 'change' event to trigger the crop logic in base.html
         const event = new Event("change", { bubbles: true });
         fileInput.dispatchEvent(event);
       }
     }
   }
 });
+
+/* =========================================
+   SAFETY & MODERATION (BLOCK & REPORT) 🚀 NEW
+   ========================================= */
+window.blockUser = function (userId) {
+  if (!confirm("Are you sure you want to block this user? They will no longer be able to message you or see your posts.")) return;
+  
+  fetch(`/block/${userId}`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "X-CSRFToken": getCsrfToken() }
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        if (typeof showToast === "function") showToast("User blocked successfully.");
+        // Instantly redirect home so they don't stay on the blocked profile
+        setTimeout(() => window.location.href = "/", 1000);
+      } else {
+        if (typeof showToast === "function") showToast(data.message, true);
+      }
+    });
+};
+
+window.unblockUser = function (userId) {
+  fetch(`/unblock/${userId}`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "X-CSRFToken": getCsrfToken() }
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        location.reload();
+      }
+    });
+};
+
+window.submitReport = function (itemType, itemId) {
+  const reasonEl = document.getElementById(`reportReason-${itemType}-${itemId}`);
+  const reason = reasonEl ? reasonEl.value : "Inappropriate content";
+  
+  fetch(`/report/${itemType}/${itemId}`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { 
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCsrfToken() 
+    },
+    body: JSON.stringify({ reason: reason })
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        if (typeof showToast === "function") showToast("Report submitted successfully.");
+        // Hide the modal programmatically
+        const modalEl = document.getElementById(`reportModal-${itemType}-${itemId}`);
+        if (modalEl) {
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+        }
+      } else {
+        if (typeof showToast === "function") showToast("Error submitting report.", true);
+      }
+    });
+};

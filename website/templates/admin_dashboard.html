@@ -185,6 +185,20 @@ block content %}
       <ul class="nav nav-pills admin-tabs" id="adminTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button
+            class="nav-link fw-bold text-warning"
+            id="reports-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-reports"
+            type="button"
+          >
+            <i class="fas fa-flag me-1"></i> Reports 
+            {% if reports|length > 0 %}
+            <span class="badge bg-danger ms-1">{{ reports|length }}</span>
+            {% endif %}
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
             class="nav-link active fw-bold"
             id="users-tab"
             data-bs-toggle="pill"
@@ -245,6 +259,77 @@ block content %}
     </div>
 
     <div class="tab-content" id="adminTabsContent">
+      <div class="tab-pane fade" id="pills-reports">
+        <div class="card border-0 shadow-sm" style="border-radius: 20px; overflow: hidden; background-color: var(--bg-card); border: 1px solid var(--border-color) !important;">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table align-middle mb-0 admin-table">
+                <thead>
+                  <tr>
+                    <th class="ps-4 py-3">Reporter</th>
+                    <th class="py-3">Reason</th>
+                    <th class="py-3">Content Type</th>
+                    <th class="py-3">Date</th>
+                    <th class="text-end pe-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for r in reports %}
+                  <tr class="admin-data-row">
+                    <td class="ps-4 py-3 fw-bold" style="color: var(--text-main)">
+                      {{ r.reporter.username }}
+                    </td>
+                    <td class="py-3 text-danger fw-bold">
+                      <i class="fas fa-exclamation-triangle me-1"></i>{{ r.reason }}
+                    </td>
+                    <td class="py-3">
+                      {% if r.post_id %}
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill">Post ID: {{ r.post_id }}</span>
+                        <a href="{{ url_for('views.post_view', id=r.post_id) }}" target="_blank" class="btn btn-link btn-sm p-0 ms-2 fw-bold text-decoration-none"><i class="fas fa-external-link-alt"></i> View</a>
+                      {% elif r.comment_id %}
+                        <span class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill">Comment ID: {{ r.comment_id }}</span>
+                        {% if r.reported_comment.post_id %}
+                        <a href="{{ url_for('views.post_view', id=r.reported_comment.post_id) }}" target="_blank" class="btn btn-link btn-sm p-0 ms-2 fw-bold text-decoration-none"><i class="fas fa-external-link-alt"></i> View</a>
+                        {% endif %}
+                      {% endif %}
+                    </td>
+                    <td class="py-3 text-muted small">
+                      {{ r.date_created.strftime('%b %d, %Y - %I:%M %p') }}
+                    </td>
+                    <td class="text-end pe-4 py-3">
+                      <div class="d-inline-flex gap-2">
+                        <form method="POST" action="{{ url_for('views.admin_resolve_report', report_id=r.id) }}" onsubmit="return injectAdminPassword(this);">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <input type="hidden" name="action" value="resolve">
+                          <button class="btn btn-success btn-sm fw-bold rounded-pill shadow-sm" title="Mark Resolved">
+                            Resolve
+                          </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('views.admin_resolve_report', report_id=r.id) }}" onsubmit="return confirm('Delete reported content entirely?') && injectAdminPassword(this);">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <input type="hidden" name="action" value="delete_content">
+                          <button class="btn btn-danger btn-sm fw-bold rounded-pill shadow-sm" title="Delete Content & Resolve">
+                            Delete & Resolve
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                  {% else %}
+                  <tr>
+                    <td colspan="5" class="text-center py-5 text-muted fw-bold">
+                      <i class="fas fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                      No pending reports! Your community is safe.
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <div class="tab-pane fade show active" id="pills-users">
         <div
           class="card border-0 shadow-sm"
