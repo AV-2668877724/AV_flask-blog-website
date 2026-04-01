@@ -76,6 +76,7 @@ endblock %} {% block content %}
     padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
+    justify-content: space-between; 
     gap: 1rem;
     z-index: 10;
   }
@@ -314,54 +315,75 @@ endblock %} {% block content %}
 <div class="chat-wrapper fade-in-up">
   <div class="chat-card">
     <div class="chat-header">
-      <a
-        href="{{ url_for('views.inbox') }}"
-        onclick="
-          if (window.history.length > 1) {
-            history.back();
-            return false;
-          }
-        "
-        class="btn-back me-2"
-        title="Go Back"
-      >
-        <i class="fas fa-arrow-left" style="font-size: 1.2rem"></i>
-      </a>
+      <div class="d-flex align-items-center">
+        <a
+          href="{{ url_for('views.inbox') }}"
+          onclick="
+            if (window.history.length > 1) {
+              history.back();
+              return false;
+            }
+          "
+          class="btn-back me-2"
+          title="Go Back"
+        >
+          <i class="fas fa-arrow-left" style="font-size: 1.2rem"></i>
+        </a>
 
-      <a
-        href="{{ url_for('views.profile', username=recipient.username) }}"
-        class="text-decoration-none d-flex align-items-center gap-3"
-      >
-        {% if recipient.profile_pic %}
-        <img
-          src="{% if 'http' in recipient.profile_pic %}{{ recipient.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + recipient.profile_pic) }}{% endif %}"
-          class="chat-avatar shadow-sm"
-          alt="{{ recipient.username }}"
-        />
-        {% else %}
-        <div class="chat-avatar-placeholder shadow-sm">
-          {{ recipient.username[0]|upper }}
-        </div>
-        {% endif %}
-        <div>
-          <h5 class="fw-bold mb-0" style="color: var(--text-main)">
-            {{ recipient.username }}
-          </h5>
-          {% if recipient.is_online %}
-          <small
-            id="userStatusText"
-            style="color: var(--primary); font-weight: 600"
-            >Online</small
-          >
+        <a
+          href="{{ url_for('views.profile', username=recipient.username) }}"
+          class="text-decoration-none d-flex align-items-center gap-3"
+        >
+          {% if recipient.profile_pic %}
+          <img
+            src="{% if 'http' in recipient.profile_pic %}{{ recipient.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + recipient.profile_pic) }}{% endif %}"
+            class="chat-avatar shadow-sm"
+            alt="{{ recipient.username }}"
+          />
           {% else %}
-          <small
-            id="userStatusText"
-            style="color: var(--text-muted); font-weight: 600"
-            >Offline</small
-          >
+          <div class="chat-avatar-placeholder shadow-sm">
+            {{ recipient.username[0]|upper }}
+          </div>
           {% endif %}
-        </div>
-      </a>
+          <div>
+            <h5 class="fw-bold mb-0" style="color: var(--text-main)">
+              {{ recipient.username }}
+            </h5>
+            {% if recipient.is_online %}
+            <small
+              id="userStatusText"
+              style="color: var(--primary); font-weight: 600"
+              >Online</small
+            >
+            {% else %}
+            <small
+              id="userStatusText"
+              style="color: var(--text-muted); font-weight: 600"
+              >Offline</small
+            >
+            {% endif %}
+          </div>
+        </a>
+      </div>
+      
+      <div class="dropdown">
+        <button class="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center text-muted hover-opacity-100" style="width: 40px; height: 40px; background-color: var(--bg-input);" data-bs-toggle="dropdown">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; background-color: var(--bg-card); z-index: 1050;">
+          <li>
+            <a class="dropdown-item fw-bold py-2" href="#" onclick="clearChat('{{ recipient.id }}')" style="border-radius: 8px; color: var(--text-main);">
+              <i class="fas fa-eraser me-2"></i> Clear Chat
+            </a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <a class="dropdown-item text-danger fw-bold py-2" href="#" onclick="blockUser('{{ recipient.id }}')" style="border-radius: 8px;">
+              <i class="fas fa-ban me-2"></i> Block User
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="chat-messages" id="chatContainer">
@@ -484,6 +506,38 @@ endblock %} {% block content %}
     const iso = el.getAttribute("data-iso");
     el.innerText = formatLocalTime(iso);
   });
+
+  // 🚀 NEW: Clear Chat Javascript Function
+  window.clearChat = function (recipientId) {
+    if (!confirm("Are you sure you want to clear your chat history? This will only remove the messages for you, not the other person.")) return;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+
+    fetch(`/api/clear-chat/${recipientId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
+      }
+    })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        document.getElementById("chatContainer").innerHTML = `
+          <div class="text-center my-auto opacity-75" id="emptyChatState">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 80px; height: 80px">
+              <i class="fas fa-broom fa-2x"></i>
+            </div>
+            <h5 class="fw-bold" style="color: var(--text-main)">Chat Cleared</h5>
+            <p class="text-muted small">Your conversation history has been removed.</p>
+          </div>
+        `;
+        if (typeof showToast === "function") showToast("Chat cleared successfully.");
+      } else {
+        alert("Failed to clear chat: " + (data.error || "Unknown error."));
+      }
+    });
+  };
 
   window.removeChatMessage = function (event, msgId) {
     event.preventDefault();

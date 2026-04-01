@@ -257,7 +257,7 @@ def enrich_posts(posts, blocked_ids=None):
         post.likes_count = len(post.likes)
         post.saves_count = len(post.saved_by) 
         
-        # 🚀 UPDATE: Filter out comments from blocked users
+        # Filter out comments from blocked users
         active_comments = [c for c in post.comments if not c.is_deleted and c.author not in blocked_ids]
         post.active_comments_count = len(active_comments)
         
@@ -331,7 +331,7 @@ def detect_platform(url: str) -> str:
 @login_required
 def home():
     page = request.args.get('page', 1, type=int)
-    blocked_ids = get_blocked_ids(current_user.id) # 🚀 GET BLOCKED USERS
+    blocked_ids = get_blocked_ids(current_user.id) # GET BLOCKED USERS
     
     pagination = Post.query\
         .filter(or_(Post.is_deleted == False, Post.is_deleted == None))\
@@ -350,7 +350,7 @@ def home():
     if not posts and page == 1:
         followed_ids = [f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()]
         followed_ids.append(current_user.id) 
-        followed_ids.extend(blocked_ids) # 🚀 Exclude blocked users from suggestions
+        followed_ids.extend(blocked_ids) # Exclude blocked users from suggestions
         
         suggested_users = User.query.filter(
             ~User.id.in_(followed_ids),
@@ -361,6 +361,7 @@ def home():
         return render_template('_posts.html', posts=posts, user=current_user)
         
     return render_template("home.html", posts=posts, pagination=pagination, user=current_user, suggested_users=suggested_users)
+
 
 @views.route('/create-post', methods=['GET', 'POST'])
 @login_required
@@ -915,7 +916,7 @@ def admin_dashboard():
     deleted_posts = Post.query.filter_by(is_deleted=True).all()
     comments = Comment.query.order_by(Comment.date_created.desc()).limit(50).all()
     
-    # 🚀 NEW: Fetch Unresolved Reports
+    # Fetch Unresolved Reports
     reports = Report.query.filter_by(is_resolved=False).order_by(Report.date_created.desc()).all()
 
     return render_template(
@@ -942,7 +943,6 @@ def admin_resolve_report(report_id):
     report = Report.query.get_or_404(report_id)
     report.is_resolved = True
     
-    # Optionally delete the post/comment automatically if requested via form
     action = request.form.get('action')
     if action == 'delete_content':
         if report.post_id:
@@ -1134,7 +1134,6 @@ def follow_user(user_id):
     if user_to_follow.id == current_user.id:
         return jsonify({'error': 'Cannot follow self'}), 400
         
-    # Check block status before following
     blocked_ids = get_blocked_ids(current_user.id)
     if user_id in blocked_ids:
         return jsonify({'success': False, 'message': 'Cannot follow this user'})
@@ -1466,7 +1465,6 @@ def inbox():
     for msg in messages:
         partner = msg.recipient if msg.sender_id == current_user.id else msg.sender
         
-        # 🚀 Skip this conversation if the partner is blocked
         if partner.id in blocked_ids:
             continue
             
@@ -1484,7 +1482,6 @@ def inbox():
 def chat(username):
     recipient = User.query.filter_by(username=username).first_or_404()
     
-    # Block validation for opening chat
     blocked_ids = get_blocked_ids(current_user.id)
     if recipient.id in blocked_ids:
         flash("You cannot message this user.", category='error')
@@ -1564,6 +1561,27 @@ def delete_message(id):
     else:
         return jsonify({'error': 'Unauthorized'}), 403
 
+    db.session.commit()
+    return jsonify({'success': True})
+
+# 🚀 NEW: Clear Entire Chat History for Current User
+@views.route('/api/clear-chat/<int:recipient_id>', methods=['POST'])
+@login_required
+@limiter.limit("10 per minute")
+def clear_chat(recipient_id):
+    messages = Message.query.filter(
+        or_(
+            and_(Message.sender_id == current_user.id, Message.recipient_id == recipient_id),
+            and_(Message.sender_id == recipient_id, Message.recipient_id == current_user.id)
+        )
+    ).all()
+    
+    for msg in messages:
+        if msg.sender_id == current_user.id:
+            msg.visible_to_sender = False
+        if msg.recipient_id == current_user.id:
+            msg.visible_to_recipient = False
+            
     db.session.commit()
     return jsonify({'success': True})
 
