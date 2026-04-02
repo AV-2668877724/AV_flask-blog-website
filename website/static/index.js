@@ -1066,3 +1066,16 @@ window.submitReport = function (itemType, itemId) {
       }
     });
 };
+
+/* =========================================
+   GLOBAL MODAL FIX (BLURRY SCREEN PREVENTER)
+   ========================================= */
+// This ensures that ALL modals (even ones loaded dynamically via infinite scroll)
+// are moved to the <body> right before they open. This prevents the Bootstrap
+// "blurry backdrop trap" where the screen freezes.
+document.addEventListener('show.bs.modal', function (event) {
+  const modal = event.target;
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+  }
+});

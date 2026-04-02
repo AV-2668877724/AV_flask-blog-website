@@ -320,6 +320,13 @@ Profile{% endblock %} {% block content %}
 
                 {% else %}
 
+                {% if i_have_blocked_them %}
+                <div class="d-flex w-100 gap-2">
+                  <button class="btn btn-danger btn-sm rounded-pill px-4 flex-grow-1 flex-md-grow-0 fw-bold shadow-sm" onclick="unblockUser('{{ profile_user.id }}')">
+                    <i class="fas fa-unlock me-2"></i> Unblock User
+                  </button>
+                </div>
+                {% else %}
                 <div class="d-flex w-100 gap-2">
                   {% if is_following %}
                   <button
@@ -358,6 +365,7 @@ Profile{% endblock %} {% block content %}
                     </ul>
                   </div>
                 </div>
+                {% endif %}
 
                 {% endif %}
               </div>
@@ -367,6 +375,16 @@ Profile{% endblock %} {% block content %}
       </div>
     </div>
 
+    {% if i_have_blocked_them %}
+    <div class="text-center py-5 text-muted fade-in-up mt-4 border border-dashed rounded-4" style="background-color: var(--bg-card); border-color: var(--border-color) !important;">
+      <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle mb-3" style="width: 80px; height: 80px">
+        <i class="fas fa-user-slash fa-2x"></i>
+      </div>
+      <h5 class="fw-bold text-dark">You blocked {{ profile_user.username }}</h5>
+      <p>Unblock them to view their stories and interact.</p>
+    </div>
+    {% else %}
+    
     <ul
       class="nav nav-pills nav-fill mb-4 border-bottom pb-2"
       style="border-color: var(--border-color) !important"
@@ -429,6 +447,7 @@ Profile{% endblock %} {% block content %}
         {% endif %}
       </ul>
     </nav>
+    {% endif %}
     {% endif %}
   </div>
 </div>
