@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from .models import User, Message as ChatMessage 
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db, mail, limiter # 🚀 NEW: Imported limiter
+from . import db, mail, limiter 
 from flask_login import login_user, login_required, logout_user, current_user
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
@@ -11,10 +11,15 @@ from flask import session
 import os
 import re 
 from datetime import datetime 
-from threading import Thread
 from sqlalchemy import func
 
+# 🚀 NEW: Import ThreadPoolExecutor for our lightweight Email Task Queue
+from concurrent.futures import ThreadPoolExecutor
+
 auth = Blueprint('auth', __name__)
+
+# 🚀 NEW: Initialize the Global Email Queue (Max 5 background workers running concurrently)
+email_executor = ThreadPoolExecutor(max_workers=5)
 
 # Setup Token Serializer dynamically using the app's secret key
 def get_serializer():
@@ -30,9 +35,10 @@ RESERVED_USERNAMES = {
 }
 
 # ==========================================
-#  HELPER: SEND EMAILS (ASYNC)
+#  HELPER: SEND EMAILS (ASYNC WORKER)
 # ==========================================
 def send_async_email(app, msg):
+    """ This function is safely executed by the background ThreadPoolExecutor """
     with app.app_context():
         try:
             mail.send(msg)
@@ -52,7 +58,7 @@ def get_public_link(endpoint, token=None, **kwargs):
     # YOUR NGROK URL (Update this if it changes!)
     PUBLIC_DOMAIN = "https://arjun-diffusible-nonfamiliarly.ngrok-free.dev"
     
-    # 🚀 FIX: Dynamically catch ANY local address and port
+    # Dynamically catch ANY local address and port
     link = re.sub(r'https?://(127\.0\.0\.1|localhost)(:\d+)?', PUBLIC_DOMAIN, link)
         
     return link
@@ -69,9 +75,10 @@ def send_verification_email(user_email):
     
     msg.body = f'Your link is: {link}\n\nThis link expires in 1 hour.'
     
-    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+    # 🚀 NEW: Queue the email instead of using threading.Thread
+    email_executor.submit(send_async_email, current_app._get_current_object(), msg)
 
-# 🚀 UPGRADED: Beautiful HTML Password Reset Email
+
 def send_reset_email(user_email):
     token = get_serializer().dumps(user_email, salt='password-reset')
     link = get_public_link('auth.forgot_password_token', token=token) 
@@ -82,7 +89,6 @@ def send_reset_email(user_email):
                   recipients=[user_email],
                   reply_to='noreply@avpostory.com')
                   
-    # 🚀 FIX: Embedded Cloudinary Logo
     logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png" 
     
     current_year = datetime.utcnow().year
@@ -129,7 +135,8 @@ def send_reset_email(user_email):
     </html>
     """
     
-    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+    # 🚀 NEW: Queue the email instead of using threading.Thread
+    email_executor.submit(send_async_email, current_app._get_current_object(), msg)
 
 def send_welcome_email(user_email, username):
     sender_email = os.getenv('MAIL_USERNAME')
@@ -138,7 +145,6 @@ def send_welcome_email(user_email, username):
                   recipients=[user_email],
                   reply_to='noreply@avpostory.com')
     
-    # 🚀 FIX: Embedded Cloudinary Logo
     logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png"
     
     login_url = get_public_link('auth.login')
@@ -206,14 +212,15 @@ def send_welcome_email(user_email, username):
     </html>
     """
     
-    Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+    # 🚀 NEW: Queue the email instead of using threading.Thread
+    email_executor.submit(send_async_email, current_app._get_current_object(), msg)
 
 
 # ==========================================
 #  STEP 1: ENTER EMAIL
 # ==========================================
 @auth.route('/sign-up', methods=['GET', 'POST'])
-@limiter.limit("10 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("10 per hour") 
 def sign_up():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -232,13 +239,15 @@ def sign_up():
                   sender=sender_email, 
                   recipients=[email])
             msg.body = f'Your verification code is: {otp}\n\nDo not share this code.'
-            Thread(target=send_async_email, args=(current_app._get_current_object(), msg)).start()
+            
+            # 🚀 NEW: Queue the email instead of using threading.Thread
+            email_executor.submit(send_async_email, current_app._get_current_object(), msg)
             
             flash('OTP sent to your email!', category='success')
             return redirect(url_for('auth.verify_otp'))
         except Exception as e:
             print(e)
-            flash('Error sending email. Check your internet connection.', category='error')
+            flash('Error queuing email. Please try again.', category='error')
 
     return render_template("signup.html", user=current_user)
 
@@ -246,7 +255,7 @@ def sign_up():
 #  STEP 2: VERIFY OTP
 # ==========================================
 @auth.route('/sign-up/verify', methods=['GET', 'POST'])
-@limiter.limit("15 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("15 per hour") 
 def verify_otp():
     if 'signup_email' not in session:
         return redirect(url_for('auth.sign_up'))
@@ -268,7 +277,7 @@ def verify_otp():
 #  CHECK USERNAME (API)
 # ==========================================
 @auth.route('/check-username-signup', methods=['POST'])
-@limiter.limit("30 per minute") # 🚀 SPAM PROTECTION (Prevent mass username scanning)
+@limiter.limit("30 per minute") 
 def check_username_signup():
     data = request.json
     username = data.get('username', '').strip().lower()
@@ -294,7 +303,7 @@ def check_username_signup():
 #  STEP 3: FINISH SIGNUP
 # ==========================================
 @auth.route('/sign-up/finish', methods=['GET', 'POST'])
-@limiter.limit("5 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("5 per hour") 
 def finish_signup():
     if not session.get('email_verified'):
         return redirect(url_for('auth.sign_up'))
@@ -335,7 +344,7 @@ def finish_signup():
             try:
                 send_welcome_email(email, username)
             except Exception as e:
-                print("Failed to send welcome email:", e)
+                print("Failed to queue welcome email:", e)
             
             login_user(new_user, remember=True)
             
@@ -369,7 +378,7 @@ def confirm_email(token):
     return redirect(url_for('auth.login'))
 
 @auth.route('/login', methods=['GET', 'POST'])
-@limiter.limit("20 per minute") # 🚀 SPAM PROTECTION (Anti brute-force)
+@limiter.limit("20 per minute") 
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -402,7 +411,7 @@ def login():
 #  FORGOT PASSWORD ROUTES
 # ==========================================
 @auth.route('/forgot-password', methods=['GET', 'POST'])
-@limiter.limit("5 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("5 per hour") 
 def forgot_password():
     if current_user.is_authenticated:
         return redirect(url_for('views.home'))
@@ -420,7 +429,7 @@ def forgot_password():
     return render_template('reset_request.html', user=current_user)
 
 @auth.route('/reset-password/<token>', methods=['GET', 'POST'])
-@limiter.limit("5 per hour") # 🚀 SPAM PROTECTION
+@limiter.limit("5 per hour") 
 def forgot_password_token(token):
     if current_user.is_authenticated:
         logout_user()
