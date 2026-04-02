@@ -49,17 +49,14 @@ QUILL_ALLOWED_ATTRIBUTES = {
     '*': ['class', 'style'] 
 }
 
-# 🚀 NEW: Block Filtering Helper
-def get_blocked_ids(user_id):
-    if not user_id: return []
-    # Users who blocked me
-    blockers = db.session.query(Block.blocker_id).filter_by(blocked_id=user_id).all()
-    # Users I blocked
-    blocked = db.session.query(Block.blocked_id).filter_by(blocker_id=user_id).all()
-    
-    # Flatten lists and combine into a unique set
-    ids = [b[0] for b in blockers] + [b[0] for b in blocked]
-    return list(set(ids))
+# 🚀 UPGRADED: Block Filtering Helper (Splits the lists for better UX control)
+def get_block_lists(user_id):
+    if not user_id: return [], []
+    # Users who blocked me (I should NEVER see them)
+    blockers = [b[0] for b in db.session.query(Block.blocker_id).filter_by(blocked_id=user_id).all()]
+    # Users I blocked (I can see them in search to unblock them)
+    blocked_by_me = [b[0] for b in db.session.query(Block.blocked_id).filter_by(blocker_id=user_id).all()]
+    return blockers, blocked_by_me
 
 def sanitize_html(html_content):
     if not html_content:
@@ -160,7 +157,6 @@ def process_text_links(text):
 
     text = re.sub(r'(?<![\w&])#([a-zA-Z0-9_]+)', r'<a href="/search-page?q=\1" class="text-primary text-decoration-none fw-bold">#\1</a>', text)
     
-    # MENTIONS
     def replace_mention(match):
         uname = match.group(1)
         u = User.query.filter(func.lower(User.username) == uname.lower()).first()
@@ -243,11 +239,11 @@ def delete_from_cloudinary(image_url):
     except Exception as e:
         print(f"❌ Cloudinary deletion error: {e}")
 
-def enrich_posts(posts, blocked_ids=None):
+def enrich_posts(posts, all_blocked_ids=None):
     following_ids = set()
     saved_post_ids = set() 
-    if blocked_ids is None:
-        blocked_ids = []
+    if all_blocked_ids is None:
+        all_blocked_ids = []
     
     if current_user.is_authenticated:
         following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
@@ -257,8 +253,7 @@ def enrich_posts(posts, blocked_ids=None):
         post.likes_count = len(post.likes)
         post.saves_count = len(post.saved_by) 
         
-        # Filter out comments from blocked users
-        active_comments = [c for c in post.comments if not c.is_deleted and c.author not in blocked_ids]
+        active_comments = [c for c in post.comments if not c.is_deleted and c.author not in all_blocked_ids]
         post.active_comments_count = len(active_comments)
         
         post.liked = False
@@ -331,11 +326,12 @@ def detect_platform(url: str) -> str:
 @login_required
 def home():
     page = request.args.get('page', 1, type=int)
-    blocked_ids = get_blocked_ids(current_user.id) # GET BLOCKED USERS
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me)) 
     
     pagination = Post.query\
         .filter(or_(Post.is_deleted == False, Post.is_deleted == None))\
-        .filter(~Post.author.in_(blocked_ids))\
+        .filter(~Post.author.in_(all_blocked_ids))\
         .options(
             joinedload(Post.user),              
             subqueryload(Post.likes),           
@@ -344,13 +340,13 @@ def home():
         .order_by(Post.date_created.desc())\
         .paginate(page=page, per_page=10)
 
-    posts = enrich_posts(pagination.items, blocked_ids)
+    posts = enrich_posts(pagination.items, all_blocked_ids)
     
     suggested_users = []
     if not posts and page == 1:
         followed_ids = [f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()]
         followed_ids.append(current_user.id) 
-        followed_ids.extend(blocked_ids) # Exclude blocked users from suggestions
+        followed_ids.extend(all_blocked_ids) 
         
         suggested_users = User.query.filter(
             ~User.id.in_(followed_ids),
@@ -438,9 +434,10 @@ def edit_post(id):
 @login_required
 def posts(username):
     user = User.query.filter_by(username=username).first_or_404()
-    blocked_ids = get_blocked_ids(current_user.id)
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me)) 
     
-    if user.id in blocked_ids:
+    if user.id in all_blocked_ids:
         flash("You cannot view this user's posts.", category='error')
         return redirect(url_for('views.home'))
 
@@ -454,7 +451,7 @@ def posts(username):
     .order_by(Post.date_created.desc())\
     .paginate(page=page, per_page=10, error_out=False)
         
-    posts = enrich_posts(pagination.items, blocked_ids)
+    posts = enrich_posts(pagination.items, all_blocked_ids)
     
     return render_template(
         "posts.html",
@@ -648,14 +645,21 @@ def mark_notifications_read():
 @login_required
 def profile(username):
     user = User.query.filter_by(username=username).first_or_404()
-    blocked_ids = get_blocked_ids(current_user.id)
+    
+    # 🚀 NEW: Advanced Block Logic for the Profile Page
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me))
+
+    # If THEY blocked YOU, you cannot view the profile at all
+    if user.id in blockers:
+        flash("You cannot view this profile.", category='error')
+        return redirect(url_for('views.home'))
+        
+    # If YOU blocked THEM, load the profile but set the flag so we can show the "Unblock" screen
+    i_have_blocked_them = user.id in blocked_by_me
 
     if user.is_admin and not current_user.is_admin:
         flash('This profile is private and cannot be viewed.', category='error')
-        return redirect(url_for('views.home'))
-        
-    if user.id in blocked_ids:
-        flash("You cannot view this profile.", category='error')
         return redirect(url_for('views.home'))
 
     page = request.args.get('page', 1, type=int)
@@ -667,7 +671,7 @@ def profile(username):
                 joinedload(Post.user),
                 subqueryload(Post.likes),
                 subqueryload(Post.comments).joinedload(Comment.user)
-            ).filter(SavedPost.user_id == user.id, Post.is_deleted == False, ~Post.author.in_(blocked_ids))\
+            ).filter(SavedPost.user_id == user.id, Post.is_deleted == False, ~Post.author.in_(all_blocked_ids))\
             .order_by(SavedPost.date_created.desc())\
             .paginate(page=page, per_page=5, error_out=False)
     else:
@@ -680,7 +684,7 @@ def profile(username):
         .order_by(Post.date_created.desc())\
         .paginate(page=page, per_page=5, error_out=False)
 
-    posts = enrich_posts(pagination.items, blocked_ids)
+    posts = enrich_posts(pagination.items, all_blocked_ids)
     
     followers_count = Follow.query.filter_by(following_id=user.id).count()
     following_count = Follow.query.filter_by(follower_id=user.id).count()
@@ -701,7 +705,8 @@ def profile(username):
         following_count=following_count,
         total_posts=total_posts,
         is_following=is_following,
-        tab=tab 
+        tab=tab,
+        i_have_blocked_them=i_have_blocked_them # 🚀 Pass flag to template
     )
     
 @views.route('/update-profile-pic', methods=['POST'])
@@ -915,9 +920,21 @@ def admin_dashboard():
     
     deleted_posts = Post.query.filter_by(is_deleted=True).all()
     comments = Comment.query.order_by(Comment.date_created.desc()).limit(50).all()
-    
-    # Fetch Unresolved Reports
     reports = Report.query.filter_by(is_resolved=False).order_by(Report.date_created.desc()).all()
+
+    # 🚀 NEW: Get all blocks and map user info for the Admin Blocks Tab
+    raw_blocks = Block.query.order_by(Block.date_created.desc()).all()
+    blocks_data = []
+    for b in raw_blocks:
+        blocker = User.query.get(b.blocker_id)
+        blocked = User.query.get(b.blocked_id)
+        if blocker and blocked:
+            blocks_data.append({
+                'id': b.id,
+                'blocker': blocker,
+                'blocked': blocked,
+                'date_created': b.date_created
+            })
 
     return render_template(
         "admin_dashboard.html",
@@ -926,8 +943,27 @@ def admin_dashboard():
         deleted_posts=deleted_posts,
         comments=comments,
         reports=reports, 
+        blocks_data=blocks_data, # Pass to template
         user=current_user
     )
+
+# 🚀 NEW: Admin Force Remove Block
+@views.route('/admin/remove-block/<int:block_id>', methods=['POST'])
+@login_required
+def admin_remove_block(block_id):
+    if not current_user.is_admin: abort(403)
+    
+    pwd = request.form.get('admin_password')
+    if pwd != os.getenv('ADMIN_PASSWORD'):
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+        
+    block_record = Block.query.get_or_404(block_id)
+    db.session.delete(block_record)
+    db.session.commit()
+    flash("Block successfully removed by Admin.", category='success')
+    return redirect(url_for('views.admin_dashboard'))
+
 
 @views.route('/admin/resolve-report/<int:report_id>', methods=['POST'])
 @login_required
@@ -1134,8 +1170,10 @@ def follow_user(user_id):
     if user_to_follow.id == current_user.id:
         return jsonify({'error': 'Cannot follow self'}), 400
         
-    blocked_ids = get_blocked_ids(current_user.id)
-    if user_id in blocked_ids:
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me)) 
+    
+    if user_id in all_blocked_ids:
         return jsonify({'success': False, 'message': 'Cannot follow this user'})
         
     existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
@@ -1164,14 +1202,15 @@ def unfollow_user(user_id):
 @login_required
 def followers_list(username):
     user = User.query.filter_by(username=username).first_or_404()
-    blocked_ids = get_blocked_ids(current_user.id)
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me)) 
     
-    if user.id in blocked_ids:
+    if user.id in all_blocked_ids:
         flash("You cannot view this information.", category='error')
         return redirect(url_for('views.home'))
         
     followers = User.query.join(Follow, Follow.follower_id == User.id)\
-        .filter(Follow.following_id == user.id, ~User.id.in_(blocked_ids)).all()
+        .filter(Follow.following_id == user.id, ~User.id.in_(all_blocked_ids)).all()
     following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
     return render_template("followers.html", profile_user=user, users=followers, following_ids=following_ids, title="Followers")
 
@@ -1179,14 +1218,15 @@ def followers_list(username):
 @login_required
 def following_list(username):
     user = User.query.filter_by(username=username).first_or_404()
-    blocked_ids = get_blocked_ids(current_user.id)
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me)) 
     
-    if user.id in blocked_ids:
+    if user.id in all_blocked_ids:
         flash("You cannot view this information.", category='error')
         return redirect(url_for('views.home'))
         
     following = User.query.join(Follow, Follow.following_id == User.id)\
-        .filter(Follow.follower_id == user.id, ~User.id.in_(blocked_ids)).all()
+        .filter(Follow.follower_id == user.id, ~User.id.in_(all_blocked_ids)).all()
     following_ids = {f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()}
     return render_template("followers.html", profile_user=user, users=following, following_ids=following_ids, title="Following")
 
@@ -1225,12 +1265,13 @@ def search_users_api():
     if not q:
         return jsonify([])
         
-    blocked_ids = get_blocked_ids(current_user.id) if current_user.is_authenticated else []
+    # 🚀 ONLY exclude people who blocked ME. Allow me to search people I blocked.
+    blockers, _ = get_block_lists(current_user.id) if current_user.is_authenticated else ([], [])
 
     users = User.query.filter(
         User.username.ilike(f'%{q}%'),
         User.is_admin == False,
-        ~User.id.in_(blocked_ids)
+        ~User.id.in_(blockers)
     ).limit(5).all()
 
     results = []
@@ -1245,22 +1286,24 @@ def search_users_api():
 @login_required
 def search_page():
     query = request.args.get('q', '').strip()
-    blocked_ids = get_blocked_ids(current_user.id)
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me))
     
     users = []
     posts = []
     
     if query:
+        # 🚀 ONLY exclude people who blocked ME. Allow me to search people I blocked.
         users = User.query.filter(
             User.username.ilike(f"%{query}%"),
             User.is_admin == False,
-            ~User.id.in_(blocked_ids)
+            ~User.id.in_(blockers) 
         ).all()
         
         posts = Post.query.filter(
             Post.text.ilike(f"%{query}%"),
             Post.is_deleted == False,
-            ~Post.author.in_(blocked_ids)
+            ~Post.author.in_(all_blocked_ids)
         ).options(
             joinedload(Post.user),
             subqueryload(Post.likes),
@@ -1275,13 +1318,13 @@ def search_page():
             users = User.query.filter(
                 or_(*user_conditions),
                 User.is_admin == False,
-                ~User.id.in_(blocked_ids)
+                ~User.id.in_(blockers)
             ).all()
             
             posts = Post.query.filter(
                 or_(*post_conditions),
                 Post.is_deleted == False,
-                ~Post.author.in_(blocked_ids)
+                ~Post.author.in_(all_blocked_ids)
             ).options(
                 joinedload(Post.user),
                 subqueryload(Post.likes),
@@ -1291,7 +1334,7 @@ def search_page():
         if len(users) < 5 or len(posts) < 5:
             found_user_ids = [u.id for u in users]
             found_user_ids.append(current_user.id) 
-            found_user_ids.extend(blocked_ids)
+            found_user_ids.extend(blockers) # Exclude blockers from recommendations
             
             found_post_ids = [p.id for p in posts]
             added_recommendations = False
@@ -1310,7 +1353,7 @@ def search_page():
                 extra_posts = Post.query.filter(
                     Post.is_deleted == False,
                     ~Post.id.in_(found_post_ids),
-                    ~Post.author.in_(blocked_ids)
+                    ~Post.author.in_(all_blocked_ids)
                 ).options(
                     joinedload(Post.user),
                     subqueryload(Post.likes),
@@ -1328,11 +1371,11 @@ def search_page():
         users = User.query.filter(
             User.is_admin == False,
             User.id != current_user.id,
-            ~User.id.in_(blocked_ids)
+            ~User.id.in_(blockers)
         ).order_by(func.random()).limit(5).all()
         
         posts = Post.query.filter_by(is_deleted=False)\
-            .filter(~Post.author.in_(blocked_ids))\
+            .filter(~Post.author.in_(all_blocked_ids))\
             .options(
                 joinedload(Post.user),
                 subqueryload(Post.likes),
@@ -1340,7 +1383,7 @@ def search_page():
             ).order_by(func.random()).limit(10).all()
     
     if posts:
-        posts = enrich_posts(posts, blocked_ids)
+        posts = enrich_posts(posts, all_blocked_ids)
 
     return render_template("search.html", user=current_user, users=users, posts=posts, query=query)
 
@@ -1426,13 +1469,17 @@ def post_view(id):
         subqueryload(Post.comments).joinedload(Comment.user)
     ).get_or_404(id)
     
-    blocked_ids = get_blocked_ids(current_user.id) if current_user.is_authenticated else []
+    if current_user.is_authenticated:
+        blockers, blocked_by_me = get_block_lists(current_user.id) 
+        all_blocked_ids = list(set(blockers + blocked_by_me))
+    else:
+        all_blocked_ids = []
     
-    if post.author in blocked_ids:
+    if post.author in all_blocked_ids:
         flash("You cannot view this post.", category='error')
         return redirect(url_for('views.home'))
         
-    posts = enrich_posts([post], blocked_ids)
+    posts = enrich_posts([post], all_blocked_ids)
     
     return render_template(
         "posts.html", 
@@ -1449,7 +1496,8 @@ def post_view(id):
 @views.route('/inbox')
 @login_required
 def inbox():
-    blocked_ids = get_blocked_ids(current_user.id)
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me))
     
     messages = Message.query.options(
         joinedload(Message.sender), 
@@ -1465,7 +1513,7 @@ def inbox():
     for msg in messages:
         partner = msg.recipient if msg.sender_id == current_user.id else msg.sender
         
-        if partner.id in blocked_ids:
+        if partner.id in all_blocked_ids:
             continue
             
         if partner.id not in conversations:
@@ -1482,8 +1530,10 @@ def inbox():
 def chat(username):
     recipient = User.query.filter_by(username=username).first_or_404()
     
-    blocked_ids = get_blocked_ids(current_user.id)
-    if recipient.id in blocked_ids:
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    all_blocked_ids = list(set(blockers + blocked_by_me))
+    
+    if recipient.id in all_blocked_ids:
         flash("You cannot message this user.", category='error')
         return redirect(url_for('views.inbox'))
 
@@ -1564,7 +1614,6 @@ def delete_message(id):
     db.session.commit()
     return jsonify({'success': True})
 
-# 🚀 NEW: Clear Entire Chat History for Current User
 @views.route('/api/clear-chat/<int:recipient_id>', methods=['POST'])
 @login_required
 @limiter.limit("10 per minute")
@@ -1627,8 +1676,8 @@ def send_message():
     if not raw_text or not recipient_id:
         return jsonify({'success': False}), 400
         
-    blocked_ids = get_blocked_ids(current_user.id)
-    if recipient_id in blocked_ids:
+    blockers, blocked_by_me = get_block_lists(current_user.id)
+    if recipient_id in blocked_by_me or recipient_id in blockers:
         return jsonify({'success': False, 'message': 'Cannot send message.'}), 403
         
     clean_text = bleach.clean(raw_text, tags=[], strip=True)
