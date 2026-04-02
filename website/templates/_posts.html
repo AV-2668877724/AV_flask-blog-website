@@ -501,12 +501,19 @@
                 </div>
                 <div class="modal-body">
                   <p class="text-muted small">Help us understand what's wrong with this comment.</p>
-                  <select class="form-select bg-light border-0 shadow-sm mb-3" id="reportReason-comment-{{ comment.id }}" style="border-radius: 12px; padding: 12px;">
+                  
+                  <select class="form-select bg-light border-0 shadow-sm mb-3" id="reportReason-comment-{{ comment.id }}" onchange="toggleOtherReason('comment', '{{ comment.id }}')" style="border-radius: 12px; padding: 12px;">
                     <option value="Spam or misleading">Spam or misleading</option>
                     <option value="Harassment or hate speech">Harassment or hate speech</option>
                     <option value="Inappropriate content">Inappropriate content</option>
                     <option value="Self-harm or violence">Self-harm or violence</option>
+                    <option value="Other">Other</option>
                   </select>
+                  
+                  <div id="otherReasonDiv-comment-{{ comment.id }}" class="d-none mb-3 fade-in-up" style="animation-duration: 0.2s;">
+                    <textarea class="form-control bg-light border-0 shadow-sm" id="otherReasonText-comment-{{ comment.id }}" rows="3" placeholder="Please specify your reason..." style="border-radius: 12px; resize: none;"></textarea>
+                  </div>
+                  
                 </div>
                 <div class="modal-footer border-0">
                   <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
@@ -534,13 +541,20 @@
       </div>
       <div class="modal-body">
         <p class="text-muted small">Help us understand what's wrong with this story.</p>
-        <select class="form-select bg-light border-0 shadow-sm mb-3" id="reportReason-post-{{ post.id }}" style="border-radius: 12px; padding: 12px;">
+        
+        <select class="form-select bg-light border-0 shadow-sm mb-3" id="reportReason-post-{{ post.id }}" onchange="toggleOtherReason('post', '{{ post.id }}')" style="border-radius: 12px; padding: 12px;">
           <option value="Spam or misleading">Spam or misleading</option>
           <option value="Harassment or hate speech">Harassment or hate speech</option>
           <option value="Inappropriate content">Inappropriate content</option>
           <option value="Self-harm or violence">Self-harm or violence</option>
           <option value="Intellectual property violation">Intellectual property violation</option>
+          <option value="Other">Other</option>
         </select>
+        
+        <div id="otherReasonDiv-post-{{ post.id }}" class="d-none mb-3 fade-in-up" style="animation-duration: 0.2s;">
+          <textarea class="form-control bg-light border-0 shadow-sm" id="otherReasonText-post-{{ post.id }}" rows="3" placeholder="Please specify your reason..." style="border-radius: 12px; resize: none;"></textarea>
+        </div>
+        
       </div>
       <div class="modal-footer border-0">
         <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>

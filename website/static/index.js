@@ -1016,7 +1016,6 @@ window.blockUser = function (userId) {
     .then((data) => {
       if (data.success) {
         if (typeof showToast === "function") showToast("User blocked successfully.");
-        // Instantly redirect home so they don't stay on the blocked profile
         setTimeout(() => window.location.href = "/", 1000);
       } else {
         if (typeof showToast === "function") showToast(data.message, true);
@@ -1038,10 +1037,36 @@ window.unblockUser = function (userId) {
     });
 };
 
+// 🚀 NEW: Function to toggle the text area when "Other" is selected
+window.toggleOtherReason = function(itemType, itemId) {
+  const select = document.getElementById(`reportReason-${itemType}-${itemId}`);
+  const otherDiv = document.getElementById(`otherReasonDiv-${itemType}-${itemId}`);
+  if (select && otherDiv) {
+    if (select.value === 'Other') {
+      otherDiv.classList.remove('d-none');
+    } else {
+      otherDiv.classList.add('d-none');
+    }
+  }
+};
+
+// 🚀 UPDATED: submitReport grabs the custom text if "Other" is chosen
 window.submitReport = function (itemType, itemId) {
   const reasonEl = document.getElementById(`reportReason-${itemType}-${itemId}`);
-  const reason = reasonEl ? reasonEl.value : "Inappropriate content";
+  let reason = reasonEl ? reasonEl.value : "Inappropriate content";
   
+  // Intercept if "Other" is selected to get custom text
+  if (reason === 'Other') {
+    const otherTextEl = document.getElementById(`otherReasonText-${itemType}-${itemId}`);
+    if (otherTextEl && otherTextEl.value.trim() !== '') {
+      reason = "Other: " + otherTextEl.value.trim();
+    } else {
+      if (typeof showToast === "function") showToast("Please specify your reason.", true);
+      else alert("Please specify your reason.");
+      return; // Stop submission if empty
+    }
+  }
+
   fetch(`/report/${itemType}/${itemId}`, {
     method: "POST",
     credentials: "same-origin",
@@ -1055,7 +1080,6 @@ window.submitReport = function (itemType, itemId) {
     .then((data) => {
       if (data.success) {
         if (typeof showToast === "function") showToast("Report submitted successfully.");
-        // Hide the modal programmatically
         const modalEl = document.getElementById(`reportModal-${itemType}-${itemId}`);
         if (modalEl) {
           const modal = bootstrap.Modal.getInstance(modalEl);
@@ -1070,9 +1094,6 @@ window.submitReport = function (itemType, itemId) {
 /* =========================================
    GLOBAL MODAL FIX (BLURRY SCREEN PREVENTER)
    ========================================= */
-// This ensures that ALL modals (even ones loaded dynamically via infinite scroll)
-// are moved to the <body> right before they open. This prevents the Bootstrap
-// "blurry backdrop trap" where the screen freezes.
 document.addEventListener('show.bs.modal', function (event) {
   const modal = event.target;
   if (modal.parentElement !== document.body) {
