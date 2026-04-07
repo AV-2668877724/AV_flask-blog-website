@@ -57,6 +57,9 @@
       crossorigin="anonymous"
     ></script>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+
     <link
       rel="icon"
       type="image/png"
@@ -91,7 +94,7 @@
     ></script>
 
     <script
-      src="{{ url_for('static', filename='index.js') }}?v=33"
+      src="{{ url_for('static', filename='index.js') }}?v=34"
       defer
     ></script>
 
@@ -113,6 +116,36 @@
         word-wrap: break-word;
         overflow-wrap: break-word;
         word-break: break-word;
+      }
+      
+      /* 🚀 NEW: Syntax Highlighting Overrides */
+      pre, .ql-syntax {
+        background-color: #282c34 !important;
+        color: #abb2bf !important;
+        padding: 16px;
+        border-radius: 12px;
+        font-family: 'Courier New', Courier, monospace;
+        overflow-x: auto;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      
+      /* 🚀 NEW: Auto-Mention Dropdown Styles */
+      .mention-dropdown {
+        border-radius: 12px;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        min-width: 220px;
+        padding: 0.5rem;
+      }
+      .mention-dropdown .dropdown-item {
+        border-radius: 8px;
+        color: var(--text-main);
+        transition: all 0.2s;
+      }
+      .mention-dropdown .dropdown-item:hover {
+        background-color: var(--bg-input);
+        color: var(--primary);
       }
 
       /* 4. Complete Mobile Bottom Navigation styling */
@@ -1152,7 +1185,7 @@
           });
       });
 
-      // 🚀 NEW: Universal Mobile-Friendly Share Function
+      // Universal Mobile-Friendly Share Function
       function sharePost(author, postId) {
         const url = window.location.origin + "/post/" + postId;
         if (navigator.share) {

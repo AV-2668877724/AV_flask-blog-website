@@ -80,6 +80,90 @@ function debounce(func, wait) {
 }
 
 /* =========================================
+   @ MENTIONS AUTO-COMPLETE (COMMENTS) 🚀 NEW
+   ========================================= */
+function setupMentions() {
+  const commentInputs = document.querySelectorAll('.ajax-comment-form input[name="text"]');
+  
+  commentInputs.forEach(input => {
+    // Prevent double-binding on infinite scroll
+    if (input.dataset.mentionsBound) return;
+    
+    const wrapper = input.closest('.input-group');
+    // Ensure the dropdown can overflow out of the input group visually
+    wrapper.classList.remove('overflow-hidden');
+    wrapper.style.overflow = 'visible'; 
+    
+    // Create the floating dropdown UI
+    const dropdown = document.createElement('div');
+    dropdown.className = 'mention-dropdown dropdown-menu shadow-lg border-0 fade-in-up';
+    dropdown.style.position = 'absolute';
+    dropdown.style.display = 'none';
+    dropdown.style.bottom = '110%'; // Pop UP above the input line
+    dropdown.style.left = '20px';
+    dropdown.style.zIndex = '1050';
+    dropdown.style.maxHeight = '200px';
+    dropdown.style.overflowY = 'auto';
+    wrapper.appendChild(dropdown);
+
+    input.addEventListener('input', debounce(async function(e) {
+      const cursorPosition = this.selectionStart;
+      const textBeforeCursor = this.value.substring(0, cursorPosition);
+      const words = textBeforeCursor.split(/\s+/);
+      const currentWord = words[words.length - 1];
+
+      // If the user is currently typing a word that starts with @
+      if (currentWord.startsWith('@') && currentWord.length > 1) {
+        const query = currentWord.substring(1);
+        try {
+          const response = await fetch(`/api/search-users?q=${query}`);
+          const users = await response.json();
+
+          dropdown.innerHTML = '';
+          if (users.length > 0) {
+            users.forEach(user => {
+              const item = document.createElement('a');
+              item.className = 'dropdown-item d-flex align-items-center gap-2 py-2';
+              item.href = '#';
+              
+              let avatarHtml = user.profile_pic 
+                ? `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle object-fit-cover shadow-sm border border-secondary" width="24" height="24">`
+                : `<div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" style="width:24px; height:24px; font-size:12px;">${user.username.charAt(0).toUpperCase()}</div>`;
+
+              item.innerHTML = `${avatarHtml} <span class="fw-bold" style="color: var(--text-main);">@${user.username}</span>`;
+              
+              item.onclick = function(ev) {
+                ev.preventDefault();
+                const textAfterCursor = input.value.substring(cursorPosition);
+                const newTextBeforeCursor = textBeforeCursor.substring(0, textBeforeCursor.length - currentWord.length) + `@${user.username} `;
+                input.value = newTextBeforeCursor + textAfterCursor;
+                dropdown.style.display = 'none';
+                input.focus();
+              };
+              dropdown.appendChild(item);
+            });
+            dropdown.style.display = 'block';
+          } else {
+            dropdown.style.display = 'none';
+          }
+        } catch(err) { console.error(err); }
+      } else {
+        dropdown.style.display = 'none';
+      }
+    }, 150));
+
+    // Hide dropdown if clicked outside
+    document.addEventListener('click', function(e) {
+      if (!wrapper.contains(e.target)) {
+        dropdown.style.display = 'none';
+      }
+    });
+    
+    input.dataset.mentionsBound = "true";
+  });
+}
+
+/* =========================================
    MAIN DOM LOAD LOGIC
    ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
@@ -96,12 +180,19 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     document.body.classList.remove("dark-mode");
   }
+  
+  // 🚀 NEW: Trigger global Syntax Highlighting
+  if (typeof hljs !== 'undefined') {
+    hljs.highlightAll();
+  }
 
   document
     .querySelectorAll("#toastContainer .toast")
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
   truncatePosts();
+  setupMentions(); // 🚀 Setup mentions on page load
+  
   window.addEventListener("load", truncatePosts);
 
   const notifBtn = document.getElementById("notifDropdown");
@@ -285,7 +376,7 @@ function like(postId) {
 }
 
 /* =========================================
-   SAVE POST LOGIC 🚀 (NEW)
+   SAVE POST LOGIC
    ========================================= */
 window.savePost = function (postId, btn) {
   if (btn.dataset.loading === "true") return;
@@ -822,6 +913,8 @@ document.addEventListener("DOMContentLoaded", function () {
           container.appendChild(tempDiv.firstChild);
         }
         truncatePosts();
+        setupMentions(); // 🚀 Re-bind mentions to newly loaded comment boxes
+        if (typeof hljs !== 'undefined') hljs.highlightAll(); // 🚀 Highlight new code blocks
         sentinel.setAttribute("data-page", nextPage);
       } catch (error) {
         console.error("Scroll Error:", error);
@@ -1002,7 +1095,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* =========================================
-   SAFETY & MODERATION (BLOCK & REPORT) 🚀 NEW
+   SAFETY & MODERATION (BLOCK & REPORT) 
    ========================================= */
 window.blockUser = function (userId) {
   if (!confirm("Are you sure you want to block this user? They will no longer be able to message you or see your posts.")) return;
@@ -1016,6 +1109,7 @@ window.blockUser = function (userId) {
     .then((data) => {
       if (data.success) {
         if (typeof showToast === "function") showToast("User blocked successfully.");
+        // Instantly redirect home so they don't stay on the blocked profile
         setTimeout(() => window.location.href = "/", 1000);
       } else {
         if (typeof showToast === "function") showToast(data.message, true);
@@ -1037,7 +1131,6 @@ window.unblockUser = function (userId) {
     });
 };
 
-// 🚀 NEW: Function to toggle the text area when "Other" is selected
 window.toggleOtherReason = function(itemType, itemId) {
   const select = document.getElementById(`reportReason-${itemType}-${itemId}`);
   const otherDiv = document.getElementById(`otherReasonDiv-${itemType}-${itemId}`);
@@ -1050,7 +1143,6 @@ window.toggleOtherReason = function(itemType, itemId) {
   }
 };
 
-// 🚀 UPDATED: submitReport grabs the custom text if "Other" is chosen
 window.submitReport = function (itemType, itemId) {
   const reasonEl = document.getElementById(`reportReason-${itemType}-${itemId}`);
   let reason = reasonEl ? reasonEl.value : "Inappropriate content";
@@ -1063,7 +1155,7 @@ window.submitReport = function (itemType, itemId) {
     } else {
       if (typeof showToast === "function") showToast("Please specify your reason.", true);
       else alert("Please specify your reason.");
-      return; // Stop submission if empty
+      return; 
     }
   }
 
