@@ -1,5 +1,52 @@
-{% extends "base.html" %} {% block title %} {{ username }}'s Posts {% endblock
-%} {% block content %}
+{% extends "base.html" %} 
+
+{% block title %} 
+    {% if posts|length == 1 %}
+        Post by {{ posts[0].user.username }} - AV Postory
+    {% else %}
+        {{ username }}'s Posts - AV Postory
+    {% endif %}
+{% endblock %} 
+
+{% block og_meta %}
+    {% if posts|length == 1 %}
+        <meta property="og:title" content="Post by {{ posts[0].user.username }} on AV Postory" />
+        
+        <meta property="og:description" content="{{ posts[0].text | striptags | truncate(150) }}" />
+        
+        {% if posts[0].cover_image %}
+            <meta property="og:image" content="{% if 'http' in posts[0].cover_image %}{{ posts[0].cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + posts[0].cover_image, _external=True) }}{% endif %}" />
+            <meta name="twitter:card" content="summary_large_image" />
+        {% else %}
+            <meta property="og:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
+            <meta name="twitter:card" content="summary" />
+        {% endif %}
+        
+        <meta property="og:url" content="{{ request.url }}" />
+        <meta property="og:type" content="article" />
+        <meta name="twitter:title" content="Post by {{ posts[0].user.username }}" />
+        <meta name="twitter:description" content="{{ posts[0].text | striptags | truncate(150) }}" />
+        
+        {% if posts[0].cover_image %}
+            <meta name="twitter:image" content="{% if 'http' in posts[0].cover_image %}{{ posts[0].cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + posts[0].cover_image, _external=True) }}{% endif %}" />
+        {% else %}
+            <meta name="twitter:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
+        {% endif %}
+        
+    {% else %}
+        <meta property="og:title" content="{{ username }}'s Posts on AV Postory" />
+        <meta property="og:description" content="Check out stories and updates by {{ username }}." />
+        <meta property="og:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
+        <meta property="og:url" content="{{ request.url }}" />
+        <meta property="og:type" content="profile" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="{{ username }}'s Posts" />
+        <meta name="twitter:description" content="Check out stories and updates by {{ username }}." />
+        <meta name="twitter:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
+    {% endif %}
+{% endblock %}
+
+{% block content %}
 
 <div class="row justify-content-center fade-in-up">
   <div class="col-lg-9 col-xl-8">
@@ -18,13 +65,15 @@
       </a>
       <div>
         <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
-          {{ username }}'s Posts
+          {% if posts|length == 1 %}Story{% else %}{{ username }}'s Posts{% endif %}
         </h3>
-        <p class="text-muted small mb-0">All public posts by {{ username }}</p>
+        <p class="text-muted small mb-0">{% if posts|length == 1 %}View the full story{% else %}All public posts by {{ username }}{% endif %}</p>
       </div>
     </div>
 
-    {% if posts %} {% set hide_dividers = False %} {% include "_posts.html" %}
+    {% if posts %} 
+      {% set hide_dividers = False %} 
+      {% include "_posts.html" %}
     {% else %}
     <div
       class="text-center py-5 my-4 rounded-4 border border-dashed shadow-sm"
@@ -42,7 +91,9 @@
       <h5 class="fw-bold" style="color: var(--text-main)">No posts found.</h5>
       <p class="text-muted mb-0">Check back later for updates.</p>
     </div>
-    {% endif %} {% if pagination and pagination.pages > 1 %}
+    {% endif %} 
+    
+    {% if pagination and pagination.pages > 1 %}
     <nav aria-label="User post pagination" class="mt-5 mb-4">
       <ul class="pagination justify-content-center gap-2">
         {% if pagination.has_prev %}
