@@ -1,6 +1,8 @@
 {% extends 'base.html' %} {% block title %}Write Story{% endblock %} {% block
 content %}
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/quill-mention@3.1.0/dist/quill.mention.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
 
 <style>
   /* =========================================
@@ -10,7 +12,7 @@ content %}
     border-radius: 20px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
-    overflow: hidden;
+    /* 🚀 FIX: Removed overflow: hidden; so the dropdown can pop out! */
     background-color: var(--bg-card);
     transition: all var(--trans-smooth);
   }
@@ -25,6 +27,7 @@ content %}
     border-bottom: 1px solid var(--border-color) !important;
     background-color: var(--bg-input) !important;
     padding: 12px 20px !important;
+    border-radius: 20px 20px 0 0 !important; /* 🚀 FIX: Keep top corners rounded */
   }
 
   /* Text Area Styling */
@@ -34,6 +37,7 @@ content %}
     color: var(--text-main) !important;
     font-size: 1.15rem !important;
     font-family: var(--font-sans) !important;
+    border-radius: 0 0 20px 20px !important; /* 🚀 FIX: Keep bottom corners rounded */
   }
   .ql-editor {
     min-height: 400px;
@@ -60,6 +64,33 @@ content %}
   body.dark-mode .ql-snow.ql-toolbar button:hover .ql-stroke,
   body.dark-mode .ql-snow .ql-toolbar button:hover .ql-stroke {
     stroke: var(--primary);
+  }
+
+  /* 🚀 NEW: Mention Dropdown Styling */
+  .ql-mention-list-container {
+    width: 250px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px !important;
+    background-color: var(--bg-card) !important;
+    box-shadow: var(--shadow-md) !important;
+    overflow: hidden;
+    z-index: 9999;
+  }
+  .ql-mention-list {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .ql-mention-list-item {
+    padding: 10px 15px !important;
+    color: var(--text-main) !important;
+    font-size: 0.95rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+  }
+  .ql-mention-list-item.selected {
+    background-color: var(--bg-input) !important;
+    color: var(--primary) !important;
+    font-weight: bold;
   }
 
   /* =========================================
@@ -219,7 +250,7 @@ content %}
           <small
             class="text-muted fw-bold mb-3 mb-md-0 d-flex align-items-center gap-2"
           >
-            <i class="fab fa-markdown fs-5"></i> Supports Markdown shortcuts
+            <i class="fab fa-markdown fs-5"></i> Supports Markdown shortcuts & @mentions
           </small>
 
           <div class="d-flex gap-3 w-100 w-md-auto">
@@ -244,42 +275,77 @@ content %}
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill-mention@3.1.0/dist/quill.mention.min.js"></script>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // 1. Initialize Quill
+    // 1. Initialize Highlight.js
+    hljs.configure({
+      languages: ['python', 'javascript', 'html', 'css', 'json', 'bash']
+    });
+
+    // 2. Initialize Quill with new Modules
     var quill = new Quill("#editor-container", {
       theme: "snow",
-      placeholder: "Start typing your masterpiece...",
+      placeholder: "Start typing your masterpiece... type @ to mention someone!",
       modules: {
+        syntax: true, // 🚀 Turn on Syntax Highlighting
         toolbar: [
           [{ header: [2, 3, false] }],
-          ["bold", "italic", "underline", "link", "blockquote"],
+          ["bold", "italic", "underline", "link", "blockquote", "code-block"],
           [{ list: "ordered" }, { list: "bullet" }],
           ["clean"],
         ],
+        mention: {
+          allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
+          mentionDenotationChars: ["@"],
+          source: async function (searchTerm, renderList, mentionChar) {
+            let matchedPeople = [];
+            if (searchTerm.length > 0) {
+              try {
+                const response = await fetch(`/api/search-users?q=${searchTerm}`);
+                const users = await response.json();
+                
+                matchedPeople = users.map(user => ({
+                  id: user.username,
+                  value: user.username,
+                  avatar: user.profile_pic ? `/static/uploads/avatars/${user.profile_pic}` : null
+                }));
+              } catch (error) {
+                console.error("Mention Search Error:", error);
+              }
+            }
+            renderList(matchedPeople, searchTerm);
+          },
+          renderItem: function(item) {
+            let avatarHtml = item.avatar 
+                ? `<img src="${item.avatar}" class="rounded-circle object-fit-cover shadow-sm border" width="24" height="24">`
+                : `<div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center shadow-sm" style="width:24px; height:24px; font-size:12px; vertical-align: middle;">${item.value.charAt(0).toUpperCase()}</div>`;
+                
+            return `${avatarHtml} <span class="ms-2 fw-bold">@${item.value}</span>`;
+          }
+        }
       },
     });
 
-    // 🚀 NEW: UNSAVED CHANGES WARNING LOGIC
+    // 🚀 UNSAVED CHANGES WARNING LOGIC
     let isSubmitting = false;
 
     window.addEventListener("beforeunload", function (e) {
-      // If they are intentionally submitting the form, let them go!
       if (isSubmitting) return undefined;
-
-      // Check if they typed anything
       var text = quill.getText().trim();
       if (text.length > 0) {
         var confirmationMessage =
           "You have unsaved changes. Are you sure you want to leave?";
-        e.returnValue = confirmationMessage; // Required for most modern browsers
-        return confirmationMessage; // Required for older browsers
+        e.returnValue = confirmationMessage; 
+        return confirmationMessage; 
       }
     });
 
     // =========================================
-    // 2. IMAGE PREVIEW LOGIC
+    // IMAGE PREVIEW LOGIC
     // =========================================
     window.removeCoverImage = function () {
       document.getElementById("coverImageInput").value = "";
@@ -288,7 +354,7 @@ content %}
     };
 
     // =========================================
-    // 3. FORM VALIDATION & SUBMISSION
+    // FORM VALIDATION & SUBMISSION
     // =========================================
     window.validatePostForm = function () {
       var html = quill.root.innerHTML;
@@ -303,13 +369,9 @@ content %}
         return false;
       }
 
-      // 🚀 NEW: Disable the unsaved changes warning right before submitting
       isSubmitting = true;
-
-      // Inject quill HTML into hidden input for backend to process
       document.getElementById("hiddenInput").value = html;
 
-      // Change button state to loading
       const btn = document.querySelector('button[type="submit"]');
       btn.innerHTML =
         '<i class="fas fa-spinner fa-spin me-2"></i>Publishing...';
