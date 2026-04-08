@@ -51,3 +51,4 @@ website/static/uploads/*
 # If 'tools/' contains personal scripts you don't want on GitHub:
 tools/
 AV_features.txt
+requirements.txt
