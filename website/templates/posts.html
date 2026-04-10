@@ -9,47 +9,64 @@
 {% endblock %} 
 
 {% block og_meta %}
+    <meta property="og:site_name" content="AV Postory" />
+    
     {% if posts|length == 1 %}
-        <meta property="og:title" content="Post by {{ posts[0].user.username }} on AV Postory" />
-        
+        <meta property="og:title" content="Story by {{ posts[0].user.username }} on AV Postory" />
         <meta property="og:description" content="{{ posts[0].text | striptags | truncate(150) }}" />
         
+        <meta itemprop="name" content="Story by {{ posts[0].user.username }} on AV Postory" />
+        <meta itemprop="description" content="{{ posts[0].text | striptags | truncate(150) }}" />
+        
         {% if posts[0].cover_image %}
-            <meta property="og:image" content="{% if 'http' in posts[0].cover_image %}{{ posts[0].cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + posts[0].cover_image, _external=True) }}{% endif %}" />
+            {% set img_url = posts[0].cover_image if 'http' in posts[0].cover_image else url_for('static', filename='uploads/posts/' + posts[0].cover_image, _external=True) %}
+            
+            <meta property="og:image" itemprop="image" content="{{ img_url }}" />
+            <meta property="og:image:width" content="1080" />
+            <meta property="og:image:height" content="600" />
+            
             <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:image" content="{{ img_url }}" />
         {% else %}
-            <meta property="og:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
+            {% set logo_url = url_for('static', filename='images/logo.png', _external=True) %}
+            <meta property="og:image" itemprop="image" content="{{ logo_url }}" />
+            <meta property="og:image:width" content="800" />
+            <meta property="og:image:height" content="800" />
+            
             <meta name="twitter:card" content="summary" />
+            <meta name="twitter:image" content="{{ logo_url }}" />
         {% endif %}
         
         <meta property="og:url" content="{{ request.url }}" />
         <meta property="og:type" content="article" />
-        <meta name="twitter:title" content="Post by {{ posts[0].user.username }}" />
-        <meta name="twitter:description" content="{{ posts[0].text | striptags | truncate(150) }}" />
         
-        {% if posts[0].cover_image %}
-            <meta name="twitter:image" content="{% if 'http' in posts[0].cover_image %}{{ posts[0].cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + posts[0].cover_image, _external=True) }}{% endif %}" />
-        {% else %}
-            <meta name="twitter:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
-        {% endif %}
+        <meta name="twitter:title" content="Story by {{ posts[0].user.username }}" />
+        <meta name="twitter:description" content="{{ posts[0].text | striptags | truncate(150) }}" />
         
     {% else %}
         <meta property="og:title" content="{{ username }}'s Posts on AV Postory" />
         <meta property="og:description" content="Check out stories and updates by {{ username }}." />
-        <meta property="og:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
+        <meta itemprop="name" content="{{ username }}'s Posts on AV Postory" />
+        <meta itemprop="description" content="Check out stories and updates by {{ username }}." />
+        
+        {% set logo_url = url_for('static', filename='images/logo.png', _external=True) %}
+        <meta property="og:image" itemprop="image" content="{{ logo_url }}" />
+        <meta property="og:image:width" content="800" />
+        <meta property="og:image:height" content="800" />
+        
         <meta property="og:url" content="{{ request.url }}" />
         <meta property="og:type" content="profile" />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="{{ username }}'s Posts" />
         <meta name="twitter:description" content="Check out stories and updates by {{ username }}." />
-        <meta name="twitter:image" content="{{ url_for('static', filename='images/logo.png', _external=True) }}" />
+        <meta name="twitter:image" content="{{ logo_url }}" />
     {% endif %}
 {% endblock %}
 
 {% block content %}
-
 <div class="row justify-content-center fade-in-up">
   <div class="col-lg-9 col-xl-8">
+    
     <div class="d-flex align-items-center mb-4 px-2">
       <a
         href="{{ url_for('views.profile', username=username) }}"
@@ -75,6 +92,7 @@
       {% set hide_dividers = False %} 
       {% include "_posts.html" %}
     {% else %}
+    
     <div
       class="text-center py-5 my-4 rounded-4 border border-dashed shadow-sm"
       style="
@@ -180,5 +198,4 @@
     </div>
   </div>
 </div>
-
 {% endblock %}
