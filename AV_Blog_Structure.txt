@@ -56,6 +56,6 @@ AV_Postory/
         ├── reset_request.html       # ✅ NEW: Password reset request
         ├── reset_token.html         # ✅ NEW: Password reset form via token
         │
-        ├── 404.html         
+        ├── 404.html
         └── 500.html
 
