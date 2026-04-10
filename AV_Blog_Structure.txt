@@ -42,15 +42,15 @@ AV_Postory/
         ├── chat.html        # ⚡ UPDATED: Real-time Online/Offline status, Delete buttons
         ├── inbox.html       # List of conversations
         │
-        ├── create_posts.html 
+        ├── create_posts.html
         ├── edit_post.html
         ├── _posts.html
         ├── posts.html               # ✅ NEW: Posts listing page
         ├── _skeleton_post.html      # ✅ NEW: Post loading skeleton UI
         │
-        ├── admin_dashboard.html 
-        ├── search.html      
-        ├── notifications.html   
+        ├── admin_dashboard.html
+        ├── search.html
+        ├── notifications.html
         ├── followers.html           # ✅ NEW (added as you requested)
         │
         ├── reset_request.html       # ✅ NEW: Password reset request
