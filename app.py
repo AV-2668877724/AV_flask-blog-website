@@ -2,8 +2,6 @@ from website import create_app, socketio
 from dotenv import load_dotenv
 import os
 
-
-# Load the secrets from .env file
 load_dotenv()
 
 app = create_app()
