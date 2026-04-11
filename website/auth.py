@@ -50,16 +50,17 @@ def send_async_email(app, msg):
             print("=========================================")
 
 def get_public_link(endpoint, token=None, **kwargs):
-    """Generates a link and forces the Ngrok URL if running locally."""
+    """Generates a link and forces the Production URL if running locally/behind proxy."""
     if token:
         kwargs['token'] = token
     link = url_for(endpoint, _external=True, **kwargs)
     
-    # YOUR NGROK URL (Update this if it changes!)
-    PUBLIC_DOMAIN = "https://arjun-diffusible-nonfamiliarly.ngrok-free.dev"
+    # 🚀 FIX: Pull the domain from .env instead of hardcoding it
+    PUBLIC_DOMAIN = os.getenv("PUBLIC_DOMAIN") 
     
-    # Dynamically catch ANY local address and port
-    link = re.sub(r'https?://(127\.0\.0\.1|localhost)(:\d+)?', PUBLIC_DOMAIN, link)
+    # Only replace if a PUBLIC_DOMAIN is explicitly set in your .env file
+    if PUBLIC_DOMAIN:
+        link = re.sub(r'https?://(127\.0\.0\.1|localhost)(:\d+)?', PUBLIC_DOMAIN, link)
         
     return link
 

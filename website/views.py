@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import ( 
     Blueprint, render_template, request,
-    flash, redirect, url_for, abort, jsonify, current_app, make_response
+    flash, redirect, url_for, abort, jsonify, current_app, make_response,redirect
 )
 from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message, SavedPost, Block, Report
