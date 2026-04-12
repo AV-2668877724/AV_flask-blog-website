@@ -1,25 +1,29 @@
 AV_Postory/
 │
+├── .env                     # ✅ NEW/REQUIRED: Stores SECRET_KEY, MAIL_USERNAME, etc. (DO NOT UPLOAD)
+├── .gitignore               # ✅ NEW/RECOMMENDED: Prevents .env and instance/ from being uploaded to GitHub
+│
 ├── app.py                   # Entry point (Initializes SocketIO & App)
 ├── reset_badges.py          # 🔧 UTILITY: Script to force-reset notification counts to 0
 ├── update_read_db.py        # 🔧 UTILITY: Script to add 'is_read' column
 ├── update_status_db.py      # 🔧 UTILITY: Script to add 'is_online' & 'last_seen' columns
 │
 ├── instance/
-│   └── database.db          # SQLite Database file
+│   └── database.db          # SQLite Database file (Ignored by Git)
 │
 └── website/
-    ├── __init__.py          # ⚡ UPDATED: initialized SocketIO, added context processors
-    ├── auth.py              # ⚡ UPDATED: Added '/check-username-signup' route
-    ├── events.py            # ✅ NEW: Handles Socket.IO events (Connect/Disconnect/Message)
-    ├── models.py            # ⚡ UPDATED: Added 'is_online', 'last_seen', 'is_read' cols
-    ├── views.py             # ⚡ UPDATED: Chat route marks messages as read
+    ├── __init__.py          # ⚡ UPDATED: Uses config.py and enforces secure SECRET_KEY check
+    ├── config.py            # ✅ NEW: Handles Development/Production environment splits
+    ├── auth.py              # Auth routes (Signup, Login, OTP, Reset)
+    ├── events.py            # Handles Socket.IO events (Connect/Disconnect/Message)
+    ├── models.py            # Database Models
+    ├── utils.py             # Helper functions (Cloudinary, Link parsing, Bleach)
+    ├── views.py             # Main application routes
     │
     ├── static/
-    │   ├── styles.css       # ⚡ UPDATED: Dark mode fixes for Chat & Profile links
-    │   ├── index.js         # ⚡ UPDATED: Socket.IO logic, Duplicate msg check, Back button reload
-    │   │
-    │   ├── images/          # Logo and assets
+    │   ├── styles.css       
+    │   ├── index.js         
+    │   ├── images/          
     │   │   └── logo.png
     │   │
     │   └── uploads/         # User uploaded content
@@ -27,34 +31,27 @@ AV_Postory/
     │       └── posts/
     │
     └── templates/
-        ├── base.html        # ⚡ UPDATED: Auto-reload script, Badge clearing logic
-        ├── home.html        # Homepage / Feed
-        ├── login.html       # Login Page
-        │
-        ├── sign_up.html        # ⚡ UPDATED: Step 1 (Email & OTP only)
-        ├── signup_final.html   # ✅ NEW: Step 3 (Username Check, Password creation)
-        ├── verify_otp.html     # ✅ NEW: OTP verification page
-        │
-        ├── profile.html     # ⚡ UPDATED: Social links logic fixed (.items), Dark mode fixed
-        ├── about.html       # ⚡ About Us Page
+        ├── base.html        
+        ├── home.html        
+        ├── login.html       
+        ├── sign_up.html     
+        ├── signup_final.html
+        ├── verify_otp.html  
+        ├── profile.html     
+        ├── about.html       
         ├── account_deactivated.html 
-        │
-        ├── chat.html        # ⚡ UPDATED: Real-time Online/Offline status, Delete buttons
-        ├── inbox.html       # ⚡ List of conversations
-        │
+        ├── chat.html        
+        ├── inbox.html       
         ├── create_posts.html
         ├── edit_post.html
         ├── _posts.html
-        ├── posts.html               # ✅ NEW: Posts listing page
-        ├── _skeleton_post.html      # ✅ NEW: Post loading skeleton UI
-        │
+        ├── posts.html       
+        ├── _skeleton_post.html 
         ├── admin_dashboard.html
         ├── search.html
         ├── notifications.html
-        ├── followers.html           # ✅ NEW (added as you requested)
-        │
-        ├── reset_request.html       # ✅ NEW: Password reset request
-        ├── reset_token.html         # ✅ NEW: Password reset form via token
-        │
+        ├── followers.html   
+        ├── reset_request.html
+        ├── reset_token.html 
         ├── 404.html
         └── 500.html

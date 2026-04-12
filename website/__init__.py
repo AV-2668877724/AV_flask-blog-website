@@ -10,6 +10,8 @@ from flask_compress import Compress
 from sqlalchemy.orm import joinedload 
 from flask_wtf.csrf import CSRFProtect 
 
+from .config import config
+
 # 🚀 Imports for Spam Protection & Migrations
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -31,36 +33,19 @@ migrate = Migrate() # 🚀 NEW: Initialize Migrate
 
 def create_app():
     app = Flask(__name__)
+    
+    # 🚀 NEW: Load Config via Environment Split
+    env = os.getenv('FLASK_ENV', 'development')
+    app.config.from_object(config[env])
+
     # 🚀 SECURITY UPDATE: Secure SECRET_KEY fallback (Fail-Fast)
-    secret = os.getenv('SECRET_KEY')
-    if not secret:
+    if not app.config.get('SECRET_KEY'):
         raise RuntimeError("SECRET_KEY environment variable is not set! Create a .env file.")
-    app.config['SECRET_KEY'] = secret
 
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    # ⚡ PERFORMANCE: Cache Static Files (Images/CSS) for 1 Year
-    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 31536000
-    
-    # ⚡ PERFORMANCE: Database Connection Pooling
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_size': 20,       
-        'pool_recycle': 3600,  
-        'pool_pre_ping': True  
-    }
-    
-    # EMAIL CONFIGURATION
-    app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')    
-    
     mail.init_app(app)
     
     # ⚡ PERFORMANCE: Enable Gzip Compression
-    Compress(app) 
+    Compress(app)
     
     # UPLOAD FOLDER
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
