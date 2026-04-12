@@ -36,11 +36,11 @@ AV_Postory/
         ├── verify_otp.html     # ✅ NEW: OTP verification page
         │
         ├── profile.html     # ⚡ UPDATED: Social links logic fixed (.items), Dark mode fixed
-        ├── about.html       # About Us Page
+        ├── about.html       # ⚡ About Us Page
         ├── account_deactivated.html 
         │
         ├── chat.html        # ⚡ UPDATED: Real-time Online/Offline status, Delete buttons
-        ├── inbox.html       # List of conversations
+        ├── inbox.html       # ⚡ List of conversations
         │
         ├── create_posts.html
         ├── edit_post.html

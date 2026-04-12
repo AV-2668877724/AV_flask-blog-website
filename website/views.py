@@ -448,7 +448,7 @@ def update_profile_pic():
         else:
             flash('Error uploading to cloud storage.', category='error')
     else:
-        flash('Invalid file type. Please upload a JPG, PNG, or WEBP image.', category='error')
+        flash('Invalid file type. Please upload JPG, PNG, or WEBP image.', category='error')
         
     return redirect(url_for('views.profile', username=current_user.username))
 
@@ -969,6 +969,8 @@ def deactivate_account():
 # =================================================
 # API ROUTES (SEARCH)
 # =================================================
+
+
 
 @views.route('/api/search-users', methods=['GET'])
 @limiter.limit("60 per minute") 
