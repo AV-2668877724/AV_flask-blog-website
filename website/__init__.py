@@ -4,7 +4,7 @@ from os import path, makedirs
 from flask_login import LoginManager, current_user
 from flask_mail import Mail
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_socketio import SocketIO
 from flask_compress import Compress
 from sqlalchemy.orm import joinedload 
@@ -108,7 +108,7 @@ def create_app():
             unread_count=unread_notifs, 
             unread_messages=unread_messages, 
             latest_notifs=latest_notifs,
-            now=datetime.utcnow() 
+            now=datetime.now(timezone.utc).replace(tzinfo=None) 
         )
 
     @app.context_processor
@@ -122,7 +122,7 @@ def create_app():
     @app.template_filter('timeago')
     def timeago(dt):
         if dt is None: return ""
-        now = datetime.utcnow() 
+        now = datetime.now(timezone.utc).replace(tzinfo=None) 
         if dt.tzinfo is not None:
             dt = dt.replace(tzinfo=None)
         

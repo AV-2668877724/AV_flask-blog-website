@@ -10,8 +10,9 @@ import string
 from flask import session
 import os
 import re 
-from datetime import datetime 
+ 
 from sqlalchemy import func
+from datetime import datetime, timezone
 
 # 🚀 NEW: Import ThreadPoolExecutor for our lightweight Email Task Queue
 from concurrent.futures import ThreadPoolExecutor
@@ -92,7 +93,7 @@ def send_reset_email(user_email):
                   
     logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png" 
     
-    current_year = datetime.utcnow().year
+    current_year = datetime.now(timezone.utc).replace(tzinfo=None).year
     
     msg.body = f'''To reset your password, click the following link: {link}\nIf you did not request this, please ignore this email.'''
 
@@ -149,7 +150,7 @@ def send_welcome_email(user_email, username):
     logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png"
     
     login_url = get_public_link('auth.login')
-    current_year = datetime.utcnow().year
+    current_year = datetime.now(timezone.utc).replace(tzinfo=None).year
     
     msg.body = f'''Hello {username},\nWelcome to AV Postory! Go to AV Postory: {login_url}'''
 
@@ -337,7 +338,7 @@ def finish_signup():
             new_user = User(email=email, username=username, 
                             password=generate_password_hash(password, method='scrypt'), 
                             is_verified=True,
-                            date_created=datetime.utcnow())
+                            date_created=datetime.now(timezone.utc).replace(tzinfo=None))
             
             db.session.add(new_user)
             db.session.commit()
@@ -395,7 +396,7 @@ def login():
                     flash('Please verify your email first.', category='error')
                     return render_template("login.html", user=current_user)
 
-                user.last_login = datetime.utcnow()
+                user.last_login = datetime.now(timezone.utc).replace(tzinfo=None)
                 db.session.commit()
 
                 login_user(user, remember=True)

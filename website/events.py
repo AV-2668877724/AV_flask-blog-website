@@ -3,9 +3,10 @@ from flask_login import current_user
 from . import socketio, db
 from .models import Message, User, Notification, Block # 🚀 ADDED Block model
 from flask_socketio import emit, join_room, leave_room
-from datetime import datetime
+from datetime import datetime, timezone
 import bleach # 🚀 FIX 1: Import bleach for XSS protection
 from sqlalchemy import or_, and_ # 🚀 ADDED for block logic
+
 
 # 🚀 IMPORT THE PROCESSOR FROM VIEWS FOR LINK PREVIEWS & TAGS
 from .views import process_text_links
@@ -35,7 +36,7 @@ def handle_disconnect():
     if current_user.is_authenticated:
         # 1. Mark User as Offline
         current_user.is_online = False
-        current_user.last_seen = datetime.utcnow()
+        current_user.last_seen = datetime.now(timezone.utc).replace(tzinfo=None)
         db.session.commit()
         
         # 2. Leave room
@@ -90,7 +91,7 @@ def handle_send_message_event(data):
         recipient_id=recipient_id,
         visible_to_sender=True,
         visible_to_recipient=True,
-        date_created=datetime.utcnow()
+        date_created=datetime.now(timezone.utc).replace(tzinfo=None)
     )
     
     db.session.add(new_message)
@@ -111,7 +112,7 @@ def handle_send_message_event(data):
             visitor_id=current_user.id, 
             recipient_id=recipient_id, 
             action='message', 
-            date_created=datetime.utcnow()
+            date_created=datetime.now(timezone.utc).replace(tzinfo=None)
         )
         db.session.add(notif)
         db.session.commit()

@@ -8,14 +8,13 @@ from .models import User, Post, Comment, Like, Follow, Notification, CommentLike
 from sqlalchemy.exc import IntegrityError
 
 from . import db, limiter
-
+from datetime import datetime, timezone
 from sqlalchemy import func, or_, desc, and_
 from werkzeug.security import check_password_hash
 from sqlalchemy.orm import joinedload, subqueryload 
 import re, json, os
 from sqlalchemy.orm.attributes import flag_modified
 import secrets
-from datetime import datetime
 from flask_socketio import emit, join_room, leave_room
 import bleach 
 
@@ -82,24 +81,39 @@ def home():
 @limiter.limit("5 per minute")
 def create_post():
     if request.method == 'POST':
+        title = request.form.get('title')
+        excerpt = request.form.get('excerpt')
         raw_text = request.form.get('text')
         cover_image_file = request.files.get('cover_image')
         cover_image_url = None
 
-        if not raw_text:
-            flash('Post content cannot be empty!', category='error')
+        if not raw_text or not title:
+            flash('Title and Post content cannot be empty!', category='error')
         else:
             clean_text = sanitize_html(raw_text)
             final_text = process_text_links(clean_text)
             
+            # 🚀 NEW: Calculate Read Time & Generate Slug
+            word_count = len(re.findall(r'\w+', clean_text))
+            read_time = max(1, round(word_count / 200))
+            
+            base_slug = re.sub(r'[^\w\s-]', '', title.lower()).strip()
+            base_slug = re.sub(r'[-\s]+', '-', base_slug)
+            slug = f"{base_slug}-{secrets.token_hex(4)}"
+            
             if cover_image_file and cover_image_file.filename != '':
                 cover_image_url = upload_to_cloudinary(cover_image_file, 'posts', width=1080)
             
+            # Since you updated models.py with default datetime.now, 
+            # we can safely drop date_created from here.
             post = Post(
+                title=title,
+                slug=slug,
+                excerpt=excerpt,
+                read_time=read_time,
                 text=final_text, 
                 author=current_user.id, 
-                cover_image=cover_image_url,
-                date_created=datetime.utcnow() 
+                cover_image=cover_image_url
             )
             
             db.session.add(post)
@@ -112,6 +126,7 @@ def create_post():
 
     return render_template('create_posts.html', user=current_user)
 
+
 @views.route("/edit-post/<int:id>", methods=['GET', 'POST'])
 @login_required
 @limiter.limit("10 per minute")
@@ -123,13 +138,31 @@ def edit_post(id):
         return redirect(url_for('views.home'))
 
     if request.method == "POST":
+        title = request.form.get('title')
+        excerpt = request.form.get('excerpt')
         raw_text = request.form.get('text')
         file = request.files.get('cover_image') 
         
-        if not raw_text:
-            flash("Post content cannot be empty.", category='error')
+        if not raw_text or not title:
+            flash("Title and Post content cannot be empty.", category='error')
         else:
-            post.text = process_text_links(sanitize_html(raw_text))
+            clean_text = sanitize_html(raw_text)
+            post.text = process_text_links(clean_text)
+            
+            # 🚀 NEW: Update new fields
+            post.title = title
+            post.excerpt = excerpt
+            
+            word_count = len(re.findall(r'\w+', clean_text))
+            post.read_time = max(1, round(word_count / 200))
+            
+            # Update slug only if title changed to preserve old links
+            base_slug = re.sub(r'[^\w\s-]', '', title.lower()).strip()
+            base_slug = re.sub(r'[-\s]+', '-', base_slug)
+            
+            # Ensure we only append a new hex if the slug base actually changed
+            if not post.slug or not post.slug.startswith(base_slug):
+                post.slug = f"{base_slug}-{secrets.token_hex(4)}"
             
             if file and file.filename != '' and allowed_file(file.filename):
                 new_image_url = upload_to_cloudinary(file, 'posts', width=1080)
@@ -147,6 +180,46 @@ def edit_post(id):
         content_to_edit = content_to_edit.replace('\n', '<br>')
 
     return render_template("edit_post.html", user=current_user, post=post, content_to_edit=content_to_edit)
+
+# 🚀 NEW: Route now accepts a string (slug) instead of just an int
+@views.route("/post/<string:slug>")
+def post_view(slug):
+    # Try to fetch by the new SEO slug first
+    post = Post.query.options(
+        joinedload(Post.user),
+        subqueryload(Post.likes),
+        subqueryload(Post.comments).joinedload(Comment.user)
+    ).filter_by(slug=slug).first()
+    
+    # Fallback for older posts created before slugs were added
+    if not post and slug.isdigit():
+        post = Post.query.options(
+            joinedload(Post.user),
+            subqueryload(Post.likes),
+            subqueryload(Post.comments).joinedload(Comment.user)
+        ).get_or_404(int(slug))
+    elif not post:
+        abort(404)
+        
+    if current_user.is_authenticated:
+        blockers, blocked_by_me = get_block_lists(current_user.id) 
+        all_blocked_ids = list(set(blockers + blocked_by_me))
+    else:
+        all_blocked_ids = []
+    
+    if post.author in all_blocked_ids:
+        flash("You cannot view this post.", category='error')
+        return redirect(url_for('views.home'))
+        
+    posts = enrich_posts([post], all_blocked_ids)
+    
+    return render_template(
+        "posts.html", 
+        user=current_user, 
+        posts=posts, 
+        username=post.user.username,
+        pagination=None 
+    )
 
 @views.route("/posts/<string:username>")
 @login_required
@@ -215,7 +288,7 @@ def create_comment(post_id):
                 text=final_text, 
                 author=current_user.id, 
                 post_id=post_id,
-                date_created=datetime.utcnow() 
+                date_created=datetime.now(timezone.utc).replace(tzinfo=None) 
             )
             
             db.session.add(comment)
@@ -256,7 +329,7 @@ def like(post_id):
         db.session.delete(like)
         db.session.commit()
     else:
-        like = Like(author=current_user.id, post_id=post_id, date_created=datetime.utcnow()) 
+        like = Like(author=current_user.id, post_id=post_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None)) 
         db.session.add(like)
         db.session.commit()
         liked = True
@@ -276,7 +349,7 @@ def save_post(post_id):
         db.session.delete(saved_post)
         db.session.commit()
     else:
-        new_save = SavedPost(user_id=current_user.id, post_id=post_id, date_created=datetime.utcnow()) 
+        new_save = SavedPost(user_id=current_user.id, post_id=post_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None)) 
         db.session.add(new_save)
         db.session.commit()
         saved = True
@@ -571,7 +644,7 @@ def block_user(user_id):
     
     existing = Block.query.filter_by(blocker_id=current_user.id, blocked_id=user_id).first()
     if not existing:
-        new_block = Block(blocker_id=current_user.id, blocked_id=user_id, date_created=datetime.utcnow())
+        new_block = Block(blocker_id=current_user.id, blocked_id=user_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None))
         db.session.add(new_block)
         
         Follow.query.filter(or_(
@@ -890,7 +963,7 @@ def follow_user(user_id):
         
     existing = Follow.query.filter_by(follower_id=current_user.id, following_id=user_id).first()
     if not existing:
-        new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.utcnow()) 
+        new_follow = Follow(follower_id=current_user.id, following_id=user_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None)) 
         db.session.add(new_follow)
         db.session.commit()
         create_notification(current_user.id, user_id, 'follow')
@@ -1166,40 +1239,14 @@ def like_comment(comment_id):
         db.session.delete(like)
         liked = False
     else:
-        like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.utcnow()) 
+        like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None)) 
         db.session.add(like)
         liked = True
 
     db.session.commit()
     return jsonify({"likes": len(comment.likes), "liked": liked})
 
-@views.route("/post/<int:id>")
-def post_view(id):
-    post = Post.query.options(
-        joinedload(Post.user),
-        subqueryload(Post.likes),
-        subqueryload(Post.comments).joinedload(Comment.user)
-    ).get_or_404(id)
-    
-    if current_user.is_authenticated:
-        blockers, blocked_by_me = get_block_lists(current_user.id) 
-        all_blocked_ids = list(set(blockers + blocked_by_me))
-    else:
-        all_blocked_ids = []
-    
-    if post.author in all_blocked_ids:
-        flash("You cannot view this post.", category='error')
-        return redirect(url_for('views.home'))
-        
-    posts = enrich_posts([post], all_blocked_ids)
-    
-    return render_template(
-        "posts.html", 
-        user=current_user, 
-        posts=posts, 
-        username=post.user.username,
-        pagination=None 
-    )
+
     
 # =================================================
 # MESSAGING SYSTEM (Inbox & Chat)
@@ -1399,7 +1446,7 @@ def send_message():
         text=final_text, 
         sender_id=current_user.id, 
         recipient_id=recipient_id,
-        date_created=datetime.utcnow() 
+        date_created=datetime.now(timezone.utc).replace(tzinfo=None) 
     )
     db.session.add(new_message)
     db.session.commit()

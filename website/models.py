@@ -2,8 +2,9 @@ from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
 from sqlalchemy.types import JSON
-from datetime import datetime
+
 from sqlalchemy import Index  
+from datetime import datetime, timezone
 
 # =====================================================
 # Notification Model
@@ -24,7 +25,7 @@ class Notification(db.Model):
     is_read = db.Column(db.Boolean, default=False, index=True)
     
     # Single Index (Faster sorting)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)
 
     visitor = db.relationship('User', foreign_keys=[visitor_id], lazy=True)
     recipient = db.relationship('User', foreign_keys=[recipient_id], lazy=True)
@@ -60,12 +61,12 @@ class User(db.Model, UserMixin):
     is_verified = db.Column(db.Boolean, default=False)
     deactivation_reason = db.Column(db.String(500), nullable=True)
     
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
-    last_login = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    last_login = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     
     # Online Status
     is_online = db.Column(db.Boolean, default=False)
-    last_seen = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    last_seen = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
     
     # Relationships
     posts = db.relationship('Post', backref='user', passive_deletes=True)
@@ -81,6 +82,13 @@ class User(db.Model, UserMixin):
 class Post(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
+    
+    # 🚀 NEW FIELDS
+    title = db.Column(db.String(200), nullable=True)
+    slug = db.Column(db.String(220), unique=True, nullable=True, index=True)
+    excerpt = db.Column(db.String(300), nullable=True)
+    read_time = db.Column(db.Integer, default=1)
+    
     text = db.Column(db.Text, nullable=False)
     cover_image = db.Column(db.String(150), nullable=True)
     
@@ -91,7 +99,7 @@ class Post(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     
     # Index for the Home Feed sorting
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)    
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)    
     
     comments = db.relationship('Comment', backref='post', cascade="all, delete-orphan", passive_deletes=True)
     likes = db.relationship('Like', backref='post', cascade="all, delete-orphan", passive_deletes=True)
@@ -111,7 +119,7 @@ class Message(db.Model):
     text = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
     
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)    
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)    
     
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     recipient = db.relationship('User', foreign_keys=[recipient_id], backref='received_messages')
@@ -135,7 +143,7 @@ class Comment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
     
     is_deleted = db.Column(db.Boolean, default=False)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)
     
     likes = db.relationship('CommentLike', backref='comment', passive_deletes=True)
     reports = db.relationship('Report', backref='reported_comment', cascade="all, delete-orphan", passive_deletes=True)
@@ -145,27 +153,27 @@ class Like(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 class SavedPost(db.Model):
     __tablename__ = 'saved_post'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id', ondelete='CASCADE'), nullable=False, index=True)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)
 
 class Follow(db.Model):
     __tablename__ = 'follow'
     id = db.Column(db.Integer, primary_key=True)
     follower_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     following_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 class CommentLike(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
     comment_id = db.Column(db.Integer, db.ForeignKey('comment.id', ondelete="CASCADE"), nullable=False, index=True)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 # =====================================================
 # Safety & Moderation Models 🚀 NEW
@@ -176,7 +184,7 @@ class Block(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     blocker_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
     blocked_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, index=True)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow())
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 class Report(db.Model):
     __tablename__ = 'report'
@@ -189,4 +197,4 @@ class Report(db.Model):
     
     reason = db.Column(db.String(200), nullable=False)
     is_resolved = db.Column(db.Boolean, default=False)
-    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.utcnow(), index=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)

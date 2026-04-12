@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 import bleach
 import cloudinary
 import cloudinary.uploader
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_login import current_user
 from sqlalchemy import func
 from . import db
@@ -212,7 +212,7 @@ def create_notification(visitor_id, recipient_id, action, post_id=None):
             recipient_id=recipient_id, 
             action=action, 
             post_id=post_id,
-            date_created=datetime.utcnow() 
+            date_created=datetime.now(timezone.utc).replace(tzinfo=None) 
         )
         db.session.add(notif)
         db.session.commit()
