@@ -31,7 +31,12 @@ migrate = Migrate() # 🚀 NEW: Initialize Migrate
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+    # 🚀 SECURITY UPDATE: Secure SECRET_KEY fallback (Fail-Fast)
+    secret = os.getenv('SECRET_KEY')
+    if not secret:
+        raise RuntimeError("SECRET_KEY environment variable is not set! Create a .env file.")
+    app.config['SECRET_KEY'] = secret
+
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
