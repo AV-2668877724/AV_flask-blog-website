@@ -179,6 +179,12 @@ content %}
         <input type="hidden" name="text" id="hiddenInput" />
 
         <div class="mb-4">
+          <input type="text" name="title" class="form-control form-control-lg fw-bold" placeholder="Story Title (Required)" value="{{ post.title or '' }}" required maxlength="200" style="font-size: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input);">
+        </div>
+        <div class="mb-4">
+          <textarea name="excerpt" class="form-control" placeholder="Short excerpt or summary (Optional, max 300 characters)" maxlength="300" rows="2" style="border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input);">{{ post.excerpt or '' }}</textarea>
+        </div>
+        <div class="mb-4">
           <label
             class="form-label fw-bold small text-uppercase"
             style="color: var(--text-muted); letter-spacing: 0.5px"
@@ -188,8 +194,8 @@ content %}
 
           <div
             id="uploadZone"
-            class="image-upload-zone upload-zone-drop {{ 'd-none' if post.cover_image else 'd-block' }}"
-            onclick="document.getElementById('coverImageInput').click()"
+            class="image-upload-zone upload-zone-drop"
+            {% if post.cover_image %}style="display: none;"{% else %}style="display: block;"{% endif %}
           >
             <i
               class="fas fa-images fa-2x mb-2"
@@ -220,7 +226,8 @@ content %}
 
           <div
             id="coverPreviewContainer"
-            class="cover-preview-wrapper mt-3 {{ 'd-block' if post.cover_image else 'd-none' }}"
+            class="cover-preview-wrapper mt-3"
+            {% if post.cover_image %}style="display: block;"{% else %}style="display: none;"{% endif %}
           >
             <img
               id="coverPreview"
@@ -345,7 +352,13 @@ content %}
       var text = quill.getText().trim();
       var originalText = `{{ content_to_edit|striptags|replace('\n', ' ')|replace('\r', '')|trim }}`;
       
-      if (text !== originalText && text.length > 0) {
+      var titleText = document.querySelector('input[name="title"]').value.trim();
+      var excerptText = document.querySelector('textarea[name="excerpt"]').value.trim();
+      
+      var originalTitle = `{{ post.title or '' }}`.trim();
+      var originalExcerpt = `{{ post.excerpt or '' }}`.trim();
+      
+      if ((text !== originalText && text.length > 0) || titleText !== originalTitle || excerptText !== originalExcerpt) {
         var confirmationMessage =
           "You have unsaved changes. Are you sure you want to leave?";
         e.returnValue = confirmationMessage;
@@ -358,14 +371,8 @@ content %}
     // =========================================
     window.removeCoverImage = function () {
       document.getElementById("coverImageInput").value = "";
-      
-      const container = document.getElementById("coverPreviewContainer");
-      container.classList.remove("d-block");
-      container.classList.add("d-none");
-      
-      const uploadZone = document.getElementById("uploadZone");
-      uploadZone.classList.remove("d-none");
-      uploadZone.classList.add("d-block");
+      document.getElementById("coverPreviewContainer").style.display = "none";
+      document.getElementById("uploadZone").style.display = "block";
     };
 
     // =========================================
@@ -377,9 +384,9 @@ content %}
 
       if (text.length === 0) {
         if (typeof showToast === "function") {
-          showToast("Content cannot be empty!", true);
+          showToast("Story content cannot be empty!", true);
         } else {
-          alert("Content cannot be empty!");
+          alert("Story content cannot be empty!");
         }
         return false;
       }

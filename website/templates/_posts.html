@@ -177,6 +177,21 @@
       {% endif %}
     </div>
 
+    <div class="px-3 px-md-4 mb-2">
+      {% if post.title %}
+        <h4 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif; letter-spacing: -0.02em;">
+          <a href="{{ url_for('views.post_view', slug=post.slug or post.id) }}" class="text-decoration-none" style="color: var(--text-main); transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-main)'">
+            {{ post.title }}
+          </a>
+        </h4>
+      {% endif %}
+
+      {% if post.excerpt %}
+        <p class="text-muted mb-3 mt-2" style="font-size: 1.05rem; line-height: 1.6; border-left: 3px solid var(--border-color); padding-left: 15px;">
+          {{ post.excerpt }}
+        </p>
+      {% endif %}
+    </div>
     <div class="px-3 px-md-4 pb-2 position-relative">
       <div class="post-text-container position-relative">
         <div

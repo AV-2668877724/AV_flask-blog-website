@@ -180,6 +180,12 @@ content %}
         <input type="hidden" name="text" id="hiddenInput" />
 
         <div class="mb-4">
+          <input type="text" name="title" class="form-control form-control-lg fw-bold" placeholder="Story Title (Required)" required maxlength="200" style="font-size: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input);">
+        </div>
+        <div class="mb-4">
+          <textarea name="excerpt" class="form-control" placeholder="Short excerpt or summary (Optional, max 300 characters)" maxlength="300" rows="2" style="border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input);"></textarea>
+        </div>
+        <div class="mb-4">
           <label
             class="form-label fw-bold small text-uppercase"
             style="color: var(--text-muted); letter-spacing: 0.5px"
@@ -190,7 +196,6 @@ content %}
           <div
             id="uploadZone"
             class="image-upload-zone upload-zone-drop"
-            onclick="document.getElementById('coverImageInput').click()"
           >
             <i
               class="fas fa-images fa-2x mb-2"
@@ -336,7 +341,12 @@ content %}
     window.addEventListener("beforeunload", function (e) {
       if (isSubmitting) return undefined;
       var text = quill.getText().trim();
-      if (text.length > 0) {
+      
+      // Also check if title or excerpt has been filled out
+      var titleText = document.querySelector('input[name="title"]').value.trim();
+      var excerptText = document.querySelector('textarea[name="excerpt"]').value.trim();
+      
+      if (text.length > 0 || titleText.length > 0 || excerptText.length > 0) {
         var confirmationMessage =
           "You have unsaved changes. Are you sure you want to leave?";
         e.returnValue = confirmationMessage; 
@@ -362,9 +372,9 @@ content %}
 
       if (text.length === 0) {
         if (typeof showToast === "function") {
-          showToast("Content cannot be empty!", true);
+          showToast("Story content cannot be empty!", true);
         } else {
-          alert("Content cannot be empty!");
+          alert("Story content cannot be empty!");
         }
         return false;
       }

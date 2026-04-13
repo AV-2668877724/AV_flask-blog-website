@@ -2,11 +2,11 @@
 
 {% block title %} 
     {% if posts|length == 1 %}
-        Post by {{ posts[0].user.username }} - AV Postory
+        {{ posts[0].title or 'Story by ' + posts[0].user.username }} - AV Postory
     {% else %}
         {{ username }}'s Posts - AV Postory
     {% endif %}
-{% endblock %} 
+{% endblock %}
 
 {% block og_meta %}
     <meta property="og:site_name" content="AV Postory" />
