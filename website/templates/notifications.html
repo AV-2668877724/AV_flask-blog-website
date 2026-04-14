@@ -36,7 +36,7 @@ content %}
       <div class="list-group list-group-flush">
         {% for n in notifications %}
         <a
-          href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}/home#post-{{n.post_id}}{% else %}/profile/{{n.visitor.username}}{% endif %}"
+          href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}{{ url_for('views.post_view', slug=n.post.slug or n.post.id) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
           class="list-group-item list-group-item-action p-3 p-md-4 border-bottom d-flex align-items-center gap-3 transition-all hover-opacity-100 {% if not n.is_read %}notif-unread{% else %}notif-read{% endif %}"
           style="border-color: var(--border-color) !important"
         >

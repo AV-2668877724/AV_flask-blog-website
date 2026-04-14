@@ -296,11 +296,11 @@ block content %}
                     <td class="py-3">
                       {% if r.post_id %}
                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill">Post ID: {{ r.post_id }}</span>
-                        <a href="{{ url_for('views.post_view', id=r.post_id) }}" target="_blank" class="btn btn-link btn-sm p-0 ms-2 fw-bold text-decoration-none"><i class="fas fa-external-link-alt"></i> View</a>
+                        <a href="{{ url_for('views.post_view', slug=post.slug or post.id) }}" target="_blank" class="btn btn-link btn-sm p-0 ms-2 fw-bold text-decoration-none"><i class="fas fa-external-link-alt"></i> View</a>
                       {% elif r.comment_id %}
                         <span class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill">Comment ID: {{ r.comment_id }}</span>
                         {% if r.reported_comment.post_id %}
-                        <a href="{{ url_for('views.post_view', id=r.reported_comment.post_id) }}" target="_blank" class="btn btn-link btn-sm p-0 ms-2 fw-bold text-decoration-none"><i class="fas fa-external-link-alt"></i> View</a>
+                        <a href="{{ url_for('views.post_view', slug=post.slug or post.id) }}" target="_blank" class="btn btn-link btn-sm p-0 ms-2 fw-bold text-decoration-none"><i class="fas fa-external-link-alt"></i> View</a>
                         {% endif %}
                       {% endif %}
                     </td>
