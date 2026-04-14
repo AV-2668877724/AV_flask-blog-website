@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
-%}
+{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content %}
 
 <style>
   /* 🚀 FIX: Ensure mobile search text and placeholder adapt to dark mode */
@@ -8,133 +7,142 @@
   }
   .mobile-home-search::placeholder {
     color: var(--text-muted) !important;
-    opacity: 0.8; /* Makes the placeholder slightly softer */
+    opacity: 0.8;
   }
 </style>
 
 <div class="row justify-content-center">
   <div class="col-lg-9 col-xl-8 mx-auto">
+    
     <div class="d-md-none mb-4 fade-in-up">
-      <form
-        action="{{ url_for('views.search_page') }}"
-        method="GET"
-        class="position-relative"
-      >
-        <div
-          class="input-group shadow-sm"
-          style="
-            border-radius: 20px;
-            overflow: hidden;
-            border: 2px solid transparent;
-            background: var(--bg-card);
-          "
-        >
+      <form action="{{ url_for('views.search_page') }}" method="GET" class="position-relative">
+        <div class="input-group shadow-sm" style="border-radius: 20px; overflow: hidden; border: 2px solid transparent; background: var(--bg-card);">
           <span class="input-group-text bg-transparent border-0 ps-4">
             <i class="fas fa-search text-muted"></i>
           </span>
-          <input
-            type="search"
-            name="q"
-            class="form-control border-0 bg-transparent py-3 shadow-none mobile-home-search"
-            placeholder="Search"
-            autocomplete="off"
-            required
-            style="font-weight: 500"
-          />
-          <button
-            class="btn btn-primary px-4 fw-bold"
-            type="submit"
-            style="border-radius: 0 16px 16px 0"
-          >
-            Search
+          <input type="search" name="q" class="form-control border-0 bg-transparent py-3 shadow-none mobile-home-search" placeholder="Search" autocomplete="off" required style="font-weight: 500" />
+          <button type="submit" class="btn text-primary px-4 fw-bold bg-transparent border-0">
+            Go
           </button>
         </div>
       </form>
     </div>
 
-    <div id="posts-container" class="post-feed">
-      {% if posts %} 
-        {% include "_posts.html" %} 
-      {% else %}
-      
-      <div class="py-5 my-4 fade-in-up" style="background-color: var(--bg-card); border-radius: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
-        <div class="text-center px-3 mb-4">
-          <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 70px; height: 70px">
-            <i class="fas fa-user-friends fa-2x"></i>
+    <div id="homeSkeleton" style="display: block;">
+      <div class="card mb-4 border-0 shadow-sm skeleton-card" style="border-radius: 20px; background-color: var(--bg-card);">
+        <div class="card-header border-0 bg-transparent d-flex align-items-center pt-4 px-4 gap-3">
+          <div class="skeleton skeleton-avatar" style="width: 48px; height: 48px;"></div>
+          <div class="d-flex flex-column gap-2 w-50">
+            <div class="skeleton skeleton-text w-50 m-0"></div>
+            <div class="skeleton skeleton-text w-25 m-0"></div>
           </div>
-          <h4 class="fw-bold font-heading mb-2" style="color: var(--text-main)">Welcome to AV Postory!</h4>
-          <p class="text-muted mx-auto" style="max-width: 500px;">Your feed is currently empty. Follow some of our top creators to start seeing amazing stories, or publish your own!</p>
         </div>
+        <div class="card-body px-4">
+          <div class="skeleton skeleton-text w-100 mb-2"></div>
+          <div class="skeleton skeleton-text w-100 mb-2"></div>
+          <div class="skeleton skeleton-text w-75 mb-4"></div>
+          <div class="skeleton skeleton-img" style="height: 300px;"></div>
+        </div>
+      </div>
+      
+      <div class="card mb-4 border-0 shadow-sm skeleton-card" style="border-radius: 20px; background-color: var(--bg-card);">
+        <div class="card-header border-0 bg-transparent d-flex align-items-center pt-4 px-4 gap-3">
+          <div class="skeleton skeleton-avatar" style="width: 48px; height: 48px;"></div>
+          <div class="d-flex flex-column gap-2 w-50">
+            <div class="skeleton skeleton-text w-50 m-0"></div>
+            <div class="skeleton skeleton-text w-25 m-0"></div>
+          </div>
+        </div>
+        <div class="card-body px-4">
+          <div class="skeleton skeleton-text w-100 mb-2"></div>
+          <div class="skeleton skeleton-text w-75 mb-4"></div>
+        </div>
+      </div>
+    </div>
 
-        {% if suggested_users %}
-        <div class="px-4 px-md-5 mb-5">
-          <h6 class="fw-bold text-muted text-uppercase small mb-3" style="letter-spacing: 0.5px;">Suggested Creators</h6>
-          <div class="row g-3">
-            {% for u in suggested_users %}
-            <div class="col-6 col-md-4">
-              <div class="card h-100 border text-center shadow-sm" style="border-radius: 16px; background-color: var(--bg-input); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
-                <div class="card-body p-3 d-flex flex-column">
-                  <a href="{{ url_for('views.profile', username=u.username) }}" class="text-decoration-none flex-grow-1 mb-2">
-                    {% if u.profile_pic %}
-                    <img src="{% if 'http' in u.profile_pic %}{{ u.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}{% endif %}" class="rounded-circle shadow-sm mb-2" style="width: 64px; height: 64px; object-fit: cover; border: 2px solid var(--bg-card);">
-                    {% else %}
-                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold shadow-sm mb-2 mx-auto" style="width: 64px; height: 64px; font-size: 1.5rem; background: linear-gradient(135deg, var(--primary), #4f46e5); border: 2px solid var(--bg-card);">
-                      {{ u.username[0]|upper }}
+    <div id="homeFeed" style="display: none;">
+      
+      {% if not posts %}
+      <div class="card border-0 shadow-sm mb-5 text-center py-5 fade-in-up" style="border-radius: 24px; background-color: var(--bg-card);">
+        <div class="card-body px-4 px-md-5">
+          <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-4 shadow-sm" style="width: 90px; height: 90px;">
+            <i class="fas fa-users fa-2x"></i>
+          </div>
+          <h3 class="fw-bold font-heading mb-3" style="color: var(--text-main);">Welcome to AV Postory!</h3>
+          <p class="text-muted lead mb-4">Your feed is currently empty. Follow other users to see their stories here, or be the first to share something amazing.</p>
+          
+          {% if suggested_users %}
+          <div class="text-start mb-4">
+            <h6 class="fw-bold text-muted text-uppercase small mb-3">Suggested People to Follow</h6>
+            <div class="row g-3">
+              {% for u in suggested_users %}
+              <div class="col-md-6">
+                <div class="card bg-light border-0 shadow-sm h-100 transition-all hover-opacity-100" style="border-radius: 16px;">
+                  <div class="card-body d-flex align-items-center p-3 gap-3">
+                    <a href="{{ url_for('views.profile', username=u.username) }}">
+                      {% if u.profile_pic %}
+                      <img src="{% if 'http' in u.profile_pic %}{{ u.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}{% endif %}" class="rounded-circle object-fit-cover shadow-sm border border-2 border-white" width="45" height="45">
+                      {% else %}
+                      <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold shadow-sm" style="width: 45px; height: 45px; background: linear-gradient(135deg, var(--primary), #4f46e5);">
+                        {{ u.username[0]|upper }}
+                      </div>
+                      {% endif %}
+                    </a>
+                    <div class="min-w-0 flex-grow-1">
+                      <a href="{{ url_for('views.profile', username=u.username) }}" class="text-decoration-none text-dark fw-bold d-block text-truncate">{{ u.username }}</a>
+                      <small class="text-muted text-truncate d-block">{{ u.bio or 'New to AV Postory' }}</small>
                     </div>
-                    {% endif %}
-                    <h6 class="fw-bold text-truncate mb-0" style="color: var(--text-main); font-size: 0.95rem;">{{ u.username }}</h6>
-                    {% if u.bio %}
-                    <p class="small text-muted text-truncate mb-0 mt-1" style="font-size: 0.75rem;">{{ u.bio }}</p>
-                    {% endif %}
-                  </a>
-                  <button class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-bold mt-auto" onclick="toggleFollow('{{ u.id }}', this)">Follow</button>
+                    <button class="btn btn-outline-primary btn-sm rounded-pill w-100 fw-bold mt-auto" onclick="toggleFollow('{{ u.id }}', this)">Follow</button>
+                  </div>
                 </div>
               </div>
+              {% endfor %}
             </div>
-            {% endfor %}
           </div>
-        </div>
-        {% endif %}
+          {% endif %}
 
-        <div class="text-center px-3">
-          <a href="{{ url_for('views.create_post') }}" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
-            <i class="fas fa-pen-nib"></i> Write Your First Story
-          </a>
+          <div class="text-center px-3">
+            <a href="{{ url_for('views.create_post') }}" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+              <i class="fas fa-pen-nib"></i> Write Your First Story
+            </a>
+          </div>
         </div>
       </div>
       {% endif %}
-    </div>
 
-    {% if posts %}
-    <div
-      id="sentinel"
-      class="text-center py-4 my-3"
-      data-page="1"
-      data-has-next="{{ 'true' if pagination.has_next else 'false' }}"
-      data-url="{{ url_for('views.home') }}"
-    >
-      <div
-        id="scroll-spinner"
-        class="spinner-border text-primary"
-        role="status"
-        style="display: none; width: 2rem; height: 2rem; border-width: 0.25em"
-      >
-        <span class="visually-hidden">Loading...</span>
+      {% if posts %}
+      <div id="posts-container">
+        {% include "_posts.html" %}
       </div>
-
-      <div
-        id="end-message"
-        class="text-muted small d-none py-3 px-4 rounded-pill d-inline-block shadow-sm"
-        style="
-          background: var(--bg-card);
-          border: 1px solid var(--border-color);
-        "
-      >
-        <i class="fas fa-check-circle me-2 text-success"></i> You've caught up
-        on everything!
+      
+      <div id="sentinel" class="text-center py-4 my-3" data-page="1" data-has-next="{{ 'true' if pagination.has_next else 'false' }}" data-url="{{ url_for('views.home') }}">
+        <div id="scroll-spinner" class="spinner-border text-primary" role="status" style="display: none; width: 2rem; height: 2rem; border-width: 0.25em;">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div id="end-message" class="text-muted small d-none py-3 px-4 rounded-pill d-inline-block shadow-sm" style="background: var(--bg-card); border: 1px solid var(--border-color); font-weight: 500;">
+          <i class="fas fa-check-circle text-success me-1"></i> You're all caught up!
+        </div>
       </div>
+      {% endif %}
+      
     </div>
-    {% endif %}
   </div>
 </div>
+
+<script>
+  // Hide skeleton smoothly after page is fully ready
+  document.addEventListener("DOMContentLoaded", function() {
+    setTimeout(() => {
+      const skeleton = document.getElementById("homeSkeleton");
+      const feed = document.getElementById("homeFeed");
+      
+      if (skeleton && feed) {
+        skeleton.style.display = "none";
+        feed.style.display = "block";
+        feed.classList.add("fade-in-up");
+      }
+    }, 400); // 0.4s fake load for smooth transition from blank page to painted UI
+  });
+</script>
+
 {% endblock %}

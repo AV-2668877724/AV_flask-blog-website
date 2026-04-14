@@ -12,7 +12,6 @@ content %}
     border-radius: 20px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
-    /* 🚀 FIX: Removed overflow: hidden; so the dropdown can pop out! */
     background-color: var(--bg-card);
     transition: all var(--trans-smooth);
   }
@@ -27,7 +26,7 @@ content %}
     border-bottom: 1px solid var(--border-color) !important;
     background-color: var(--bg-input) !important;
     padding: 12px 20px !important;
-    border-radius: 20px 20px 0 0 !important; /* 🚀 FIX: Keep top corners rounded */
+    border-radius: 20px 20px 0 0 !important; 
   }
 
   /* Text Area Styling */
@@ -37,13 +36,21 @@ content %}
     color: var(--text-main) !important;
     font-size: 1.15rem !important;
     font-family: var(--font-sans) !important;
-    border-radius: 0 0 20px 20px !important; /* 🚀 FIX: Keep bottom corners rounded */
+    border-radius: 0 0 20px 20px !important; 
   }
   .ql-editor {
     min-height: 400px;
     padding: 2rem !important;
     line-height: 1.8;
   }
+  /* Inline Quill Images styling */
+  .ql-editor img {
+    border-radius: 12px;
+    max-width: 100%;
+    margin: 1rem 0;
+    box-shadow: var(--shadow-sm);
+  }
+  
   .ql-editor.ql-blank::before {
     color: var(--text-muted);
     font-style: italic;
@@ -66,7 +73,7 @@ content %}
     stroke: var(--primary);
   }
 
-  /* 🚀 NEW: Mention Dropdown Styling */
+  /* Mention Dropdown Styling */
   .ql-mention-list-container {
     width: 250px !important;
     border: 1px solid var(--border-color) !important;
@@ -179,10 +186,10 @@ content %}
         <input type="hidden" name="text" id="hiddenInput" />
 
         <div class="mb-4">
-          <input type="text" name="title" class="form-control form-control-lg fw-bold" placeholder="Story Title (Required)" value="{{ post.title or '' }}" required maxlength="200" style="font-size: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input);">
+          <input type="text" name="title" class="form-control form-control-lg fw-bold" placeholder="Story Title (Required)" value="{{ post.title or '' }}" required maxlength="200" style="font-size: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input); color: var(--text-main);">
         </div>
         <div class="mb-4">
-          <textarea name="excerpt" class="form-control" placeholder="Short excerpt or summary (Optional, max 300 characters)" maxlength="300" rows="2" style="border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input);">{{ post.excerpt or '' }}</textarea>
+          <textarea name="excerpt" class="form-control" placeholder="Short excerpt or summary (Optional, max 300 characters)" maxlength="300" rows="2" style="border-radius: 12px; border: 1px solid var(--border-color); background-color: var(--bg-input); color: var(--text-main);">{{ post.excerpt or '' }}</textarea>
         </div>
         <div class="mb-4">
           <label
@@ -299,18 +306,73 @@ content %}
       languages: ['python', 'javascript', 'html', 'css', 'json', 'bash']
     });
 
-    // 2. Initialize Quill with new Modules
+    // 2. Custom Quill Image Handler
+    function customImageHandler() {
+      const input = document.createElement('input');
+      input.setAttribute('type', 'file');
+      input.setAttribute('accept', 'image/png, image/jpeg, image/jpg, image/webp');
+      input.click();
+
+      input.onchange = async () => {
+        const file = input.files[0];
+        if (/^image\//.test(file.type)) {
+          const formData = new FormData();
+          formData.append('image', file);
+          
+          const meta = document.querySelector('meta[name="csrf-token"]');
+          const csrfToken = meta ? meta.getAttribute("content") : "";
+          
+          const btn = document.querySelector('button[type="submit"]');
+          const originalText = btn.innerHTML;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading Image...';
+          btn.disabled = true;
+
+          try {
+            const response = await fetch('/upload-quill-image', {
+              method: 'POST',
+              headers: { "X-CSRFToken": csrfToken },
+              body: formData
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+              const range = quill.getSelection();
+              quill.insertEmbed(range.index, 'image', result.url);
+              quill.setSelection(range.index + 1); // Move cursor right after the image
+            } else {
+              if (typeof showToast === "function") showToast(result.message || "Upload failed", true);
+              else alert(result.message || "Upload failed");
+            }
+          } catch (error) {
+            console.error("Upload error:", error);
+            if (typeof showToast === "function") showToast("Network error during upload", true);
+          } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          }
+        } else {
+          if (typeof showToast === "function") showToast("Please select a valid image.", true);
+        }
+      };
+    }
+
+    // 3. Initialize Quill with new Modules
     var quill = new Quill("#editor-container", {
       theme: "snow",
       placeholder: "Start typing your masterpiece... type @ to mention someone!",
       modules: {
-        syntax: true, // 🚀 Turn on Syntax Highlighting
-        toolbar: [
-          [{ header: [2, 3, false] }],
-          ["bold", "italic", "underline", "link", "blockquote", "code-block"],
-          [{ list: "ordered" }, { list: "bullet" }],
-          ["clean"],
-        ],
+        syntax: true, 
+        toolbar: {
+          container: [
+            [{ header: [2, 3, false] }],
+            ["bold", "italic", "underline", "link", "blockquote", "code-block", "image"], // 🚀 ADDED IMAGE
+            [{ list: "ordered" }, { list: "bullet" }],
+            ["clean"],
+          ],
+          handlers: {
+            image: customImageHandler
+          }
+        },
         mention: {
           allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
           mentionDenotationChars: ["@"],
