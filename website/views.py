@@ -43,37 +43,28 @@ views = Blueprint('views', __name__)
 @login_required
 def home():
     page = request.args.get('page', 1, type=int)
-    blockers, blocked_by_me = get_block_lists(current_user.id)
-    all_blocked_ids = list(set(blockers + blocked_by_me)) 
+    blockers, blocked_by_me = get_block_lists(current_user.id) 
+    all_blocked_ids = list(set(blockers + blocked_by_me))
     
-    pagination = Post.query\
-        .filter(or_(Post.is_deleted == False, Post.is_deleted == None))\
-        .filter(~Post.author.in_(all_blocked_ids))\
-        .options(
-            joinedload(Post.user),              
-            subqueryload(Post.likes),           
-            subqueryload(Post.comments).joinedload(Comment.user) 
-        )\
-        .order_by(Post.date_created.desc())\
-        .paginate(page=page, per_page=10)
+    pagination = Post.query.options(
+        joinedload(Post.user),
+        subqueryload(Post.likes),
+        subqueryload(Post.comments).joinedload(Comment.user)
+    ).filter(
+        Post.is_deleted == False,
+        ~Post.author.in_(all_blocked_ids) if all_blocked_ids else True
+    ).order_by(desc(Post.date_created)).paginate(page=page, per_page=10, error_out=False)
 
     posts = enrich_posts(pagination.items, all_blocked_ids)
-    
-    suggested_users = []
-    if not posts and page == 1:
-        followed_ids = [f.following_id for f in Follow.query.filter_by(follower_id=current_user.id).all()]
-        followed_ids.append(current_user.id) 
-        followed_ids.extend(all_blocked_ids) 
-        
-        suggested_users = User.query.filter(
-            ~User.id.in_(followed_ids),
-            User.is_admin == False
-        ).order_by(func.random()).limit(6).all()
 
-    if request.args.get('ajax'):
-        return render_template('_posts.html', posts=posts, user=current_user)
-        
-    return render_template("home.html", posts=posts, pagination=pagination, user=current_user, suggested_users=suggested_users)
+    # 🚀 NEW: Handle Infinite Scroll AJAX Requests
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'html': render_template('_posts.html', posts=posts, user=current_user),
+            'has_next': pagination.has_next
+        })
+
+    return render_template("home.html", user=current_user, posts=posts, pagination=pagination)
 
 
 @views.route('/create-post', methods=['GET', 'POST'])
@@ -1459,7 +1450,54 @@ def send_message():
         'text': new_message.text, 
         'time': new_message.date_created.isoformat() + 'Z' 
     })
+
+# =================================================
+# SEO & CRAWLER ROUTES (robots.txt & sitemap.xml)
+# =================================================
+
+@views.route('/robots.txt')
+def robots_txt():
+    # Dynamically generate the sitemap URL based on your current domain
+    sitemap_url = url_for('views.sitemap', _external=True)
     
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Disallow: /admin",
+        "Disallow: /api/",
+        f"Sitemap: {sitemap_url}"
+    ]
+    resp = make_response("\n".join(lines))
+    resp.headers['Content-Type'] = 'text/plain'
+    return resp
+
+@views.route('/sitemap.xml')
+def sitemap():
+    # Fetch the 100 most recent active posts
+    posts = Post.query.filter_by(is_deleted=False).order_by(Post.date_created.desc()).limit(100).all()
+    
+    xml = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    ]
+    
+    # 1. Add Homepage
+    home_url = url_for('views.home', _external=True)
+    xml.append(f'<url><loc>{home_url}</loc></url>')
+    
+    # 2. Add Posts (🚀 Uses your new SEO SLUGS!)
+    for post in posts:
+        # Fallback to ID if a post is old and doesn't have a slug yet
+        post_url = url_for('views.post_view', slug=post.slug or post.id, _external=True)
+        last_mod = post.date_created.strftime("%Y-%m-%d")
+        xml.append(f'<url><loc>{post_url}</loc><lastmod>{last_mod}</lastmod></url>')
+        
+    xml.append('</urlset>')
+    
+    resp = make_response('\n'.join(xml))
+    resp.headers['Content-Type'] = 'application/xml'
+    return resp
+
 # =================================================
 # ERROR HANDLERS
 # =================================================

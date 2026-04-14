@@ -862,8 +862,77 @@ document.addEventListener("click", async function (e) {
 });
 
 /* =========================================
-   INFINITE SCROLL
+   🚀 NEW: INFINITE SCROLL LOGIC
    ========================================= */
+document.addEventListener("DOMContentLoaded", function () {
+  const sentinel = document.getElementById("sentinel");
+
+  if (sentinel) {
+    let isFetching = false;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !isFetching) {
+        const hasNext = sentinel.getAttribute("data-has-next") === "true";
+
+        if (hasNext) {
+          loadMorePosts();
+        } else {
+          const spinner = document.getElementById("scroll-spinner");
+          const endMessage = document.getElementById("end-message");
+          if (spinner) spinner.style.display = "none";
+          if (endMessage) endMessage.classList.remove("d-none");
+          observer.disconnect(); // Stop observing if no more posts
+        }
+      }
+    }, { rootMargin: "0px 0px 200px 0px" });
+
+    observer.observe(sentinel);
+
+    function loadMorePosts() {
+      isFetching = true;
+      const spinner = document.getElementById("scroll-spinner");
+      if (spinner) spinner.style.display = "inline-block";
+
+      let currentPage = parseInt(sentinel.getAttribute("data-page"));
+      let nextPage = currentPage + 1;
+      let fetchUrl = `${sentinel.getAttribute("data-url")}?page=${nextPage}`;
+
+      fetch(fetchUrl, {
+        headers: {
+          "X-Requested-With": "XMLHttpRequest", // Tells Flask this is an AJAX request
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.html) {
+            // Insert the new posts right above the sentinel loading spinner
+            sentinel.insertAdjacentHTML("beforebegin", data.html);
+
+            // Update the sentinel data for the NEXT time they scroll
+            sentinel.setAttribute("data-page", nextPage);
+            sentinel.setAttribute("data-has-next", data.has_next ? "true" : "false");
+
+            // Re-initialize "Read More" truncation and Timeago for newly injected posts
+            if (typeof truncatePosts === "function") {
+              truncatePosts();
+            }
+            if (typeof refreshTimestamps === "function") {
+              refreshTimestamps();
+            }
+            if (typeof setupMentions === "function") {
+              setupMentions();
+            }
+          }
+        })
+        .catch((err) => console.error("Error fetching more posts:", err))
+        .finally(() => {
+          isFetching = false;
+          if (spinner) spinner.style.display = "none";
+        });
+    }
+  }
+});
+
 /* =========================================
    LIVE SEARCH AUTOCOMPLETE (Desktop & Mobile)
    ========================================= */
@@ -886,7 +955,6 @@ document.addEventListener("DOMContentLoaded", function () {
     mobileResults.style.top = "100%";
     mobileResults.style.left = "0";
     mobileResults.style.zIndex = "1050";
-    mobileResults.style.backgroundColor = "var(--bg-card)";
     
     // Inject it securely under the mobile search wrapper
     const mobileForm = mobileInput.closest("form");
@@ -913,63 +981,25 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      // Wait 300ms after typing stops to call the API
+      // Wait 300ms after the user stops typing to fetch results
       debounceTimer = setTimeout(() => {
-        // 🚀 We use your existing JSON API route here!
-        fetch(`/api/search-users?q=${encodeURIComponent(query)}`)
-        .then(res => res.json())
-        .then(data => {
-          resultsEl.innerHTML = ""; // Clear old results
-
-          if (data.length === 0) {
-            resultsEl.innerHTML = `<div class='p-3 text-center text-muted small fw-bold'><i class='fas fa-search me-2'></i>No users found.</div>`;
-          } else {
-            // Loop through the JSON array and build the HTML
-            data.forEach(user => {
-              let avatarHtml = "";
-              
-              // Handle Profile Pic formatting
-              if (user.profile_pic) {
-                const picUrl = user.profile_pic.includes('http') 
-                  ? user.profile_pic 
-                  : `/static/uploads/avatars/${user.profile_pic}`;
-                
-                avatarHtml = `<img src="${picUrl}" class="rounded-circle object-fit-cover shadow-sm border border-light" width="36" height="36">`;
-              } else {
-                avatarHtml = `<div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 36px; height: 36px; background: var(--primary); font-size: 0.9rem;">${user.username.charAt(0).toUpperCase()}</div>`;
-              }
-
-              // Create the clickable link for the dropdown
-              const userLink = `
-                <a href="/profile/${user.username}" class="dropdown-item d-flex align-items-center gap-3 py-2 px-3 border-bottom" style="transition: all 0.2s;">
-                    ${avatarHtml}
-                    <div class="lh-sm overflow-hidden">
-                        <strong style="color: var(--text-main); font-size: 0.95rem;">${user.username}</strong>
-                    </div>
-                </a>
-              `;
-              resultsEl.innerHTML += userLink;
-            });
+        fetch(`/search?q=${encodeURIComponent(query)}`, {
+          headers: {
+            "X-Requested-With": "XMLHttpRequest" // Tells Flask this is an AJAX call
           }
-
-          // Always add the "View all results" button at the bottom
-          // 🚀 This links to your full /search-page endpoint!
-          resultsEl.innerHTML += `
-            <div class="p-2 text-center" style="background-color: var(--bg-input); border-radius: 0 0 16px 16px;">
-                <a href="/search-page?q=${encodeURIComponent(query)}" class="text-decoration-none small fw-bold text-primary">
-                    View all results for "${query}"
-                </a>
-            </div>
-          `;
-
-          // Show the dropdown
+        })
+        .then(res => {
+          return res.text(); 
+        })
+        .then(html => {
+          resultsEl.innerHTML = html;
           resultsEl.classList.add("show");
         })
         .catch(err => console.error("Search autocomplete error:", err));
       }, 300);
     });
 
-    // 4. Close the dropdown if the user clicks anywhere else
+    // 4. Close the dropdown if the user clicks anywhere else on the screen
     document.addEventListener("click", function(e) {
       if (!inputEl.contains(e.target) && !resultsEl.contains(e.target)) {
         resultsEl.classList.remove("show");
@@ -977,7 +1007,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Initialize both inputs
+  // Initialize the listener for both inputs!
   setupLiveSearch(desktopInput, desktopResults);
   setupLiveSearch(mobileInput, mobileResults);
 });
@@ -1247,86 +1277,4 @@ document.addEventListener('show.bs.modal', function (event) {
   if (modal.parentElement !== document.body) {
     document.body.appendChild(modal);
   }
-});
-
-/* =========================================
-   LIVE SEARCH AUTOCOMPLETE (Desktop & Mobile)
-   ========================================= */
-document.addEventListener("DOMContentLoaded", function () {
-  // 1. Identify Desktop Elements
-  const desktopInput = document.getElementById("searchInput");
-  const desktopResults = document.getElementById("searchResults");
-
-  // 2. Identify Mobile Elements
-  const mobileInput = document.getElementById("mobileSearchInput");
-  
-  // Create a mobile results dropdown container dynamically if it doesn't exist
-  let mobileResults = document.getElementById("mobileSearchResults");
-  if (mobileInput && !mobileResults) {
-    mobileResults = document.createElement("div");
-    mobileResults.id = "mobileSearchResults";
-    mobileResults.className = "dropdown-menu w-100 shadow-lg border-0 mt-2";
-    mobileResults.style.borderRadius = "16px";
-    mobileResults.style.position = "absolute";
-    mobileResults.style.top = "100%";
-    mobileResults.style.left = "0";
-    mobileResults.style.zIndex = "1050";
-    
-    // Inject it securely under the mobile search wrapper
-    const mobileForm = mobileInput.closest("form");
-    if (mobileForm) {
-      mobileForm.style.position = "relative";
-      mobileForm.insertBefore(mobileResults, mobileForm.querySelector(".d-grid"));
-    }
-  }
-
-  // 3. The Core Autocomplete Function
-  function setupLiveSearch(inputEl, resultsEl) {
-    if (!inputEl || !resultsEl) return;
-
-    let debounceTimer;
-
-    inputEl.addEventListener("input", function () {
-      clearTimeout(debounceTimer);
-      const query = this.value.trim();
-
-      // Clear results if the user deletes the text
-      if (query.length < 2) {
-        resultsEl.classList.remove("show");
-        resultsEl.innerHTML = "";
-        return;
-      }
-
-      // Wait 300ms after the user stops typing to fetch results
-      debounceTimer = setTimeout(() => {
-        // Adjust this fetch URL to match your exact backend AJAX search route
-        // Example: /api/search?q=... or /search-autocomplete?q=...
-        fetch(`/search?q=${encodeURIComponent(query)}`, {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest" // Tells Flask this is an AJAX call
-          }
-        })
-        .then(res => {
-          // If your backend returns rendered HTML snippet for the dropdown:
-          return res.text(); 
-        })
-        .then(html => {
-          resultsEl.innerHTML = html;
-          resultsEl.classList.add("show");
-        })
-        .catch(err => console.error("Search autocomplete error:", err));
-      }, 300);
-    });
-
-    // 4. Close the dropdown if the user clicks anywhere else on the screen
-    document.addEventListener("click", function(e) {
-      if (!inputEl.contains(e.target) && !resultsEl.contains(e.target)) {
-        resultsEl.classList.remove("show");
-      }
-    });
-  }
-
-  // Initialize the listener for both inputs!
-  setupLiveSearch(desktopInput, desktopResults);
-  setupLiveSearch(mobileInput, mobileResults);
 });
