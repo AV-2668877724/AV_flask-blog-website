@@ -1,3 +1,4 @@
+/* FILE: index.js */
 /* =========================================
    GLOBAL CONFIG & HELPER FUNCTIONS
    ========================================= */
@@ -168,20 +169,26 @@ function setupMentions() {
    ========================================= */
 document.addEventListener("DOMContentLoaded", () => {
   const darkToggle = document.getElementById("darkToggle");
-  const saved = localStorage.getItem("darkMode") === "true";
-
+  
+  // 🚀 System Preference Detection added to match base.html
+  const saved = localStorage.getItem("darkMode");
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
   if (darkToggle) {
-    setDarkMode(saved);
+    if (saved === "true" || (saved === null && prefersDark)) {
+      setDarkMode(true);
+    } else {
+      setDarkMode(false);
+    }
+
     darkToggle.addEventListener("click", () => {
       const enabled = document.body.classList.toggle("dark-mode");
       localStorage.setItem("darkMode", enabled);
       setDarkMode(enabled);
     });
-  } else {
-    document.body.classList.remove("dark-mode");
   }
   
-  // 🚀 NEW: Trigger global Syntax Highlighting
+  // 🚀 Trigger global Syntax Highlighting
   if (typeof hljs !== 'undefined') {
     hljs.highlightAll();
   }
@@ -191,7 +198,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
   truncatePosts();
-  setupMentions(); // 🚀 Setup mentions on page load
+  setupMentions();
+  initReadingProgress(); // 🚀 Initialize the Continue Reading feature
   
   window.addEventListener("load", truncatePosts);
 
@@ -322,6 +330,73 @@ function showToast(message, isError = false) {
   const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
   bsToast.show();
   toast.addEventListener("hidden.bs.toast", () => toast.remove());
+}
+
+/* =========================================
+   READING PROGRESS TRACKER 🚀 NEW
+   ========================================= */
+function initReadingProgress() {
+  // 1. Restore progress UI on page load
+  document.querySelectorAll('.post-text').forEach(postEl => {
+    const postId = postEl.id.replace('post-text-', '');
+    const progress = localStorage.getItem(`reading_progress_${postId}`);
+    
+    if (progress) {
+      const progressBar = document.getElementById(`read-progress-${postId}`);
+      const badge = document.getElementById(`continue-badge-${postId}`);
+      
+      if (progressBar) {
+        progressBar.style.width = `${progress}%`;
+        progressBar.parentElement.style.display = 'block'; // Show the wrapper
+      }
+      if (badge && progress > 0 && progress < 100) {
+        badge.style.display = 'inline-flex';
+      }
+    }
+  });
+
+  // 2. Track reading as they scroll
+  window.addEventListener('scroll', debounce(() => {
+    document.querySelectorAll('.post-text').forEach(postEl => {
+      // Only track if it's expanded or it's a full post page
+      if (postEl.style.maxHeight !== 'none' && !postEl.classList.contains('full-post')) return;
+
+      const rect = postEl.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+      
+      // If the post is in view
+      if (rect.top < windowHeight && rect.bottom > 0) {
+        const scrolled = windowHeight - rect.top;
+        const total = rect.height;
+        let percent = Math.floor((scrolled / total) * 100);
+        
+        if (percent > 100) percent = 100;
+        if (percent < 0) percent = 0;
+
+        const postId = postEl.id.replace('post-text-', '');
+        const currentSaved = parseInt(localStorage.getItem(`reading_progress_${postId}`) || '0', 10);
+        
+        // Only update if they read further
+        if (percent > currentSaved) {
+          localStorage.setItem(`reading_progress_${postId}`, percent);
+          const progressBar = document.getElementById(`read-progress-${postId}`);
+          const badge = document.getElementById(`continue-badge-${postId}`);
+          
+          if (progressBar) {
+            progressBar.parentElement.style.display = 'block';
+            progressBar.style.width = `${percent}%`;
+          }
+          if (badge) {
+            if (percent < 100) {
+              badge.style.display = 'inline-flex';
+            } else {
+              badge.style.display = 'none'; // Done reading
+            }
+          }
+        }
+      }
+    });
+  }, 100)); // Throttled scroll listener
 }
 
 /* =========================================
@@ -921,6 +996,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             if (typeof setupMentions === "function") {
               setupMentions();
+            }
+            if (typeof initReadingProgress === "function") {
+              initReadingProgress(); // Re-bind progress trackers for new posts
             }
           }
         })
