@@ -310,6 +310,11 @@ endblock %} {% block content %}
       transform: scale(1);
     }
   }
+
+  /* 🚀 NEW: SKELETON CHAT BUBBLES FOR INFINITE SCROLL */
+  .skeleton-bubble { height: 40px; border-radius: 20px; margin-bottom: 0.5rem; }
+  .skeleton-theirs { align-self: flex-start; border-bottom-left-radius: 4px; }
+  .skeleton-mine { align-self: flex-end; border-bottom-right-radius: 4px; }
 </style>
 
 <div class="chat-wrapper fade-in-up">
@@ -387,13 +392,9 @@ endblock %} {% block content %}
     </div>
 
     <div class="chat-messages" id="chatContainer">
-      <div id="historyLoadingSpinner" class="text-center w-100 py-3 d-none">
-        <div
-          class="spinner-border text-primary spinner-border-sm"
-          role="status"
-        >
-          <span class="visually-hidden">Loading...</span>
-        </div>
+      <div id="historyLoadingSpinner" class="w-100 py-3 d-none flex-column gap-1">
+        <div class="skeleton skeleton-bubble skeleton-theirs w-50"></div>
+        <div class="skeleton skeleton-bubble skeleton-theirs w-25"></div>
       </div>
 
       {% if messages %} {% for msg in messages %} {% if msg.sender_id ==
@@ -507,7 +508,6 @@ endblock %} {% block content %}
     el.innerText = formatLocalTime(iso);
   });
 
-  // 🚀 NEW: Clear Chat Javascript Function
   window.clearChat = function (recipientId) {
     if (!confirm("Are you sure you want to clear your chat history? This will only remove the messages for you, not the other person.")) return;
 
@@ -616,6 +616,7 @@ endblock %} {% block content %}
     function loadChatHistory() {
       isLoadingHistory = true;
       spinner.classList.remove("d-none");
+      spinner.classList.add("d-flex"); // 🚀 Changed to show skeleton bubbles
       const oldScrollHeight = chatContainer.scrollHeight;
 
       fetch(`/api/chat-history/${recipientId}?offset=${messageOffset}`)
@@ -624,6 +625,7 @@ endblock %} {% block content %}
           if (data.length === 0) {
             allMessagesLoaded = true;
             spinner.classList.add("d-none");
+            spinner.classList.remove("d-flex");
             return;
           }
 
@@ -642,10 +644,12 @@ endblock %} {% block content %}
             chatContainer.scrollHeight - oldScrollHeight;
           isLoadingHistory = false;
           spinner.classList.add("d-none");
+          spinner.classList.remove("d-flex");
         })
         .catch((err) => {
           isLoadingHistory = false;
           spinner.classList.add("d-none");
+          spinner.classList.remove("d-flex");
         });
     }
 

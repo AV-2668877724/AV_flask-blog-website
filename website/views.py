@@ -1,3 +1,4 @@
+# FILE: views.py
 from functools import wraps
 from flask import ( 
     Blueprint, render_template, request,
@@ -57,7 +58,7 @@ def home():
 
     posts = enrich_posts(pagination.items, all_blocked_ids)
 
-    # 🚀 NEW: Handle Infinite Scroll AJAX Requests
+    # 🚀 Handle Infinite Scroll AJAX Requests
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
             'html': render_template('_posts.html', posts=posts, user=current_user),
@@ -84,7 +85,7 @@ def create_post():
             clean_text = sanitize_html(raw_text)
             final_text = process_text_links(clean_text)
             
-            # 🚀 NEW: Calculate Read Time & Generate Slug
+            # 🚀 Calculate Read Time & Generate Slug
             word_count = len(re.findall(r'\w+', clean_text))
             read_time = max(1, round(word_count / 200))
             
@@ -95,8 +96,6 @@ def create_post():
             if cover_image_file and cover_image_file.filename != '':
                 cover_image_url = upload_to_cloudinary(cover_image_file, 'posts', width=1080)
             
-            # Since you updated models.py with default datetime.now, 
-            # we can safely drop date_created from here.
             post = Post(
                 title=title,
                 slug=slug,
@@ -140,18 +139,15 @@ def edit_post(id):
             clean_text = sanitize_html(raw_text)
             post.text = process_text_links(clean_text)
             
-            # 🚀 NEW: Update new fields
             post.title = title
             post.excerpt = excerpt
             
             word_count = len(re.findall(r'\w+', clean_text))
             post.read_time = max(1, round(word_count / 200))
             
-            # Update slug only if title changed to preserve old links
             base_slug = re.sub(r'[^\w\s-]', '', title.lower()).strip()
             base_slug = re.sub(r'[-\s]+', '-', base_slug)
             
-            # Ensure we only append a new hex if the slug base actually changed
             if not post.slug or not post.slug.startswith(base_slug):
                 post.slug = f"{base_slug}-{secrets.token_hex(4)}"
             
@@ -172,17 +168,14 @@ def edit_post(id):
 
     return render_template("edit_post.html", user=current_user, post=post, content_to_edit=content_to_edit)
 
-# 🚀 NEW: Route now accepts a string (slug) instead of just an int
 @views.route("/post/<string:slug>")
 def post_view(slug):
-    # Try to fetch by the new SEO slug first
     post = Post.query.options(
         joinedload(Post.user),
         subqueryload(Post.likes),
         subqueryload(Post.comments).joinedload(Comment.user)
     ).filter_by(slug=slug).first()
     
-    # Fallback for older posts created before slugs were added
     if not post and slug.isdigit():
         post = Post.query.options(
             joinedload(Post.user),
@@ -487,6 +480,25 @@ def profile(username):
         tab=tab,
         i_have_blocked_them=i_have_blocked_them 
     )
+
+# 🚀 NEW API ROUTE FOR QUILL IMAGE UPLOADS
+@views.route('/upload-quill-image', methods=['POST'])
+@login_required
+@limiter.limit("20 per hour")
+def upload_quill_image():
+    if 'image' not in request.files:
+        return jsonify({'success': False, 'message': 'No image provided'}), 400
+    
+    file = request.files['image']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': 'No selected file'}), 400
+        
+    if file and allowed_file(file.filename):
+        image_url = upload_to_cloudinary(file, 'posts/inline', width=1200) # Give them good resolution for body
+        if image_url:
+            return jsonify({'success': True, 'url': image_url})
+            
+    return jsonify({'success': False, 'message': 'Invalid file type or upload failed'}), 400
     
 @views.route('/update-profile-pic', methods=['POST'])
 @login_required
@@ -1457,7 +1469,6 @@ def send_message():
 
 @views.route('/robots.txt')
 def robots_txt():
-    # Dynamically generate the sitemap URL based on your current domain
     sitemap_url = url_for('views.sitemap', _external=True)
     
     lines = [
@@ -1473,7 +1484,6 @@ def robots_txt():
 
 @views.route('/sitemap.xml')
 def sitemap():
-    # Fetch the 100 most recent active posts
     posts = Post.query.filter_by(is_deleted=False).order_by(Post.date_created.desc()).limit(100).all()
     
     xml = [
@@ -1481,13 +1491,10 @@ def sitemap():
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
     ]
     
-    # 1. Add Homepage
     home_url = url_for('views.home', _external=True)
     xml.append(f'<url><loc>{home_url}</loc></url>')
     
-    # 2. Add Posts (🚀 Uses your new SEO SLUGS!)
     for post in posts:
-        # Fallback to ID if a post is old and doesn't have a slug yet
         post_url = url_for('views.post_view', slug=post.slug or post.id, _external=True)
         last_mod = post.date_created.strftime("%Y-%m-%d")
         xml.append(f'<url><loc>{post_url}</loc><lastmod>{last_mod}</lastmod></url>')

@@ -43,7 +43,6 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap"
       rel="stylesheet"
     />
-
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -65,16 +64,14 @@
       src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
       defer
     ></script>
-
     <link
       rel="icon"
       type="image/png"
       href="{{ url_for('static', filename='images/logo.png') }}"
     />
-
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='styles.css') }}?v=18"
+      href="{{ url_for('static', filename='styles.css') }}?v=20"
     />
 
     <link
@@ -85,7 +82,6 @@
       src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"
       defer
     ></script>
-
     <script
       src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
       defer
@@ -98,33 +94,27 @@
       src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
       defer
     ></script>
-
     <script
-      src="{{ url_for('static', filename='index.js') }}?v=36"
+      src="{{ url_for('static', filename='index.js') }}?v=38"
       defer
     ></script>
 
     <style>
-      /* 1. Force Rich Text to obey Dark Mode */
+      /* Force Rich Text to obey Dark Mode */
       body.dark-mode .post-text * {
         color: var(--text-main) !important;
         background-color: transparent !important;
       }
-
-      /* 2. Improve Muted Text contrast in dark mode */
       body.dark-mode .text-muted,
       body.dark-mode .text-secondary {
         color: #a1a1aa !important;
       }
-
-      /* 3. Prevent long links/words from breaking mobile screen width */
       .post-text {
         word-wrap: break-word;
         overflow-wrap: break-word;
         word-break: break-word;
       }
 
-      /* 🚀 NEW: Syntax Highlighting Overrides */
       pre,
       .ql-syntax {
         background-color: #282c34 !important;
@@ -135,8 +125,6 @@
         overflow-x: auto;
         border: 1px solid rgba(255, 255, 255, 0.1);
       }
-
-      /* 🚀 NEW: Auto-Mention Dropdown Styles */
       .mention-dropdown {
         border-radius: 12px;
         background-color: var(--bg-card);
@@ -155,62 +143,44 @@
         color: var(--primary);
       }
 
-      /* 4. Complete Mobile Bottom Navigation styling */
+      /* Mobile Navigation Structure */
       .mobile-nav {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        background-color: rgba(255, 255, 255, 0.95);
+        background-color: var(--bg-card);
         backdrop-filter: blur(10px);
         border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        padding: 0.5rem 1rem;
         z-index: 1050;
-        padding-bottom: env(safe-area-inset-bottom, 0.5rem);
-        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
       }
       body.dark-mode .mobile-nav {
-        background-color: rgba(18, 18, 18, 0.95);
-        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
       }
+
       .mobile-nav-item {
         color: var(--text-muted);
         font-size: 1.5rem;
-        padding: 0.5rem;
+        padding: 0.8rem;
         transition:
           color 0.2s,
           transform 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .mobile-nav-item:hover,
       .mobile-nav-item:active {
         color: var(--primary);
         transform: translateY(-2px);
       }
-      .mobile-nav-add {
-        background: linear-gradient(135deg, var(--primary), #4f46e5);
-        color: white !important;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        box-shadow: 0 4px 15px var(--primary-glow);
-        transform: translateY(-15px);
-        transition: transform 0.2s;
-      }
-      .mobile-nav-add:active {
-        transform: translateY(-12px) scale(0.95);
-      }
 
-      /* 5. Premium Search Bar Styling */
+      /* Premium Search Bar Styling */
       .search-bar-wrapper {
         background-color: var(--bg-input);
-        border-radius: 50px; /* Full pill shape */
+        border-radius: 50px;
         height: 44px;
         width: 260px;
         border: 2px solid transparent;
@@ -233,36 +203,55 @@
         color: var(--text-muted);
         font-weight: 400;
       }
-      /* Icon color changes when input is focused */
       .search-bar-wrapper .search-icon {
         transition: color 0.3s ease;
       }
       .search-bar-wrapper:focus-within .search-icon {
         color: var(--primary) !important;
       }
-      /* Taller version for Mobile Modal */
       .mobile-search-wrapper {
         height: 54px;
         width: 100%;
+      }
+
+      /* VS Code Linter Friendly Visibility Class */
+      .icon-transparent {
+        color: transparent !important;
       }
     </style>
   </head>
 
   <body>
-    <nav class="navbar navbar-expand-lg sticky-top" id="mainNavbar">
+    <script>
+      (function () {
+        const saved = localStorage.getItem("darkMode");
+        if (
+          saved === "true" ||
+          (saved === null &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches)
+        ) {
+          document.body.classList.add("dark-mode");
+        }
+      })();
+    </script>
+
+    <nav
+      class="navbar navbar-expand-lg sticky-top"
+      id="mainNavbar"
+      aria-label="Main navigation"
+    >
       <div class="container position-relative">
         <a
           class="navbar-brand d-flex align-items-center gap-2 me-auto me-lg-4"
           href="{{ url_for('views.home') }}"
+          aria-label="AV Postory Home"
         >
           <img
             src="{{ url_for('static', filename='images/logo.png') }}"
             alt="Logo"
             class="nav-logo shadow-sm"
           />
-          <span class="brand-text fw-bold" style="color: var(--text-main)"
-            >AV Postory</span
-          >
+          <span class="brand-text fw-bold">AV Postory</span>
         </a>
 
         <div
@@ -280,14 +269,17 @@
             <div
               class="search-bar-wrapper d-flex align-items-center px-3 shadow-sm"
             >
-              <i class="fas fa-search text-muted search-icon"></i>
+              <i
+                class="fas fa-search text-muted search-icon"
+                aria-hidden="true"
+              ></i>
               <input
                 type="search"
                 name="q"
                 id="searchInput"
                 class="search-input-field bg-transparent border-0"
                 placeholder="Search users or posts..."
-                autocomplete="off"
+                aria-label="Search"
                 required
               />
             </div>
@@ -302,17 +294,19 @@
             id="darkToggle"
             class="btn btn-icon shadow-sm"
             title="Toggle theme"
+            aria-label="Toggle Dark Mode"
           >
-            <i class="far fa-moon"></i>
+            <i class="far fa-moon" aria-hidden="true"></i>
           </button>
 
           <a
             href="{{ url_for('views.inbox') }}"
             class="btn btn-icon position-relative shadow-sm d-none d-md-flex"
             title="Messages"
+            aria-label="Messages"
             id="messageIconBtn"
           >
-            <i class="far fa-paper-plane"></i>
+            <i class="far fa-paper-plane" aria-hidden="true"></i>
             {% if unread_messages and unread_messages > 0 %}
             <span
               id="messageBadge"
@@ -330,8 +324,10 @@
               type="button"
               id="notifDropdown"
               data-bs-toggle="dropdown"
+              aria-expanded="false"
+              aria-label="Notifications"
             >
-              <i class="far fa-bell"></i>
+              <i class="far fa-bell" aria-hidden="true"></i>
               {% if unread_count and unread_count > 0 %}
               <span
                 id="notifBadge"
@@ -394,6 +390,8 @@
               href="#"
               role="button"
               data-bs-toggle="dropdown"
+              aria-expanded="false"
+              aria-label="User Menu"
             >
               {% if current_user.profile_pic %}
               <img
@@ -406,6 +404,7 @@
                   object-fit: cover;
                 "
                 referrerpolicy="no-referrer"
+                alt="Profile avatar"
               />
               {% else %}
               <div
@@ -487,6 +486,8 @@
             type="button"
             data-bs-toggle="collapse"
             data-bs-target="#navbar"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
           >
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -530,9 +531,13 @@
     </div>
     {% endif %}
 
-    <div class="container my-4 fade-in-up" style="min-height: 80vh">
+    <main
+      class="container my-4 fade-in-up"
+      style="min-height: 80vh"
+      role="main"
+    >
       {% block content %}{% endblock %}
-    </div>
+    </main>
 
     <footer
       class="py-4 mt-5 text-center text-muted border-top d-none d-md-block"
@@ -542,89 +547,274 @@
     </footer>
 
     {% if current_user.is_authenticated %}
-
     <nav class="mobile-nav d-md-none">
-      <a href="{{ url_for('views.home') }}" class="mobile-nav-item"
-        ><i class="bi bi-house-door-fill"></i
-      ></a>
-      <a
-        href="#"
-        class="mobile-nav-item"
-        data-bs-toggle="modal"
-        data-bs-target="#mobileSearchModal"
-        ><i class="bi bi-search"></i
-      ></a>
-      <a
-        href="{{ url_for('views.create_post') }}"
-        class="mobile-nav-add text-decoration-none"
-        ><i class="bi bi-plus-lg"></i
-      ></a>
-
-      <a
-        href="{{ url_for('views.notifications') }}"
-        class="mobile-nav-item position-relative"
-        id="mobileNotifBtn"
+      <div
+        class="mobile-nav-container"
+        style="
+          position: relative;
+          width: 100%;
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+        "
       >
-        <i class="bi bi-bell-fill"></i>
-        {% if (unread_count and unread_count > 0) or (unread_messages and
-        unread_messages > 0) %}
-        <span
-          class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm mobile-notif-badge"
-          style="width: 10px; height: 10px; margin-top: 8px; margin-left: -5px"
-        ></span>
-        {% endif %}
-      </a>
+        <a
+          href="{{ url_for('views.home') }}"
+          class="mobile-nav-item"
+          aria-label="Home"
+          ><i class="bi bi-house-door-fill"></i
+        ></a>
+        <a
+          href="#"
+          class="mobile-nav-item"
+          data-bs-toggle="modal"
+          data-bs-target="#mobileSearchModal"
+          aria-label="Search"
+          ><i class="bi bi-search"></i
+        ></a>
 
-      <a
-        href="{{ url_for('views.profile', username=current_user.username) }}"
-        class="mobile-nav-item position-relative d-inline-block"
-        id="mobileNavProfileLink"
-      >
-        {% if current_user.profile_pic %}
-        <div
-          id="mobileNavAvatar"
-          class="rounded-circle shadow-sm"
+        <div style="width: 56px; height: 56px"></div>
+        <a
+          href="{{ url_for('views.create_post') }}"
+          class="mobile-nav-fab"
+          aria-label="Create Post"
           style="
-            width: 32px;
-            height: 32px;
-            border: 2px solid var(--border-color);
-            background-size: cover;
-            background-position: center;
-            background-color: var(--bg-input);
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary), #4338ca);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white !important;
+            font-size: 1.5rem;
+            box-shadow: 0 8px 20px var(--primary-glow);
+            border: 4px solid var(--bg-card);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1060;
           "
-        ></div>
+          ><i class="bi bi-plus-lg"></i
+        ></a>
 
-        <div
-          id="mobileAvatarData"
-          class="d-none"
-          data-url="{% if current_user.profile_pic.startswith('http') %}{{ current_user.profile_pic | replace('http://', 'https://') }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
-        ></div>
+        <a
+          href="{{ url_for('views.notifications') }}"
+          class="mobile-nav-item position-relative"
+          id="mobileNotifBtn"
+          aria-label="Notifications"
+        >
+          <i class="bi bi-bell-fill"></i>
+          {% if (unread_count and unread_count > 0) or (unread_messages and
+          unread_messages > 0) %}
+          <span
+            class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle shadow-sm mobile-notif-badge"
+            style="
+              width: 10px;
+              height: 10px;
+              margin-top: 8px;
+              margin-left: -5px;
+            "
+          ></span>
+          {% endif %}
+        </a>
+        <a
+          href="{{ url_for('views.profile', username=current_user.username) }}"
+          class="mobile-nav-item position-relative d-inline-block"
+          aria-label="Profile"
+          id="mobileNavProfileLink"
+        >
+          {% if current_user.profile_pic %}
+          <div
+            id="mobileNavAvatar"
+            class="rounded-circle shadow-sm"
+            style="
+              width: 32px;
+              height: 32px;
+              border: 2px solid var(--border-color);
+              background-size: cover;
+              background-position: center;
+              background-color: var(--bg-input);
+            "
+          ></div>
+          <div
+            id="mobileAvatarData"
+            class="d-none"
+            data-url="{% if current_user.profile_pic.startswith('http') %}{{ current_user.profile_pic | replace('http://', 'https://') }}{% else %}{{ url_for('static', filename='uploads/avatars/' + current_user.profile_pic) }}{% endif %}"
+          ></div>
+          {% else %}
+          <div
+            class="rounded-circle shadow-sm fw-bold text-white d-flex align-items-center justify-content-center"
+            style="
+              width: 32px;
+              height: 32px;
+              font-size: 1rem;
+              background: linear-gradient(135deg, var(--primary), #4f46e5);
+              border: 2px solid var(--border-color);
+            "
+          >
+            {{ current_user.username[0]|upper }}
+          </div>
+          {% endif %}
+        </a>
+      </div>
+    </nav>
 
-        <script>
-          document.addEventListener("DOMContentLoaded", function () {
-            const dataDiv = document.getElementById("mobileAvatarData");
-            const avatarDiv = document.getElementById("mobileNavAvatar");
-            if (dataDiv && avatarDiv) {
-              avatarDiv.style.backgroundImage = `url('${dataDiv.dataset.url}')`;
-            }
-          });
-        </script>
-        {% else %}
+    <div
+      class="modal fade"
+      id="onboardingModal"
+      tabindex="-1"
+      aria-labelledby="onboardingModalLabel"
+      aria-hidden="true"
+      data-bs-backdrop="static"
+    >
+      <div class="modal-dialog modal-dialog-centered">
         <div
-          class="rounded-circle shadow-sm fw-bold text-white d-flex align-items-center justify-content-center"
+          class="modal-content border-0 shadow-lg"
           style="
-            width: 32px;
-            height: 32px;
-            font-size: 1rem;
-            background: linear-gradient(135deg, var(--primary), #4f46e5);
-            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            background-color: var(--bg-card);
           "
         >
-          {{ current_user.username[0]|upper }}
+          <div
+            class="modal-header border-0 bg-primary text-white text-center d-block pt-4 pb-3 position-relative"
+          >
+            <h4 class="modal-title fw-bold font-heading mb-1 text-white">
+              Welcome to AV Postory! 🎉
+            </h4>
+            <p class="mb-0 text-white-50 small">
+              Let's get your profile set up.
+            </p>
+            <button
+              type="button"
+              class="btn-close btn-close-white position-absolute top-0 end-0 m-3"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              onclick="localStorage.setItem('hasSeenOnboarding', 'true')"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <div
+              class="onboarding-task d-flex align-items-center p-3 mb-2 rounded"
+              style="
+                background-color: var(--bg-input);
+                transition: background-color 0.2s;
+              "
+            >
+              {% if current_user.profile_pic %}
+              <div
+                class="rounded-circle border border-2 bg-primary border-primary text-white d-flex align-items-center justify-content-center me-3"
+                style="width: 24px; height: 24px"
+              >
+                <i class="fas fa-check" style="font-size: 0.7rem"></i>
+              </div>
+              {% else %}
+              <div
+                class="rounded-circle border border-2 border-primary d-flex align-items-center justify-content-center me-3"
+                style="width: 24px; height: 24px"
+              >
+                <i
+                  class="fas fa-check icon-transparent"
+                  style="font-size: 0.7rem"
+                ></i>
+              </div>
+              {% endif %}
+              <div class="flex-grow-1">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-main)">
+                  Add a Profile Picture
+                </h6>
+                <small class="text-muted">Help people recognize you</small>
+              </div>
+              <a
+                href="{{ url_for('views.profile', username=current_user.username) }}"
+                class="btn btn-sm btn-outline-primary rounded-pill"
+                >Go</a
+              >
+            </div>
+
+            <div
+              class="onboarding-task d-flex align-items-center p-3 mb-2 rounded"
+              style="
+                background-color: var(--bg-input);
+                transition: background-color 0.2s;
+              "
+            >
+              {% if current_user.bio %}
+              <div
+                class="rounded-circle border border-2 bg-primary border-primary text-white d-flex align-items-center justify-content-center me-3"
+                style="width: 24px; height: 24px"
+              >
+                <i class="fas fa-check" style="font-size: 0.7rem"></i>
+              </div>
+              {% else %}
+              <div
+                class="rounded-circle border border-2 border-primary d-flex align-items-center justify-content-center me-3"
+                style="width: 24px; height: 24px"
+              >
+                <i
+                  class="fas fa-check icon-transparent"
+                  style="font-size: 0.7rem"
+                ></i>
+              </div>
+              {% endif %}
+              <div class="flex-grow-1">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-main)">
+                  Write your Bio
+                </h6>
+                <small class="text-muted">Tell us a bit about yourself</small>
+              </div>
+              <a
+                href="{{ url_for('views.profile', username=current_user.username) }}"
+                class="btn btn-sm btn-outline-primary rounded-pill"
+                >Go</a
+              >
+            </div>
+
+            <div
+              class="onboarding-task d-flex align-items-center p-3 mb-2 rounded"
+              style="
+                background-color: var(--bg-input);
+                transition: background-color 0.2s;
+              "
+            >
+              <div
+                class="rounded-circle border border-2 border-primary d-flex align-items-center justify-content-center me-3"
+                style="width: 24px; height: 24px"
+              >
+                <i
+                  class="fas fa-check icon-transparent"
+                  style="font-size: 0.7rem"
+                ></i>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-0 fw-bold" style="color: var(--text-main)">
+                  Write a Story
+                </h6>
+                <small class="text-muted">Share your first post</small>
+              </div>
+              <a
+                href="{{ url_for('views.create_post') }}"
+                class="btn btn-sm btn-outline-primary rounded-pill"
+                >Go</a
+              >
+            </div>
+          </div>
+          <div class="modal-footer border-0 justify-content-center pb-4">
+            <button
+              type="button"
+              class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm"
+              data-bs-dismiss="modal"
+              onclick="localStorage.setItem('hasSeenOnboarding', 'true')"
+            >
+              Let's Go!
+            </button>
+          </div>
         </div>
-        {% endif %}
-      </a>
-    </nav>
+      </div>
+    </div>
     {% endif %}
 
     <div
@@ -762,8 +952,12 @@
                 >
                 <select
                   name="reason"
-                  class="form-select shadow-sm bg-light border-0"
-                  style="border-radius: 12px; color: var(--text-main)"
+                  class="form-select shadow-sm border-0"
+                  style="
+                    background-color: var(--bg-input);
+                    border-radius: 12px;
+                    color: var(--text-main);
+                  "
                   required
                   onchange="toggleDeactivateDetails(this)"
                 >
@@ -776,12 +970,15 @@
               <textarea
                 name="details"
                 id="deactivateDetailsBox"
-                class="form-control mb-4 shadow-sm bg-light border-0 d-none"
+                class="form-control mb-4 shadow-sm border-0 d-none"
                 rows="2"
-                style="border-radius: 12px; color: var(--text-main)"
+                style="
+                  background-color: var(--bg-input);
+                  border-radius: 12px;
+                  color: var(--text-main);
+                "
                 placeholder="Please tell us more..."
               ></textarea>
-
               <div class="d-grid">
                 <button
                   type="button"
@@ -848,7 +1045,6 @@
     >
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %} {% for category, message in messages %}
-
       <div
         class="toast align-items-center border-0 shadow-lg {% if category == 'error' %}text-bg-danger{% elif category == 'signup_success' %}text-bg-success{% else %}text-bg-dark{% endif %}"
         role="alert"
@@ -865,13 +1061,11 @@
           ></button>
         </div>
       </div>
-
       {% if category == 'signup_success' %}
       <script>
         document.addEventListener("DOMContentLoaded", function () {
           var duration = 3 * 1000;
           var end = Date.now() + duration;
-
           (function frame() {
             confetti({
               particleCount: 5,
@@ -887,10 +1081,7 @@
               origin: { x: 1 },
               colors: ["#4f46e5", "#6366f1", "#ffffff"],
             });
-
-            if (Date.now() < end) {
-              requestAnimationFrame(frame);
-            }
+            if (Date.now() < end) requestAnimationFrame(frame);
           })();
         });
       </script>
@@ -1030,6 +1221,13 @@
             }
           });
         }
+
+        // Avatar rendering for mobile separated cleanly for linters
+        const dataDiv = document.getElementById("mobileAvatarData");
+        const avatarDiv = document.getElementById("mobileNavAvatar");
+        if (dataDiv && avatarDiv && dataDiv.dataset.url) {
+          avatarDiv.style.backgroundImage = `url('${dataDiv.dataset.url}')`;
+        }
       });
 
       function triggerFinalPlea() {
@@ -1038,12 +1236,10 @@
           form.reportValidity();
           return;
         }
-
         const deactModal = bootstrap.Modal.getInstance(
           document.getElementById("deactivateModal"),
         );
         if (deactModal) deactModal.hide();
-
         const pleaModal = new bootstrap.Modal(
           document.getElementById("finalPleaModal"),
         );
@@ -1079,7 +1275,6 @@
             if (files && files.length > 0) {
               const file = files[0];
               currentFileInput = e.target;
-
               currentPreviewTarget = document.getElementById(
                 e.target.getAttribute("data-preview-target"),
               );
@@ -1104,7 +1299,6 @@
                   "shown.bs.modal",
                   function () {
                     if (cropper) cropper.destroy();
-
                     let ratio = e.target.getAttribute("data-aspect-ratio");
                     let options = {
                       viewMode: 1,
@@ -1112,12 +1306,9 @@
                       responsive: true,
                       background: false,
                     };
-
-                    // Aspect Ratios: 1 for Square, 1.7777 for 16:9, free for unconstrained
                     if (ratio && ratio !== "free") {
                       options.aspectRatio = parseFloat(ratio);
                     }
-
                     cropper = new Cropper(image, options);
                   },
                   { once: true },
@@ -1132,7 +1323,6 @@
           .getElementById("applyCropBtn")
           .addEventListener("click", function () {
             if (!cropper) return;
-
             const btn = document.getElementById("applyCropBtn");
             const originalText = btn.innerHTML;
             btn.innerHTML =
@@ -1148,7 +1338,6 @@
               })
               .toBlob(
                 function (blob) {
-                  // Securely replace the selected file in the input tag
                   const newFile = new File([blob], "cropped_image.jpg", {
                     type: "image/jpeg",
                     lastModified: Date.now(),
@@ -1157,13 +1346,11 @@
                   dataTransfer.items.add(newFile);
                   currentFileInput.files = dataTransfer.files;
 
-                  // Live update the preview images
                   if (currentPreviewTarget) {
                     const previewUrl = URL.createObjectURL(blob);
                     currentPreviewTarget.src = previewUrl;
                     currentPreviewTarget.classList.remove("d-none");
                     currentPreviewTarget.style.display = "block";
-
                     if (currentPreviewContainer)
                       currentPreviewContainer.style.display = "block";
                     if (currentUploadZone)
@@ -1175,7 +1362,6 @@
                   ).hide();
                   cropper.destroy();
                   cropper = null;
-
                   btn.innerHTML = originalText;
                   btn.disabled = false;
                 },
@@ -1194,7 +1380,6 @@
           });
       });
 
-      // Universal Mobile-Friendly Share Function
       function sharePost(author, postId) {
         const url = window.location.origin + "/post/" + postId;
         if (navigator.share) {
@@ -1216,74 +1401,96 @@
       }
     </script>
 
-    {% if current_user.is_authenticated %}
+    <div
+      id="authDataStore"
+      class="d-none"
+      data-auth="{{ 'true' if current_user.is_authenticated else 'false' }}"
+      data-pic="{{ current_user.profile_pic if current_user.is_authenticated else '' }}"
+      data-uid="{{ current_user.id if current_user.is_authenticated else '' }}"
+    ></div>
+
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        const globalSocket = io();
-        const myUserId = parseInt("{{ current_user.id }}");
+        const authData = document.getElementById("authDataStore");
+        if (authData && authData.dataset.auth === "true") {
+          // 1. Onboarding Modal Logic
+          const hasSeen = localStorage.getItem("hasSeenOnboarding");
+          const justSignedUp = document.querySelector(".toast.text-bg-success");
+          const hasProfilePic = authData.dataset.pic !== "";
 
-        globalSocket.on("receive_message", function (msg) {
-          if (parseInt(msg.recipient_id) === myUserId) {
-            const currentPath = window.location.pathname;
-            const senderName = msg.sender_username || "Someone";
+          if (!hasSeen && (justSignedUp || !hasProfilePic)) {
+            const obModal = new bootstrap.Modal(
+              document.getElementById("onboardingModal"),
+            );
+            obModal.show();
+          }
 
-            const isChattingWithSender =
-              currentPath.includes("/chat/") &&
-              currentPath.includes(senderName);
+          // 2. Socket.IO Messaging Logic
+          const globalSocket = io();
+          const myUserId = parseInt(authData.dataset.uid);
 
-            if (!isChattingWithSender) {
-              let shortText =
-                msg.text.length > 40
-                  ? msg.text.substring(0, 40) + "..."
-                  : msg.text;
+          globalSocket.on("receive_message", function (msg) {
+            if (parseInt(msg.recipient_id) === myUserId) {
+              const currentPath = window.location.pathname;
+              const senderName = msg.sender_username || "Someone";
 
-              const container = document.getElementById("toastContainer");
-              if (container) {
-                const toastId = "msg-toast-" + Date.now();
-                const toastHtml = `
-                    <div id="${toastId}" class="toast border-0 shadow-lg fade-in-up" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s;">
-                        <div class="toast-header" style="background-color: var(--primary); color: white; border-bottom: none;">
-                            <i class="fas fa-envelope me-2"></i>
-                            <strong class="me-auto">Message from ${senderName}</strong>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-                        </div>
-                        <div class="toast-body" style="background-color: var(--bg-card); color: var(--text-main); font-size: 0.95rem;">
-                            ${shortText}
-                        </div>
-                    </div>`;
+              const isChattingWithSender =
+                currentPath.includes("/chat/") &&
+                currentPath.includes(senderName);
 
-                container.insertAdjacentHTML("beforeend", toastHtml);
-                const toastElement = document.getElementById(toastId);
+              if (!isChattingWithSender) {
+                let shortText =
+                  msg.text.length > 40
+                    ? msg.text.substring(0, 40) + "..."
+                    : msg.text;
+                const container = document.getElementById("toastContainer");
 
-                toastElement.addEventListener(
-                  "mouseenter",
-                  () => (toastElement.style.transform = "scale(1.02)"),
-                );
-                toastElement.addEventListener(
-                  "mouseleave",
-                  () => (toastElement.style.transform = "scale(1)"),
-                );
+                if (container) {
+                  const toastId = "msg-toast-" + Date.now();
+                  const toastHtml = `
+                      <div id="${toastId}" class="toast border-0 shadow-lg fade-in-up" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s;">
+                          <div class="toast-header" style="background-color: var(--primary); color: white; border-bottom: none;">
+                              <i class="fas fa-envelope me-2"></i>
+                              <strong class="me-auto">Message from ${senderName}</strong>
+                              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                          <div class="toast-body" style="background-color: var(--bg-card); color: var(--text-main); font-size: 0.95rem;">
+                              ${shortText}
+                          </div>
+                      </div>`;
 
-                toastElement.addEventListener("click", (e) => {
-                  if (!e.target.classList.contains("btn-close")) {
-                    window.location.href = "/chat/" + senderName;
-                  }
-                });
+                  container.insertAdjacentHTML("beforeend", toastHtml);
+                  const toastElement = document.getElementById(toastId);
 
-                const bsToast = new bootstrap.Toast(toastElement, {
-                  delay: 4000,
-                });
-                bsToast.show();
+                  toastElement.addEventListener(
+                    "mouseenter",
+                    () => (toastElement.style.transform = "scale(1.02)"),
+                  );
+                  toastElement.addEventListener(
+                    "mouseleave",
+                    () => (toastElement.style.transform = "scale(1)"),
+                  );
 
-                toastElement.addEventListener("hidden.bs.toast", () =>
-                  toastElement.remove(),
-                );
+                  toastElement.addEventListener("click", (e) => {
+                    if (!e.target.classList.contains("btn-close")) {
+                      window.location.href = "/chat/" + senderName;
+                    }
+                  });
+
+                  const bsToast = new bootstrap.Toast(toastElement, {
+                    delay: 4000,
+                  });
+                  bsToast.show();
+
+                  toastElement.addEventListener("hidden.bs.toast", () =>
+                    toastElement.remove(),
+                  );
+                }
               }
             }
-          }
-        });
+          });
+        }
       });
     </script>
-    {% endif %}
   </body>
 </html>
