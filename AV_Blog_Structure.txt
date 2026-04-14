@@ -1,7 +1,7 @@
 AV_Postory/
 │
-├── .env                     # ✅ NEW/REQUIRED: Stores SECRET_KEY, MAIL_USERNAME, etc. (DO NOT UPLOAD)
-├── .gitignore               # ✅ NEW/RECOMMENDED: Prevents .env and instance/ from being uploaded to GitHub
+├── .env                     #  Stores SECRET_KEY, MAIL_USERNAME, etc. (DO NOT UPLOAD)
+├── .gitignore               #  Prevents .env and instance/ from being uploaded to GitHub
 │
 ├── app.py                   # Entry point (Initializes SocketIO & App)
 ├── reset_badges.py          # 🔧 UTILITY: Script to force-reset notification counts to 0
