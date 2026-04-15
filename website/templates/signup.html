@@ -47,6 +47,21 @@ block content %}
     border-radius: 14px;
     box-shadow: var(--shadow-sm);
   }
+
+  /* Adaptive Input Styling for Dark Mode */
+  .auth-input {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    font-size: 1rem;
+    transition: all var(--trans-smooth);
+  }
+  .auth-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--primary-glow) !important;
+  }
 </style>
 
 <div class="auth-wrapper fade-in-up">
@@ -65,18 +80,23 @@ block content %}
       </div>
 
       <form method="POST" id="signupForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <div class="form-floating mb-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="mb-4 text-start">
+          <label
+            for="emailInput"
+            class="form-label fw-bold small text-muted ms-1"
+            >Email address</label
+          >
           <input
             type="email"
-            class="form-control"
+            class="form-control auth-input shadow-sm"
             id="emailInput"
             name="email"
             placeholder="name@example.com"
             required
             autocomplete="email"
           />
-          <label for="emailInput">Email address</label>
         </div>
 
         <button

@@ -35,6 +35,22 @@ endblock %} {% block content %}
     z-index: 0;
     pointer-events: none;
   }
+
+  /* Adaptive Input Styling for Dark Mode */
+  .auth-input {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    font-size: 1rem;
+    transition: all var(--trans-smooth);
+  }
+  .auth-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--primary-glow) !important;
+  }
+
   .password-toggle {
     position: absolute;
     top: 50%;
@@ -64,7 +80,7 @@ endblock %} {% block content %}
       </div>
 
       <form method="POST" id="finalSignupForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="mb-3">
           <label class="form-label fw-bold small text-muted ms-1"
             >Choose Username</label
@@ -74,18 +90,18 @@ endblock %} {% block content %}
             style="
               border-radius: 12px;
               overflow: hidden;
-              border: 2px solid transparent;
+              border: 1px solid var(--border-color);
             "
           >
             <span
               class="input-group-text border-0"
-              style="background-color: var(--bg-input)"
-              ><i class="fas fa-at"></i
+              style="background-color: var(--bg-input); padding: 1rem"
+              ><i class="fas fa-at text-muted"></i
             ></span>
             <input
               type="text"
-              class="form-control border-0"
-              style="background-color: var(--bg-input); color: var(--text-main)"
+              class="form-control auth-input border-0 shadow-none"
+              style="border-radius: 0; padding-left: 0.5rem"
               id="signupUsername"
               name="username"
               placeholder="username"
@@ -94,7 +110,7 @@ endblock %} {% block content %}
               oninput="resetSignupCheck()"
             />
             <button
-              class="btn border-0 fw-bold"
+              class="btn border-0 fw-bold px-3"
               style="background-color: var(--bg-input); color: var(--primary)"
               type="button"
               id="checkBtn"
@@ -108,18 +124,19 @@ endblock %} {% block content %}
           </div>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-3 text-start">
           <label class="form-label fw-bold small text-muted ms-1"
             >Create Password</label
           >
           <div class="position-relative">
             <input
               type="password"
-              class="form-control shadow-sm"
+              class="form-control auth-input shadow-sm w-100"
               id="password"
               name="password"
               placeholder="Minimum 7 characters"
               required
+              style="padding-right: 45px"
             />
             <button
               type="button"
@@ -131,18 +148,19 @@ endblock %} {% block content %}
           </div>
         </div>
 
-        <div class="mb-4">
+        <div class="mb-4 text-start">
           <label class="form-label fw-bold small text-muted ms-1"
             >Confirm Password</label
           >
           <div class="position-relative">
             <input
               type="password"
-              class="form-control shadow-sm"
+              class="form-control auth-input shadow-sm w-100"
               id="confirm_password"
               name="confirm_password"
               placeholder="Type password again"
               required
+              style="padding-right: 45px"
             />
             <button
               type="button"
@@ -168,7 +186,6 @@ endblock %} {% block content %}
 </div>
 
 <script>
-  // Show/Hide Password function
   function toggleVisibility(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icon = document.getElementById(iconId);
@@ -183,7 +200,6 @@ endblock %} {% block content %}
     }
   }
 
-  // Submit button loader
   document
     .getElementById("finalSignupForm")
     .addEventListener("submit", function () {

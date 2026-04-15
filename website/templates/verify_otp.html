@@ -1,5 +1,4 @@
-{% extends "base.html" %} {% block title %}Verify Email - AV Postory{% endblock
-%} {% block content %}
+{% extends "base.html" %} {% block title %}Verify Email - AV Postory{% endblock %} {% block content %}
 <style>
   .auth-wrapper {
     min-height: 75vh;
@@ -35,18 +34,31 @@
     z-index: 0;
     pointer-events: none;
   }
+  
+  .auth-input {
+    background-color: var(--bg-input) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    transition: all var(--trans-smooth);
+  }
+  .auth-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--primary-glow) !important;
+  }
+
   .otp-input {
     font-size: 2rem !important;
     letter-spacing: 0.5rem;
     text-align: center;
     font-weight: bold;
-    padding: 1rem !important;
+    padding: 1.5rem !important;
     border-radius: 16px !important;
   }
   .otp-input::placeholder {
     font-size: 1rem;
     letter-spacing: normal;
     font-weight: normal;
+    color: var(--text-muted);
   }
 </style>
 
@@ -54,10 +66,7 @@
   <div class="auth-card">
     <div class="auth-content" style="position: relative; z-index: 1">
       <div class="text-center mb-4">
-        <div
-          class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
-          style="width: 64px; height: 64px"
-        >
+        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3 shadow-sm" style="width: 64px; height: 64px">
           <i class="fas fa-envelope-open-text fa-2x"></i>
         </div>
         <h3 class="font-heading fw-bold" style="color: var(--text-main)">
@@ -72,7 +81,7 @@
         <div class="mb-4">
           <input
             type="text"
-            class="form-control otp-input shadow-sm"
+            class="form-control auth-input otp-input shadow-sm"
             name="otp"
             placeholder="Enter 6-digit OTP"
             required
@@ -82,20 +91,13 @@
           />
         </div>
 
-        <button
-          type="submit"
-          class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm"
-          id="verifyBtn"
-        >
+        <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm" id="verifyBtn">
           Verify & Continue
         </button>
       </form>
 
       <div class="text-center mt-4">
-        <a
-          href="{{ url_for('auth.sign_up') }}"
-          class="text-decoration-none small text-muted hover-opacity-100"
-        >
+        <a href="{{ url_for('auth.sign_up') }}" class="text-decoration-none small text-muted hover-opacity-100 fw-bold">
           <i class="fas fa-arrow-left me-1"></i> Change email address
         </a>
       </div>

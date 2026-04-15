@@ -40,20 +40,19 @@ endblock %} {% block content %}
     z-index: 1;
   }
 
-  /* Adaptive Input Styling */
+  /* Adaptive Input Styling for Dark Mode */
   .auth-input {
     background-color: var(--bg-input) !important;
     color: var(--text-main) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 12px;
+    padding: 1rem 1.2rem;
+    font-size: 1rem;
+    transition: all var(--trans-smooth);
   }
-
-  /* 🚀 FIX: Stop placeholder and label from overlapping in floating forms! */
-  .form-floating > .auth-input::placeholder {
-    color: transparent !important;
-  }
-  .form-floating > .auth-input:focus::placeholder {
-    color: var(--text-muted) !important;
+  .auth-input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--primary-glow) !important;
   }
 </style>
 
@@ -79,7 +78,12 @@ endblock %} {% block content %}
       <form method="POST" id="resetRequestForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        <div class="form-floating mb-4">
+        <div class="mb-4 text-start">
+          <label
+            for="emailInput"
+            class="form-label fw-bold small text-muted ms-1"
+            >Email address</label
+          >
           <input
             type="email"
             class="form-control auth-input shadow-sm"
@@ -89,7 +93,6 @@ endblock %} {% block content %}
             required
             autocomplete="email"
           />
-          <label for="emailInput" class="text-muted">Email address</label>
         </div>
 
         <button
