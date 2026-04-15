@@ -1,102 +1,211 @@
-# AV Postory 📝✨
+```markdown
+# AV Postory
 
-![Python](https://img.shields.io/badge/Python-3.8+-blue.svg?style=flat-square&logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-Web%20Framework-lightgrey.svg?style=flat-square&logo=flask&logoColor=white)
-![Cloudinary](https://img.shields.io/badge/Cloudinary-Image%20Hosting-blue.svg?style=flat-square&logo=cloudinary&logoColor=white)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-Real%20Time-black.svg?style=flat-square&logo=socket.io&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)
+**A modern, clean, and delightful social blogging platform** — built for writers, developers, and thinkers who value depth over noise.
 
-**AV Postory** is a modern, feature-rich social blogging platform built with Python and Flask. It empowers users to write beautifully formatted stories, engage with a vibrant community through likes and nested comments, and connect privately via real-time WebSockets chat.
+![AV Postory Banner](https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png)
 
 ---
 
-## 📑 Table of Contents
-1. [About the Project](#-about-the-project)
-2. [Core Features](#-core-features)
-3. [Tech Stack](#-tech-stack)
-4. [Getting Started (Installation)](#-getting-started)
-5. [Environment Variables](#-environment-variables)
-6. [Project Structure](#-project-structure)
-7. [Screenshots](#-screenshots)
-8. [Contributing](#-contributing)
-9. [License](#-license)
+## ✨ About AV Postory
+
+AV Postory is a full-featured social publishing platform where users can write rich stories, connect with others through real-time chat, follow creators, and engage in meaningful discussions — all in a beautiful, distraction-free environment.
+
+Whether you're sharing technical deep-dives, personal essays, code tutorials, or creative writing, AV Postory gives you the tools to express yourself clearly and connect with a thoughtful community.
 
 ---
 
-## 🚀 About the Project
-AV Postory was created to bridge the gap between traditional blogging and modern social media. Whether you are publishing a long-form article using our rich-text editor or having a quick 1-on-1 chat with a follower, the platform is designed to be fast, secure, and visually stunning across all devices.
+## 🚀 Key Features
+
+### Core Features
+- **Rich Text Editor** with Quill.js (mentions, hashtags, link previews, code highlighting, image upload)
+- **Infinite Scroll Feed** with "Continue Reading" progress
+- **Real-time Chat** powered by Flask-SocketIO
+- **Live Notifications** (likes, comments, follows, mentions, messages)
+- **Follow System** + Follower/Following lists
+- **Like, Comment, Save, Share** posts
+- **Block & Report** system for safety
+- **Advanced Search** with user & post suggestions
+
+### User Experience
+- Beautiful **Dark Mode** with system preference detection
+- Fully responsive design (mobile-first)
+- Smooth animations and modern UI/UX
+- First-time user onboarding checklist
+- Reading progress tracking
+
+### Admin & Moderation
+- Powerful **Admin Dashboard**
+- User management, post moderation, comment control
+- Report handling system
+
+### Technical Highlights
+- Secure authentication with OTP email verification
+- Cloudinary image hosting + optimization
+- Rate limiting & spam protection
+- CSRF & XSS protection (Bleach sanitization)
+- PostgreSQL ready (SQLite for development)
 
 ---
 
-## ✨ Core Features
+## 🛠 Tech Stack
 
-### 🔐 Authentication & Security
-* **Secure Access:** Sign-up, Login, and Logout functionality with robust "Remember Me" session management.
-* **Data Protection:** Passwords are mathematically hashed using Werkzeug.
-* **CSRF Protection:** Global Cross-Site Request Forgery (WTF) protection on all forms and API routes.
-* **XSS Prevention:** HTML sanitization using Bleach prevents malicious script injections.
-* **Account Deactivation:** A multi-step deactivation flow featuring an "emotional plea" retention UI and exit-reason logging.
-
-### 👤 Profile & Community
-* **Custom Profiles:** Personalize with custom bios, profile pictures, and cover photos.
-* **Smart Social Links:** Add personal URLs (GitHub, Twitter, LinkedIn) that automatically render the correct brand icons.
-* **Follow System:** Build an audience with real-time follower/following tracking.
-
-### ✍️ Blogging Engine
-* **Rich Text Editor:** Powered by Quill.js for creating beautifully formatted stories.
-* **Cloud Images:** Attach dynamic cover photos seamlessly hosted and optimized on Cloudinary.
-* **Smart Feed:** "Read More" truncation keeps the main feed clean, accompanied by time-ago timestamps and clipboard link-sharing.
-
-### 💬 Social Engagement & Real-Time Chat
-* **Interactive Posts:** Like and unlike posts and individual comments with live counters.
-* **Nested Comments:** Engage in discussions with strict ownership control (only authors or admins can delete).
-* **Live Private Messaging:** 1-on-1 real-time chat powered by Flask-SocketIO.
-* **Advanced Chat UX:** Live online/offline status indicators, message deletion, and infinite-scroll pagination for loading historical messages.
-* **Smart Notifications:** Real-time alerts for interactions that group intelligently (e.g., *"User and 5+ others liked your post"*).
-
-### 🛡️ Super Admin Dashboard
-* **Centralized Hub:** View platform statistics (users, active/deleted posts, total comments).
-* **Content Moderation:** Soft-delete, permanently destroy, or restore user posts and comments.
-* **User Management:** Disable/reactivate user accounts and review exit feedback.
-* **Security Lock:** Master password protection required before executing any destructive actions.
-
-### 🎨 UI/UX Enhancements
-* **System-Wide Themes:** Seamless Dark Mode and Light Mode toggling.
-* **Mobile-First Design:** Fully responsive layout featuring a mobile app-style bottom navigation bar.
-* **Interactive Elements:** Drag-and-drop image upload zones, image lightboxes, and toast notifications.
-* **Global Search:** Live AJAX dropdown search bar for finding users and content.
+| Layer           | Technology                                      |
+|-----------------|-------------------------------------------------|
+| Backend         | Flask, SQLAlchemy, Flask-Login, Flask-SocketIO |
+| Database        | PostgreSQL (Production) / SQLite (Development) |
+| Frontend        | Jinja2, Bootstrap 5, Vanilla JS                 |
+| Rich Editor     | Quill.js + Quill Mention + Highlight.js         |
+| Real-time       | Socket.IO                                       |
+| Image Hosting   | Cloudinary                                      |
+| Emails          | Flask-Mail + Async ThreadPoolExecutor           |
+| Styling         | Custom CSS Variables + Dark Mode                |
+| Migrations      | Flask-Migrate                                   |
+| Rate Limiting   | Flask-Limiter                                   |
 
 ---
 
-## 💻 Tech Stack
+## 📸 Screenshots
 
-**Backend:**
-* [Python 3](https://www.python.org/)
-* [Flask](https://flask.palletsprojects.com/)
-* [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/) (ORM) & SQLite (Database)
-* [Flask-SocketIO](https://flask-socketio.readthedocs.io/) (WebSockets)
-* [Flask-Login](https://flask-login.readthedocs.io/) (Session Management)
+*(Add screenshots here once ready)*
 
-**Frontend:**
-* HTML5, CSS3, Vanilla JavaScript
-* [Bootstrap 5.3.2](https://getbootstrap.com/)
-* [Quill.js](https://quilljs.com/) (Rich Text Editor)
-* FontAwesome & Bootstrap Icons
-
-**Cloud & Integrations:**
-* [Cloudinary API](https://cloudinary.com/) (Image hosting and delivery)
+- Home Feed
+- Rich Text Editor
+- Real-time Chat
+- Profile Page
+- Notifications
+- Admin Dashboard
+- Mobile View
 
 ---
 
-## 🛠️ Getting Started
+## 🛠 Installation & Setup
 
-Follow these steps to set up the project locally on your machine.
-
-### 1. Prerequisites
-* Python 3.8 or higher installed.
-* A free [Cloudinary](https://cloudinary.com/) account for image uploads.
-
-### 2. Clone the Repository
+### 1. Clone the Repository
 ```bash
-git clone [https://github.com/yourusername/av-postory.git](https://github.com/yourusername/av-postory.git)
+git clone https://github.com/yourusername/av-postory.git
 cd av-postory
+```
+
+### 2. Create Virtual Environment
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Environment Variables
+Create a `.env` file in the root directory:
+
+```env
+FLASK_ENV=development
+SECRET_KEY=your-super-secret-key-here
+
+# Email Configuration (Gmail recommended)
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Optional: Production Database
+DATABASE_URL=postgresql://user:password@localhost/avpostory
+
+# Public Domain (for email links)
+PUBLIC_DOMAIN=https://yourdomain.com
+```
+
+### 5. Database Setup
+```bash
+# Initialize migrations (first time only)
+flask db init
+
+# Create migration
+flask db migrate -m "Initial migration"
+
+# Apply migrations
+flask db upgrade
+```
+
+### 6. Run the Application
+```bash
+python app.py
+```
+
+The app will be available at `http://localhost:8001`
+
+---
+
+## 📌 How to Use
+
+- **Sign Up** → Verify email via OTP
+- **Create Posts** → Use rich editor with mentions and image upload
+- **Engage** → Like, comment, save, follow
+- **Chat** → Real-time messaging with typing indicators
+- **Admin** → Access `/admin` (only for admin users)
+
+---
+
+## 🧩 Project Structure
+
+```
+av-postory/
+├── website/
+│   ├── __init__.py          # App factory
+│   ├── config.py
+│   ├── models.py
+│   ├── views.py
+│   ├── auth.py
+│   ├── utils.py
+│   ├── events.py            # SocketIO events
+│   └── templates/           # All HTML templates
+├── static/
+│   ├── styles.css
+│   ├── index.js
+│   └── uploads/             # Local uploads (dev)
+├── migrations/              # Alembic migrations
+├── .env
+├── app.py
+└── README.md
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to:
+
+1. Fork the project
+2. Create a feature branch
+3. Submit a Pull Request
+
+Please follow the existing code style and comment your changes.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👨‍💻 Author
+
+**Anannay Varshney**  
+Creator of AV Postory
+
+- GitHub: [@AV-2668877724](https://github.com/AV-2668877724)
+- Twitter/X: [@av_indian007](https://x.com/av_indian007)
+- LinkedIn: [Anannay Varshney](https://www.linkedin.com/in/anannay-varshney-765a32261)
+
+---
+
