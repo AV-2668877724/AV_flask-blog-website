@@ -1,7 +1,7 @@
 AV_Postory/
 │
-├── .env                     #  Stores SECRET_KEY, MAIL_USERNAME, etc. (DO NOT UPLOAD)
-├── .gitignore               #  Prevents .env and instance/ from being uploaded to GitHub
+├── .env                     # Stores SECRET_KEY, MAIL_USERNAME, etc. (DO NOT UPLOAD)
+├── .gitignore               # Prevents .env and instance/ from being uploaded to GitHub
 │
 ├── app.py                   # Entry point (Initializes SocketIO & App)
 ├── reset_badges.py          # 🔧 UTILITY: Script to force-reset notification counts to 0
@@ -21,8 +21,8 @@ AV_Postory/
     ├── views.py             # Main application routes
     │
     ├── static/
-    │   ├── styles.css       
-    │   ├── index.js         
+    │   ├── styles.css       # ⚡ UPDATED: Contains Premium Skeleton CSS Variables
+    │   ├── index.js         # ⚡ UPDATED: Contains Global Skeleton UI Controller
     │   ├── images/          
     │   │   └── logo.png
     │   │
@@ -31,13 +31,13 @@ AV_Postory/
     │       └── posts/
     │
     └── templates/
-        ├── base.html        
+        ├── base.html        # ⚡ UPDATED: Contains the hidden Admin Deactivate Logic & System Dark Mode
         ├── home.html        
         ├── login.html       
         ├── sign_up.html     
         ├── signup_final.html
         ├── verify_otp.html  
-        ├── profile.html     
+        ├── profile.html     # ⚡ UPDATED: Writing Stats, Two-Step Deactivation, Skeleton Loader
         ├── about.html       
         ├── account_deactivated.html 
         ├── chat.html        
@@ -46,7 +46,8 @@ AV_Postory/
         ├── edit_post.html
         ├── _posts.html
         ├── posts.html       
-        ├── _skeleton_post.html 
+        ├── _skeleton_post.html  # ⚡ Premium Post Skeleton Component
+        ├── _skeleton_user.html  # ✅ NEW: Premium User/Chat Skeleton Component
         ├── admin_dashboard.html
         ├── search.html
         ├── notifications.html
