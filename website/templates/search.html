@@ -147,130 +147,144 @@ block content %}
       </form>
     </div>
 
-    <ul class="nav search-tabs" id="searchTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link active"
-          id="posts-tab"
-          data-bs-toggle="pill"
-          data-bs-target="#pills-posts"
-          type="button"
-          role="tab"
-        >
-          <i class="fas fa-file-alt me-2"></i>Posts
-          <span
-            class="badge rounded-pill ms-2"
-            style="background-color: var(--bg-input); color: var(--text-main)"
-            >{{ posts|length }}</span
-          >
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link"
-          id="users-tab"
-          data-bs-toggle="pill"
-          data-bs-target="#pills-users"
-          type="button"
-          role="tab"
-        >
-          <i class="fas fa-users me-2"></i>People
-          <span
-            class="badge rounded-pill ms-2"
-            style="background-color: var(--bg-input); color: var(--text-main)"
-            >{{ users|length }}</span
-          >
-        </button>
-      </li>
-    </ul>
-
-    <div class="tab-content mt-4" id="searchTabsContent">
-      <div class="tab-pane fade show active" id="pills-posts" role="tabpanel">
-        {% if posts %}
-        <div id="posts-container">{% include '_posts.html' %}</div>
-        {% else %}
-        <div class="text-center py-5">
-          <div
-            class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-            style="width: 80px; height: 80px; background-color: var(--bg-input)"
-          >
-            <i class="far fa-folder-open fa-2x text-muted"></i>
-          </div>
-          <h4 class="fw-bold" style="color: var(--text-main)">
-            No posts found
-          </h4>
-          <p class="text-muted">
-            Try searching for different keywords or check your spelling.
-          </p>
-        </div>
-        {% endif %}
+    <div class="skeleton-ui-wrapper w-100">
+      <div class="d-flex justify-content-center gap-5 mb-4">
+        <div class="skeleton skeleton-text m-0" style="width: 60px; height: 20px;"></div>
+        <div class="skeleton skeleton-text m-0" style="width: 60px; height: 20px;"></div>
       </div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">{% include "_skeleton_user.html" %}</div>
+        <div class="col-md-6">{% include "_skeleton_user.html" %}</div>
+      </div>
+      {% include "_skeleton_post.html" %}
+    </div>
 
-      <div class="tab-pane fade" id="pills-users" role="tabpanel">
-        {% if users %}
-        <div class="row g-3">
-          {% for u in users %}
-          <div class="col-12 col-md-6">
-            <a
-              href="{{ url_for('views.profile', username=u.username) }}"
-              class="user-result-card"
-            >
-              <div class="flex-shrink-0">
-                {% if u.profile_pic %}
-                <img
-                  src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}"
-                  class="user-avatar-search shadow-sm"
-                  alt="{{ u.username }}"
-                />
-                {% else %}
-                <div class="user-placeholder-search shadow-sm">
-                  {{ u.username[0]|upper }}
-                </div>
-                {% endif %}
-              </div>
-
-              <div class="flex-grow-1 min-w-0">
-                <h6
-                  class="fw-bold mb-1 text-truncate"
-                  style="color: var(--text-main); font-size: 1.1rem"
-                >
-                  {{ u.username }} {% if u.is_verified %}
-                  <i
-                    class="fas fa-check-circle text-primary ms-1"
-                    style="font-size: 0.9rem"
-                    title="Verified"
-                  ></i>
-                  {% endif %}
-                </h6>
-                <p class="text-muted small mb-0 text-truncate">
-                  {% if u.bio %} {{ u.bio }} {% else %} Joined {{
-                  u.date_created.strftime('%b %Y') }} {% endif %}
-                </p>
-              </div>
-
-              <div class="flex-shrink-0 text-muted opacity-50">
-                <i class="fas fa-chevron-right"></i>
-              </div>
-            </a>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="text-center py-5">
-          <div
-            class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-            style="width: 80px; height: 80px; background-color: var(--bg-input)"
+    <div class="skeleton-ui-content d-none">
+      <ul class="nav search-tabs" id="searchTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link active"
+            id="posts-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-posts"
+            type="button"
+            role="tab"
           >
-            <i class="fas fa-user-slash fa-2x text-muted"></i>
+            <i class="fas fa-file-alt me-2"></i>Posts
+            <span
+              class="badge rounded-pill ms-2"
+              style="background-color: var(--bg-input); color: var(--text-main)"
+              >{{ posts|length }}</span
+            >
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button
+            class="nav-link"
+            id="users-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#pills-users"
+            type="button"
+            role="tab"
+          >
+            <i class="fas fa-users me-2"></i>People
+            <span
+              class="badge rounded-pill ms-2"
+              style="background-color: var(--bg-input); color: var(--text-main)"
+              >{{ users|length }}</span
+            >
+          </button>
+        </li>
+      </ul>
+
+      <div class="tab-content mt-4" id="searchTabsContent">
+        <div class="tab-pane fade show active" id="pills-posts" role="tabpanel">
+          {% if posts %}
+          <div id="posts-container">{% include '_posts.html' %}</div>
+          {% else %}
+          <div class="text-center py-5">
+            <div
+              class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+              style="width: 80px; height: 80px; background-color: var(--bg-input)"
+            >
+              <i class="far fa-folder-open fa-2x text-muted"></i>
+            </div>
+            <h4 class="fw-bold" style="color: var(--text-main)">
+              No posts found
+            </h4>
+            <p class="text-muted">
+              Try searching for different keywords or check your spelling.
+            </p>
           </div>
-          <h4 class="fw-bold" style="color: var(--text-main)">
-            No people found
-          </h4>
-          <p class="text-muted">
-            We couldn't find any users matching that name.
-          </p>
+          {% endif %}
         </div>
-        {% endif %}
+
+        <div class="tab-pane fade" id="pills-users" role="tabpanel">
+          {% if users %}
+          <div class="row g-3">
+            {% for u in users %}
+            <div class="col-12 col-md-6">
+              <a
+                href="{{ url_for('views.profile', username=u.username) }}"
+                class="user-result-card"
+              >
+                <div class="flex-shrink-0">
+                  {% if u.profile_pic %}
+                  <img
+                    src="{% if 'http' in u.profile_pic %}{{ u.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}{% endif %}"
+                    class="user-avatar-search shadow-sm"
+                    alt="{{ u.username }}"
+                  />
+                  {% else %}
+                  <div class="user-placeholder-search shadow-sm">
+                    {{ u.username[0]|upper }}
+                  </div>
+                  {% endif %}
+                </div>
+
+                <div class="flex-grow-1 min-w-0">
+                  <h6
+                    class="fw-bold mb-1 text-truncate"
+                    style="color: var(--text-main); font-size: 1.1rem"
+                  >
+                    {{ u.username }} {% if u.is_verified %}
+                    <i
+                      class="fas fa-check-circle text-primary ms-1"
+                      style="font-size: 0.9rem"
+                      title="Verified"
+                    ></i>
+                    {% endif %}
+                  </h6>
+                  <p class="text-muted small mb-0 text-truncate">
+                    {% if u.bio %} {{ u.bio }} {% else %} Joined {{
+                    u.date_created.strftime('%b %Y') }} {% endif %}
+                  </p>
+                </div>
+
+                <div class="flex-shrink-0 text-muted opacity-50">
+                  <i class="fas fa-chevron-right"></i>
+                </div>
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <div
+              class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+              style="width: 80px; height: 80px; background-color: var(--bg-input)"
+            >
+              <i class="fas fa-user-slash fa-2x text-muted"></i>
+            </div>
+            <h4 class="fw-bold" style="color: var(--text-main)">
+              No people found
+            </h4>
+            <p class="text-muted">
+              We couldn't find any users matching that name.
+            </p>
+          </div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>

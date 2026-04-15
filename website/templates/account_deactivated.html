@@ -5,8 +5,8 @@ block content %}
   style="min-height: 70vh"
 >
   <div
-    class="card border-0 shadow-lg p-5 text-center"
-    style="max-width: 600px; background-color: var(--bg-card)"
+    class="card border-0 shadow-lg p-5 text-center fade-in-up"
+    style="max-width: 600px; background-color: var(--bg-card); border-radius: 24px;"
   >
     <div class="mb-4 text-danger">
       <i class="fas fa-user-lock fa-4x"></i>
@@ -16,19 +16,20 @@ block content %}
       Account Deactivated
     </h2>
 
-    <p class="text-muted mb-4 lead">
+    <p class="text-muted mb-4 lead" style="font-size: 1.1rem;">
       Your account is currently disabled. <br />
       <strong>Only an Administrator can restore your access.</strong>
     </p>
 
     <div
-      class="alert alert-light border text-start mb-4 bg-opacity-10"
+      class="alert border text-start mb-4 shadow-sm"
       role="alert"
+      style="background-color: var(--bg-input); border-color: var(--border-color) !important; border-radius: 16px;"
     >
-      <p class="mb-2 small fw-bold text-uppercase text-muted">
+      <p class="mb-2 small fw-bold text-uppercase" style="color: var(--text-main);">
         Please email us with these details:
       </p>
-      <ul class="mb-0 small text-secondary">
+      <ul class="mb-0 small text-muted">
         <li><strong>Username:</strong> {{ username }}</li>
         <li><strong>Email:</strong> {{ email }}</li>
       </ul>
@@ -54,10 +55,10 @@ block content %}
       </a>
     </div>
 
-    <div class="mt-4">
-      <a href="/login" class="text-decoration-none text-muted small"
-        >Back to Login</a
-      >
+    <div class="mt-4 pt-4 border-top" style="border-color: var(--border-color) !important;">
+      <a href="/login" class="text-decoration-none text-muted small fw-bold hover-opacity-100">
+        <i class="fas fa-arrow-left me-1"></i> Back to Login
+      </a>
     </div>
   </div>
 </div>
