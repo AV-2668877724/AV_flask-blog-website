@@ -147,7 +147,7 @@ block content %}
       </form>
     </div>
 
-    <div class="skeleton-ui-wrapper w-100">
+    <div id="searchSkeleton" class="skeleton-ui-wrapper w-100">
       <div class="d-flex justify-content-center gap-5 mb-4">
         <div class="skeleton skeleton-text m-0" style="width: 60px; height: 20px;"></div>
         <div class="skeleton skeleton-text m-0" style="width: 60px; height: 20px;"></div>
@@ -159,7 +159,7 @@ block content %}
       {% include "_skeleton_post.html" %}
     </div>
 
-    <div class="skeleton-ui-content d-none">
+    <div id="searchContent" class="skeleton-ui-content d-none">
       <ul class="nav search-tabs" id="searchTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button
@@ -286,7 +286,6 @@ block content %}
           {% endif %}
         </div>
       </div>
-    </div>
-  </div>
+    </div> </div>
 </div>
 {% endblock %}
