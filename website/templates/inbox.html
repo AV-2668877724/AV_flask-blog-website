@@ -171,18 +171,7 @@ content %}
 </div>
 
 <script>
-  // Fallback direct script to absolutely guarantee the skeleton hides on this page
   document.addEventListener("DOMContentLoaded", function() {
-    setTimeout(() => {
-      const skel = document.getElementById("inboxSkeleton");
-      const content = document.getElementById("inboxContent");
-      if (skel && content) {
-        skel.style.display = "none";
-        content.classList.remove("d-none");
-        content.classList.add("fade-in-up");
-      }
-    }, 400);
-
     const socket = io();
 
     socket.on("user_typing", function (data) {

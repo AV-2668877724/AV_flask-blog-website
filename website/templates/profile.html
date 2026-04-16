@@ -334,25 +334,13 @@
       {% endif %}
     </ul>
 
-    <div id="profileSkeleton" style="display: block;">
-      <div class="card mb-4 border-0 shadow-sm skeleton-card" style="border-radius: 20px; background-color: var(--bg-card);">
-        <div class="card-header border-0 bg-transparent d-flex align-items-center pt-3 px-3 gap-2">
-          <div class="skeleton skeleton-avatar"></div>
-          <div class="d-flex flex-column gap-1 w-50">
-            <div class="skeleton skeleton-text w-50"></div>
-            <div class="skeleton skeleton-text w-25"></div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="skeleton skeleton-text w-100 mb-2"></div>
-          <div class="skeleton skeleton-text w-100 mb-2"></div>
-          <div class="skeleton skeleton-text w-75 mb-3"></div>
-          <div class="skeleton skeleton-img"></div>
-        </div>
-      </div>
+    <div id="profileSkeleton" class="skeleton-ui-wrapper">
+      {% for i in range(2) %}
+        {% include "_skeleton_post.html" %}
+      {% endfor %}
     </div>
 
-    <div id="profileFeed" style="display: none;">
+    <div id="profileContent" class="skeleton-ui-content d-none">
       {% if posts|length == 0 %}
         <div class="text-center py-5 text-muted fade-in-up border-0 bg-transparent">
           <i class="{% if tab == 'saved' %}fas fa-bookmark{% else %}far fa-folder-open{% endif %} fa-3x mb-3 opacity-50"></i>
@@ -601,16 +589,7 @@
 {% endif %}
 
 <script>
-  // Setup skeleton hide
-  document.addEventListener("DOMContentLoaded", function() {
-    setTimeout(() => {
-      document.getElementById("profileSkeleton").style.display = "none";
-      document.getElementById("profileFeed").style.display = "block";
-      document.getElementById("profileFeed").classList.add("fade-in-up");
-    }, 500); // 0.5s fake load for smoothness
-  });
-
-  // Preserve all original JS exactly
+  // Preserve all original JS exactly EXCEPT the setTimeout for the skeleton
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".modal").forEach(function (modal) {
       document.body.appendChild(modal);
