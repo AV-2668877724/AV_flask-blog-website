@@ -311,7 +311,7 @@ endblock %} {% block content %}
     }
   }
 
-  /* 🚀 NEW: SKELETON CHAT BUBBLES FOR INFINITE SCROLL */
+  /* SKELETON CHAT BUBBLES FOR INFINITE SCROLL */
   .skeleton-bubble { height: 40px; border-radius: 20px; margin-bottom: 0.5rem; }
   .skeleton-theirs { align-self: flex-start; border-bottom-left-radius: 4px; }
   .skeleton-mine { align-self: flex-end; border-bottom-right-radius: 4px; }
@@ -392,85 +392,104 @@ endblock %} {% block content %}
     </div>
 
     <div class="chat-messages" id="chatContainer">
-      <div id="historyLoadingSpinner" class="w-100 py-3 d-none flex-column gap-1">
-        <div class="skeleton skeleton-bubble skeleton-theirs w-50"></div>
-        <div class="skeleton skeleton-bubble skeleton-theirs w-25"></div>
-      </div>
-
-      {% if messages %} {% for msg in messages %} {% if msg.sender_id ==
-      current_user.id %}
-      <div class="msg-container msg-mine" id="msg-{{ msg.id }}">
+      <div id="chatSkeleton" class="skeleton-ui-wrapper w-100 d-flex flex-column justify-content-end gap-3 mt-auto pb-2" aria-hidden="true">
+        <div class="d-flex align-items-center justify-content-start gap-2">
+          <div class="skeleton skeleton-avatar" style="width:35px; height:35px; flex-shrink: 0;"></div>
+          <div class="skeleton" style="width: 200px; height: 45px; border-radius: 20px 20px 20px 4px;"></div>
+        </div>
         <div class="d-flex align-items-center justify-content-end gap-2">
-          <button
-            type="button"
-            class="btn btn-link text-white-50 p-0 msg-actions hover-opacity-100"
-            onclick="removeChatMessage(event, '{{ msg.id }}')"
-            title="Delete Message"
-          >
-            <i class="fas fa-trash-alt" style="font-size: 0.85rem"></i>
-          </button>
-          <div class="msg-bubble shadow-sm">{{ msg.text|safe }}</div>
+          <div class="skeleton" style="width: 150px; height: 45px; border-radius: 20px 20px 4px 20px;"></div>
         </div>
-        <div class="d-flex justify-content-end align-items-center mt-1">
-          <div
-            class="msg-time local-time-formatter"
-            data-iso="{{ msg.date_created.isoformat() }}Z"
-            style="margin-top: 0"
-          ></div>
-          <i
-            id="tick-{{ msg.id }}"
-            class="fas {% if msg.is_read %}fa-check-double text-info{% else %}fa-check text-muted{% endif %} ms-1 msg-tick"
-            style="font-size: 0.7rem"
-          ></i>
-        </div>
-      </div>
-      {% else %}
-      <div class="msg-container msg-theirs" id="msg-{{ msg.id }}">
         <div class="d-flex align-items-center justify-content-start gap-2">
-          <div class="msg-bubble shadow-sm">{{ msg.text|safe }}</div>
-          <button
-            type="button"
-            class="btn btn-link text-danger p-0 msg-actions"
-            onclick="removeChatMessage(event, '{{ msg.id }}')"
-            title="Delete Message"
-          >
-            <i class="fas fa-trash-alt" style="font-size: 0.85rem"></i>
-          </button>
+          <div class="skeleton skeleton-avatar" style="width:35px; height:35px; flex-shrink: 0;"></div>
+          <div class="skeleton" style="width: 250px; height: 60px; border-radius: 20px 20px 20px 4px;"></div>
         </div>
-        <div
-          class="msg-time local-time-formatter"
-          data-iso="{{ msg.date_created.isoformat() }}Z"
-        ></div>
       </div>
-      {% endif %} {% endfor %} {% else %}
-      <div class="text-center my-auto opacity-75" id="emptyChatState">
-        <div
-          class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
-          style="width: 80px; height: 80px"
-        >
-          <i class="far fa-paper-plane fa-2x"></i>
-        </div>
-        <h5 class="fw-bold" style="color: var(--text-main)">
-          Say hi to {{ recipient.username }}!
-        </h5>
-        <p class="text-muted small">Start the conversation below.</p>
-      </div>
-      {% endif %}
 
-      <div
-        class="msg-container msg-theirs d-none"
-        id="typingIndicator"
-        style="margin-bottom: 5px"
-      >
-        <div class="d-flex align-items-center justify-content-start gap-2">
-          <div class="msg-bubble shadow-sm" style="padding: 0.6rem 1rem">
-            <span class="typing-dot"></span>
-            <span class="typing-dot"></span>
-            <span class="typing-dot"></span>
+      <div id="chatContent" class="skeleton-ui-content d-none d-flex flex-column gap-3 w-100 mt-auto">
+        
+        <div id="historyLoadingSpinner" class="w-100 py-3 d-none flex-column gap-1">
+          <div class="skeleton skeleton-bubble skeleton-theirs w-50"></div>
+          <div class="skeleton skeleton-bubble skeleton-theirs w-25"></div>
+        </div>
+
+        {% if messages %} 
+          {% for msg in messages %} 
+            {% if msg.sender_id == current_user.id %}
+            <div class="msg-container msg-mine" id="msg-{{ msg.id }}">
+              <div class="d-flex align-items-center justify-content-end gap-2">
+                <button
+                  type="button"
+                  class="btn btn-link text-white-50 p-0 msg-actions hover-opacity-100"
+                  onclick="removeChatMessage(event, '{{ msg.id }}')"
+                  title="Delete Message"
+                >
+                  <i class="fas fa-trash-alt" style="font-size: 0.85rem"></i>
+                </button>
+                <div class="msg-bubble shadow-sm">{{ msg.text|safe }}</div>
+              </div>
+              <div class="d-flex justify-content-end align-items-center mt-1">
+                <div
+                  class="msg-time local-time-formatter"
+                  data-iso="{{ msg.date_created.isoformat() }}Z"
+                  style="margin-top: 0"
+                ></div>
+                <i
+                  id="tick-{{ msg.id }}"
+                  class="fas {% if msg.is_read %}fa-check-double text-info{% else %}fa-check text-muted{% endif %} ms-1 msg-tick"
+                  style="font-size: 0.7rem"
+                ></i>
+              </div>
+            </div>
+            {% else %}
+            <div class="msg-container msg-theirs" id="msg-{{ msg.id }}">
+              <div class="d-flex align-items-center justify-content-start gap-2">
+                <div class="msg-bubble shadow-sm">{{ msg.text|safe }}</div>
+                <button
+                  type="button"
+                  class="btn btn-link text-danger p-0 msg-actions"
+                  onclick="removeChatMessage(event, '{{ msg.id }}')"
+                  title="Delete Message"
+                >
+                  <i class="fas fa-trash-alt" style="font-size: 0.85rem"></i>
+                </button>
+              </div>
+              <div
+                class="msg-time local-time-formatter"
+                data-iso="{{ msg.date_created.isoformat() }}Z"
+              ></div>
+            </div>
+            {% endif %} 
+          {% endfor %} 
+        {% else %}
+        <div class="text-center my-auto opacity-75" id="emptyChatState">
+          <div
+            class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
+            style="width: 80px; height: 80px"
+          >
+            <i class="far fa-paper-plane fa-2x"></i>
+          </div>
+          <h5 class="fw-bold" style="color: var(--text-main)">
+            Say hi to {{ recipient.username }}!
+          </h5>
+          <p class="text-muted small">Start the conversation below.</p>
+        </div>
+        {% endif %}
+
+        <div
+          class="msg-container msg-theirs d-none"
+          id="typingIndicator"
+          style="margin-bottom: 5px"
+        >
+          <div class="d-flex align-items-center justify-content-start gap-2">
+            <div class="msg-bubble shadow-sm" style="padding: 0.6rem 1rem">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </div> </div>
 
     <div class="chat-input-area">
       <form id="chatForm" onsubmit="event.preventDefault()">
@@ -523,15 +542,22 @@ endblock %} {% block content %}
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        document.getElementById("chatContainer").innerHTML = `
-          <div class="text-center my-auto opacity-75" id="emptyChatState">
-            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 80px; height: 80px">
-              <i class="fas fa-broom fa-2x"></i>
+        // 🚀 SAFELY REMOVE ONLY MESSAGES (Keep spinner & typing indicator)
+        document.querySelectorAll(".msg-container:not(#typingIndicator)").forEach(el => el.remove());
+        
+        // Show empty state
+        if (!document.getElementById("emptyChatState")) {
+          const emptyHTML = `
+            <div class="text-center my-auto opacity-75" id="emptyChatState">
+              <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 80px; height: 80px">
+                <i class="fas fa-broom fa-2x"></i>
+              </div>
+              <h5 class="fw-bold" style="color: var(--text-main)">Chat Cleared</h5>
+              <p class="text-muted small">Your conversation history has been removed.</p>
             </div>
-            <h5 class="fw-bold" style="color: var(--text-main)">Chat Cleared</h5>
-            <p class="text-muted small">Your conversation history has been removed.</p>
-          </div>
-        `;
+          `;
+          document.getElementById("chatContent").insertAdjacentHTML('beforeend', emptyHTML);
+        }
         if (typeof showToast === "function") showToast("Chat cleared successfully.");
       } else {
         alert("Failed to clear chat: " + (data.error || "Unknown error."));
@@ -584,6 +610,7 @@ endblock %} {% block content %}
 
   document.addEventListener("DOMContentLoaded", function () {
     const chatContainer = document.getElementById("chatContainer");
+    const chatContentWrapper = document.getElementById("chatContent"); // 🚀 NEW: Outer content wrapper
     const chatForm = document.getElementById("chatForm");
     const inputField = document.getElementById("chatInputField");
     const spinner = document.getElementById("historyLoadingSpinner");
@@ -601,6 +628,11 @@ endblock %} {% block content %}
 
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
 
+    // 🚀 NEW: Safety re-scroll after Skeleton fades out
+    setTimeout(() => {
+      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+    }, 450);
+
     if (chatContainer) {
       chatContainer.addEventListener("scroll", function () {
         if (
@@ -616,7 +648,7 @@ endblock %} {% block content %}
     function loadChatHistory() {
       isLoadingHistory = true;
       spinner.classList.remove("d-none");
-      spinner.classList.add("d-flex"); // 🚀 Changed to show skeleton bubbles
+      spinner.classList.add("d-flex"); 
       const oldScrollHeight = chatContainer.scrollHeight;
 
       fetch(`/api/chat-history/${recipientId}?offset=${messageOffset}`)
@@ -679,6 +711,7 @@ endblock %} {% block content %}
               <div class="msg-time">${time}</div>`;
       }
 
+      // 🚀 FIX: Ensure we insert after the spinner which is now inside #chatContent
       spinner.insertAdjacentElement("afterend", newMsg);
     }
 
@@ -806,10 +839,11 @@ endblock %} {% block content %}
       const emptyState = document.getElementById("emptyChatState");
       if (emptyState) emptyState.remove();
 
+      // 🚀 FIX: Target the new chatContentWrapper instead of chatContainer
       if (typingIndicator) {
-        chatContainer.insertBefore(newMsg, typingIndicator);
+        chatContentWrapper.insertBefore(newMsg, typingIndicator);
       } else {
-        chatContainer.appendChild(newMsg);
+        chatContentWrapper.appendChild(newMsg);
       }
 
       chatContainer.scrollTop = chatContainer.scrollHeight;

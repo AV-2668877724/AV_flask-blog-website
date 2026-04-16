@@ -24,7 +24,7 @@
       </button>
     </div>
 
-    <div id="notifSkeleton" style="display: block;">
+    <div id="notifSkeleton" class="skeleton-ui-wrapper">
       <div class="card border-0 shadow-sm mb-3" style="border-radius: var(--border-radius-lg); background-color: var(--bg-card);">
         <div class="card-body d-flex gap-3 align-items-center">
           <div class="skeleton skeleton-avatar" style="width: 48px; height: 48px;"></div>
@@ -45,7 +45,7 @@
       </div>
     </div>
 
-    <div id="notifContent" style="display: none;">
+    <div id="notifContent" class="skeleton-ui-content d-none">
       <div class="card border-0 shadow-sm mb-5" style="border-radius: var(--border-radius-lg); background-color: var(--bg-card); overflow: hidden;">
         <div class="list-group list-group-flush">
           {% for n in notifications %}
@@ -127,14 +127,4 @@
     </div>
   </div>
 </div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    setTimeout(() => {
-      document.getElementById("notifSkeleton").style.display = "none";
-      document.getElementById("notifContent").style.display = "block";
-    }, 400); // Quick fake load to make it feel smooth
-  });
-</script>
-
 {% endblock %}
