@@ -297,22 +297,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  /* =========================================
+ /* =========================================
      GLOBAL SKELETON UI CONTROLLER 🚀 NEW
      ========================================= */
-  // Automatically handles loading states for all pages using the skeleton classes
-  setTimeout(() => {
-    document.querySelectorAll('.skeleton-ui-wrapper').forEach(skeleton => {
-      skeleton.style.display = 'none';
-    });
-    document.querySelectorAll('.skeleton-ui-content').forEach(content => {
-      content.classList.remove('d-none');
-      content.classList.add('fade-in-up'); // Adds the smooth entry animation
-    });
-  }, 400); // 400ms is the sweet spot for perceived performance
+  window.initSkeletons = function() {
+    setTimeout(() => {
+      // 1. Fade out the skeleton
+      document.querySelectorAll('.skeleton-ui-wrapper').forEach(skeleton => {
+        skeleton.style.opacity = '0';
+        setTimeout(() => {
+          skeleton.style.display = 'none';
+        }, 300); // Wait for fade-out to finish
+      });
+      
+      // 2. Reveal the real content
+      document.querySelectorAll('.skeleton-ui-content').forEach(content => {
+        content.classList.remove('d-none');
+        content.classList.add('fade-in-up'); // Adds the smooth entry animation
+      });
+    }, 400); // 400ms is the sweet spot for perceived performance
+  };
 
+  // Run immediately on page load
+  initSkeletons();
 });
-
 /* =========================================
    UI HELPERS (Dark Mode, Toasts, Time)
    ========================================= */

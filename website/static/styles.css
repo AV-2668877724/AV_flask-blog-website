@@ -284,10 +284,15 @@ body.dark-mode .form-control {
    PREMIUM SKELETON LOADERS
    ========================================= */
 .skeleton {
-  /* Dynamic gradient using your existing CSS variables */
-  background: linear-gradient(90deg, var(--bg-input) 25%, var(--border-color) 50%, var(--bg-input) 75%);
+  /* Premium angled shimmer gradient */
+  background: linear-gradient(
+    110deg, 
+    var(--bg-input) 8%, 
+    var(--border-color) 18%, 
+    var(--bg-input) 33%
+  );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite linear; /* Linear is crucial for smooth shimmer */
+  animation: premiumShimmer 1.5s linear infinite; 
   border-radius: 8px;
 }
 
@@ -295,16 +300,23 @@ body.dark-mode .form-control {
 .skeleton-text { height: 14px; margin-bottom: 8px; border-radius: 4px; }
 .skeleton-img { width: 100%; height: 200px; border-radius: 16px; }
 
-@keyframes shimmer {
+@keyframes premiumShimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
 /* Global Skeleton Wrapper Utility Classes */
+.skeleton-ui-wrapper {
+  transition: opacity 0.3s ease-out;
+}
+
+.skeleton-ui-content {
+  transition: opacity 0.4s ease-in;
+}
+
 .skeleton-ui-content.d-none {
   display: none !important;
 }
-
 
 /* =========================================
    9. BOOTSTRAP DARK MODE FIXES
