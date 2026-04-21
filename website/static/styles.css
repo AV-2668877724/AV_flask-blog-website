@@ -3,20 +3,20 @@
    1. PREMIUM CSS VARIABLES & THEME
    ========================================= */
 :root {
-  /* Light Mode Palette */
+  /* Light Mode Palette - Updated for Better Visibility */
   --bg-main: #f8fafc;
   --bg-card: #ffffff;
   --bg-input: #f1f5f9;
   --text-main: #0f172a;
-  --text-muted: #64748b;
+  --text-muted: #475569; /* Darkened slightly for better readability */
   --primary: #4f46e5;
   --primary-glow: rgba(79, 70, 229, 0.25);
-  --border-color: #e2e8f0;
+  --border-color: #cbd5e1; /* Darkened from #e2e8f0 so lines are clearly visible */
 
-  /* Shadows & Transitions */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.05);
-  --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.08);
+  /* Shadows & Transitions - Increased opacity so cards pop off the background */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06); /* Was 0.02 */
+  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.1); /* Was 0.05 */
+  --shadow-float: 0 20px 40px rgba(0, 0, 0, 0.12); /* Was 0.08 */
   --trans-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -29,7 +29,7 @@ body.dark-mode {
   --text-muted: #94a3b8;
   --primary: #6366f1;
   --primary-glow: rgba(99, 102, 241, 0.3);
-  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.12); /* Slightly increased dark mode border too */
 
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -217,7 +217,7 @@ body.dark-mode .navbar {
    ========================================= */
 .form-control, .form-select {
   background-color: var(--bg-input);
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color) !important; /* CHANGED: Added visible border so boxes stand out */
   color: var(--text-main);
   border-radius: 12px;
   padding: 0.75rem 1rem;
@@ -226,7 +226,7 @@ body.dark-mode .navbar {
 
 .form-control:focus, .form-select:focus {
   background-color: var(--bg-card);
-  border-color: var(--primary);
+  border-color: var(--primary) !important;
   box-shadow: 0 0 0 4px var(--primary-glow);
   color: var(--text-main);
 }

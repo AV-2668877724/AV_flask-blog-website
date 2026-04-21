@@ -1,46 +1,64 @@
-{% extends "base.html" %} 
-{% block title %}{{ profile_user.username }}'s Profile - AV Postory{% endblock %} 
-
-{% block content %}
+{% extends "base.html" %} {% block title %}{{ profile_user.username }}'s Profile
+- AV Postory{% endblock %} {% block content %}
 <style>
   /* Dark Mode & Theme Styles */
-  body.dark-mode a { color: #6ea8fe; }
-  body.dark-mode a:hover { color: #9ec5fe; }
+  body.dark-mode a {
+    color: #6ea8fe;
+  }
+  body.dark-mode a:hover {
+    color: #9ec5fe;
+  }
   body.dark-mode .card,
   body.dark-mode .modal-content {
     background-color: var(--bg-card) !important;
     border-color: var(--border-color) !important;
     color: var(--text-main) !important;
   }
-  body.dark-mode .text-dark { color: var(--text-main) !important; }
-  body.dark-mode .text-muted { color: var(--text-muted) !important; }
-  body.dark-mode .bg-light { background-color: var(--bg-input) !important; }
-  body.dark-mode .form-control, body.dark-mode .form-select {
+  body.dark-mode .text-dark {
+    color: var(--text-main) !important;
+  }
+  body.dark-mode .text-muted {
+    color: var(--text-muted) !important;
+  }
+  body.dark-mode .bg-light {
+    background-color: var(--bg-input) !important;
+  }
+  body.dark-mode .form-control,
+  body.dark-mode .form-select {
     background-color: var(--bg-input);
     border-color: var(--border-color);
     color: var(--text-main);
   }
-  body.dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+  body.dark-mode .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+  }
 
   /* Cover Photo Parallax */
+  /* Cover Photo Parallax - FIXED VISIBILITY */
   .profile-cover {
     height: 280px;
-    background-color: var(--bg-input);
+    background-color: #e2e8f0; /* Slightly darker default slate for light mode */
+    border: 1px solid var(--border-color); /* Added explicit border */
     background-size: cover;
     background-position: center;
     border-radius: 24px;
     position: relative;
     margin-bottom: -80px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md); /* Boosted shadow for depth */
   }
-  
+
+  /* Ensure it switches back to dark input color in dark mode */
+  body.dark-mode .profile-cover {
+    background-color: var(--bg-input);
+  }
+
   /* Profile Avatar Wrapper & Image */
   .profile-avatar-wrapper {
     position: relative;
     display: inline-block;
     z-index: 2;
   }
-  
+
   .profile-avatar {
     width: 140px !important;
     height: 140px !important;
@@ -53,7 +71,7 @@
     overflow: hidden;
     display: block;
   }
-  
+
   /* Stats & Top Posts Cards */
   .stat-card {
     background-color: var(--bg-input);
@@ -62,8 +80,10 @@
     text-align: center;
     transition: transform var(--trans-smooth);
   }
-  .stat-card:hover { transform: translateY(-3px); }
-  
+  .stat-card:hover {
+    transform: translateY(-3px);
+  }
+
   .top-post-card {
     border-left: 4px solid var(--primary);
     background-color: var(--bg-card);
@@ -72,8 +92,11 @@
     box-shadow: var(--shadow-sm);
     transition: all 0.2s;
   }
-  .top-post-card:hover { background-color: var(--bg-input); transform: translateX(5px); }
-  
+  .top-post-card:hover {
+    background-color: var(--bg-input);
+    transform: translateX(5px);
+  }
+
   /* Formatter-Safe Active Tab Classes */
   .profile-tab {
     border-radius: 50px;
@@ -88,96 +111,271 @@
 
 <div class="row justify-content-center fade-in-up">
   <div class="col-lg-10 col-xl-9">
-    
-    {% if profile_user.cover_pic %}
-        {% set cover_url = profile_user.cover_pic if 'http' in profile_user.cover_pic else url_for('static', filename='uploads/posts/' + profile_user.cover_pic) %}
-    {% else %}
-        {% set cover_url = '' %}
-    {% endif %}
+    {% if profile_user.cover_pic %} {% set cover_url = profile_user.cover_pic if
+    'http' in profile_user.cover_pic else url_for('static',
+    filename='uploads/posts/' + profile_user.cover_pic) %} {% else %} {% set
+    cover_url = '' %} {% endif %}
 
-    <div class="profile-cover" {% if cover_url %} style="background-image: url('{{ cover_url }}');" {% endif %}>
+    <div
+      class="profile-cover"
+      {%
+      if
+      cover_url
+      %}
+      style="background-image: url('{{ cover_url }}');"
+      {%
+      endif
+      %}
+    >
       {% if user.is_authenticated and user.id == profile_user.id %}
-      <button class="btn btn-sm btn-light position-absolute top-0 end-0 m-3 fw-bold shadow-sm rounded-pill d-none d-md-block" data-bs-toggle="modal" data-bs-target="#coverPicModal" style="backdrop-filter: blur(5px); background: rgba(255,255,255,0.8);">
+      <button
+        class="btn btn-sm btn-light position-absolute top-0 end-0 m-3 fw-bold shadow-sm rounded-pill d-none d-md-block"
+        data-bs-toggle="modal"
+        data-bs-target="#coverPicModal"
+        style="backdrop-filter: blur(5px); background: rgba(255, 255, 255, 0.8)"
+      >
         <i class="fas fa-camera me-1"></i> Edit Cover
       </button>
       {% endif %}
     </div>
 
-    <div class="card border-0 shadow-sm mb-4" style="border-radius: 24px; background-color: var(--bg-card); border: 1px solid var(--border-color) !important;">
+    <div
+      class="card border-0 shadow-sm mb-4"
+      style="
+        border-radius: 24px;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color) !important;
+      "
+    >
       <div class="card-body px-4 px-md-5 pb-5">
-        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-3 mb-4">
-          
-          <div class="profile-avatar-wrapper text-center text-sm-start mt-n5 pt-3">
+        <div
+          class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end gap-3 mb-4"
+        >
+          <div
+            class="profile-avatar-wrapper text-center text-sm-start mt-n5 pt-3"
+          >
             {% if profile_user.profile_pic %}
-            <img src="{% if 'http' in profile_user.profile_pic %}{{ profile_user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + profile_user.profile_pic) }}{% endif %}" class="profile-avatar bg-white mx-auto mx-sm-0" id="tempAvatar" alt="Profile avatar" onclick="viewFullSize(this.src)" style="cursor: pointer;"/>
+            <img
+              src="{% if 'http' in profile_user.profile_pic %}{{ profile_user.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + profile_user.profile_pic) }}{% endif %}"
+              class="profile-avatar bg-white mx-auto mx-sm-0"
+              id="tempAvatar"
+              alt="Profile avatar"
+              onclick="viewFullSize(this.src)"
+              style="cursor: pointer"
+            />
             {% else %}
-            <div class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold display-4 mx-auto mx-sm-0" style="background: linear-gradient(135deg, var(--primary), #4f46e5);">
+            <div
+              class="profile-avatar d-flex align-items-center justify-content-center text-white fw-bold display-4 mx-auto mx-sm-0"
+              style="
+                background: linear-gradient(135deg, var(--primary), #4f46e5);
+              "
+            >
               {{ profile_user.username[0]|upper }}
             </div>
-            {% endif %}
-            
-            {% if user.is_authenticated and user.id == profile_user.id %}
-            <button class="btn btn-primary rounded-circle shadow-sm position-absolute bottom-0 end-0 d-none d-md-flex align-items-center justify-content-center" style="width: 36px; height: 36px; padding: 0; transform: translate(-5px, -5px); border: 2px solid white;" data-bs-toggle="modal" data-bs-target="#profilePicModal" title="Update Profile Picture">
-              <i class="fas fa-camera" style="font-size: 0.8rem;"></i>
+            {% endif %} {% if user.is_authenticated and user.id ==
+            profile_user.id %}
+            <button
+              class="btn btn-primary rounded-circle shadow-sm position-absolute bottom-0 end-0 d-none d-md-flex align-items-center justify-content-center"
+              style="
+                width: 36px;
+                height: 36px;
+                padding: 0;
+                transform: translate(-5px, -5px);
+                border: 2px solid white;
+              "
+              data-bs-toggle="modal"
+              data-bs-target="#profilePicModal"
+              title="Update Profile Picture"
+            >
+              <i class="fas fa-camera" style="font-size: 0.8rem"></i>
             </button>
             {% endif %}
           </div>
 
-          <div class="d-flex gap-2 justify-content-center justify-content-sm-end flex-wrap w-100 w-sm-auto ms-sm-auto mb-sm-2">
-            {% if user.is_authenticated and user.id != profile_user.id and not i_have_blocked_them %}
-            <a href="{{ url_for('views.chat', username=profile_user.username) }}" class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm flex-grow-1 flex-md-grow-0">
+          <div
+            class="d-flex gap-2 justify-content-center justify-content-sm-end flex-wrap w-100 w-sm-auto ms-sm-auto mb-sm-2"
+          >
+            {% if user.is_authenticated and user.id != profile_user.id and not
+            i_have_blocked_them %}
+            <a
+              href="{{ url_for('views.chat', username=profile_user.username) }}"
+              class="btn btn-outline-primary rounded-pill px-4 fw-bold shadow-sm flex-grow-1 flex-md-grow-0"
+            >
               <i class="far fa-paper-plane me-1"></i> Message
             </a>
-            <button class="btn {{ 'btn-outline-secondary' if is_following else 'btn-primary' }} rounded-pill px-4 fw-bold shadow-sm flex-grow-1 flex-md-grow-0" onclick="window.toggleFollow('{{ profile_user.id }}', this)">
+            <button
+              class="btn {{ 'btn-outline-secondary' if is_following else 'btn-primary' }} rounded-pill px-4 fw-bold shadow-sm flex-grow-1 flex-md-grow-0"
+              onclick="window.toggleFollow('{{ profile_user.id }}', this)"
+            >
               {{ 'Following' if is_following else 'Follow' }}
             </button>
             <div class="dropdown d-inline-block">
-              <button class="btn btn-light rounded-circle shadow-sm" data-bs-toggle="dropdown" style="width: 40px; height: 40px; background-color: var(--bg-input); border-color: var(--border-color);">
+              <button
+                class="btn btn-light rounded-circle shadow-sm"
+                data-bs-toggle="dropdown"
+                style="
+                  width: 40px;
+                  height: 40px;
+                  background-color: var(--bg-input);
+                  border-color: var(--border-color);
+                "
+              >
                 <i class="fas fa-ellipsis-v text-muted"></i>
               </button>
-              <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg" style="border-radius: 12px; background-color: var(--bg-card);">
-                <li><button class="dropdown-item text-danger py-2 fw-bold" onclick="window.blockUser('{{ profile_user.id }}')"><i class="fas fa-ban me-2"></i> Block User</button></li>
+              <ul
+                class="dropdown-menu dropdown-menu-end border-0 shadow-lg"
+                style="border-radius: 12px; background-color: var(--bg-card)"
+              >
+                <li>
+                  <button
+                    class="dropdown-item text-danger py-2 fw-bold"
+                    onclick="window.blockUser('{{ profile_user.id }}')"
+                  >
+                    <i class="fas fa-ban me-2"></i> Block User
+                  </button>
+                </li>
               </ul>
             </div>
             {% elif i_have_blocked_them %}
-            <button class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm flex-grow-1 flex-md-grow-0" onclick="window.unblockUser('{{ profile_user.id }}')">
+            <button
+              class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm flex-grow-1 flex-md-grow-0"
+              onclick="window.unblockUser('{{ profile_user.id }}')"
+            >
               <i class="fas fa-unlock me-1"></i> Unblock
             </button>
             {% elif user.is_authenticated and user.id == profile_user.id %}
-            
+
             <div class="dropdown d-none d-md-block">
-              <button class="btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="dropdown">
+              <button
+                class="btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold shadow-sm"
+                data-bs-toggle="dropdown"
+              >
                 <i class="fas fa-cog me-1"></i> Settings
               </button>
-              <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2" style="border-radius: 12px; background-color: var(--bg-card);">
-                <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal">Edit Bio</a></li>
-                <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#changeUsernameModal">Change Username</a></li>
-                <li><a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#socialLinkModal">Add Social Link</a></li>
-                
+              <ul
+                class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2"
+                style="border-radius: 12px; background-color: var(--bg-card)"
+              >
+                <li>
+                  <a
+                    class="dropdown-item py-2"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editProfileModal"
+                    >Edit Bio</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item py-2"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#changeUsernameModal"
+                    >Change Username</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item py-2"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#socialLinkModal"
+                    >Add Social Link</a
+                  >
+                </li>
+
                 {% if not is_admin %}
                 <li><hr class="dropdown-divider" /></li>
-                <li><a class="dropdown-item text-danger py-2" href="#" data-bs-toggle="modal" data-bs-target="#deactivateModal">Deactivate Account</a></li>
+                <li>
+                  <a
+                    class="dropdown-item text-danger py-2"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deactivateModal"
+                    >Deactivate Account</a
+                  >
+                </li>
                 {% endif %}
               </ul>
             </div>
 
             <div class="dropdown d-md-none w-100 mt-2">
-              <button class="btn btn-light w-100 rounded-pill fw-bold py-2 shadow-sm" data-bs-toggle="dropdown" style="background-color: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">
+              <button
+                class="btn btn-light w-100 rounded-pill fw-bold py-2 shadow-sm"
+                data-bs-toggle="dropdown"
+                style="
+                  background-color: var(--bg-input);
+                  color: var(--text-main);
+                  border: 1px solid var(--border-color);
+                "
+              >
                 <i class="fas fa-ellipsis-h me-2"></i> Edit Profile
               </button>
-              <ul class="dropdown-menu shadow border-0 w-100 mt-2 p-2" style="border-radius: 12px; background-color: var(--bg-card);">
+              <ul
+                class="dropdown-menu shadow border-0 w-100 mt-2 p-2"
+                style="border-radius: 12px; background-color: var(--bg-card)"
+              >
                 <li><h6 class="dropdown-header fw-bold">Photos</h6></li>
-                <li><a class="dropdown-item py-2 rounded" href="#" data-bs-toggle="modal" data-bs-target="#profilePicModal"><i class="fas fa-user-circle me-2"></i> Profile Picture</a></li>
-                <li><a class="dropdown-item py-2 rounded" href="#" data-bs-toggle="modal" data-bs-target="#coverPicModal"><i class="fas fa-image me-2"></i> Cover Photo</a></li>
+                <li>
+                  <a
+                    class="dropdown-item py-2 rounded"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#profilePicModal"
+                    ><i class="fas fa-user-circle me-2"></i> Profile Picture</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item py-2 rounded"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#coverPicModal"
+                    ><i class="fas fa-image me-2"></i> Cover Photo</a
+                  >
+                </li>
                 <li><hr class="dropdown-divider" /></li>
                 <li><h6 class="dropdown-header fw-bold">Info</h6></li>
-                <li><a class="dropdown-item py-2 rounded" href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal"><i class="fas fa-pen me-2"></i> Edit Bio</a></li>
-                <li><a class="dropdown-item py-2 rounded" href="#" data-bs-toggle="modal" data-bs-target="#changeUsernameModal"><i class="fas fa-at me-2"></i> Change Username</a></li>
-                <li><a class="dropdown-item py-2 rounded" href="#" data-bs-toggle="modal" data-bs-target="#socialLinkModal"><i class="fas fa-link me-2"></i> Add Social Link</a></li>
-                
+                <li>
+                  <a
+                    class="dropdown-item py-2 rounded"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editProfileModal"
+                    ><i class="fas fa-pen me-2"></i> Edit Bio</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item py-2 rounded"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#changeUsernameModal"
+                    ><i class="fas fa-at me-2"></i> Change Username</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item py-2 rounded"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#socialLinkModal"
+                    ><i class="fas fa-link me-2"></i> Add Social Link</a
+                  >
+                </li>
+
                 {% if not is_admin %}
                 <li><hr class="dropdown-divider" /></li>
-                <li><a class="dropdown-item text-danger py-2 rounded" href="#" data-bs-toggle="modal" data-bs-target="#deactivateModal"><i class="fas fa-exclamation-triangle me-2"></i> Deactivate Account</a></li>
+                <li>
+                  <a
+                    class="dropdown-item text-danger py-2 rounded"
+                    href="#"
+                    data-bs-toggle="modal"
+                    data-bs-target="#deactivateModal"
+                    ><i class="fas fa-exclamation-triangle me-2"></i> Deactivate
+                    Account</a
+                  >
+                </li>
                 {% endif %}
               </ul>
             </div>
@@ -186,86 +384,137 @@
         </div>
 
         <div class="text-center text-sm-start mb-4">
-          <h2 class="fw-bold font-heading mb-1 d-flex align-items-center justify-content-center justify-content-sm-start gap-2" style="color: var(--text-main);">
-            {{ profile_user.username }}
-            {% if profile_user.is_verified %}<i class="fas fa-check-circle text-primary fs-5" title="Verified"></i>{% endif %}
-            {% if profile_user.is_admin %}<span class="badge bg-warning text-dark align-middle" style="font-size: 0.6rem;">Admin</span>{% endif %}
+          <h2
+            class="fw-bold font-heading mb-1 d-flex align-items-center justify-content-center justify-content-sm-start gap-2"
+            style="color: var(--text-main)"
+          >
+            {{ profile_user.username }} {% if profile_user.is_verified %}<i
+              class="fas fa-check-circle text-primary fs-5"
+              title="Verified"
+            ></i
+            >{% endif %} {% if profile_user.is_admin %}<span
+              class="badge bg-warning text-dark align-middle"
+              style="font-size: 0.6rem"
+              >Admin</span
+            >{% endif %}
           </h2>
-          <p class="text-muted mb-3 small"><i class="far fa-calendar-alt me-1"></i> Joined {{ profile_user.date_created.strftime('%B %Y') }}</p>
-          
+          <p class="text-muted mb-3 small">
+            <i class="far fa-calendar-alt me-1"></i> Joined {{
+            profile_user.date_created.strftime('%B %Y') }}
+          </p>
+
           {% if profile_user.bio %}
-          <p class="lead text-secondary mb-4" style="font-size: 1.05rem;">{{ profile_user.bio }}</p>
+          <p class="lead text-secondary mb-4" style="font-size: 1.05rem">
+            {{ profile_user.bio }}
+          </p>
           {% elif user.is_authenticated and user.id == profile_user.id %}
-          <p class="text-muted fst-italic mb-4" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#editProfileModal">Add a bio to tell people about yourself...</p>
+          <p
+            class="text-muted fst-italic mb-4"
+            style="cursor: pointer"
+            data-bs-toggle="modal"
+            data-bs-target="#editProfileModal"
+          >
+            Add a bio to tell people about yourself...
+          </p>
           {% endif %}
-          
-          <div class="d-flex align-items-center justify-content-center justify-content-sm-start gap-4">
-            <a href="{{ url_for('views.followers_list', username=profile_user.username) }}" class="text-decoration-none text-muted">
-              <span class="fw-bold text-dark fs-5" id="followersCount">{{ followers_count }}</span> Followers
+
+          <div
+            class="d-flex align-items-center justify-content-center justify-content-sm-start gap-4"
+          >
+            <a
+              href="{{ url_for('views.followers_list', username=profile_user.username) }}"
+              class="text-decoration-none text-muted"
+            >
+              <span class="fw-bold text-dark fs-5" id="followersCount"
+                >{{ followers_count }}</span
+              >
+              Followers
             </a>
-            <a href="{{ url_for('views.following_list', username=profile_user.username) }}" class="text-decoration-none text-muted">
-              <span class="fw-bold text-dark fs-5">{{ following_count }}</span> Following
+            <a
+              href="{{ url_for('views.following_list', username=profile_user.username) }}"
+              class="text-decoration-none text-muted"
+            >
+              <span class="fw-bold text-dark fs-5">{{ following_count }}</span>
+              Following
             </a>
           </div>
         </div>
 
-        {% set total_likes = namespace(count=0) %}
-        {% set total_words = namespace(count=0) %}
-        {% for p in profile_user.posts %}
-          {% if not p.is_deleted %}
-            {% set total_likes.count = total_likes.count + p.likes|length %}
-            {% set total_words.count = total_words.count + p.text.split()|length %}
-          {% endif %}
-        {% endfor %}
+        {% set total_likes = namespace(count=0) %} {% set total_words =
+        namespace(count=0) %} {% for p in profile_user.posts %} {% if not
+        p.is_deleted %} {% set total_likes.count = total_likes.count +
+        p.likes|length %} {% set total_words.count = total_words.count +
+        p.text.split()|length %} {% endif %} {% endfor %}
         <div class="row g-3 mb-4">
           <div class="col-4">
             <div class="stat-card">
               <i class="fas fa-pen-nib text-primary mb-2 fs-4"></i>
-              <h4 class="fw-bold mb-0" style="color: var(--text-main);">{{ total_posts }}</h4>
+              <h4 class="fw-bold mb-0" style="color: var(--text-main)">
+                {{ total_posts }}
+              </h4>
               <small class="text-muted fw-bold">Stories</small>
             </div>
           </div>
           <div class="col-4">
             <div class="stat-card">
               <i class="fas fa-heart text-danger mb-2 fs-4"></i>
-              <h4 class="fw-bold mb-0" style="color: var(--text-main);">{{ total_likes.count }}</h4>
+              <h4 class="fw-bold mb-0" style="color: var(--text-main)">
+                {{ total_likes.count }}
+              </h4>
               <small class="text-muted fw-bold">Total Likes</small>
             </div>
           </div>
           <div class="col-4">
             <div class="stat-card">
               <i class="fas fa-book-open text-success mb-2 fs-4"></i>
-              <h4 class="fw-bold mb-0" style="color: var(--text-main);">{{ '{:,}'.format(total_words.count) }}</h4>
+              <h4 class="fw-bold mb-0" style="color: var(--text-main)">
+                {{ '{:,}'.format(total_words.count) }}
+              </h4>
               <small class="text-muted fw-bold">Words Written</small>
             </div>
           </div>
         </div>
 
         {% if profile_user.social_links %}
-        <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start mt-3">
-          {% for platform, url in profile_user.social_links.items() %}
-          
-          {% set icon = 'fas fa-link' %}
-          {% set color = '' %}
-          {% set label = 'Link' %}
-          
-          {% if 'github' in url %} {% set icon = 'fab fa-github' %} {% set label = 'GitHub' %}
-          {% elif 'linkedin' in url %} {% set icon = 'fab fa-linkedin' %} {% set color = 'text-primary' %} {% set label = 'LinkedIn' %}
-          {% elif 'twitter' in url or 'x.com' in url %} {% set icon = 'fab fa-twitter' %} {% set color = 'text-info' %} {% set label = 'Twitter' %}
-          {% elif 'instagram' in url %} {% set icon = 'fab fa-instagram' %} {% set color = 'text-danger' %} {% set label = 'Instagram' %}
-          {% elif 'facebook' in url %} {% set icon = 'fab fa-facebook' %} {% set color = 'text-primary' %} {% set label = 'Facebook' %}
-          {% elif 'youtube' in url %} {% set icon = 'fab fa-youtube' %} {% set color = 'text-danger' %} {% set label = 'YouTube' %}
-          {% elif 'whatsapp' in url %} {% set icon = 'fab fa-whatsapp' %} {% set color = 'text-success' %} {% set label = 'WhatsApp' %}
-          {% endif %}
+        <div
+          class="d-flex flex-wrap gap-2 justify-content-center justify-content-sm-start mt-3"
+        >
+          {% for platform, url in profile_user.social_links.items() %} {% set
+          icon = 'fas fa-link' %} {% set color = '' %} {% set label = 'Link' %}
+          {% if 'github' in url %} {% set icon = 'fab fa-github' %} {% set label
+          = 'GitHub' %} {% elif 'linkedin' in url %} {% set icon = 'fab
+          fa-linkedin' %} {% set color = 'text-primary' %} {% set label =
+          'LinkedIn' %} {% elif 'twitter' in url or 'x.com' in url %} {% set
+          icon = 'fab fa-twitter' %} {% set color = 'text-info' %} {% set label
+          = 'Twitter' %} {% elif 'instagram' in url %} {% set icon = 'fab
+          fa-instagram' %} {% set color = 'text-danger' %} {% set label =
+          'Instagram' %} {% elif 'facebook' in url %} {% set icon = 'fab
+          fa-facebook' %} {% set color = 'text-primary' %} {% set label =
+          'Facebook' %} {% elif 'youtube' in url %} {% set icon = 'fab
+          fa-youtube' %} {% set color = 'text-danger' %} {% set label =
+          'YouTube' %} {% elif 'whatsapp' in url %} {% set icon = 'fab
+          fa-whatsapp' %} {% set color = 'text-success' %} {% set label =
+          'WhatsApp' %} {% endif %}
 
-          <div class="d-inline-flex align-items-center bg-light border rounded-pill px-3 py-1" style="background-color: var(--bg-input) !important;">
-            <a href="{{ url }}" target="_blank" class="text-decoration-none d-flex align-items-center gap-2 {{ color }}">
+          <div
+            class="d-inline-flex align-items-center bg-light border rounded-pill px-3 py-1"
+            style="background-color: var(--bg-input) !important"
+          >
+            <a
+              href="{{ url }}"
+              target="_blank"
+              class="text-decoration-none d-flex align-items-center gap-2 {{ color }}"
+            >
               <i class="{{ icon }}"></i>
               <span class="small fw-bold text-dark">{{ label }}</span>
             </a>
             {% if user.id == profile_user.id %}
             <div class="vr mx-2"></div>
-            <button onclick="window.removeSocialLink('{{ url }}')" class="btn btn-link p-0 text-secondary" style="font-size: 0.8rem">
+            <button
+              onclick="window.removeSocialLink('{{ url }}')"
+              class="btn btn-link p-0 text-secondary"
+              style="font-size: 0.8rem"
+            >
               <i class="fas fa-times"></i>
             </button>
             {% endif %}
@@ -276,31 +525,53 @@
       </div>
     </div>
 
-    {% set active_posts = [] %}
-    {% for p in profile_user.posts %}
-      {% if not p.is_deleted %}
-        {% set _ = active_posts.append({'post': p, 'like_count': p.likes|length}) %}
-      {% endif %}
-    {% endfor %}
-    
-    {% set top_posts_dicts = active_posts | sort(attribute='like_count', reverse=True) %}
-    
-    {% if top_posts_dicts|length > 0 %}
+    {% set active_posts = [] %} {% for p in profile_user.posts %} {% if not
+    p.is_deleted %} {% set _ = active_posts.append({'post': p, 'like_count':
+    p.likes|length}) %} {% endif %} {% endfor %} {% set top_posts_dicts =
+    active_posts | sort(attribute='like_count', reverse=True) %} {% if
+    top_posts_dicts|length > 0 %}
     <div class="mb-5">
-      <h4 class="font-heading fw-bold mb-3 px-2" style="color: var(--text-main);"><i class="fas fa-fire text-danger me-2"></i> Top Stories</h4>
+      <h4
+        class="font-heading fw-bold mb-3 px-2"
+        style="color: var(--text-main)"
+      >
+        <i class="fas fa-fire text-danger me-2"></i> Top Stories
+      </h4>
       <div class="row g-3">
-        {% for tp_dict in top_posts_dicts[:2] %}
-        {% set tp = tp_dict.post %}
+        {% for tp_dict in top_posts_dicts[:2] %} {% set tp = tp_dict.post %}
         <div class="col-md-6">
-          <a href="{{ url_for('views.post_view', slug=tp.slug or tp.id) }}" class="text-decoration-none">
+          <a
+            href="{{ url_for('views.post_view', slug=tp.slug or tp.id) }}"
+            class="text-decoration-none"
+          >
             <div class="top-post-card h-100">
-              <h6 class="fw-bold mb-2 text-truncate" style="color: var(--text-main);">{{ tp.title or 'Untitled Story' }}</h6>
-              <p class="small text-muted mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              <h6
+                class="fw-bold mb-2 text-truncate"
+                style="color: var(--text-main)"
+              >
+                {{ tp.title or 'Untitled Story' }}
+              </h6>
+              <p
+                class="small text-muted mb-2"
+                style="
+                  display: -webkit-box;
+                  -webkit-line-clamp: 2;
+                  line-clamp: 2;
+                  -webkit-box-orient: vertical;
+                  overflow: hidden;
+                "
+              >
                 {{ tp.excerpt or (tp.text | striptags) }}
               </p>
               <div class="d-flex gap-3 small fw-bold text-muted">
-                <span><i class="fas fa-heart text-danger me-1"></i> {{ tp.likes|length }}</span>
-                <span><i class="fas fa-comment text-primary me-1"></i> {{ tp.comments|length }}</span>
+                <span
+                  ><i class="fas fa-heart text-danger me-1"></i> {{
+                  tp.likes|length }}</span
+                >
+                <span
+                  ><i class="fas fa-comment text-primary me-1"></i> {{
+                  tp.comments|length }}</span
+                >
               </div>
             </div>
           </a>
@@ -308,11 +579,18 @@
         {% endfor %}
       </div>
     </div>
-    {% endif %}
-
-    {% if i_have_blocked_them %}
-    <div class="text-center py-5 text-muted fade-in-up mt-4 border border-dashed rounded-4" style="background-color: var(--bg-card); border-color: var(--border-color) !important;">
-      <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle mb-3" style="width: 80px; height: 80px">
+    {% endif %} {% if i_have_blocked_them %}
+    <div
+      class="text-center py-5 text-muted fade-in-up mt-4 border border-dashed rounded-4"
+      style="
+        background-color: var(--bg-card);
+        border-color: var(--border-color) !important;
+      "
+    >
+      <div
+        class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 text-danger rounded-circle mb-3"
+        style="width: 80px; height: 80px"
+      >
         <i class="fas fa-user-slash fa-2x"></i>
       </div>
       <h5 class="fw-bold text-dark">You blocked {{ profile_user.username }}</h5>
@@ -320,15 +598,24 @@
     </div>
     {% else %}
 
-    <ul class="nav nav-pills nav-fill mb-4 border-bottom pb-2" style="border-color: var(--border-color) !important">
+    <ul
+      class="nav nav-pills nav-fill mb-4 border-bottom pb-2"
+      style="border-color: var(--border-color) !important"
+    >
       <li class="nav-item">
-        <a class="nav-link profile-tab {% if not tab or tab == 'posts' %}active-tab{% else %}text-muted{% endif %}" href="{{ url_for('views.profile', username=profile_user.username, tab='posts') }}">
+        <a
+          class="nav-link profile-tab {% if not tab or tab == 'posts' %}active-tab{% else %}text-muted{% endif %}"
+          href="{{ url_for('views.profile', username=profile_user.username, tab='posts') }}"
+        >
           <i class="fas fa-file-alt me-1"></i> Stories
         </a>
       </li>
       {% if current_user.id == profile_user.id %}
       <li class="nav-item">
-        <a class="nav-link profile-tab {% if tab == 'saved' %}active-tab{% else %}text-muted{% endif %}" href="{{ url_for('views.profile', username=profile_user.username, tab='saved') }}">
+        <a
+          class="nav-link profile-tab {% if tab == 'saved' %}active-tab{% else %}text-muted{% endif %}"
+          href="{{ url_for('views.profile', username=profile_user.username, tab='saved') }}"
+        >
           <i class="fas fa-bookmark me-1"></i> Saved
         </a>
       </li>
@@ -336,46 +623,74 @@
     </ul>
 
     <div id="profileSkeleton" class="skeleton-ui-wrapper">
-      {% for i in range(2) %}
-        {% include "_skeleton_post.html" %}
-      {% endfor %}
+      {% for i in range(2) %} {% include "_skeleton_post.html" %} {% endfor %}
     </div>
 
     <div id="profileContent" class="skeleton-ui-content d-none">
       {% if posts|length == 0 %}
-        <div class="text-center py-5 text-muted fade-in-up border-0 bg-transparent">
-          <i class="{% if tab == 'saved' %}fas fa-bookmark{% else %}far fa-folder-open{% endif %} fa-3x mb-3 opacity-50"></i>
-          {% if tab == 'saved' %}
-          <h5 class="fw-bold" style="color: var(--text-main);">No saved posts yet.</h5>
-          <p>Go find some interesting stories to read later!</p>
-          {% else %}
-          <h5 class="fw-bold" style="color: var(--text-main);">No posts yet.</h5>
-          <p>When {{ profile_user.username }} posts, it will show up here.</p>
-          {% endif %}
-        </div>
-      {% else %}
-        <div id="posts-container">{% include "_posts.html" %}</div>
-
-        {% if pagination %}
-          {% if pagination.has_next %}
-          <div id="sentinel" class="text-center py-4 my-3" data-page="{{ pagination.page }}" data-has-next="true" data-url="{{ url_for('views.profile', username=profile_user.username, tab=tab) }}">
-            <div id="scroll-spinner" class="spinner-border text-primary" role="status" style="display: none; width: 2rem; height: 2rem; border-width: 0.25em;">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            <div id="end-message" class="text-muted small d-none py-3 px-4 rounded-pill d-inline-block shadow-sm" style="background: var(--bg-card); border: 1px solid var(--border-color); font-weight: 500;">
-              <i class="fas fa-check-circle text-success me-1"></i> You've reached the end
-            </div>
-          </div>
-          {% else %}
-          <div class="text-center py-4 my-3">
-            <div class="text-muted small py-3 px-4 rounded-pill d-inline-block shadow-sm" style="background: var(--bg-card); border: 1px solid var(--border-color); font-weight: 500;">
-              <i class="fas fa-check-circle text-success me-1"></i> You've reached the end
-            </div>
-          </div>
-          {% endif %}
+      <div
+        class="text-center py-5 text-muted fade-in-up border-0 bg-transparent"
+      >
+        <i
+          class="{% if tab == 'saved' %}fas fa-bookmark{% else %}far fa-folder-open{% endif %} fa-3x mb-3 opacity-50"
+        ></i>
+        {% if tab == 'saved' %}
+        <h5 class="fw-bold" style="color: var(--text-main)">
+          No saved posts yet.
+        </h5>
+        <p>Go find some interesting stories to read later!</p>
+        {% else %}
+        <h5 class="fw-bold" style="color: var(--text-main)">No posts yet.</h5>
+        <p>When {{ profile_user.username }} posts, it will show up here.</p>
         {% endif %}
+      </div>
+      {% else %}
+      <div id="posts-container">{% include "_posts.html" %}</div>
 
-      {% endif %}
+      {% if pagination %} {% if pagination.has_next %}
+      <div
+        id="sentinel"
+        class="text-center py-4 my-3"
+        data-page="{{ pagination.page }}"
+        data-has-next="true"
+        data-url="{{ url_for('views.profile', username=profile_user.username, tab=tab) }}"
+      >
+        <div
+          id="scroll-spinner"
+          class="spinner-border text-primary"
+          role="status"
+          style="display: none; width: 2rem; height: 2rem; border-width: 0.25em"
+        >
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <div
+          id="end-message"
+          class="text-muted small d-none py-3 px-4 rounded-pill d-inline-block shadow-sm"
+          style="
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+          "
+        >
+          <i class="fas fa-check-circle text-success me-1"></i> You've reached
+          the end
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-4 my-3">
+        <div
+          class="text-muted small py-3 px-4 rounded-pill d-inline-block shadow-sm"
+          style="
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+          "
+        >
+          <i class="fas fa-check-circle text-success me-1"></i> You've reached
+          the end
+        </div>
+      </div>
+      {% endif %} {% endif %} {% endif %}
     </div>
 
     {% endif %}
@@ -384,20 +699,51 @@
 
 <div class="modal fade" id="editProfileModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius: 20px; background-color: var(--bg-card);">
+    <div
+      class="modal-content border-0 shadow"
+      style="border-radius: 20px; background-color: var(--bg-card)"
+    >
       <div class="modal-header border-0 pb-0 mt-2 px-4">
-        <h5 class="modal-title fw-bold" style="color: var(--text-main);">Edit Bio</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+          Edit Bio
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
       <form action="{{ url_for('views.edit_bio') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body px-4">
-          <textarea name="bio" class="form-control bg-light border-0 shadow-sm" rows="4" maxlength="300" placeholder="Tell us about yourself..." style="border-radius: 12px;">{{ user.bio }}</textarea>
-          <div class="text-end text-muted small mt-1 fw-bold">Max 300 characters</div>
+          <textarea
+            name="bio"
+            class="form-control bg-light border-0 shadow-sm"
+            rows="4"
+            maxlength="300"
+            placeholder="Tell us about yourself..."
+            style="border-radius: 12px"
+          >
+{{ user.bio }}</textarea
+          >
+          <div class="text-end text-muted small mt-1 fw-bold">
+            Max 300 characters
+          </div>
         </div>
         <div class="modal-footer border-0 px-4 pb-4">
-          <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Save</button>
+          <button
+            type="button"
+            class="btn btn-light rounded-pill px-4 fw-bold"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
+          >
+            Save
+          </button>
         </div>
       </form>
     </div>
@@ -406,41 +752,84 @@
 
 <div class="modal fade" id="changeUsernameModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius: 20px; background-color: var(--bg-card);">
+    <div
+      class="modal-content border-0 shadow"
+      style="border-radius: 20px; background-color: var(--bg-card)"
+    >
       <div class="modal-header border-0 pb-0 mt-2 px-4">
-        <h5 class="modal-title fw-bold" style="color: var(--text-main);">Change Username</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+          Change Username
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
       <form action="{{ url_for('views.change_username') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" name="username" id="finalUsername" value="" />
         <div class="modal-body px-4">
           <div class="mb-3">
-            <label class="form-label text-muted small fw-bold">New Username</label>
-            <div class="input-group shadow-sm" style="border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color);">
+            <label class="form-label text-muted small fw-bold"
+              >New Username</label
+            >
+            <div
+              class="input-group shadow-sm"
+              style="
+                border-radius: 12px;
+                overflow: hidden;
+                border: 1px solid var(--border-color);
+              "
+            >
               <span class="input-group-text bg-light-1 border-0">@</span>
-              <input 
-                type="text" 
-                class="form-control bg-light border-0" 
-                id="newUsername" 
-                placeholder="Enter new username" 
-                required 
-                pattern="[a-zA-Z0-9_.]+" 
-                title="Only letters, numbers, dots, and underscores allowed." 
-                oninput="document.getElementById('submitUsernameBtn').disabled = true; document.getElementById('usernameStatus').innerHTML = '';" 
+              <input
+                type="text"
+                class="form-control bg-light border-0"
+                id="newUsername"
+                placeholder="Enter new username"
+                required
+                pattern="[a-zA-Z0-9_.]+"
+                title="Only letters, numbers, dots, and underscores allowed."
+                oninput="
+                  document.getElementById('submitUsernameBtn').disabled = true;
+                  document.getElementById('usernameStatus').innerHTML = '';
+                "
               />
-              <button id="checkUsernameBtn" class="btn btn-dark fw-bold px-3" type="button" onclick="checkUsername()">Check</button>
+              <button
+                id="checkUsernameBtn"
+                class="btn btn-dark fw-bold px-3"
+                type="button"
+                onclick="checkUsername()"
+              >
+                Check
+              </button>
             </div>
             <div id="usernameStatus" class="form-text mt-2 fw-bold"></div>
           </div>
-          <div class="alert alert-warning small border-0 d-flex align-items-center gap-2 rounded-3">
+          <div
+            class="alert alert-warning small border-0 d-flex align-items-center gap-2 rounded-3"
+          >
             <i class="fas fa-exclamation-triangle"></i>
             <div>Changing your username will log you out.</div>
           </div>
         </div>
         <div class="modal-footer border-0 px-4 pb-4">
-          <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" id="submitUsernameBtn" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" disabled>Update</button>
+          <button
+            type="button"
+            class="btn btn-light rounded-pill px-4 fw-bold"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            id="submitUsernameBtn"
+            class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm"
+            disabled
+          >
+            Update
+          </button>
         </div>
       </form>
     </div>
@@ -449,24 +838,74 @@
 
 <div class="modal fade" id="profilePicModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius: 20px; background-color: var(--bg-card);">
+    <div
+      class="modal-content border-0 shadow"
+      style="border-radius: 20px; background-color: var(--bg-card)"
+    >
       <div class="modal-header border-0 pb-0 mt-2 px-4">
-        <h5 class="modal-title fw-bold" style="color: var(--text-main);">Update Profile Picture</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+          Update Profile Picture
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
-      <form action="{{ url_for('views.update_profile_pic') }}" method="POST" enctype="multipart/form-data">
+      <form
+        action="{{ url_for('views.update_profile_pic') }}"
+        method="POST"
+        enctype="multipart/form-data"
+      >
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body text-center px-4">
-          <div class="upload-area p-4 border border-2 border-dashed rounded-3 bg-light mb-3 transition-all" onclick="document.getElementById('avatarInput').click()" style="cursor: pointer; border-color: var(--border-color) !important; background-color: var(--bg-input) !important;">
-            <i class="fas fa-images fa-2x mb-2" style="color: var(--text-muted); opacity: 0.6"></i>
-            <h6 class="fw-bold mb-1" style="color: var(--text-main)">Click to select image</h6>
-            <div class="small fw-bold opacity-75" style="color: var(--text-muted)">Supported: JPG, JPEG, PNG, WEBP</div>
+          <div
+            class="upload-area p-4 border border-2 border-dashed rounded-3 bg-light mb-3 transition-all"
+            onclick="document.getElementById('avatarInput').click()"
+            style="
+              cursor: pointer;
+              border-color: var(--border-color) !important;
+              background-color: var(--bg-input) !important;
+            "
+          >
+            <i
+              class="fas fa-images fa-2x mb-2"
+              style="color: var(--text-muted); opacity: 0.6"
+            ></i>
+            <h6 class="fw-bold mb-1" style="color: var(--text-main)">
+              Click to select image
+            </h6>
+            <div
+              class="small fw-bold opacity-75"
+              style="color: var(--text-muted)"
+            >
+              Supported: JPG, JPEG, PNG, WEBP
+            </div>
           </div>
-          <input type="file" name="profile_pic" id="avatarInput" class="d-none crop-upload" accept="image/*" onchange="previewImage(this, 'avatarPreview')" />
-          <img id="avatarPreview" src="#" class="rounded-circle d-none mx-auto mt-3 border shadow-sm" width="120" height="120" style="object-fit: cover" />
+          <input
+            type="file"
+            name="profile_pic"
+            id="avatarInput"
+            class="d-none crop-upload"
+            accept="image/*"
+            onchange="previewImage(this, 'avatarPreview')"
+          />
+          <img
+            id="avatarPreview"
+            src="#"
+            class="rounded-circle d-none mx-auto mt-3 border shadow-sm"
+            width="120"
+            height="120"
+            style="object-fit: cover"
+          />
         </div>
         <div class="modal-footer border-0 px-4 pb-4">
-          <button type="submit" class="btn btn-primary rounded-pill w-100 py-2 fw-bold shadow-sm">Upload</button>
+          <button
+            type="submit"
+            class="btn btn-primary rounded-pill w-100 py-2 fw-bold shadow-sm"
+          >
+            Upload
+          </button>
         </div>
       </form>
     </div>
@@ -475,25 +914,79 @@
 
 <div class="modal fade" id="coverPicModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius: 20px; background-color: var(--bg-card);">
+    <div
+      class="modal-content border-0 shadow"
+      style="border-radius: 20px; background-color: var(--bg-card)"
+    >
       <div class="modal-header border-0 pb-0 mt-2 px-4">
-        <h5 class="modal-title fw-bold" style="color: var(--text-main);">Update Cover Photo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+          Update Cover Photo
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
-      <form action="{{ url_for('views.update_cover_pic') }}" method="POST" enctype="multipart/form-data">
+      <form
+        action="{{ url_for('views.update_cover_pic') }}"
+        method="POST"
+        enctype="multipart/form-data"
+      >
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body px-4 text-center">
-          <div class="upload-area p-4 border border-2 border-dashed rounded-3 bg-light mb-3 transition-all" onclick="document.getElementById('coverInputFull').click()" style="cursor: pointer; border-color: var(--border-color) !important; background-color: var(--bg-input) !important;">
-            <i class="fas fa-images fa-2x mb-2" style="color: var(--text-muted); opacity: 0.6"></i>
-            <h6 class="fw-bold mb-1" style="color: var(--text-main)">Click to select image</h6>
-            <div class="small fw-bold opacity-75 mb-1" style="color: var(--text-muted)">Recommended size: 1080x400 pixels</div>
-            <div class="small fw-bold opacity-75" style="color: var(--text-muted)">Supported: JPG, JPEG, PNG, WEBP</div>
+          <div
+            class="upload-area p-4 border border-2 border-dashed rounded-3 bg-light mb-3 transition-all"
+            onclick="document.getElementById('coverInputFull').click()"
+            style="
+              cursor: pointer;
+              border-color: var(--border-color) !important;
+              background-color: var(--bg-input) !important;
+            "
+          >
+            <i
+              class="fas fa-images fa-2x mb-2"
+              style="color: var(--text-muted); opacity: 0.6"
+            ></i>
+            <h6 class="fw-bold mb-1" style="color: var(--text-main)">
+              Click to select image
+            </h6>
+            <div
+              class="small fw-bold opacity-75 mb-1"
+              style="color: var(--text-muted)"
+            >
+              Recommended size: 1080x400 pixels
+            </div>
+            <div
+              class="small fw-bold opacity-75"
+              style="color: var(--text-muted)"
+            >
+              Supported: JPG, JPEG, PNG, WEBP
+            </div>
           </div>
-          <input type="file" name="cover_pic" id="coverInputFull" class="d-none crop-upload" accept="image/*" required onchange="previewImage(this, 'coverPicPreview')" />
-          <img id="coverPicPreview" src="#" class="img-fluid rounded-3 d-none mt-3 border shadow-sm" style="object-fit: cover; width: 100%" />
+          <input
+            type="file"
+            name="cover_pic"
+            id="coverInputFull"
+            class="d-none crop-upload"
+            accept="image/*"
+            required
+            onchange="previewImage(this, 'coverPicPreview')"
+          />
+          <img
+            id="coverPicPreview"
+            src="#"
+            class="img-fluid rounded-3 d-none mt-3 border shadow-sm"
+            style="object-fit: cover; width: 100%"
+          />
         </div>
         <div class="modal-footer border-0 px-4 pb-4">
-          <button type="submit" class="btn btn-primary rounded-pill w-100 py-2 fw-bold shadow-sm">Upload</button>
+          <button
+            type="submit"
+            class="btn btn-primary rounded-pill w-100 py-2 fw-bold shadow-sm"
+          >
+            Upload
+          </button>
         </div>
       </form>
     </div>
@@ -502,21 +995,42 @@
 
 <div class="modal fade" id="socialLinkModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius: 20px; background-color: var(--bg-card);">
+    <div
+      class="modal-content border-0 shadow"
+      style="border-radius: 20px; background-color: var(--bg-card)"
+    >
       <div class="modal-header border-0 pb-0 mt-2 px-4">
-        <h5 class="modal-title fw-bold" style="color: var(--text-main);">Add Social Link</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title fw-bold" style="color: var(--text-main)">
+          Add Social Link
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
       <form action="{{ url_for('views.add_social_link') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body px-4">
           <div class="mb-3">
             <label class="form-label text-muted small fw-bold">URL</label>
-            <input type="url" name="new_link" class="form-control bg-light border-0 shadow-sm" placeholder="https://..." required style="border-radius: 12px;"/>
+            <input
+              type="url"
+              name="new_link"
+              class="form-control bg-light border-0 shadow-sm"
+              placeholder="https://..."
+              required
+              style="border-radius: 12px"
+            />
           </div>
         </div>
         <div class="modal-footer border-0 px-4 pb-4">
-          <button type="submit" class="btn btn-dark rounded-pill px-4 w-100 py-2 fw-bold shadow-sm">Add Link</button>
+          <button
+            type="submit"
+            class="btn btn-dark rounded-pill px-4 w-100 py-2 fw-bold shadow-sm"
+          >
+            Add Link
+          </button>
         </div>
       </form>
     </div>
@@ -525,33 +1039,70 @@
 
 <div class="modal fade" id="deactivateModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow" style="border-radius: 20px; background-color: var(--bg-card);">
+    <div
+      class="modal-content border-0 shadow"
+      style="border-radius: 20px; background-color: var(--bg-card)"
+    >
       <div class="modal-header border-0 pb-0 mt-2 px-4">
         <h5 class="modal-title fw-bold text-danger">Deactivate Account</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
       </div>
       <form action="{{ url_for('views.deactivate_account') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="modal-body px-4">
-          <p class="text-muted small">Are you sure you want to deactivate your account? This action will hide your profile and posts.</p>
+          <p class="text-muted small">
+            Are you sure you want to deactivate your account? This action will
+            hide your profile and posts.
+          </p>
           <div class="mb-3">
-            <label class="form-label text-muted small fw-bold">Reason for leaving</label>
-            <select name="reason" class="form-select bg-light border-0 shadow-sm" style="border-radius: 12px;" required>
+            <label class="form-label text-muted small fw-bold"
+              >Reason for leaving</label
+            >
+            <select
+              name="reason"
+              class="form-select bg-light border-0 shadow-sm"
+              style="border-radius: 12px"
+              required
+            >
               <option value="" disabled selected>Select a reason...</option>
               <option value="Taking a break">Taking a break</option>
               <option value="Privacy concerns">Privacy concerns</option>
-              <option value="Too many notifications">Too many notifications</option>
+              <option value="Too many notifications">
+                Too many notifications
+              </option>
               <option value="Other">Other</option>
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label text-muted small fw-bold">Additional details (Optional)</label>
-            <textarea name="details" class="form-control bg-light border-0 shadow-sm" rows="3" style="border-radius: 12px;"></textarea>
+            <label class="form-label text-muted small fw-bold"
+              >Additional details (Optional)</label
+            >
+            <textarea
+              name="details"
+              class="form-control bg-light border-0 shadow-sm"
+              rows="3"
+              style="border-radius: 12px"
+            ></textarea>
           </div>
         </div>
         <div class="modal-footer border-0 px-4 pb-4">
-          <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">Deactivate</button>
+          <button
+            type="button"
+            class="btn btn-light rounded-pill px-4 fw-bold"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm"
+          >
+            Deactivate
+          </button>
         </div>
       </form>
     </div>
@@ -560,22 +1111,26 @@
 
 <script>
   // Securely Remove Social Links
-  window.removeSocialLink = function(url) {
-    if(confirm("Are you sure you want to remove this social link?")) {
-        const formData = new FormData();
-        formData.append('link_to_remove', url);
-        window.fetchWithCSRF('/remove-social-link', {
-            method: 'POST',
-            body: formData
-        }).then(res => res.json()).then(data => {
-            if(data.success) {
-              location.reload();
-            } else {
-              alert(data.error || "Error removing link");
-            }
-        }).catch(err => {
-            console.error("Failed to remove social link", err);
-            alert("Network error. Could not remove link.");
+  window.removeSocialLink = function (url) {
+    if (confirm("Are you sure you want to remove this social link?")) {
+      const formData = new FormData();
+      formData.append("link_to_remove", url);
+      window
+        .fetchWithCSRF("/remove-social-link", {
+          method: "POST",
+          body: formData,
+        })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            location.reload();
+          } else {
+            alert(data.error || "Error removing link");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to remove social link", err);
+          alert("Network error. Could not remove link.");
         });
     }
   };
