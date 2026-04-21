@@ -10,14 +10,16 @@
 
 {% block og_meta %}
     <meta property="og:site_name" content="AV Postory" />
+    <link rel="canonical" href="{{ request.base_url }}" />
     
     {% if posts|length == 1 %}
-        <meta property="og:title" content="Story by {{ posts[0].user.username }} on AV Postory" />
-        <meta property="og:description" content="{{ posts[0].text | striptags | truncate(150) }}" />
+        <meta property="og:title" content="{{ posts[0].title or 'Story by ' + posts[0].user.username }} on AV Postory" />
+        <meta property="og:description" content="{{ posts[0].excerpt or (posts[0].text | striptags | truncate(150)) }}" />
         
-        <meta itemprop="name" content="Story by {{ posts[0].user.username }} on AV Postory" />
-        <meta itemprop="description" content="{{ posts[0].text | striptags | truncate(150) }}" />
+        <meta itemprop="name" content="{{ posts[0].title or 'Story by ' + posts[0].user.username }} on AV Postory" />
+        <meta itemprop="description" content="{{ posts[0].excerpt or (posts[0].text | striptags | truncate(150)) }}" />
         
+        {% set logo_url = url_for('static', filename='images/logo.png', _external=True) %}
         {% if posts[0].cover_image %}
             {% set img_url = posts[0].cover_image if 'http' in posts[0].cover_image else url_for('static', filename='uploads/posts/' + posts[0].cover_image, _external=True) %}
             
@@ -28,7 +30,6 @@
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:image" content="{{ img_url }}" />
         {% else %}
-            {% set logo_url = url_for('static', filename='images/logo.png', _external=True) %}
             <meta property="og:image" itemprop="image" content="{{ logo_url }}" />
             <meta property="og:image:width" content="800" />
             <meta property="og:image:height" content="800" />
@@ -40,8 +41,30 @@
         <meta property="og:url" content="{{ request.url }}" />
         <meta property="og:type" content="article" />
         
-        <meta name="twitter:title" content="Story by {{ posts[0].user.username }}" />
-        <meta name="twitter:description" content="{{ posts[0].text | striptags | truncate(150) }}" />
+        <meta name="twitter:title" content="{{ posts[0].title or 'Story by ' + posts[0].user.username }}" />
+        <meta name="twitter:description" content="{{ posts[0].excerpt or (posts[0].text | striptags | truncate(150)) }}" />
+
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          "headline": "{{ (posts[0].title or 'Story by ' ~ posts[0].user.username)|escape }}",
+          "image": "{{ img_url if posts[0].cover_image else logo_url }}",
+          "author": {
+            "@type": "Person",
+            "name": "{{ posts[0].user.username|escape }}"
+          },
+          "datePublished": "{{ posts[0].date_created.isoformat() }}Z",
+          "publisher": {
+            "@type": "Organization",
+            "name": "AV Postory",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "{{ logo_url }}"
+            }
+          }
+        }
+        </script>
         
     {% else %}
         <meta property="og:title" content="{{ username }}'s Posts on AV Postory" />
@@ -211,22 +234,28 @@
 <script>
   // Script to force single posts to open fully expanded and render syntax highlights
   document.addEventListener("DOMContentLoaded", function () {
-    {% if posts|length == 1 %}
-    const singlePost = document.querySelector(".post-text");
-    if (singlePost) {
-      singlePost.style.maxHeight = "none";
-      singlePost.classList.add("full-post");
-      const fade = document.querySelector(".fade-overlay");
-      const btn = document.querySelector(".see-more-btn");
-      if (fade) fade.style.display = "none";
-      if (btn) btn.style.display = "none";
-      
-      const commentsCollapse = document.getElementById("comments-{{ posts[0].id }}");
-      if(commentsCollapse) {
-          commentsCollapse.classList.add("show");
+    // Evaluate the Jinja condition inside a string to satisfy the JS linter
+    const isSinglePost = "{{ 'true' if posts|length == 1 else 'false' }}" === "true";
+    
+    if (isSinglePost) {
+      const singlePost = document.querySelector(".post-text");
+      if (singlePost) {
+        singlePost.style.maxHeight = "none";
+        singlePost.classList.add("full-post");
+        const fade = document.querySelector(".fade-overlay");
+        const btn = document.querySelector(".see-more-btn");
+        if (fade) fade.style.display = "none";
+        if (btn) btn.style.display = "none";
+        
+        const postId = "{{ posts[0].id if posts|length > 0 else '' }}";
+        if (postId) {
+            const commentsCollapse = document.getElementById("comments-" + postId);
+            if(commentsCollapse) {
+                commentsCollapse.classList.add("show");
+            }
+        }
       }
     }
-    {% endif %}
   });
 </script>
 {% endblock %}
