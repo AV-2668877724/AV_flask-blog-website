@@ -1,14 +1,13 @@
 from flask import request
 from flask_login import current_user
 from . import socketio, db
-from .models import Message, User, Notification, Block # 🚀 ADDED Block model
+from .models import Message, User, Notification, Block 
 from flask_socketio import emit, join_room, leave_room
 from datetime import datetime, timezone
-import bleach # 🚀 FIX 1: Import bleach for XSS protection
-from sqlalchemy import or_, and_ # 🚀 ADDED for block logic
+import bleach 
+from sqlalchemy import or_, and_ 
 
-
-# 🚀 IMPORT THE PROCESSOR FROM VIEWS FOR LINK PREVIEWS & TAGS
+# IMPORT THE PROCESSOR FROM VIEWS FOR LINK PREVIEWS & TAGS
 from .views import process_text_links
 
 # ==================================================
@@ -22,10 +21,10 @@ def handle_connect():
         current_user.is_online = True
         db.session.commit()
         
-        # 2. Join a private room
+        # 2. Join a private room tied to their User ID
         join_room(str(current_user.id))
         
-        # 3. Broadcast status
+        # 3. Broadcast status globally
         emit('user_status_change', {
             'user_id': current_user.id, 
             'status': 'online'
@@ -34,15 +33,15 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     if current_user.is_authenticated:
-        # 1. Mark User as Offline
+        # 1. Mark User as Offline & record last seen
         current_user.is_online = False
         current_user.last_seen = datetime.now(timezone.utc).replace(tzinfo=None)
         db.session.commit()
         
-        # 2. Leave room
+        # 2. Leave private room
         leave_room(str(current_user.id))
         
-        # 3. Broadcast status
+        # 3. Broadcast offline status
         emit('user_status_change', {
             'user_id': current_user.id, 
             'status': 'offline',
@@ -58,12 +57,12 @@ def handle_send_message_event(data):
     
     if not raw_text or not recipient_id: return
     
-    # 🚀 FIX 5: Validate recipient exists (IDOR Prevention)
+    # Validate recipient exists (IDOR Prevention)
     recipient = User.query.get(recipient_id)
     if not recipient: return
 
     # ==========================================
-    # 🚀 NEW: Block Validation
+    # Block Validation
     # ==========================================
     # Prevent message if either user has blocked the other
     is_blocked = Block.query.filter(
@@ -76,12 +75,14 @@ def handle_send_message_event(data):
     if is_blocked:
         return # Silently drop the message
 
-    # 🚀 FIX 1: Sanitize chat input (XSS Prevention)
-    # We strip all HTML tags from chat to ensure no malicious scripts are executed
+    # ==========================================
+    # Sanitize & Process Input
+    # ==========================================
+    # Strip all HTML tags from chat to ensure no malicious scripts are executed
     clean_text = bleach.clean(raw_text, tags=[], attributes={}, strip=True)
-    if not clean_text: return # Prevent sending empty messages if they only typed HTML
+    if not clean_text: return 
     
-    # 🚀 NEW: Generate Link Previews, Mentions, and Hashtags!
+    # Generate Link Previews, Mentions, and Hashtags
     final_text = process_text_links(clean_text)
     
     # 1. Save to Database
@@ -98,7 +99,7 @@ def handle_send_message_event(data):
     db.session.commit()
     
     # ==========================================
-    # 🚀 Create Notification for the Message
+    # Smart Notification Handling
     # ==========================================
     existing_notif = Notification.query.filter_by(
         visitor_id=current_user.id, 
@@ -122,20 +123,15 @@ def handle_send_message_event(data):
         'id': new_message.id,
         'text': new_message.text,
         'sender_id': current_user.id,
-        'sender_username': current_user.username, # 🚀 NEW: Send the username to the frontend!
+        'sender_username': current_user.username,
         'recipient_id': recipient_id,
         'time': new_message.date_created.isoformat() + 'Z' 
     }
     
     # 3. Emit to both parties
-    # Send to Recipient (Room)
-    emit('receive_message', msg_data, room=str(recipient_id))
-    
-    # Send to Sender's Other Tabs (Room)
-    emit('receive_message', msg_data, room=str(current_user.id))
-    
-    # Send to Sender's Current Tab (Direct Reply)
-    emit('receive_message', msg_data)
+    emit('receive_message', msg_data, room=str(recipient_id))      # Send to Recipient
+    emit('receive_message', msg_data, room=str(current_user.id))   # Sync across Sender's other tabs
+    emit('receive_message', msg_data)                              # Send back to current sender tab
     
 @socketio.on('typing')
 def handle_typing(data):
@@ -146,9 +142,7 @@ def handle_typing(data):
     
     if not recipient_id: return
     
-    # ==========================================
-    # 🚀 NEW: Block Validation for Typing Status
-    # ==========================================
+    # Block Validation for Typing Status
     is_blocked = Block.query.filter(
         or_(
             and_(Block.blocker_id == current_user.id, Block.blocked_id == recipient_id),
@@ -171,7 +165,7 @@ def handle_chat_opened(data):
     sender_id = data.get('sender_id')
     
     if sender_id:
-        # Tell the sender that current_user has opened the chat, so turn all ticks blue!
+        # Tell the sender that current_user has opened the chat, so turn all ticks blue
         emit('all_messages_read', {'reader_id': current_user.id}, room=str(sender_id))
 
 @socketio.on('message_read')
@@ -186,5 +180,4 @@ def handle_message_read(data):
         if msg and msg.recipient_id == current_user.id:
             msg.is_read = True
             db.session.commit()
-            # Tell the sender to turn this specific tick blue
             emit('single_message_read', {'msg_id': msg_id, 'reader_id': current_user.id}, room=str(sender_id))

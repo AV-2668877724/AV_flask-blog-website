@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, url_for # 🚀 ADDED url_for
 from flask_sqlalchemy import SQLAlchemy
 from os import path, makedirs
 from flask_login import LoginManager, current_user
@@ -20,7 +20,7 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
-socketio = SocketIO() 
+socketio = SocketIO(cors_allowed_origins="*")
 csrf = CSRFProtect() 
 
 # Initialize Limiter and Migrate globally
@@ -50,6 +50,12 @@ def create_app():
     # UPLOAD FOLDER
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    # Tell CSRF protection to trust ngrok URLs
+    app.config['WTF_CSRF_TRUSTED_ORIGINS'] = [
+        'https://*.ngrok-free.app',
+        'https://*.ngrok.app',
+        'https://*.ngrok.io'
+    ]
     
     if not path.exists(UPLOAD_FOLDER):
         makedirs(UPLOAD_FOLDER)
@@ -72,9 +78,6 @@ def create_app():
     # DB CREATION (Import models so Alembic can see them)
     from .models import User, Post, Comment, Like, Notification, Follow, Message, SavedPost, Block, Report
     
-    # 🚀 REPLACED: We no longer use db.create_all() here. Flask-Migrate handles this now.
-    # create_database(app) 
-
     # LOGIN MANAGER
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -84,7 +87,9 @@ def create_app():
     def load_user(id):
         return User.query.get(int(id))
 
+    # ==========================================
     # CONTEXT PROCESSORS
+    # ==========================================
     @app.context_processor
     def inject_notifications():
         unread_notifs = 0
@@ -118,7 +123,23 @@ def create_app():
             is_admin = getattr(current_user, "is_admin", False)
         return dict(is_admin=is_admin)
 
+    # 🚀 NEW: Automated Cache Busting
+    @app.context_processor
+    def override_url_for():
+        def dated_url_for(endpoint, **values):
+            if endpoint == 'static':
+                filename = values.get('filename', None)
+                if filename:
+                    # Find the physical file and append its last modified time as ?v=...
+                    file_path = os.path.join(app.root_path, endpoint, filename)
+                    if os.path.isfile(file_path):
+                        values['v'] = int(os.stat(file_path).st_mtime)
+            return url_for(endpoint, **values)
+        return dict(url_for=dated_url_for)
+
+    # ==========================================
     # JINJA FILTERS
+    # ==========================================
     @app.template_filter('timeago')
     def timeago(dt):
         if dt is None: return ""
@@ -151,11 +172,3 @@ def create_app():
     from . import events
     
     return app
-
-# 🚀 REPLACED: Kept commented out for reference, but migrations do this safely now.
-# def create_database(app):
-#     with app.app_context():
-#         db_path = path.join(app.root_path, DB_NAME)
-#         if not path.exists(db_path):
-#             db.create_all()
-#             print('Database Created Successfully!')
