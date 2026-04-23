@@ -71,7 +71,7 @@
     />
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='styles.css') }}?v=25"
+      href="{{ url_for('static', filename='styles.css') }}"
     />
 
     <link
@@ -95,7 +95,7 @@
       defer
     ></script>
     <script
-      src="{{ url_for('static', filename='index.js') }}?v=44"
+      src="{{ url_for('static', filename='index.js') }}"
       defer
     ></script>
 
@@ -177,7 +177,7 @@
         transform: translateY(-2px);
       }
 
-      /* Premium Search Bar Styling */
+      /* Premium Search Bar Styling (Desktop) */
       .search-bar-wrapper {
         background-color: var(--bg-input);
         border-radius: 50px;
@@ -209,9 +209,33 @@
       .search-bar-wrapper:focus-within .search-icon {
         color: var(--primary) !important;
       }
+      
+      /* 🚀 ULTIMATE MOBILE SEARCH BOX FIX */
       .mobile-search-wrapper {
-        height: 54px;
-        width: 100%;
+        height: 54px !important;
+        width: 100% !important;
+        background-color: rgba(0, 0, 0, 0.03) !important; /* Extremely light grey in Light Mode */
+        border: 1px solid rgba(0, 0, 0, 0.06) !important; /* Soft edge */
+        box-shadow: none !important;
+      }
+      .mobile-search-wrapper input::placeholder {
+        color: rgba(0, 0, 0, 0.35) !important; /* Soft placeholder */
+      }
+      
+      /* Dark Mode Mobile Overrides */
+      body.dark-mode .mobile-search-wrapper {
+        background-color: rgba(255, 255, 255, 0.05) !important; /* Subtle frosted glass */
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      }
+      body.dark-mode .mobile-search-wrapper input::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+      }
+      
+      /* Focus States for Mobile */
+      .mobile-search-wrapper:focus-within {
+        background-color: var(--bg-card) !important;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 4px var(--primary-glow) !important;
       }
 
       /* VS Code Linter Friendly Visibility Class */
@@ -852,14 +876,14 @@
           <div class="modal-body p-4 pt-3">
             <form action="{{ url_for('views.search_page') }}" method="GET">
               <div
-                class="search-bar-wrapper mobile-search-wrapper d-flex align-items-center px-4 shadow-sm mb-4"
+                class="search-bar-wrapper mobile-search-wrapper d-flex align-items-center px-4 mb-4"
               >
                 <i class="bi bi-search text-muted search-icon fs-5"></i>
                 <input
                   type="search"
                   name="q"
                   id="mobileSearchInput"
-                  class="search-input-field bg-transparent border-0 fs-5 ps-3"
+                  class="search-input-field border-0 fs-5 ps-3"
                   placeholder="Search..."
                   required
                   autocomplete="off"

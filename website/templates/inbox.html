@@ -171,9 +171,11 @@ content %}
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("DOMContentLoaded", function () {
     const socket = io();
+    const currentUserId = "{{ current_user.id }}"; // Get the logged-in user's ID
 
+    // Listen for typing indicators
     socket.on("user_typing", function (data) {
       const msgText = document.getElementById("msg-text-" + data.user_id);
       const typingText = document.getElementById("typing-text-" + data.user_id);
@@ -189,24 +191,54 @@ content %}
       }
     });
 
+    // 🚀 NEW: Receive Message & Auto-Move to Top
     socket.on("receive_message", function (msg) {
-      const msgText = document.getElementById("msg-text-" + msg.sender_id);
-      const typingText = document.getElementById(
-        "typing-text-" + msg.sender_id,
-      );
+      // Determine if I sent this message (from another tab) or if I received it
+      const isMine = String(msg.sender_id) === currentUserId;
+      const targetId = isMine ? msg.recipient_id : msg.sender_id;
+
+      const msgText = document.getElementById("msg-text-" + targetId);
+      const typingText = document.getElementById("typing-text-" + targetId);
 
       if (msgText && typingText) {
+        // 1. Hide typing indicator & show message text
         typingText.classList.add("d-none");
         msgText.classList.remove("d-none");
-        msgText.classList.add("fw-bold", "text-dark"); 
-        msgText.classList.remove("text-muted");
         
+        // 2. Make text bold if we received it
+        if (!isMine) {
+          msgText.classList.add("fw-bold", "text-dark"); 
+          msgText.classList.remove("text-muted");
+        }
+
+        // 3. Clean and set the preview text
         let tmp = document.createElement("DIV");
         tmp.innerHTML = msg.text;
-        msgText.innerHTML   = tmp.textContent || tmp.innerText || "";
+        const cleanText = tmp.textContent || tmp.innerText || "";
+        msgText.innerHTML = (isMine ? "You: " : "") + cleanText;
+
+        // 4. 🚀 MOVE THE CHAT TO THE TOP OF THE INBOX!
+        const chatRow = msgText.closest('.list-group-item');
+        if (chatRow) {
+          // Move the element to the top of the parent container
+          chatRow.parentNode.prepend(chatRow);
+          
+          // Add a subtle highlight effect so the user sees it jump to the top
+          chatRow.style.transition = "background-color 0.5s ease";
+          chatRow.style.backgroundColor = "var(--primary-glow, rgba(79, 70, 229, 0.15))";
+          setTimeout(() => {
+            chatRow.style.backgroundColor = "transparent";
+          }, 1500);
+        }
+      } else {
+        // If the chat row doesn't exist at all (it's a brand new conversation from someone else)
+        if (!isMine) {
+          window.location.reload(); // Instantly refresh to build the new UI row
+        }
       }
     });
 
+    // Clear Chat Logic
     window.clearChat = function (recipientId) {
       if (!confirm("Clear this conversation?")) return;
       const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
@@ -216,8 +248,14 @@ content %}
           "Content-Type": "application/json",
           "X-CSRFToken": csrfToken,
         }
-      }).then((res) => res.json()).then((data) => {
-        if (data.success) location.reload();
+      })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const msgText = document.getElementById("msg-text-" + recipientId);
+          if (msgText) msgText.innerHTML = "<em>Chat cleared</em>";
+          if (typeof window.showToast === "function") window.showToast("Chat cleared.");
+        }
       });
     };
   });
