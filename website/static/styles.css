@@ -420,3 +420,38 @@ body.dark-mode textarea::placeholder {
   background-color: var(--primary);
   color: white;
 }
+
+/* =========================================
+   📱 MOBILE SEARCH BOX UI FIX (ULTIMATE LITE)
+   ========================================= */
+@media (max-width: 768px) {
+  /* 1. Light Mode: Force EVERYTHING in the search bar to be transparent/light */
+  #mobileSearchInput,
+  #mobileSearchInput:focus,
+  .mobile-search-wrapper .input-group-text,
+  .mobile-search-wrapper .btn {
+    background-color: transparent !important; /* Drops the dark gray completely */
+    border: 1px solid rgba(0, 0, 0, 0.08) !important; /* Very faint elegant border */
+    color: var(--text-main) !important;
+    box-shadow: none !important;
+  }
+
+  /* Fix the placeholder text so it doesn't look bold/dark */
+  #mobileSearchInput::placeholder {
+    color: rgba(0, 0, 0, 0.3) !important; 
+    font-weight: 400 !important;
+  }
+
+  /* 2. Dark Mode: A very soft, barely-there frosted glass effect */
+  body.dark-mode #mobileSearchInput,
+  body.dark-mode .mobile-search-wrapper .input-group-text,
+  body.dark-mode .mobile-search-wrapper .btn {
+    background-color: rgba(255, 255, 255, 0.04) !important; /* Super light */
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+  }
+
+  body.dark-mode #mobileSearchInput::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+}

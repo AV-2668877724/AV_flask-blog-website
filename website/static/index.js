@@ -4,10 +4,11 @@
    ========================================= */
 const TRUNCATE_HEIGHT = 320;
 
-function getCsrfToken() {
+// 🚀 FIX: Attach to window so inline scripts (like chat) can access it securely
+window.getCsrfToken = function() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta ? meta.getAttribute("content") : "";
-}
+};
 
 function truncatePosts() {
   document.querySelectorAll(".post-text").forEach((el) => {
@@ -212,7 +213,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch("/api/mark-notifications-read", {
           method: "POST",
           credentials: "same-origin",
-          headers: { "X-CSRFToken": getCsrfToken() },
+          headers: { "X-CSRFToken": window.getCsrfToken() },
         }).catch((err) => console.error("Error marking read:", err));
       }
     });
@@ -335,7 +336,7 @@ function setDarkMode(enabled) {
   }
 }
 
-function showToast(message, isError = false) {
+window.showToast = function(message, isError = false) {
   const container = document.getElementById("toastContainer");
   if (!container) return;
 
@@ -425,7 +426,7 @@ function initReadingProgress() {
 /* =========================================
    LIKE POST LOGIC
    ========================================= */
-function likePost(postId, btn) {
+window.likePost = function(postId, btn) {
   like(postId);
 }
 
@@ -456,7 +457,7 @@ function like(postId) {
   fetch(`/like-post/${postId}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() },
+    headers: { "X-CSRFToken": window.getCsrfToken() },
   })
     .then((res) => res.json())
     .then((data) => {
@@ -469,7 +470,7 @@ function like(postId) {
         icon.classList.remove("fas", "text-danger");
       }
     })
-    .catch(() => showToast("Network error", true))
+    .catch(() => window.showToast("Network error", true))
     .finally(() => (btn.dataset.loading = "false"));
 }
 
@@ -496,24 +497,24 @@ window.savePost = function (postId, btn) {
   fetch(`/save-post/${postId}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() },
+    headers: { "X-CSRFToken": window.getCsrfToken() },
   })
     .then((res) => res.json())
     .then((data) => {
       if (data.saved) {
         icon.classList.add("fas", "text-primary");
         icon.classList.remove("far");
-        if (typeof showToast === "function")
-          showToast("Post saved to your bookmarks!");
+        if (typeof window.showToast === "function")
+          window.showToast("Post saved to your bookmarks!");
       } else {
         icon.classList.add("far");
         icon.classList.remove("fas", "text-primary");
-        if (typeof showToast === "function")
-          showToast("Post removed from bookmarks.");
+        if (typeof window.showToast === "function")
+          window.showToast("Post removed from bookmarks.");
       }
     })
     .catch(() => {
-      if (typeof showToast === "function") showToast("Network error", true);
+      if (typeof window.showToast === "function") window.showToast("Network error", true);
     })
     .finally(() => (btn.dataset.loading = "false"));
 };
@@ -529,7 +530,7 @@ document.addEventListener("click", function (e) {
   }
 });
 
-function likeComment(commentId, btn) {
+window.likeComment = function(commentId, btn) {
   if (btn.dataset.loading === "true") return;
   btn.dataset.loading = "true";
 
@@ -554,7 +555,7 @@ function likeComment(commentId, btn) {
   fetch(`/like-comment/${commentId}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() },
+    headers: { "X-CSRFToken": window.getCsrfToken() },
   })
     .then((res) => res.json())
     .then((data) => {
@@ -598,7 +599,7 @@ function timeAgoFromISO(isoString) {
   return `${years} year${years > 1 ? "s" : ""} ago`;
 }
 
-function refreshTimestamps() {
+window.refreshTimestamps = function() {
   document.querySelectorAll("[data-timestamp]").forEach((el) => {
     const ts = el.getAttribute("data-timestamp");
     if (ts) el.textContent = timeAgoFromISO(ts);
@@ -669,7 +670,7 @@ function resetAdminFilter(sectionId) {
 /* =========================================
    USERNAME AVAILABILITY
    ========================================= */
-function checkSignupUsername() {
+window.checkSignupUsername = function() {
   const usernameInput = document.getElementById("signupUsername");
   const statusDiv = document.getElementById("signupUsernameStatus");
   const submitBtn = document.getElementById("signupSubmitBtn");
@@ -692,7 +693,7 @@ function checkSignupUsername() {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken(),
+      "X-CSRFToken": window.getCsrfToken(),
     },
     body: JSON.stringify({ username: username }),
   })
@@ -720,7 +721,7 @@ function checkSignupUsername() {
     });
 }
 
-function resetSignupCheck() {
+window.resetSignupCheck = function() {
   const submitBtn = document.getElementById("signupSubmitBtn");
   const statusDiv = document.getElementById("signupUsernameStatus");
   const usernameInput = document.getElementById("signupUsername");
@@ -732,8 +733,7 @@ function resetSignupCheck() {
   if (usernameInput) usernameInput.classList.remove("is-valid", "is-invalid");
 }
 
-let allowUsernameSubmit = false;
-function checkUsername() {
+window.checkUsername = function() {
   const input = document.getElementById("newUsername");
   const status = document.getElementById("usernameStatus");
   const submitBtn = document.getElementById("submitUsernameBtn");
@@ -743,7 +743,6 @@ function checkUsername() {
     status.textContent = "Please enter a username";
     status.className = "text-danger";
     submitBtn.disabled = true;
-    allowUsernameSubmit = false;
     return;
   }
 
@@ -752,7 +751,7 @@ function checkUsername() {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken(),
+      "X-CSRFToken": window.getCsrfToken(),
     },
     body: JSON.stringify({ username }),
   })
@@ -762,12 +761,10 @@ function checkUsername() {
       if (data.available) {
         status.className = "text-success";
         submitBtn.disabled = false;
-        allowUsernameSubmit = true;
         document.getElementById("finalUsername").value = username;
       } else {
         status.className = "text-danger";
         submitBtn.disabled = true;
-        allowUsernameSubmit = false;
       }
     });
 }
@@ -832,7 +829,7 @@ document.addEventListener("submit", async function (e) {
       await fetch(form.action, {
         method: "POST",
         credentials: "same-origin",
-        headers: { "X-CSRFToken": getCsrfToken() },
+        headers: { "X-CSRFToken": window.getCsrfToken() },
         body: formData,
       });
 
@@ -861,15 +858,15 @@ document.addEventListener("submit", async function (e) {
           if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
 
           input.value = "";
-          showToast("Comment posted!");
+          window.showToast("Comment posted!");
         } else {
           window.location.reload();
         }
       } else {
-        showToast("Error retrieving updated comments", true);
+        window.showToast("Error retrieving updated comments", true);
       }
     } catch (error) {
-      showToast("Network error", true);
+      window.showToast("Network error", true);
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalBtnText;
@@ -923,13 +920,13 @@ document.addEventListener("click", async function (e) {
           );
           if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
 
-          showToast("Comment deleted!");
+          window.showToast("Comment deleted!");
         } else {
           window.location.reload();
         }
       }
     } catch (err) {
-      showToast("Network error", true);
+      window.showToast("Network error", true);
       deleteBtn.innerHTML = originalText;
       deleteBtn.style.pointerEvents = "auto";
     }
@@ -1014,8 +1011,8 @@ document.addEventListener("DOMContentLoaded", function () {
             if (typeof truncatePosts === "function") {
               truncatePosts();
             }
-            if (typeof refreshTimestamps === "function") {
-              refreshTimestamps();
+            if (typeof window.refreshTimestamps === "function") {
+              window.refreshTimestamps();
             }
             if (typeof setupMentions === "function") {
               setupMentions();
@@ -1114,10 +1111,27 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* =========================================
-   IMAGE & LINK HELPERS
+   IMAGE, LINK & SHARE HELPERS
    ========================================= */
 
-function previewImage(input, imgId) {
+// 🚀 FIX: Securely added Share logic to index.js
+// 🚀 FIX: Professional Share Logic (Optimized for Rich Link Previews)
+window.shareContent = function(title, url) {
+    if (navigator.share) {
+        // Passing just the URL and Title ensures apps like WhatsApp 
+        // generate a beautiful Link Preview Card instead of a messy text string.
+        navigator.share({
+            title: title,
+            url: url
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(url).then(() => {
+            if (typeof window.showToast === 'function') window.showToast("Link copied to clipboard!");
+            else alert("Link copied to clipboard!");
+        });
+    }
+};
+window.previewImage = function(input, imgId) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -1131,14 +1145,14 @@ function previewImage(input, imgId) {
   }
 }
 
-function viewFullSize(src) {
+window.viewFullSize = function(src) {
   const modal = new bootstrap.Modal(document.getElementById("imageViewModal"));
   const img = document.getElementById("fullSizeImage");
   img.src = src;
   modal.show();
 }
 
-function removeSocialLink(url) {
+window.removeSocialLink = function(url) {
   if (!confirm("Remove this link?")) return;
 
   fetch("/profile/remove-social", {
@@ -1146,7 +1160,7 @@ function removeSocialLink(url) {
     credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken(),
+      "X-CSRFToken": window.getCsrfToken(),
     },
     body: JSON.stringify({ url: url }),
   })
@@ -1158,14 +1172,14 @@ function removeSocialLink(url) {
     .catch((err) => console.error("Error:", err));
 }
 
-function toggleFollow(userId, btn) {
+window.toggleFollow = function(userId, btn) {
   const isFollowing = btn.innerText.trim() === "Following";
   const url = isFollowing ? `/unfollow/${userId}` : `/follow/${userId}`;
 
   fetch(url, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() },
+    headers: { "X-CSRFToken": window.getCsrfToken() },
   })
     .then((res) => res.json())
     .then((data) => {
@@ -1184,12 +1198,12 @@ function toggleFollow(userId, btn) {
           }
         });
         
-        if (typeof showToast === "function") {
-          showToast(data.action === "followed" ? "User followed" : "User unfollowed");
+        if (typeof window.showToast === "function") {
+          window.showToast(data.action === "followed" ? "User followed" : "User unfollowed");
         }
       } else {
-        if (typeof showToast === "function") {
-          showToast(data.message || "Error processing request", true);
+        if (typeof window.showToast === "function") {
+          window.showToast(data.message || "Error processing request", true);
         } else {
           alert(data.message || "Error processing request");
         }
@@ -1197,7 +1211,7 @@ function toggleFollow(userId, btn) {
     })
     .catch((err) => {
       console.error("Error:", err);
-      if (typeof showToast === "function") showToast("Network error", true);
+      if (typeof window.showToast === "function") window.showToast("Network error", true);
     });
 }
 
@@ -1260,8 +1274,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const droppedFile = files[0];
 
       if (!droppedFile.type.startsWith("image/")) {
-        if (typeof showToast === "function") {
-          showToast("Invalid file type. Please upload an image.", true);
+        if (typeof window.showToast === "function") {
+          window.showToast("Invalid file type. Please upload an image.", true);
         } else {
           alert("Invalid file type. Please upload an image.");
         }
@@ -1290,16 +1304,16 @@ window.blockUser = function (userId) {
   fetch(`/block/${userId}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() }
+    headers: { "X-CSRFToken": window.getCsrfToken() }
   })
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        if (typeof showToast === "function") showToast("User blocked successfully.");
+        if (typeof window.showToast === "function") window.showToast("User blocked successfully.");
         // Instantly redirect home so they don't stay on the blocked profile
         setTimeout(() => window.location.href = "/", 1000);
       } else {
-        if (typeof showToast === "function") showToast(data.message, true);
+        if (typeof window.showToast === "function") window.showToast(data.message, true);
       }
     });
 };
@@ -1308,7 +1322,7 @@ window.unblockUser = function (userId) {
   fetch(`/unblock/${userId}`, {
     method: "POST",
     credentials: "same-origin",
-    headers: { "X-CSRFToken": getCsrfToken() }
+    headers: { "X-CSRFToken": window.getCsrfToken() }
   })
     .then((res) => res.json())
     .then((data) => {
@@ -1340,7 +1354,7 @@ window.submitReport = function (itemType, itemId) {
     if (otherTextEl && otherTextEl.value.trim() !== '') {
       reason = "Other: " + otherTextEl.value.trim();
     } else {
-      if (typeof showToast === "function") showToast("Please specify your reason.", true);
+      if (typeof window.showToast === "function") window.showToast("Please specify your reason.", true);
       else alert("Please specify your reason.");
       return; 
     }
@@ -1351,21 +1365,21 @@ window.submitReport = function (itemType, itemId) {
     credentials: "same-origin",
     headers: { 
       "Content-Type": "application/json",
-      "X-CSRFToken": getCsrfToken() 
+      "X-CSRFToken": window.getCsrfToken() 
     },
     body: JSON.stringify({ reason: reason })
   })
     .then((res) => res.json())
     .then((data) => {
       if (data.success) {
-        if (typeof showToast === "function") showToast("Report submitted successfully.");
+        if (typeof window.showToast === "function") window.showToast("Report submitted successfully.");
         const modalEl = document.getElementById(`reportModal-${itemType}-${itemId}`);
         if (modalEl) {
           const modal = bootstrap.Modal.getInstance(modalEl);
           if (modal) modal.hide();
         }
       } else {
-        if (typeof showToast === "function") showToast("Error submitting report.", true);
+        if (typeof window.showToast === "function") window.showToast("Error submitting report.", true);
       }
     });
 };
