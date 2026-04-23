@@ -876,14 +876,15 @@
           <div class="modal-body p-4 pt-3">
             <form action="{{ url_for('views.search_page') }}" method="GET">
               <div
-                class="search-bar-wrapper mobile-search-wrapper d-flex align-items-center px-4 mb-4"
+                class="search-bar-wrapper mobile-search-wrapper d-flex align-items-center px-3 mb-4 shadow-sm"
+                style="border-radius: 50px; overflow: hidden;"
               >
-                <i class="bi bi-search text-muted search-icon fs-5"></i>
+                <i class="bi bi-search text-muted search-icon fs-5 ms-1"></i>
                 <input
                   type="search"
                   name="q"
                   id="mobileSearchInput"
-                  class="search-input-field border-0 fs-5 ps-3"
+                  class="search-input-field bg-transparent border-0 shadow-none fs-5 ps-3 flex-grow-1 py-3"
                   placeholder="Search..."
                   required
                   autocomplete="off"
