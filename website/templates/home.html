@@ -1,37 +1,7 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block content %}
 
-<style>
-  /* Ensure the Go button matches the premium styling */
-  .mobile-home-search-btn {
-    transition: transform 0.2s, opacity 0.2s;
-  }
-  .mobile-home-search-btn:active {
-    transform: scale(0.95);
-    opacity: 0.8;
-  }
-</style>
-
 <div class="row justify-content-center">
   <div class="col-lg-9 col-xl-8 mx-auto">
-    
-    <div class="d-md-none mb-4 fade-in-up px-1">
-      <form action="{{ url_for('views.search_page') }}" method="GET" class="position-relative">
-        <div class="mobile-search-wrapper d-flex align-items-center px-3 shadow-sm" style="border-radius: 50px; overflow: hidden;">
-          <i class="fas fa-search text-muted"></i>
-          <input 
-            type="search" 
-            name="q" 
-            class="search-input-field bg-transparent border-0 flex-grow-1 py-3 px-3 shadow-none" 
-            placeholder="Search stories, users..." 
-            autocomplete="off" 
-            required 
-          />
-          <button type="submit" class="btn text-primary px-2 fw-bold bg-transparent border-0 mobile-home-search-btn shadow-none">
-            Go
-          </button>
-        </div>
-      </form>
-    </div>
 
     <div id="homeSkeleton" class="skeleton-ui-wrapper">
       {% for i in range(3) %}

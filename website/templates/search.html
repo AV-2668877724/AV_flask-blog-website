@@ -17,6 +17,7 @@ block content %}
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
+    z-index: 1050; /* 🚀 FIX: Guarantees the live-search dropdown floats OVER the tabs below it */
   }
   .search-input-large {
     background-color: var(--bg-input);
@@ -137,7 +138,7 @@ block content %}
       >
         <i class="fas fa-search search-icon-large"></i>
         <input
-          type="text"
+          type="search"
           name="q"
           class="search-input-large shadow-sm"
           placeholder="Search for posts or people..."
@@ -286,6 +287,7 @@ block content %}
           {% endif %}
         </div>
       </div>
-    </div> </div>
+    </div> 
+  </div>
 </div>
 {% endblock %}
