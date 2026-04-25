@@ -857,7 +857,7 @@
       tabindex="-1"
       aria-hidden="true"
     >
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog modal-dialog-centered align-items-start mt-5">
         <div
           class="modal-content border-0 shadow-lg"
           style="border-radius: 20px; background-color: var(--bg-card)"
@@ -873,24 +873,32 @@
               aria-label="Close"
             ></button>
           </div>
-          <div class="modal-body p-4 pt-3">
+          <div class="modal-body p-4 pt-3 position-relative">
             <form action="{{ url_for('views.search_page') }}" method="GET">
+              
               <div
-                class="search-bar-wrapper mobile-search-wrapper d-flex align-items-center px-3 mb-4 shadow-sm"
+                class="search-bar-wrapper mobile-search-wrapper d-flex align-items-center px-3 mb-3 shadow-sm"
                 style="border-radius: 50px; overflow: hidden;"
               >
                 <i class="bi bi-search text-muted search-icon fs-5 ms-1"></i>
                 <input
                   type="search"
                   name="q"
-                  id="mobileSearchInput"
+                  id="navMobileSearchInput"
                   class="search-input-field bg-transparent border-0 shadow-none fs-5 ps-3 flex-grow-1 py-3"
-                  placeholder="Search..."
+                  placeholder="Search users..."
                   required
                   autocomplete="off"
                 />
               </div>
-              <div class="d-grid">
+
+              <div 
+                id="navMobileSearchResults" 
+                class="dropdown-menu shadow-lg border-0 position-absolute" 
+                style="border-radius: 16px; top: 85px; left: 1.5rem; right: 1.5rem; z-index: 1060; max-height: 250px; overflow-y: auto; display: none; background-color: var(--bg-card);"
+              ></div>
+
+              <div class="d-grid mt-2">
                 <button
                   type="submit"
                   class="btn btn-primary rounded-pill py-3 shadow-sm fw-bold fs-5"
@@ -904,6 +912,76 @@
       </div>
     </div>
 
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const mobileInput = document.getElementById("navMobileSearchInput");
+        const mobileResults = document.getElementById("navMobileSearchResults");
+
+        if (mobileInput && mobileResults) {
+          let debounceTimer;
+
+          mobileInput.addEventListener("input", function () {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
+
+            if (query.length < 1) {
+              mobileResults.classList.remove("show");
+              mobileResults.style.display = "none";
+              return;
+            }
+
+            debounceTimer = setTimeout(async () => {
+              try {
+                // Correctly fetch the JSON data, not the HTML page
+                const response = await fetch(`/api/search-users?q=${query}`);
+                if (!response.ok) return;
+
+                const users = await response.json();
+                mobileResults.innerHTML = "";
+
+                if (users.length > 0) {
+                  users.forEach((user) => {
+                    const item = document.createElement("a");
+                    item.className = "dropdown-item d-flex align-items-center gap-3 py-2 px-3 border-bottom";
+                    item.href = `/profile/${user.username}`;
+                    item.style.color = "var(--text-main)";
+                    item.style.borderColor = "var(--border-color)";
+
+                    let avatarHtml = "";
+                    if (user.profile_pic) {
+                        const picSrc = user.profile_pic.startsWith("http") ? user.profile_pic : "/static/uploads/avatars/" + user.profile_pic;
+                        avatarHtml = `<img src="${picSrc}" class="rounded-circle object-fit-cover shadow-sm border border-secondary" style="width: 35px; height: 35px;">`;
+                    } else {
+                        avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-sm" style="width: 35px; height: 35px; font-size: 1rem; font-weight: bold;">${user.username.charAt(0).toUpperCase()}</div>`;
+                    }
+
+                    item.innerHTML = `${avatarHtml} <span class="fw-bold" style="font-size: 1.05rem;">${user.username}</span>`;
+                    mobileResults.appendChild(item);
+                  });
+                  
+                  mobileResults.classList.add("show");
+                  mobileResults.style.display = "block";
+                } else {
+                  // Beautiful empty state instead of a 404 page!
+                  mobileResults.innerHTML = `<div class="p-3 text-center text-muted small">No users found.</div>`;
+                  mobileResults.classList.add("show");
+                  mobileResults.style.display = "block";
+                }
+              } catch (error) {
+                console.error("Mobile Search Error:", error);
+              }
+            }, 300);
+          });
+
+          document.addEventListener("click", function (e) {
+            if (!mobileInput.contains(e.target) && !mobileResults.contains(e.target)) {
+              mobileResults.classList.remove("show");
+              mobileResults.style.display = "none";
+            }
+          });
+        }
+      });
+    </script>
     <div class="modal fade" id="logoutModal" tabindex="-1">
       <div class="modal-dialog modal-dialog-centered">
         <div
