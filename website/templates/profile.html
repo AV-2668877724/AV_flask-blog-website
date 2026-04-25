@@ -1,13 +1,9 @@
 {% extends "base.html" %} {% block title %}{{ profile_user.username }}'s Profile
 - AV Postory{% endblock %} {% block content %}
 <style>
+  /* 🚀 FIX: Removed the rogue "body.dark-mode a" rule that was hijacking the navbar */
+  
   /* Dark Mode & Theme Styles */
-  body.dark-mode a {
-    color: #6ea8fe;
-  }
-  body.dark-mode a:hover {
-    color: #9ec5fe;
-  }
   body.dark-mode .card,
   body.dark-mode .modal-content {
     background-color: var(--bg-card) !important;
