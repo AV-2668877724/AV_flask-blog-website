@@ -82,26 +82,23 @@ function debounce(func, wait) {
 }
 
 /* =========================================
-   @ MENTIONS AUTO-COMPLETE (COMMENTS) 🚀 NEW
+   @ MENTIONS AUTO-COMPLETE (COMMENTS) 
    ========================================= */
 function setupMentions() {
   const commentInputs = document.querySelectorAll('.ajax-comment-form input[name="text"]');
   
   commentInputs.forEach(input => {
-    // Prevent double-binding on infinite scroll
     if (input.dataset.mentionsBound) return;
     
     const wrapper = input.closest('.input-group');
-    // Ensure the dropdown can overflow out of the input group visually
     wrapper.classList.remove('overflow-hidden');
     wrapper.style.overflow = 'visible'; 
     
-    // Create the floating dropdown UI
     const dropdown = document.createElement('div');
     dropdown.className = 'mention-dropdown dropdown-menu shadow-lg border-0 fade-in-up';
     dropdown.style.position = 'absolute';
     dropdown.style.display = 'none';
-    dropdown.style.bottom = '110%'; // Pop UP above the input line
+    dropdown.style.bottom = '110%'; 
     dropdown.style.left = '20px';
     dropdown.style.zIndex = '1050';
     dropdown.style.maxHeight = '200px';
@@ -114,7 +111,6 @@ function setupMentions() {
       const words = textBeforeCursor.split(/\s+/);
       const currentWord = words[words.length - 1];
 
-      // If the user is currently typing a word that starts with @
       if (currentWord.startsWith('@') && currentWord.length > 1) {
         const query = currentWord.substring(1);
         try {
@@ -154,7 +150,6 @@ function setupMentions() {
       }
     }, 150));
 
-    // Hide dropdown if clicked outside
     document.addEventListener('click', function(e) {
       if (!wrapper.contains(e.target)) {
         dropdown.style.display = 'none';
@@ -171,7 +166,6 @@ function setupMentions() {
 document.addEventListener("DOMContentLoaded", () => {
   const darkToggle = document.getElementById("darkToggle");
   
-  // 🚀 System Preference Detection added to match base.html
   const saved = localStorage.getItem("darkMode");
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   
@@ -189,7 +183,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // 🚀 Trigger global Syntax Highlighting
   if (typeof hljs !== 'undefined') {
     hljs.highlightAll();
   }
@@ -200,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   truncatePosts();
   setupMentions();
-  initReadingProgress(); // 🚀 Initialize the Continue Reading feature
+  initReadingProgress(); 
   
   window.addEventListener("load", truncatePosts);
 
@@ -222,71 +215,123 @@ document.addEventListener("DOMContentLoaded", () => {
   refreshTimestamps();
   setInterval(refreshTimestamps, 60000);
 
-  const searchInput = document.getElementById("searchInput");
-  const searchResults = document.getElementById("searchResults");
+  /* =========================================
+     🚀 UNIVERSAL LIVE SEARCH SYSTEM
+     ========================================= */
+  function initUniversalLiveSearch() {
+    // Selects ALL search inputs (Desktop, Home Mobile, and Search Page)
+    // Excludes the bottom nav modal input because we safely hardcoded that one in base.html!
+    const searchInputs = document.querySelectorAll('#searchInput, .search-input-field:not(#navMobileSearchInput), .search-input-large');
 
-  if (searchInput && searchResults) {
-    searchInput.addEventListener(
-      "input",
-      debounce(async function () {
+    searchInputs.forEach(input => {
+      if (input.dataset.liveSearchBound) return;
+      input.dataset.liveSearchBound = "true";
+
+      let resultsEl = null;
+      
+      // If it's the main desktop one, use its existing container
+      if (input.id === "searchInput") {
+        resultsEl = document.getElementById("searchResults");
+      } else {
+        // Dynamically create a dropdown for Home Page and Search Page inputs
+        resultsEl = document.createElement('div');
+        resultsEl.className = 'dropdown-menu shadow-lg border-0 position-absolute w-100 mt-2 fade-in-up';
+        resultsEl.style.borderRadius = '16px';
+        resultsEl.style.top = '100%';
+        resultsEl.style.left = '0';
+        resultsEl.style.zIndex = '1060';
+        resultsEl.style.maxHeight = '250px';
+        resultsEl.style.overflowY = 'auto';
+        resultsEl.style.display = 'none';
+        resultsEl.style.backgroundColor = 'var(--bg-card)';
+        
+        // Find the wrapper to append to
+        const wrapper = input.closest('.search-bar-wrapper') || input.closest('.search-input-wrapper') || input.parentElement;
+        if (wrapper) {
+            wrapper.style.position = 'relative';
+            wrapper.appendChild(resultsEl);
+        } else {
+            input.after(resultsEl);
+        }
+      }
+
+      if (!resultsEl) return;
+
+      let debounceTimer;
+
+      input.addEventListener("input", function () {
+        clearTimeout(debounceTimer);
         const query = this.value.trim();
+
         if (query.length < 1) {
-          searchResults.classList.remove("show");
+          resultsEl.classList.remove("show");
+          resultsEl.style.display = "none";
+          resultsEl.innerHTML = "";
           return;
         }
 
-        try {
-          const response = await fetch(`/api/search-users?q=${query}`);
-          const users = await response.json();
-          searchResults.innerHTML = "";
+        debounceTimer = setTimeout(async () => {
+          try {
+            // ALWAYS hit the fast JSON API to avoid the 404 HTML bug
+            const response = await fetch(`/api/search-users?q=${query}`);
+            if (!response.ok) return;
+            
+            const users = await response.json();
+            resultsEl.innerHTML = "";
 
-          if (users.length > 0) {
-            users.forEach((user) => {
-              const item = document.createElement("a");
-              item.className =
-                "dropdown-item d-flex align-items-center gap-2 py-2";
-              item.href = `/profile/${user.username}`;
+            if (users.length > 0) {
+              users.forEach((user) => {
+                const item = document.createElement("a");
+                item.className = "dropdown-item d-flex align-items-center gap-3 py-2 px-3 border-bottom";
+                item.href = `/profile/${user.username}`;
+                item.style.color = "var(--text-main)";
+                item.style.borderColor = "var(--border-color)";
 
-              let avatarHtml = "";
-              if (user.profile_pic) {
-                avatarHtml = `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;">`;
-              } else {
-                const initial = user.username.charAt(0).toUpperCase();
-                avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-secondary text-white rounded-circle" style="width: 30px; height: 30px; font-size: 0.8rem; font-weight: bold;">${initial}</div>`;
-              }
+                let avatarHtml = "";
+                if (user.profile_pic) {
+                  const picSrc = user.profile_pic.startsWith("http") ? user.profile_pic : "/static/uploads/avatars/" + user.profile_pic;
+                  avatarHtml = `<img src="${picSrc}" class="rounded-circle object-fit-cover shadow-sm border border-secondary" style="width: 35px; height: 35px;">`;
+                } else {
+                  avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-sm" style="width: 35px; height: 35px; font-size: 1rem; font-weight: bold;">${user.username.charAt(0).toUpperCase()}</div>`;
+                }
 
-              item.innerHTML = `${avatarHtml} <span>${user.username}</span>`;
-              searchResults.appendChild(item);
-            });
-            searchResults.classList.add("show");
-            searchResults.style.display = "block";
-          } else {
-            searchResults.classList.remove("show");
-            searchResults.style.display = "none";
+                item.innerHTML = `${avatarHtml} <span class="fw-bold" style="font-size: 1.05rem;">${user.username}</span>`;
+                resultsEl.appendChild(item);
+              });
+              
+              resultsEl.classList.add("show");
+              resultsEl.style.display = "block";
+            } else {
+              resultsEl.innerHTML = `<div class="p-3 text-center text-muted small">No users found.</div>`;
+              resultsEl.classList.add("show");
+              resultsEl.style.display = "block";
+            }
+          } catch (error) {
+            console.error("Live Search Error:", error);
           }
-        } catch (error) {
-          console.error("Search error:", error);
+        }, 300);
+      });
+
+      // Pressing Enter redirects to full search page
+      input.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          window.location.href = `/search-page?q=${encodeURIComponent(this.value.trim())}`;
         }
-      }, 300),
-    );
+      });
 
-    searchInput.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        window.location.href = `/search-page?q=${this.value}`;
-      }
-    });
-
-    document.addEventListener("click", function (e) {
-      if (
-        !searchInput.contains(e.target) &&
-        !searchResults.contains(e.target)
-      ) {
-        searchResults.classList.remove("show");
-        searchResults.style.display = "none";
-      }
+      // Clicking outside closes the dropdown
+      document.addEventListener("click", function (e) {
+        if (!input.contains(e.target) && !resultsEl.contains(e.target)) {
+          resultsEl.classList.remove("show");
+          resultsEl.style.display = "none";
+        }
+      });
     });
   }
+
+  // Initialize!
+  initUniversalLiveSearch();
 
   const usernameInputs = document.querySelectorAll('input[name="username"]');
   usernameInputs.forEach((input) => {
@@ -299,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
  /* =========================================
-     GLOBAL SKELETON UI CONTROLLER 🚀 NEW
+     GLOBAL SKELETON UI CONTROLLER 
      ========================================= */
   window.initSkeletons = function() {
     setTimeout(() => {
@@ -322,6 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Run immediately on page load
   initSkeletons();
 });
+
 /* =========================================
    UI HELPERS (Dark Mode, Toasts, Time)
    ========================================= */
@@ -357,10 +403,9 @@ window.showToast = function(message, isError = false) {
 }
 
 /* =========================================
-   READING PROGRESS TRACKER 🚀 NEW
+   READING PROGRESS TRACKER 
    ========================================= */
 function initReadingProgress() {
-  // 1. Restore progress UI on page load
   document.querySelectorAll('.post-text').forEach(postEl => {
     const postId = postEl.id.replace('post-text-', '');
     const progress = localStorage.getItem(`reading_progress_${postId}`);
@@ -371,7 +416,7 @@ function initReadingProgress() {
       
       if (progressBar) {
         progressBar.style.width = `${progress}%`;
-        progressBar.parentElement.style.display = 'block'; // Show the wrapper
+        progressBar.parentElement.style.display = 'block'; 
       }
       if (badge && progress > 0 && progress < 100) {
         badge.style.display = 'inline-flex';
@@ -379,16 +424,13 @@ function initReadingProgress() {
     }
   });
 
-  // 2. Track reading as they scroll
   window.addEventListener('scroll', debounce(() => {
     document.querySelectorAll('.post-text').forEach(postEl => {
-      // Only track if it's expanded or it's a full post page
       if (postEl.style.maxHeight !== 'none' && !postEl.classList.contains('full-post')) return;
 
       const rect = postEl.getBoundingClientRect();
       const windowHeight = window.innerHeight;
       
-      // If the post is in view
       if (rect.top < windowHeight && rect.bottom > 0) {
         const scrolled = windowHeight - rect.top;
         const total = rect.height;
@@ -400,7 +442,6 @@ function initReadingProgress() {
         const postId = postEl.id.replace('post-text-', '');
         const currentSaved = parseInt(localStorage.getItem(`reading_progress_${postId}`) || '0', 10);
         
-        // Only update if they read further
         if (percent > currentSaved) {
           localStorage.setItem(`reading_progress_${postId}`, percent);
           const progressBar = document.getElementById(`read-progress-${postId}`);
@@ -414,13 +455,13 @@ function initReadingProgress() {
             if (percent < 100) {
               badge.style.display = 'inline-flex';
             } else {
-              badge.style.display = 'none'; // Done reading
+              badge.style.display = 'none';
             }
           }
         }
       }
     });
-  }, 100)); // Throttled scroll listener
+  }, 100)); 
 }
 
 /* =========================================
@@ -957,7 +998,7 @@ document.addEventListener("click", async function (e) {
 });
 
 /* =========================================
-   🚀 NEW: INFINITE SCROLL LOGIC
+   INFINITE SCROLL LOGIC
    ========================================= */
 document.addEventListener("DOMContentLoaded", function () {
   const sentinel = document.getElementById("sentinel");
@@ -1032,94 +1073,10 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 /* =========================================
-   LIVE SEARCH AUTOCOMPLETE (Desktop & Mobile)
-   ========================================= */
-document.addEventListener("DOMContentLoaded", function () {
-  // 1. Identify Desktop Elements
-  const desktopInput = document.getElementById("searchInput");
-  const desktopResults = document.getElementById("searchResults");
-
-  // 2. Identify Mobile Elements
-  const mobileInput = document.getElementById("mobileSearchInput");
-  
-  // Create a mobile results dropdown container dynamically if it doesn't exist
-  let mobileResults = document.getElementById("mobileSearchResults");
-  if (mobileInput && !mobileResults) {
-    mobileResults = document.createElement("div");
-    mobileResults.id = "mobileSearchResults";
-    mobileResults.className = "dropdown-menu w-100 shadow-lg border-0 mt-2";
-    mobileResults.style.borderRadius = "16px";
-    mobileResults.style.position = "absolute";
-    mobileResults.style.top = "100%";
-    mobileResults.style.left = "0";
-    mobileResults.style.zIndex = "1050";
-    
-    // Inject it securely under the mobile search wrapper
-    const mobileForm = mobileInput.closest("form");
-    if (mobileForm) {
-      mobileForm.style.position = "relative";
-      mobileForm.insertBefore(mobileResults, mobileForm.querySelector(".d-grid"));
-    }
-  }
-
-  // 3. The Core Autocomplete Function
-  function setupLiveSearch(inputEl, resultsEl) {
-    if (!inputEl || !resultsEl) return;
-
-    let debounceTimer;
-
-    inputEl.addEventListener("input", function () {
-      clearTimeout(debounceTimer);
-      const query = this.value.trim();
-
-      // Clear results if the user deletes the text
-      if (query.length < 2) {
-        resultsEl.classList.remove("show");
-        resultsEl.innerHTML = "";
-        return;
-      }
-
-      // Wait 300ms after the user stops typing to fetch results
-      debounceTimer = setTimeout(() => {
-        fetch(`/search?q=${encodeURIComponent(query)}`, {
-          headers: {
-            "X-Requested-With": "XMLHttpRequest" // Tells Flask this is an AJAX call
-          }
-        })
-        .then(res => {
-          return res.text(); 
-        })
-        .then(html => {
-          resultsEl.innerHTML = html;
-          resultsEl.classList.add("show");
-        })
-        .catch(err => console.error("Search autocomplete error:", err));
-      }, 300);
-    });
-
-    // 4. Close the dropdown if the user clicks anywhere else on the screen
-    document.addEventListener("click", function(e) {
-      if (!inputEl.contains(e.target) && !resultsEl.contains(e.target)) {
-        resultsEl.classList.remove("show");
-      }
-    });
-  }
-
-  // Initialize the listener for both inputs!
-  setupLiveSearch(desktopInput, desktopResults);
-  setupLiveSearch(mobileInput, mobileResults);
-});
-
-/* =========================================
    IMAGE, LINK & SHARE HELPERS
    ========================================= */
-
-// 🚀 FIX: Securely added Share logic to index.js
-// 🚀 FIX: Professional Share Logic (Optimized for Rich Link Previews)
 window.shareContent = function(title, url) {
     if (navigator.share) {
-        // Passing just the URL and Title ensures apps like WhatsApp 
-        // generate a beautiful Link Preview Card instead of a messy text string.
         navigator.share({
             title: title,
             url: url
@@ -1131,6 +1088,7 @@ window.shareContent = function(title, url) {
         });
     }
 };
+
 window.previewImage = function(input, imgId) {
   if (input.files && input.files[0]) {
     const reader = new FileReader();
@@ -1310,7 +1268,6 @@ window.blockUser = function (userId) {
     .then((data) => {
       if (data.success) {
         if (typeof window.showToast === "function") window.showToast("User blocked successfully.");
-        // Instantly redirect home so they don't stay on the blocked profile
         setTimeout(() => window.location.href = "/", 1000);
       } else {
         if (typeof window.showToast === "function") window.showToast(data.message, true);
@@ -1348,7 +1305,6 @@ window.submitReport = function (itemType, itemId) {
   const reasonEl = document.getElementById(`reportReason-${itemType}-${itemId}`);
   let reason = reasonEl ? reasonEl.value : "Inappropriate content";
   
-  // Intercept if "Other" is selected to get custom text
   if (reason === 'Other') {
     const otherTextEl = document.getElementById(`otherReasonText-${itemType}-${itemId}`);
     if (otherTextEl && otherTextEl.value.trim() !== '') {
