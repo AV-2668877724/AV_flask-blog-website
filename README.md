@@ -3,7 +3,7 @@
 
 **A modern, clean, and delightful social blogging platform** — built for writers, developers, and thinkers who value depth over noise.
 
-![AV Postory Banner](https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png)
+
 
 ---
 
@@ -11,7 +11,6 @@
 
 AV Postory is a full-featured social publishing platform where users can write rich stories, connect with others through real-time chat, follow creators, and engage in meaningful discussions — all in a beautiful, distraction-free environment.
 
-Whether you're sharing technical deep-dives, personal essays, code tutorials, or creative writing, AV Postory gives you the tools to express yourself clearly and connect with a thoughtful community.
 
 ---
 
