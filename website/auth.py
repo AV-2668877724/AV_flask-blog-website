@@ -10,8 +10,9 @@ import string
 from flask import session
 import os
 import re 
- 
-from sqlalchemy import func
+
+# 🚀 FIX: Imported 'or_' so we can query multiple database columns at once
+from sqlalchemy import func, or_
 from datetime import datetime, timezone
 
 # 🚀 NEW: Import ThreadPoolExecutor for our lightweight Email Task Queue
@@ -379,14 +380,26 @@ def confirm_email(token):
         flash('The token is invalid.', category='error')
     return redirect(url_for('auth.login'))
 
+
+# 🚀 FIX: Updated Login Route to Support Email or Username
 @auth.route('/login', methods=['GET', 'POST'])
 @limiter.limit("20 per minute") 
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
+        identifier = request.form.get('identifier')
         password = request.form.get('password')
 
-        user = User.query.filter_by(email=email).first()
+        if identifier:
+            identifier = identifier.strip().lower()
+
+        # Query database checking BOTH Email and Username simultaneously
+        user = User.query.filter(
+            or_(
+                func.lower(User.email) == identifier,
+                func.lower(User.username) == identifier
+            )
+        ).first()
+
         if user:
             if check_password_hash(user.password, password):
                 if user.is_active is False:
@@ -405,9 +418,10 @@ def login():
             else:
                 flash('Incorrect password, try again.', category='error')
         else:
-            flash('Email does not exist.', category='error')
+            flash('Account does not exist. Please check your username or email.', category='error')
 
     return render_template("login.html", user=current_user)
+
 
 # ==========================================
 #  FORGOT PASSWORD ROUTES

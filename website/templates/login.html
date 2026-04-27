@@ -114,18 +114,19 @@ block content %}
 
         <div class="mb-3 text-start">
           <label
-            for="emailInput"
+            for="identifierInput"
             class="form-label fw-bold small text-muted ms-1"
-            >Email address</label
+            >Email or Username</label
           >
           <input
-            type="email"
+            type="text"
             class="form-control auth-input shadow-sm"
-            id="emailInput"
-            name="email"
-            placeholder="name@example.com"
+            id="identifierInput"
+            name="identifier"
+            placeholder="Enter email or username"
             required
-            autocomplete="email"
+            autocomplete="username"
+            autofocus
           />
         </div>
 
