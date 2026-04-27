@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Terms and Conditions - AV Postory{% endblock %}
+
+{% block content %}
+<style>
+  .terms-container {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    box-shadow: var(--shadow-sm);
+    padding: 3rem;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+  }
+  .terms-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .terms-section {
+    margin-bottom: 2.5rem;
+  }
+  .terms-section h4 {
+    color: var(--primary);
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  .terms-section p, .terms-section ul {
+    color: var(--text-muted);
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+  .terms-section li {
+    margin-bottom: 0.5rem;
+  }
+</style>
+
+<div class="row justify-content-center fade-in-up">
+  <div class="col-lg-10 col-xl-8">
+    <div class="terms-container">
+      <div class="terms-header">
+        <h1 class="font-heading fw-bold" style="color: var(--text-main);">Terms and Conditions</h1>
+        <p class="text-muted mb-0">Last updated: {{ now.strftime('%B %d, %Y') }}</p>
+      </div>
+
+      <div class="terms-section">
+        <h4>1. Acceptance of Terms</h4>
+        <p>By creating an account and accessing AV Postory, you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you are prohibited from using the platform.</p>
+      </div>
+
+      <div class="terms-section">
+        <h4>2. User Conduct & Content</h4>
+        <p>AV Postory is built on respect and open communication. You agree not to post content that is:</p>
+        <ul>
+          <li>Hate speech, discriminatory, or harassing.</li>
+          <li>Illegal, fraudulent, or promotional of illegal acts.</li>
+          <li>Infringing on the intellectual property of others.</li>
+          <li>Spam, misleading, or heavily promotional without context.</li>
+        </ul>
+        <p>We reserve the right to remove any content or suspend accounts that violate these guidelines without prior notice.</p>
+      </div>
+
+      <div class="terms-section">
+        <h4>3. Intellectual Property</h4>
+        <p>You retain full ownership of the original content you publish on AV Postory. By posting content, you grant AV Postory a non-exclusive, worldwide, royalty-free license to display, distribute, and reproduce your content solely for the purpose of operating the platform.</p>
+      </div>
+
+      <div class="terms-section">
+        <h4>4. Account Deactivation & Termination</h4>
+        <p>You may deactivate your account at any time through your Profile Settings. AV Postory reserves the right to terminate or suspend your account immediately, without prior notice, for conduct that we determine violates these Terms or is harmful to other users of the platform.</p>
+      </div>
+
+      <div class="terms-section">
+        <h4>5. Changes to Terms</h4>
+        <p>We reserve the right to modify or replace these Terms at any time. Significant changes will be communicated to you via the email address associated with your account or through a prominent notice on the platform.</p>
+      </div>
+
+      <div class="terms-section text-center mt-5">
+        <h4>Thank You!</h4>
+        <p>Thank you for being a part of AV Postory and helping us keep this community safe and inspiring.</p>
+      </div>
+      
+      <div class="text-center mt-4">
+        <a href="{{ url_for('views.home') }}" class="btn btn-light rounded-pill px-5 py-2 fw-bold shadow-sm" style="background-color: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-color);">
+          <i class="fas fa-arrow-left me-2"></i> Back to Home
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
