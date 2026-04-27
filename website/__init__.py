@@ -20,7 +20,9 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
-socketio = SocketIO(cors_allowed_origins="*")
+
+# 🚀 SECURITY FIX: Removed cors_allowed_origins="*" (We will lock it down in create_app)
+socketio = SocketIO() 
 csrf = CSRFProtect() 
 
 # Initialize Limiter and Migrate globally
@@ -42,6 +44,20 @@ def create_app():
     if not app.config.get('SECRET_KEY'):
         raise RuntimeError("SECRET_KEY environment variable is not set! Create a .env file.")
 
+    # ==========================================
+    # 🛡️ HARDENED SECURITY CONFIGURATION
+    # ==========================================
+    # 1. Protect Cookies from JavaScript (Stops XSS session theft)
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+
+    # 2. Only send cookies over HTTPS (Prevents Wi-Fi snooping)
+    # Automatically turns on if your FLASK_ENV is set to production
+    is_production = os.getenv('FLASK_ENV') == 'production'
+    app.config['SESSION_COOKIE_SECURE'] = is_production 
+
+    # 3. Stop cross-site cookie sending (Extra CSRF protection)
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' 
+
     mail.init_app(app)
     
     # ⚡ PERFORMANCE: Enable Gzip Compression
@@ -50,6 +66,7 @@ def create_app():
     # UPLOAD FOLDER
     UPLOAD_FOLDER = path.join(app.root_path, 'static', 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    
     # Tell CSRF protection to trust ngrok URLs
     app.config['WTF_CSRF_TRUSTED_ORIGINS'] = [
         'https://*.ngrok-free.app',
@@ -61,9 +78,23 @@ def create_app():
         makedirs(UPLOAD_FOLDER)
 
     db.init_app(app)
-    socketio.init_app(app)
     csrf.init_app(app) 
     limiter.init_app(app)
+    
+    # 🚀 SECURITY FIX: Lock down WebSockets to ONLY accept connections from your website / Ngrok
+    public_domain = os.getenv("PUBLIC_DOMAIN")
+    if public_domain:
+        allowed_origins = [public_domain]
+    else:
+        # Fallback for local testing and ngrok
+        allowed_origins = [
+            'http://127.0.0.1:8001', 
+            'http://localhost:8001', 
+            'https://*.ngrok-free.app', 
+            'https://*.ngrok.app', 
+            'https://*.ngrok.io'
+        ]
+    socketio.init_app(app, cors_allowed_origins=allowed_origins)
     
     # 🚀 NEW: Bind Migrate to the App and Database
     migrate.init_app(app, db)
@@ -86,6 +117,26 @@ def create_app():
     @login_manager.user_loader
     def load_user(id):
         return User.query.get(int(id))
+
+    # ==========================================
+    # 🛡️ SECURITY HEADERS (Clickjacking & XSS Protection)
+    # ==========================================
+    @app.after_request
+    def add_security_headers(response):
+        """Adds mandatory security headers to every HTTP response."""
+        # Prevent browsers from guessing the file type (Stops MIME-sniffing exploits)
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        
+        # Prevent your site from being put in an iframe (Stops Clickjacking)
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        
+        # Force the browser to turn on its built-in XSS protection
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        
+        # Force all future connections to be HTTPS only (HSTS)
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
+        return response
 
     # ==========================================
     # CONTEXT PROCESSORS
@@ -123,7 +174,7 @@ def create_app():
             is_admin = getattr(current_user, "is_admin", False)
         return dict(is_admin=is_admin)
 
-    # 🚀 NEW: Automated Cache Busting
+    # 🚀 Automated Cache Busting
     @app.context_processor
     def override_url_for():
         def dated_url_for(endpoint, **values):
