@@ -1480,7 +1480,8 @@
           }
 
           // 2. Socket.IO Messaging Logic
-          const globalSocket = io();
+          // 🚀 SPEED FIX: Force WebSockets immediately to bypass slow Ngrok HTTP polling
+          const globalSocket = io({ transports: ['websocket'] });
           const myUserId = parseInt(authData.dataset.uid);
 
           globalSocket.on("receive_message", function (msg) {
