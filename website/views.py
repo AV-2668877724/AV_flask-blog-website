@@ -39,6 +39,10 @@ views = Blueprint('views', __name__)
 # MAIN ROUTES
 # =================================================
 
+@views.route('/terms')
+def terms():
+    return render_template("terms.html", user=current_user)
+
 @views.route('/home')
 @views.route('/')
 @login_required
@@ -1524,6 +1528,7 @@ def page_not_found(e):
 @views.app_errorhandler(500)
 def internal_server_error(e):
     return render_template('500.html', user=current_user), 500
+
 
 @views.route('/about')
 def about():
