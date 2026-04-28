@@ -363,7 +363,7 @@
     Have questions, bugs to report, or ideas to share? Reach out directly.
   </p>
 
-  <div class="d-flex justify-content-center gap-3 flex-wrap">
+  <div class="d-flex justify-content-center gap-3 flex-wrap mb-5">
     <a
       href="https://github.com/AV-2668877724"
       target="_blank"
@@ -405,8 +405,13 @@
     </a>
   </div>
 
-  <div class="mt-5 text-muted small">
-    Designed & Developed by <strong>Anannay Varshney</strong> &copy; 2026.
+  <div class="d-flex flex-column align-items-center gap-3 mt-4 text-muted small">
+    <a href="{{ url_for('views.terms') }}" class="btn btn-sm shadow-sm rounded-pill px-4 fw-bold" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color);">
+      <i class="fas fa-file-contract text-primary me-2"></i> Terms & Conditions
+    </a>
+    <div>
+      Designed & Developed by <strong>Anannay Varshney</strong> &copy; 2026.
+    </div>
   </div>
 </div>
 

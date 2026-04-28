@@ -171,7 +171,30 @@ endblock %} {% block content %}
             </button>
           </div>
         </div>
-
+        <div class="form-check mb-4 text-start">
+          <input
+            class="form-check-input shadow-sm"
+            type="checkbox"
+            name="terms"
+            id="termsCheck"
+            required
+            style="cursor: pointer; border-color: var(--border-color)"
+          />
+          <label
+            class="form-check-label small"
+            for="termsCheck"
+            style="color: var(--text-muted); cursor: pointer"
+          >
+            I agree to the
+            <a
+              href="{{ url_for('views.terms') }}"
+              target="_blank"
+              class="text-decoration-none fw-bold"
+              style="color: var(--primary)"
+              >Terms and Conditions</a
+            >
+          </label>
+        </div>
         <button
           type="submit"
           class="btn btn-primary w-100 rounded-pill py-3 fw-bold shadow-sm"
