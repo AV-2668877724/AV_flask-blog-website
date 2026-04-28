@@ -10,7 +10,7 @@ import string
 from flask import session
 import os
 import re 
-
+ 
 # 🚀 FIX: Imported 'or_' so we can query multiple database columns at once
 from sqlalchemy import func, or_
 from datetime import datetime, timezone
@@ -315,6 +315,7 @@ def finish_signup():
         username = request.form.get('username')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
+        terms_accepted = request.form.get('terms') # 🚀 NEW: Grab the checkbox value
         email = session.get('signup_email')
         
         verified_username = session.get('verified_username')
@@ -322,7 +323,9 @@ def finish_signup():
             flash('Please check username availability first.', category='error')
             return render_template('signup_final.html', user=current_user)
         
-        if len(username) < 2:
+        if not terms_accepted: # 🚀 NEW: Reject if they bypassed the UI checkbox
+            flash('You must agree to the Terms and Conditions to create an account.', category='error')
+        elif len(username) < 2:
             flash('Username must be greater than 1 character.', category='error')
         elif not re.match("^[a-zA-Z0-9_.]+$", username):
             flash("Username can only contain letters, numbers, dots (.), and underscores (_). No spaces.", category='error')
@@ -379,7 +382,6 @@ def confirm_email(token):
     except Exception:
         flash('The token is invalid.', category='error')
     return redirect(url_for('auth.login'))
-
 
 # 🚀 FIX: Updated Login Route to Support Email or Username
 @auth.route('/login', methods=['GET', 'POST'])

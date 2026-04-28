@@ -1,4 +1,4 @@
-from flask import Flask, url_for # 🚀 ADDED url_for
+from flask import Flask, url_for 
 from flask_sqlalchemy import SQLAlchemy
 from os import path, makedirs
 from flask_login import LoginManager, current_user
@@ -21,7 +21,6 @@ db = SQLAlchemy()
 mail = Mail()
 DB_NAME = "database.db"
 
-# 🚀 SECURITY FIX: Removed cors_allowed_origins="*" (We will lock it down in create_app)
 socketio = SocketIO() 
 csrf = CSRFProtect() 
 
@@ -31,7 +30,7 @@ limiter = Limiter(
     default_limits=["1000 per day", "100 per hour"], 
     storage_uri="memory://" 
 )
-migrate = Migrate() # 🚀 NEW: Initialize Migrate
+migrate = Migrate()
 
 def create_app():
     app = Flask(__name__)
@@ -51,7 +50,6 @@ def create_app():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
 
     # 2. Only send cookies over HTTPS (Prevents Wi-Fi snooping)
-    # Automatically turns on if your FLASK_ENV is set to production
     is_production = os.getenv('FLASK_ENV') == 'production'
     app.config['SESSION_COOKIE_SECURE'] = is_production 
 
@@ -81,19 +79,16 @@ def create_app():
     csrf.init_app(app) 
     limiter.init_app(app)
     
-    # 🚀 SECURITY FIX: Lock down WebSockets to ONLY accept connections from your website / Ngrok
+    # ==========================================
+    # 🚀 ULTIMATE WEBSOCKET SECURITY & SPEED FIX
+    # ==========================================
     public_domain = os.getenv("PUBLIC_DOMAIN")
-    if public_domain:
-        allowed_origins = [public_domain]
+
+    if is_production and public_domain:
+        allowed_origins = [public_domain] # Strict security for launch
     else:
-        # Fallback for local testing and ngrok
-        allowed_origins = [
-            'http://127.0.0.1:8001', 
-            'http://localhost:8001', 
-            'https://*.ngrok-free.app', 
-            'https://*.ngrok.app', 
-            'https://*.ngrok.io'
-        ]
+        allowed_origins = "*" # Open door for Ngrok testing so it stays fast!
+
     socketio.init_app(app, cors_allowed_origins=allowed_origins)
     
     # 🚀 NEW: Bind Migrate to the App and Database
