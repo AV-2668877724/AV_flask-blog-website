@@ -13,11 +13,14 @@ from datetime import datetime, timezone
 from sqlalchemy import func, or_, desc, and_
 from werkzeug.security import check_password_hash
 from sqlalchemy.orm import joinedload, subqueryload 
-import re, json, os
+import re, json, os, glob
 from sqlalchemy.orm.attributes import flag_modified
 import secrets
 from flask_socketio import emit, join_room, leave_room
 import bleach 
+
+# 🚀 Logger Functions
+from .user_logger import log_user_action, rename_user_log, cleanup_old_logs
 
 import requests
 from bs4 import BeautifulSoup
@@ -26,7 +29,7 @@ import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
 
-# 🚀 NEW: Import all helpers from our new utils file
+# 🚀 Import all helpers from our new utils file
 from .utils import (
     get_block_lists, sanitize_html, process_text_links, notify_mentions, 
     allowed_file, upload_to_cloudinary, delete_from_cloudinary, 
@@ -113,6 +116,9 @@ def create_post():
             db.session.add(post)
             db.session.commit()
             
+            # 🚀 NEW: Log Action
+            log_user_action(current_user.username, "CREATE_POST", f"Created Post ID: {post.id} | Title: '{title}'")
+            
             notify_mentions(raw_text, post.id, current_user.id)
             
             flash('Post created successfully!', category='success')
@@ -162,6 +168,10 @@ def edit_post(id):
                     post.cover_image = new_image_url
                 
             db.session.commit()
+            
+            # 🚀 NEW: Log Action
+            log_user_action(current_user.username, "UPDATE_POST", f"Edited Post ID: {post.id} | Title: '{title}'")
+            
             notify_mentions(raw_text, post.id, current_user.id)
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
@@ -250,6 +260,10 @@ def delete_post(id):
     else:
         post.is_deleted = True
         db.session.commit()
+        
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "DELETE_POST", f"Moved Post ID: {id} to trash.")
+        
         flash('Post moved to trash.', category='success')
 
     return redirect(request.referrer or url_for('views.home'))
@@ -282,6 +296,9 @@ def create_comment(post_id):
             db.session.add(comment)
             db.session.commit()
             
+            # 🚀 NEW: Log Action
+            log_user_action(current_user.username, "CREATE_COMMENT", f"Commented on Post ID: {post_id}")
+            
             create_notification(current_user.id, post.author, 'comment', post.id)
             notify_mentions(text, post.id, current_user.id) 
             
@@ -301,6 +318,10 @@ def delete_comment(comment_id):
     else:
         comment.is_deleted = True
         db.session.commit()
+        
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "DELETE_COMMENT", f"Deleted Comment ID: {comment_id}")
+        
         flash('Comment deleted.', category='success')
 
     return redirect(request.referrer or url_for('views.home'))
@@ -485,7 +506,6 @@ def profile(username):
         i_have_blocked_them=i_have_blocked_them 
     )
 
-# 🚀 NEW API ROUTE FOR QUILL IMAGE UPLOADS
 @views.route('/upload-quill-image', methods=['POST'])
 @login_required
 @limiter.limit("20 per hour")
@@ -524,6 +544,10 @@ def update_profile_pic():
             
             current_user.profile_pic = image_url
             db.session.commit()
+            
+            # 🚀 NEW: Log Action
+            log_user_action(current_user.username, "UPDATE_PROFILE", "Updated profile picture.")
+            
             flash('Profile picture updated!', category='success')
         else:
             flash('Error uploading to cloud storage.', category='error')
@@ -542,6 +566,10 @@ def edit_bio():
     else:
         current_user.bio = new_bio
         db.session.commit()
+        
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "UPDATE_PROFILE", "Updated bio.")
+        
         flash('Bio updated!', category='success')
     return redirect(url_for('views.profile', username=current_user.username))
 
@@ -597,20 +625,22 @@ def change_username():
 
     if len(new_username) < 3:
         flash("Username must be at least 3 characters.", category='error')
-    
     elif not re.match("^[a-zA-Z0-9_.]+$", new_username):
         flash("Invalid format! Use letters, numbers, dots (.), and underscores (_).", category='error')
-    
     elif new_username.lower() in RESERVED_USERNAMES:
         flash("This username is reserved by the system.", category='error')
-
     else:
         existing = User.query.filter_by(username=new_username).first()
         if existing:
             flash("Username already taken.", category='error')
         else:
+            old_username = current_user.username
             current_user.username = new_username
             db.session.commit()
+            
+            # 🚀 NEW: Log Rename
+            rename_user_log(old_username, new_username)
+            
             flash("Username updated! Please login again.", category='success')
             return redirect(url_for('auth.logout'))
             
@@ -635,6 +665,10 @@ def add_social_link():
         current_user.social_links = current_links
         flag_modified(current_user, "social_links")
         db.session.commit()
+        
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "UPDATE_PROFILE", f"Added social link: {link}")
+        
         flash("Link added!", category='success')
     return redirect(url_for('views.profile', username=current_user.username))
 
@@ -660,6 +694,10 @@ def block_user(user_id):
         )).delete()
         
         db.session.commit()
+        
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "BLOCK_USER", f"Blocked user ID: {user_id}")
+        
         return jsonify({'success': True, 'action': 'blocked'})
     return jsonify({'success': False, 'message': 'Already blocked'})
 
@@ -671,6 +709,10 @@ def unblock_user(user_id):
     if block_record:
         db.session.delete(block_record)
         db.session.commit()
+        
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "UNBLOCK_USER", f"Unblocked user ID: {user_id}")
+        
         return jsonify({'success': True, 'action': 'unblocked'})
     return jsonify({'success': False, 'message': 'Not blocked'})
 
@@ -693,12 +735,17 @@ def report_item(item_type, item_id):
             db.session.add(new_report)
             
     db.session.commit()
+    
+    # 🚀 NEW: Log Action
+    log_user_action(current_user.username, "REPORT_CONTENT", f"Reported {item_type} ID: {item_id}")
+    
     return jsonify({'success': True, 'message': 'Report submitted for review.'})
 
 
 # =================================================
 # ADMIN ROUTES
 # =================================================
+
 
 @views.route('/admin-dashboard')
 @login_required
@@ -739,6 +786,68 @@ def admin_dashboard():
         blocks_data=blocks_data, 
         user=current_user
     )
+@views.route('/admin/logs')
+@login_required
+def admin_logs():
+    if not current_user.is_admin:
+        abort(403)
+    
+    # Get all log files from the directory
+    logs_path = os.path.join(os.getcwd(), 'user_logs', '*_log.txt')
+    log_files = glob.glob(logs_path)
+    
+    # Format the data for the template
+    logs_data = []
+    for f in log_files:
+        filename = os.path.basename(f)
+        # Extract username from "username_timestamp_log.txt"
+        # We split by '_' and take everything before the timestamp part
+        username = filename.rsplit('_', 2)[0] 
+        logs_data.append({
+            'filename': filename,
+            'username': username,
+            'size': f"{os.path.getsize(f) / 1024:.2f} KB",
+            'modified': datetime.fromtimestamp(os.path.getmtime(f)).strftime('%Y-%m-%d %H:%M:%S')
+        })
+    
+    return render_template("admin_logs.html", user=current_user, logs=logs_data)
+
+@views.route('/admin/view-log/<string:filename>')
+@login_required
+def view_log_content(filename):
+    if not current_user.is_admin:
+        abort(403)
+    
+    # Security: Ensure they aren't trying to access files outside the logs folder
+    if ".." in filename or "/" in filename or "\\" in filename:
+        abort(400)
+
+    file_path = os.path.join(os.getcwd(), 'user_logs', filename)
+    if not os.path.exists(file_path):
+        flash("Log file not found.", category='error')
+        return redirect(url_for('views.admin_logs'))
+    
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    return render_template("view_log.html", user=current_user, filename=filename, content=content)
+
+
+
+@views.route('/admin/cleanup-logs', methods=['POST'])
+@login_required
+def admin_cleanup_logs():
+    if not current_user.is_admin:
+        abort(403)
+        
+    # Keeps only the last 500 entries per user
+    cleaned_files = cleanup_old_logs(max_lines=500)
+    
+    # Log the fact that the admin did a cleanup!
+    log_user_action(current_user.username, "ADMIN_MAINTENANCE", f"Triggered log cleanup. Trimmed {cleaned_files} overgrown files.")
+    
+    flash(f"Maintenance complete! Trimmed {cleaned_files} oversized log files down to their most recent 500 entries.", category='success')
+    return redirect(url_for('views.admin_logs'))
 
 @views.route('/admin/remove-block/<int:block_id>', methods=['POST'])
 @login_required
@@ -753,6 +862,10 @@ def admin_remove_block(block_id):
     block_record = Block.query.get_or_404(block_id)
     db.session.delete(block_record)
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_REMOVE_BLOCK", f"Removed block ID: {block_id}")
+    
     flash("Block successfully removed by Admin.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -781,6 +894,10 @@ def admin_resolve_report(report_id):
             if c: c.is_deleted = True
             
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_RESOLVE_REPORT", f"Resolved report ID: {report_id}")
+    
     flash('Report marked as resolved.', category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -804,6 +921,10 @@ def admin_delete_user(user_id):
         
         db.session.delete(user_to_delete)
         db.session.commit()
+        
+        # 🚀 NEW: Log Admin Action
+        log_user_action(current_user.username, "ADMIN_DELETE_USER", f"Permanently deleted user ID: {user_id}")
+        
         flash(f"User {user_to_delete.username} deleted permanently.", category='success')
         
     return redirect(url_for('views.admin_dashboard'))
@@ -818,6 +939,10 @@ def restore_post(id):
     else:
         post.is_deleted = False
         db.session.commit()
+        
+        # 🚀 NEW: Log Admin Action
+        log_user_action(current_user.username, "ADMIN_RESTORE_POST", f"Restored Post ID: {id}")
+        
         flash('Post restored successfully!', category='success')
 
     return redirect(request.referrer or url_for('views.admin_dashboard'))
@@ -843,6 +968,10 @@ def admin_toggle_user_status(user_id):
     db.session.commit()
     
     status = "Active" if user.is_active else "Deactivated"
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_TOGGLE_USER_STATUS", f"Toggled status for user ID: {user_id} to {status}")
+    
     flash(f"User {user.username} is now {status}.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -860,6 +989,10 @@ def admin_delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     post.is_deleted = True
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_DELETE_POST", f"Deleted post ID: {post_id} to trash")
+    
     flash("Post moved to trash.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -878,6 +1011,10 @@ def admin_permanent_delete_post(post_id):
     delete_from_cloudinary(post.cover_image)
     db.session.delete(post)
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_PERMANENT_DELETE_POST", f"Permanently deleted post ID: {post_id}")
+    
     flash("Post permanently deleted.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -895,6 +1032,10 @@ def admin_delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
     comment.is_deleted = True
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_DELETE_COMMENT", f"Hid comment ID: {comment_id}")
+    
     flash("Comment hidden.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -913,6 +1054,10 @@ def admin_permanent_delete_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
     db.session.delete(comment)
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_PERMANENT_DELETE_COMMENT", f"Permanently deleted comment ID: {comment_id}")
+    
     flash('Comment permanently deleted.', category='success')
         
     return redirect(url_for('views.admin_dashboard'))
@@ -931,6 +1076,10 @@ def admin_restore_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
     comment.is_deleted = False
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_RESTORE_COMMENT", f"Restored comment ID: {comment_id}")
+    
     flash("Comment restored.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -947,6 +1096,10 @@ def admin_restore_post(post_id):
     post = Post.query.get_or_404(post_id)
     post.is_deleted = False
     db.session.commit()
+    
+    # 🚀 NEW: Log Admin Action
+    log_user_action(current_user.username, "ADMIN_RESTORE_POST", f"Restored post ID: {post_id}")
+    
     flash("Post restored.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
@@ -1041,6 +1194,10 @@ def deactivate_account():
     current_user.is_active = False
     
     db.session.commit()
+    
+    # 🚀 NEW: Log Action
+    log_user_action(current_user.username, "DEACTIVATE_ACCOUNT", f"Reason: {full_reason}")
+    
     logout_user() 
     
     flash('Your account has been deactivated. We hope to see you again!', category='success')
@@ -1049,8 +1206,6 @@ def deactivate_account():
 # =================================================
 # API ROUTES (SEARCH)
 # =================================================
-
-
 
 @views.route('/api/search-users', methods=['GET'])
 @limiter.limit("60 per minute") 
@@ -1086,6 +1241,9 @@ def search_page():
     posts = []
     
     if query:
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "SEARCH", f"Query: '{query}'")
+        
         users = User.query.filter(
             User.username.ilike(f"%{query}%"),
             User.is_admin == False,
@@ -1201,6 +1359,10 @@ def remove_social():
         current_user.social_links = links
         flag_modified(current_user, "social_links")
         db.session.commit()
+        
+        # 🚀 NEW: Log Action
+        log_user_action(current_user.username, "UPDATE_PROFILE", f"Removed social link: {url_to_remove}")
+        
         return jsonify({'success': True})
     
     return jsonify({'success': False, 'message': 'Link not found'})
@@ -1226,6 +1388,10 @@ def update_cover_pic():
             
             current_user.cover_pic = image_url
             db.session.commit()
+            
+            # 🚀 NEW: Log Action
+            log_user_action(current_user.username, "UPDATE_PROFILE", "Updated cover photo.")
+            
             flash('Cover photo updated!', category='success')
         else:
             flash('Error uploading to cloud storage.', category='error')
@@ -1378,6 +1544,10 @@ def delete_message(id):
         return jsonify({'error': 'Unauthorized'}), 403
 
     db.session.commit()
+    
+    # 🚀 NEW: Log Message Action
+    log_user_action(current_user.username, "DELETE_MESSAGE", f"Deleted message ID: {id} from their view.")
+    
     return jsonify({'success': True})
 
 @views.route('/api/clear-chat/<int:recipient_id>', methods=['POST'])
@@ -1398,6 +1568,10 @@ def clear_chat(recipient_id):
             msg.visible_to_recipient = False
             
     db.session.commit()
+    
+    # 🚀 NEW: Log Message Action
+    log_user_action(current_user.username, "CLEAR_CHAT", f"Cleared chat history with User ID: {recipient_id}")
+    
     return jsonify({'success': True})
 
 @views.route('/api/get-messages/<int:recipient_id>')
@@ -1457,6 +1631,9 @@ def send_message():
     )
     db.session.add(new_message)
     db.session.commit()
+    
+    # 🚀 NEW: Log Message Action
+    log_user_action(current_user.username, "SEND_MESSAGE", f"To User ID: {recipient_id}")
     
     create_notification(current_user.id, recipient_id, 'message')
     

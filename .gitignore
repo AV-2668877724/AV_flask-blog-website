@@ -52,3 +52,4 @@ website/static/uploads/*
 tools/
 AV_features.txt
 requirements.txt
+user_logs
