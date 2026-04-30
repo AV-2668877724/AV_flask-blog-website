@@ -103,23 +103,30 @@ block content %}
 
 <div class="row justify-content-center fade-in-up">
   <div class="col-12">
-    <div class="d-flex justify-content-between align-items-center mb-4 px-2">
+    <div class="d-flex justify-content-between align-items-center mb-4 px-2 flex-wrap gap-3">
       <div>
         <h2 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
           Admin Dashboard
         </h2>
         <p class="text-muted mb-0 mt-1">Manage users, content, and safety.</p>
       </div>
-      <span
-        class="badge px-3 py-2 rounded-pill shadow-sm"
-        style="
-          background: linear-gradient(135deg, #1e293b, #0f172a);
-          font-size: 0.9rem;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-        "
-      >
-        <i class="fas fa-shield-alt text-warning me-1"></i> Super Admin
-      </span>
+      
+      <div class="d-flex align-items-center gap-3">
+        <a href="{{ url_for('views.admin_logs') }}" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fas fa-history me-2"></i> Activity Logs
+        </a>
+        <span
+          class="badge px-3 py-2 rounded-pill shadow-sm d-none d-sm-inline-block"
+          style="
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+          "
+        >
+          <i class="fas fa-shield-alt text-warning me-1"></i> Super Admin
+        </span>
+      </div>
     </div>
 
     <div class="row g-3 mb-5">

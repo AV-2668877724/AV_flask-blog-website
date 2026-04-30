@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Viewing Log: {{ filename }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold" style="color: var(--text-main);">Log Entries: {{ filename }}</h4>
+        <a href="{{ url_for('views.admin_logs') }}" class="btn btn-sm btn-light rounded-pill px-3 border">Back</a>
+    </div>
+    
+    <div class="card border-0 shadow-sm bg-dark" style="border-radius: 15px;">
+        <div class="card-body">
+            <pre class="mb-0 text-success p-3" style="font-size: 0.9rem; font-family: 'Courier New', monospace; height: 70vh; overflow-y: auto; white-space: pre-wrap;">
+{{ content }}
+            </pre>
+        </div>
+    </div>
+</div>
+{% endblock %}
