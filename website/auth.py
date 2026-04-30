@@ -18,6 +18,9 @@ from datetime import datetime, timezone
 # 🚀 NEW: Import ThreadPoolExecutor for our lightweight Email Task Queue
 from concurrent.futures import ThreadPoolExecutor
 
+# 🚀 NEW: Import our custom logger
+from .user_logger import log_user_action
+
 auth = Blueprint('auth', __name__)
 
 # 🚀 NEW: Initialize the Global Email Queue (Max 5 background workers running concurrently)
@@ -315,7 +318,7 @@ def finish_signup():
         username = request.form.get('username')
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
-        terms_accepted = request.form.get('terms') # 🚀 NEW: Grab the checkbox value
+        terms_accepted = request.form.get('terms') # 🚀 Grab the checkbox value
         email = session.get('signup_email')
         
         verified_username = session.get('verified_username')
@@ -323,7 +326,7 @@ def finish_signup():
             flash('Please check username availability first.', category='error')
             return render_template('signup_final.html', user=current_user)
         
-        if not terms_accepted: # 🚀 NEW: Reject if they bypassed the UI checkbox
+        if not terms_accepted: # 🚀 Reject if they bypassed the UI checkbox
             flash('You must agree to the Terms and Conditions to create an account.', category='error')
         elif len(username) < 2:
             flash('Username must be greater than 1 character.', category='error')
@@ -353,6 +356,9 @@ def finish_signup():
                 print("Failed to queue welcome email:", e)
             
             login_user(new_user, remember=True)
+
+            # 🚀 NEW: Log Account Creation
+            log_user_action(new_user.username, "ACCOUNT_CREATE", "New user registered.")
             
             session.pop('signup_email', None)
             session.pop('signup_otp', None)
@@ -415,6 +421,10 @@ def login():
                 db.session.commit()
 
                 login_user(user, remember=True)
+
+                # 🚀 NEW: Log Login (Creates file if missing)
+                log_user_action(user.username, "LOGIN", "User logged in.")
+
                 flash('Logged in successfully!', category='success')
                 return redirect(url_for('views.home'))
             else:
@@ -478,6 +488,10 @@ def forgot_password_token(token):
                 else:
                     user.password = generate_password_hash(password, method='scrypt')
                     db.session.commit()
+
+                    # 🚀 NEW: Log Password Reset
+                    log_user_action(user.username, "PASSWORD_RESET", "User reset their password via email.")
+
                     flash('Your password has been successfully updated! You can now log in.', category='success')
                     return redirect(url_for('auth.login'))
             else:
@@ -489,5 +503,8 @@ def forgot_password_token(token):
 @auth.route('/logout')
 @login_required
 def logout():
+    # 🚀 NEW: Log Logout
+    if current_user.is_authenticated:
+        log_user_action(current_user.username, "LOGOUT", "User logged out.")
     logout_user()
     return redirect(url_for('auth.login'))
