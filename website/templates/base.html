@@ -469,15 +469,24 @@
                   ><i class="bi bi-chat-dots me-2"></i> Messages</a
                 >
               </li>
+              
               {% if is_admin %}
               <li>
                 <a
-                  class="dropdown-item py-2 text-warning"
+                  class="dropdown-item py-2 text-warning fw-bold"
                   href="{{ url_for('views.admin_dashboard') }}"
                   ><i class="bi bi-shield-lock me-2"></i> Dashboard</a
                 >
               </li>
+              <li>
+                <a
+                  class="dropdown-item py-2 text-warning"
+                  href="{{ url_for('views.admin_logs') }}"
+                  ><i class="bi bi-journal-text me-2"></i> Activity Logs</a
+                >
+              </li>
               {% endif %}
+              
               <li><hr class="dropdown-divider" /></li>
 
               <li>
@@ -565,6 +574,9 @@
       class="py-4 mt-5 text-center text-muted border-top d-none d-md-block"
       style="border-color: var(--border-color) !important"
     >
+      <div class="mb-2">
+        <a href="{{ url_for('views.terms') }}" class="text-decoration-none text-muted small fw-bold" style="transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Terms & Conditions</a>
+      </div>
       <small>&copy; 2026 AV Postory. All rights reserved.</small>
     </footer>
 
