@@ -254,13 +254,32 @@
   <body>
     <script>
       (function () {
-        const saved = localStorage.getItem("darkMode");
-        if (
-          saved === "true" ||
-          (saved === null &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches)
-        ) {
-          document.body.classList.add("dark-mode");
+        // 🚀 FORCE LIGHT MODE: Check if current page is an auth page
+        const currentPath = window.location.pathname;
+        const authPaths = [
+          '/login', 
+          '/sign-up', 
+          '/sign-up/verify', 
+          '/sign-up/finish', 
+          '/forgot-password'
+        ];
+        
+        // If we are on an exact auth path, OR if it's the dynamic reset-password link
+        const forceLight = authPaths.includes(currentPath) || currentPath.startsWith('/reset-password/');
+
+        if (!forceLight) {
+            // Apply standard dark mode logic for normal pages
+            const saved = localStorage.getItem("darkMode");
+            if (
+              saved === "true" ||
+              (saved === null &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches)
+            ) {
+              document.body.classList.add("dark-mode");
+            }
+        } else {
+            // Explicitly ensure the dark-mode class is off for auth pages
+            document.body.classList.remove("dark-mode");
         }
       })();
     </script>
