@@ -1,19 +1,128 @@
 {% extends "base.html" %}
-{% block title %}Viewing Log: {{ filename }}{% endblock %}
+{% block title %}Editing Log: {{ filename }}{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="fw-bold" style="color: var(--text-main);">Log Entries: {{ filename }}</h4>
-        <a href="{{ url_for('views.admin_logs') }}" class="btn btn-sm btn-light rounded-pill px-3 border">Back</a>
-    </div>
-    
-    <div class="card border-0 shadow-sm bg-dark" style="border-radius: 15px;">
-        <div class="card-body">
-            <pre class="mb-0 text-success p-3" style="font-size: 0.9rem; font-family: 'Courier New', monospace; height: 70vh; overflow-y: auto; white-space: pre-wrap;">
-{{ content }}
-            </pre>
+<div class="container py-4 fade-in-up">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h4 class="fw-bold mb-0" style="color: var(--text-main);">
+            <i class="fas fa-file-signature text-primary me-2"></i>Edit Log: <span class="text-muted">{{ filename }}</span>
+        </h4>
+        
+        <div class="d-flex gap-2 align-items-center">
+            <!-- Delete Button Form -->
+            <form action="{{ url_for('views.delete_log_file', filename=filename) }}" method="POST" onsubmit="return confirm('WARNING: Are you absolutely sure you want to permanently delete this log file? This cannot be undone.') && injectAdminPassword(this);" class="m-0">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm fw-bold">
+                    <i class="fas fa-trash-alt me-1"></i> Delete File
+                </button>
+            </form>
+            
+            <a href="{{ url_for('views.admin_logs') }}" class="btn btn-sm btn-light rounded-pill px-3 border fw-bold shadow-sm" style="background-color: var(--bg-input); color: var(--text-main);">
+                <i class="fas fa-arrow-left me-1"></i> Back
+            </a>
         </div>
     </div>
+    
+    <div class="card border-0 shadow-sm" style="border-radius: 15px; background-color: var(--bg-card); overflow: hidden;">
+        <!-- Edit Form -->
+        <form action="{{ url_for('views.edit_log_content', filename=filename) }}" method="POST" class="m-0" onsubmit="return injectAdminPassword(this);">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- We changed <pre> to <textarea> so you can type in it! -->
+            <textarea 
+                name="log_content" 
+                class="form-control border-0 p-3 bg-dark text-success w-100 shadow-none" 
+                spellcheck="false"
+                style="font-size: 0.9rem; font-family: 'Courier New', monospace; height: 65vh; border-radius: 0; resize: none; outline: none;"
+            >{{ content }}</textarea>
+            
+            <div class="p-3 text-end" style="border-top: 1px solid var(--border-color); background-color: var(--bg-card);">
+                <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="fas fa-save me-2"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<!-- Admin Password Verification Modal -->
+<div class="modal fade" id="adminPasswordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background-color: var(--bg-card)">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold font-heading" style="color: var(--text-main)">
+          <i class="fas fa-lock text-warning me-2"></i>Admin Verification
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-3 pb-4 px-4">
+        <p class="small mb-4" style="color: var(--text-muted)">
+          Please enter your admin password to authorize this action.
+        </p>
+        <div class="form-floating">
+          <input type="password" id="adminPasswordInput" class="form-control border-0 shadow-sm" placeholder="••••••••" autocomplete="off" style="background-color: var(--bg-input); color: var(--text-main)" />
+          <label for="adminPasswordInput">Admin Password</label>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 px-4 pb-4 gap-2">
+        <button type="button" class="btn btn-light rounded-pill px-4 fw-bold border shadow-sm" data-bs-dismiss="modal" style="background-color: var(--bg-input); color: var(--text-main)">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="submitAdminPassword()">
+          Confirm Action
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let pendingForm = null;
+
+  function injectAdminPassword(form) {
+    if (form.querySelector('input[name="admin_password"]')) {
+      return true;
+    }
+    pendingForm = form;
+    const modalEl = document.getElementById("adminPasswordModal");
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+
+    const input = document.getElementById("adminPasswordInput");
+    input.value = "";
+    setTimeout(() => input.focus(), 500);
+
+    input.onkeydown = function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitAdminPassword();
+      }
+    };
+    return false;
+  }
+
+  function submitAdminPassword() {
+    const pwd = document.getElementById("adminPasswordInput").value;
+    const modalEl = document.getElementById("adminPasswordModal");
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    if (!pwd) {
+      alert("Password is required.");
+      return;
+    }
+
+    if (pendingForm) {
+      let input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "admin_password";
+      input.value = pwd;
+      pendingForm.appendChild(input);
+      modal.hide();
+
+      setTimeout(() => {
+        pendingForm.submit();
+      }, 300);
+    }
+  }
+</script>
 {% endblock %}
