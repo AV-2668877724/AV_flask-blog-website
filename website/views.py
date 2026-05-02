@@ -786,6 +786,7 @@ def admin_dashboard():
         blocks_data=blocks_data, 
         user=current_user
     )
+
 @views.route('/admin/logs')
 @login_required
 def admin_logs():
@@ -832,13 +833,75 @@ def view_log_content(filename):
     
     return render_template("view_log.html", user=current_user, filename=filename, content=content)
 
+@views.route('/admin/edit-log/<string:filename>', methods=['POST'])
+@login_required
+def edit_log_content(filename):
+    if not current_user.is_admin:
+        abort(403)
+        
+    pwd = request.form.get('admin_password')
+    if pwd != os.getenv('ADMIN_PASSWORD'):
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.view_log_content', filename=filename))
+        
+    # Security check to prevent directory traversal attacks
+    if ".." in filename or "/" in filename or "\\" in filename:
+        abort(400)
+        
+    file_path = os.path.join(os.getcwd(), 'user_logs', filename)
+    if not os.path.exists(file_path):
+        flash("Log file not found.", category='error')
+        return redirect(url_for('views.admin_logs'))
+        
+    new_content = request.form.get('log_content')
+    if new_content is not None:
+        # Save the new content, ensuring line endings are correct for the OS
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(new_content.replace('\r\n', '\n'))
+        
+        # Log the fact that the admin edited a file!
+        log_user_action(current_user.username, "ADMIN_EDIT_LOG", f"Edited log file: {filename}")
+        flash(f"Log file '{filename}' updated successfully.", category='success')
+        
+    return redirect(url_for('views.view_log_content', filename=filename))
 
+@views.route('/admin/delete-log/<string:filename>', methods=['POST'])
+@login_required
+def delete_log_file(filename):
+    if not current_user.is_admin:
+        abort(403)
+        
+    pwd = request.form.get('admin_password')
+    if pwd != os.getenv('ADMIN_PASSWORD'):
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_logs'))
+        
+    # Security check to prevent directory traversal attacks
+    if ".." in filename or "/" in filename or "\\" in filename:
+        abort(400)
+        
+    file_path = os.path.join(os.getcwd(), 'user_logs', filename)
+    if os.path.exists(file_path):
+        os.remove(file_path) # Permanently deletes the file from the server
+        
+        # Log the deletion
+        log_user_action(current_user.username, "ADMIN_DELETE_LOG", f"Deleted log file: {filename}")
+        flash(f"Log file '{filename}' has been completely deleted.", category='success')
+    else:
+        flash("Log file not found.", category='error')
+        
+    return redirect(url_for('views.admin_logs'))
 
 @views.route('/admin/cleanup-logs', methods=['POST'])
 @login_required
 def admin_cleanup_logs():
     if not current_user.is_admin:
         abort(403)
+        
+    pwd = request.form.get('admin_password')
+    if pwd != os.getenv('ADMIN_PASSWORD'):
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_logs'))
         
     # Keeps only the last 500 entries per user
     cleaned_files = cleanup_old_logs(max_lines=500)
