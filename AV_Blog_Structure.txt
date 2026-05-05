@@ -7,49 +7,60 @@ AV_Postory/
 ├── reset_badges.py          # 🔧 UTILITY: Script to force-reset notification counts to 0
 ├── update_read_db.py        # 🔧 UTILITY: Script to add 'is_read' column
 ├── update_status_db.py      # 🔧 UTILITY: Script to add 'is_online' & 'last_seen' columns
+├── update_bluetick_db.py    # 🔧 UTILITY: ✅ NEW: Script to add 'blue_tick' column for verification
 │
 ├── instance/
 │   └── database.db          # SQLite Database file (Ignored by Git)
 │
+├── user_logs/               # ✅ NEW: Directory storing user activity text files
+│   └── [username]_log.txt   # Auto-generated text logs tracking every user action
+│
 └── website/
-    ├── __init__.py          # ⚡ UPDATED: Uses config.py and enforces secure SECRET_KEY check
-    ├── config.py            # ✅ NEW: Handles Development/Production environment splits
+    ├── __init__.py          # Uses config.py and enforces secure SECRET_KEY & Mail .env check
+    ├── config.py            # Handles Development/Production environment splits
     ├── auth.py              # Auth routes (Signup, Login, OTP, Reset)
     ├── events.py            # Handles Socket.IO events (Connect/Disconnect/Message)
-    ├── models.py            # Database Models
+    ├── models.py            # Database Models (including Block, Report, blue_tick)
     ├── utils.py             # Helper functions (Cloudinary, Link parsing, Bleach)
-    ├── views.py             # Main application routes
+    ├── views.py             # Main application routes (including Verification & Admin Logs)
+    ├── user_logger.py       # ✅ NEW: Handles saving live user actions to text files
     │
     ├── static/
-    │   ├── styles.css       # ⚡ UPDATED: Contains Premium Skeleton CSS Variables
-    │   ├── index.js         # ⚡ UPDATED: Contains Global Skeleton UI Controller
+    │   ├── styles.css       # Contains Premium Skeleton CSS Variables
+    │   ├── index.js         # Contains Global Skeleton UI Controller
     │   ├── images/          
-    │   │   └── logo.png
+    │   │   ├── logo.png
+    │   │   └── upi_qr.png   # ✅ NEW: QR code for the verification payment
     │   │
     │   └── uploads/         # User uploaded content
     │       ├── avatars/
     │       └── posts/
     │
     └── templates/
-        ├── base.html        # ⚡ UPDATED: Contains the hidden Admin Deactivate Logic & System Dark Mode
+        ├── base.html        # Admin Deactivate Logic, Dark Mode, Global Nav & Notifications
         ├── home.html        
         ├── login.html       
         ├── sign_up.html     
         ├── signup_final.html
         ├── verify_otp.html  
-        ├── profile.html     # ⚡ UPDATED: Writing Stats, Two-Step Deactivation, Skeleton Loader
+        ├── profile.html     # Stats, Deactivation, Skeleton Loader, Get Verified button
         ├── about.html       
+        ├── terms.html       # ✅ NEW: Terms and conditions page
         ├── account_deactivated.html 
         ├── chat.html        
         ├── inbox.html       
         ├── create_posts.html
         ├── edit_post.html
-        ├── _posts.html
+        ├── _posts.html      # Renders individual post cards (includes Blue Tick UI)
         ├── posts.html       
-        ├── _skeleton_post.html  # ⚡ Premium Post Skeleton Component
-        ├── _skeleton_user.html  # ✅ NEW: Premium User/Chat Skeleton Component
-        ├── admin_dashboard.html
-        ├── search.html
+        ├── _skeleton_post.html  # Premium Post Skeleton Component
+        ├── _skeleton_user.html  # Premium User/Chat Skeleton Component
+        ├── get_verified.html    # ✅ NEW: Premium verification pricing plans
+        ├── process_payment.html # ✅ NEW: Secure checkout, QR code, and File Upload page
+        ├── admin_dashboard.html # Super Admin control panel
+        ├── admin_logs.html      # ✅ NEW: Admin panel to view all user log files
+        ├── view_log.html        # ✅ NEW: Admin panel to read/edit a specific user's log file
+        ├── search.html          # Global live search results
         ├── notifications.html
         ├── followers.html   
         ├── reset_request.html
