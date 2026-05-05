@@ -1,0 +1,188 @@
+<!-- FILE: templates/get_verified.html -->
+{% extends "base.html" %}
+{% block title %}Get Verified - AV Postory{% endblock %}
+
+{% block content %}
+<style>
+  .verified-header {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), transparent);
+    border-radius: 24px;
+    margin-bottom: 3rem;
+    border: 1px solid var(--border-color);
+  }
+  
+  /* Pricing Card Base */
+  .pricing-card {
+    background-color: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 24px;
+    padding: 2rem;
+    height: 100%;
+    transition: all var(--trans-smooth);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .pricing-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* Premium Highlighted Card */
+  .pricing-card.premium {
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px var(--primary-glow);
+    background: linear-gradient(to bottom, var(--bg-card), var(--bg-input));
+    transform: scale(1.05);
+    z-index: 2;
+  }
+
+  .pricing-card.premium:hover {
+    transform: scale(1.05) translateY(-5px);
+  }
+  
+  /* Beautiful Floating Pill Badge */
+  .offer-badge {
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: white;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 6px 20px;
+    border-radius: 50px;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  .perk-list {
+    margin-top: auto; 
+    margin-bottom: 1.5rem;
+  }
+
+  .perk-list li {
+    margin-bottom: 1rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 992px) {
+    .pricing-card.premium {
+      transform: scale(1); 
+    }
+    .pricing-card.premium:hover {
+      transform: translateY(-5px);
+    }
+  }
+</style>
+
+<div class="row justify-content-center fade-in-up">
+  <div class="col-lg-11">
+    <!-- Header -->
+    <div class="verified-header shadow-sm">
+      <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3 shadow-lg" style="width: 80px; height: 80px; font-size: 2.5rem;">
+        <i class="bi bi-patch-check-fill"></i>
+      </div>
+      <h1 class="font-heading fw-bold" style="color: var(--text-main);">Stand out with a Blue Tick</h1>
+      <p class="text-muted lead mx-auto mb-0" style="max-width: 600px;">
+        Build trust, increase your visibility, and show the community that you are an authentic, verified creator on AV Postory.
+      </p>
+    </div>
+
+    <!-- Three-Tier Pricing Grid -->
+    <div class="row g-4 mb-5 pt-3">
+      
+      <!-- Tier 1: Monthly -->
+      <div class="col-lg-4 col-md-6">
+        <div class="pricing-card">
+          <h4 class="fw-bold mb-1" style="color: var(--text-main);">Monthly</h4>
+          <p class="text-muted small mb-4">Standard verification.</p>
+          
+          <div class="d-flex align-items-baseline gap-2 mb-4">
+            <h2 class="fw-bold m-0" style="color: var(--text-main); font-size: 2.5rem;">₹49</h2>
+            <span class="text-muted fw-bold">/ month</span>
+          </div>
+
+          <hr style="border-color: var(--border-color);">
+
+          <ul class="list-unstyled perk-list pt-3">
+            <li><i class="fas fa-check-circle text-secondary fs-5 mt-1"></i> Authentic Blue Tick badge</li>
+            <li><i class="fas fa-eye text-info fs-5 mt-1"></i> Increased visibility on stories</li>
+            <li><i class="fas fa-comments text-secondary fs-5 mt-1"></i> Stand out in comments</li>
+          </ul>
+          
+          <!-- Route to Checkout -->
+          <a href="{{ url_for('views.process_payment', plan='monthly') }}" class="btn btn-outline-primary w-100 rounded-pill fw-bold mt-auto py-2">Select Monthly</a>
+        </div>
+      </div>
+
+      <!-- Tier 2: 6 Months Special Offer (HIGHLIGHTED) -->
+      <div class="col-lg-4 col-md-6">
+        <div class="pricing-card premium">
+          <div class="offer-badge">Early Adopter Offer</div>
+          <h4 class="fw-bold mb-1 text-primary">6 Months</h4>
+          <p class="text-muted small mb-4">Our best value for early members.</p>
+          
+          <div class="d-flex align-items-baseline gap-2 mb-2">
+            <h2 class="fw-bold m-0 text-primary" style="font-size: 3.5rem;">₹3</h2>
+            <span class="text-muted fw-bold">/ 6 months</span>
+          </div>
+          <div class="small fw-bold text-success mb-3">
+            <i class="fas fa-arrow-down"></i> Huge discount applied
+          </div>
+
+          <hr style="border-color: var(--border-color);">
+
+          <ul class="list-unstyled perk-list pt-3">
+            <li><i class="fas fa-check-circle text-primary fs-5 mt-1"></i> Authentic Blue Tick badge</li>
+            <li><i class="fas fa-search text-warning fs-5 mt-1"></i> Priority search placement</li>
+            <li><i class="fas fa-rocket text-success fs-5 mt-1"></i> Boosted story recommendations</li>
+            <li><i class="fas fa-shield-alt text-info fs-5 mt-1"></i> Instant community trust</li>
+          </ul>
+          
+          <!-- Route to Checkout -->
+          <a href="{{ url_for('views.process_payment', plan='6-months') }}" class="btn btn-primary w-100 rounded-pill fw-bold mt-auto py-3 shadow-sm fs-5">Claim Offer</a>
+        </div>
+      </div>
+
+      <!-- Tier 3: Yearly -->
+      <div class="col-lg-4 col-md-6 offset-md-3 offset-lg-0">
+        <div class="pricing-card">
+          <h4 class="fw-bold mb-1" style="color: var(--text-main);">Yearly</h4>
+          <p class="text-muted small mb-4">Save for the long term.</p>
+          
+          <div class="d-flex align-items-baseline gap-2 mb-4">
+            <h2 class="fw-bold m-0" style="color: var(--text-main); font-size: 2.5rem;">₹489</h2>
+            <span class="text-muted fw-bold">/ year</span>
+          </div>
+
+          <hr style="border-color: var(--border-color);">
+
+          <ul class="list-unstyled perk-list pt-3">
+            <li><i class="fas fa-check-circle text-secondary fs-5 mt-1"></i> Authentic Blue Tick badge</li>
+            <li><i class="fas fa-crown text-warning fs-5 mt-1"></i> Top-tier Feed ranking</li>
+            <li><i class="fas fa-headset text-danger fs-5 mt-1"></i> Priority 24/7 VIP Support</li>
+            <li><i class="fas fa-gift text-success fs-5 mt-1"></i> Save ₹99 instantly</li>
+          </ul>
+          
+          <!-- Route to Checkout -->
+          <a href="{{ url_for('views.process_payment', plan='yearly') }}" class="btn btn-outline-primary w-100 rounded-pill fw-bold mt-auto py-2">Select Yearly</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
