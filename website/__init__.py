@@ -1,3 +1,4 @@
+# FILE: __init__.py
 from flask import Flask, url_for 
 from flask_sqlalchemy import SQLAlchemy
 from os import path, makedirs
@@ -42,6 +43,16 @@ def create_app():
     # 🚀 SECURITY UPDATE: Secure SECRET_KEY fallback (Fail-Fast)
     if not app.config.get('SECRET_KEY'):
         raise RuntimeError("SECRET_KEY environment variable is not set! Create a .env file.")
+
+    # 🚀 FIX: FORCE MAIL CONFIGURATION FROM .ENV
+    # This prevents the app from falling back to default Gmail settings in config.py
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 465))
+    app.config['MAIL_USE_TLS'] = str(os.getenv('MAIL_USE_TLS', 'False')).lower() == 'true'
+    app.config['MAIL_USE_SSL'] = str(os.getenv('MAIL_USE_SSL', 'True')).lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
     # ==========================================
     # 🛡️ HARDENED SECURITY CONFIGURATION

@@ -53,3 +53,4 @@ tools/
 AV_features.txt
 requirements.txt
 user_logs
+/website/static/images
