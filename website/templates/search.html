@@ -17,7 +17,7 @@ block content %}
     width: 100%;
     max-width: 600px;
     margin: 0 auto;
-    z-index: 1050; /* 🚀 FIX: Guarantees the live-search dropdown floats OVER the tabs below it */
+    z-index: 1050; 
   }
   .search-input-large {
     background-color: var(--bg-input);
@@ -248,7 +248,9 @@ block content %}
                     class="fw-bold mb-1 text-truncate"
                     style="color: var(--text-main); font-size: 1.1rem"
                   >
-                    {{ u.username }} {% if u.is_verified %}
+                    {{ u.username }} 
+                    <!-- 🚀 FIX: Using blue_tick instead of is_verified -->
+                    {% if u.blue_tick %}
                     <i
                       class="fas fa-check-circle text-primary ms-1"
                       style="font-size: 0.9rem"
