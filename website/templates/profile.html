@@ -1,8 +1,6 @@
 {% extends "base.html" %} {% block title %}{{ profile_user.username }}'s Profile
 - AV Postory{% endblock %} {% block content %}
 <style>
-  /* 🚀 FIX: Removed the rogue "body.dark-mode a" rule that was hijacking the navbar */
-  
   /* Dark Mode & Theme Styles */
   body.dark-mode .card,
   body.dark-mode .modal-content {
@@ -29,21 +27,19 @@
     filter: invert(1) grayscale(100%) brightness(200%);
   }
 
-  /* Cover Photo Parallax */
   /* Cover Photo Parallax - FIXED VISIBILITY */
   .profile-cover {
     height: 280px;
-    background-color: #e2e8f0; /* Slightly darker default slate for light mode */
-    border: 1px solid var(--border-color); /* Added explicit border */
+    background-color: #e2e8f0; 
+    border: 1px solid var(--border-color);
     background-size: cover;
     background-position: center;
     border-radius: 24px;
     position: relative;
     margin-bottom: -80px;
-    box-shadow: var(--shadow-md); /* Boosted shadow for depth */
+    box-shadow: var(--shadow-md); 
   }
 
-  /* Ensure it switches back to dark input color in dark mode */
   body.dark-mode .profile-cover {
     background-color: var(--bg-input);
   }
@@ -240,6 +236,13 @@
               <i class="fas fa-unlock me-1"></i> Unblock
             </button>
             {% elif user.is_authenticated and user.id == profile_user.id %}
+            
+            <!-- 🚀 FIX: Display Get Verified Button using blue_tick logic -->
+            {% if not user.blue_tick %}
+            <a href="{{ url_for('views.get_verified') }}" class="btn btn-info text-black rounded-pill px-4 fw-bold shadow-sm d-none d-md-inline-flex align-items-center">
+              <i class="fas fa-check-circle me-2"></i> Get Verified
+            </a>
+            {% endif %}
 
             <div class="dropdown d-none d-md-block">
               <button
@@ -311,6 +314,18 @@
                 class="dropdown-menu shadow border-0 w-100 mt-2 p-2"
                 style="border-radius: 12px; background-color: var(--bg-card)"
               >
+                <!-- 🚀 FIX: Mobile Get Verified Button uses blue_tick -->
+                {% if not user.blue_tick %}
+                <li>
+                  <a
+                    class="dropdown-item py-2 rounded text-primary fw-bold"
+                    href="{{ url_for('views.get_verified') }}"
+                    ><i class="fas fa-check-circle me-2"></i> Get Verified</a
+                  >
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                {% endif %}
+
                 <li><h6 class="dropdown-header fw-bold">Photos</h6></li>
                 <li>
                   <a
@@ -380,19 +395,26 @@
         </div>
 
         <div class="text-center text-sm-start mb-4">
+          <!-- 🚀 FIX: Profile Header Name uses blue_tick -->
           <h2
             class="fw-bold font-heading mb-1 d-flex align-items-center justify-content-center justify-content-sm-start gap-2"
             style="color: var(--text-main)"
           >
-            {{ profile_user.username }} {% if profile_user.is_verified %}<i
-              class="fas fa-check-circle text-primary fs-5"
+            {{ profile_user.username }} 
+            {% if profile_user.blue_tick %}
+            <i
+              class="fas fa-check-circle text-primary"
+              style="font-size: 1.5rem;"
               title="Verified"
-            ></i
-            >{% endif %} {% if profile_user.is_admin %}<span
+            ></i>
+            {% endif %} 
+            {% if profile_user.is_admin %}
+            <span
               class="badge bg-warning text-dark align-middle"
               style="font-size: 0.6rem"
               >Admin</span
-            >{% endif %}
+            >
+            {% endif %}
           </h2>
           <p class="text-muted mb-3 small">
             <i class="far fa-calendar-alt me-1"></i> Joined {{
