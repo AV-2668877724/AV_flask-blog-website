@@ -2,13 +2,16 @@
 from functools import wraps
 from flask import ( 
     Blueprint, render_template, request,
-    flash, redirect, url_for, abort, jsonify, current_app, make_response,redirect
+    flash, redirect, url_for, abort, jsonify, current_app, make_response
 )
 from flask_login import login_required, current_user, logout_user
 from .models import User, Post, Comment, Like, Follow, Notification, CommentLike, Message, SavedPost, Block, Report
 from sqlalchemy.exc import IntegrityError
 
-from . import db, limiter
+# 🚀 FIX: Imported mail and renamed Flask-Mail's Message to avoid conflict with Chat Message
+from . import db, limiter, mail
+from flask_mail import Message as MailMessage
+
 from datetime import datetime, timezone
 from sqlalchemy import func, or_, desc, and_
 from werkzeug.security import check_password_hash
@@ -743,6 +746,125 @@ def report_item(item_type, item_id):
 
 
 # =================================================
+# GET VERIFIED (BLUE TICK) ROUTES 🚀 NEW
+# =================================================
+
+# Central dictionary containing all pricing plan logic
+VERIFICATION_PLANS = {
+    'monthly': {'name': 'Monthly', 'price': '49', 'duration': '1 month'},
+    '6-months': {'name': '6 Months Early Adopter', 'price': '3', 'duration': '6 months'},
+    'yearly': {'name': 'Yearly', 'price': '489', 'duration': '1 year'}
+}
+
+@views.route('/get-verified', methods=['GET'])
+@login_required
+def get_verified():
+    if current_user.blue_tick:
+        flash("You are already verified! Enjoy your Blue Tick.", category="info")
+        return redirect(url_for('views.profile', username=current_user.username))
+    
+    # Just render the pricing page
+    return render_template('get_verified.html', user=current_user)
+
+@views.route('/process-payment/<string:plan>', methods=['GET', 'POST'])
+@login_required
+@limiter.limit("10 per hour")
+def process_payment(plan):
+    if current_user.blue_tick:
+        flash("You are already verified! Enjoy your Blue Tick.", category="info")
+        return redirect(url_for('views.profile', username=current_user.username))
+
+    # Validate that the user didn't try to hack the URL
+    if plan not in VERIFICATION_PLANS:
+        flash("Invalid verification plan selected.", category="error")
+        return redirect(url_for('views.get_verified'))
+        
+    selected_plan = VERIFICATION_PLANS[plan]
+
+    if request.method == 'POST':
+        transaction_id = request.form.get('transaction_id')
+        screenshot = request.files.get('screenshot')
+
+        if not transaction_id or not screenshot or screenshot.filename == '':
+            flash("Please provide both a Transaction ID and a screenshot.", category="error")
+            return redirect(url_for('views.process_payment', plan=plan))
+
+        if allowed_file(screenshot.filename):
+            image_url = upload_to_cloudinary(screenshot, 'payments', width=800)
+            
+            if image_url:
+                try:
+                    # Construct email for Zoho Mail
+                    msg = MailMessage(
+                        subject=f"New Blue Tick Verification Request: {current_user.username}",
+                        sender=os.getenv('MAIL_USERNAME'),
+                        recipients=['anuragvarshney@zohomail.in'] 
+                    )
+                    
+                    # 🚀 FIX: 100% Mobile-Responsive Email Template
+                    msg.html = f"""
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; padding: 15px 10px;">
+                        <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
+                            <div style="padding: 25px 20px;">
+                                <h2 style="color: #4f46e5; margin-top: 0; font-size: 22px; text-align: center;">New Payment 💰</h2>
+                                <p style="font-size: 15px; color: #4b5563; text-align: center; line-height: 1.5; margin-bottom: 25px;">
+                                    A user has submitted a payment for Blue Tick verification.
+                                </p>
+                                
+                                <!-- Mobile-friendly stacked receipt box -->
+                                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+                                    <p style="margin: 0 0 12px 0; font-size: 14px; color: #1e293b;">
+                                        <strong style="color: #64748b; display: block; font-size: 12px; text-transform: uppercase;">Username</strong>
+                                        {current_user.username} (ID: {current_user.id})
+                                    </p>
+                                    <p style="margin: 0 0 12px 0; font-size: 14px; color: #1e293b; word-break: break-word;">
+                                        <strong style="color: #64748b; display: block; font-size: 12px; text-transform: uppercase;">Email</strong>
+                                        {current_user.email}
+                                    </p>
+                                    <p style="margin: 0 0 12px 0; font-size: 14px; color: #1e293b;">
+                                        <strong style="color: #64748b; display: block; font-size: 12px; text-transform: uppercase;">Plan Selected</strong>
+                                        <span style="color: #ea580c; font-weight: bold;">{selected_plan['name']} (₹{selected_plan['price']})</span>
+                                    </p>
+                                    <p style="margin: 0; font-size: 14px; color: #1e293b; word-break: break-all;">
+                                        <strong style="color: #64748b; display: block; font-size: 12px; text-transform: uppercase;">Transaction ID</strong>
+                                        {transaction_id}
+                                    </p>
+                                </div>
+                                
+                                <h4 style="margin-top: 25px; margin-bottom: 10px; color: #1e293b; font-size: 15px;">Payment Screenshot:</h4>
+                                <a href="{image_url}" target="_blank" style="display: block;">
+                                    <img src="{image_url}" style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #cbd5e1; display: block;">
+                                </a>
+                                
+                                <div style="margin-top: 25px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                                    <p style="font-size: 12px; color: #94a3b8; margin: 0;">
+                                        Log in to the Admin Dashboard to verify this user.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    """
+                    
+                    mail.send(msg)
+                    
+                    # Log Action with Plan Name
+                    log_user_action(current_user.username, "VERIFICATION_REQUEST", f"Plan: {selected_plan['name']} | Txn ID: {transaction_id}")
+                    
+                    flash('Payment submitted successfully! Your account will be verified within 24 hours.', category='success')
+                    return redirect(url_for('views.profile', username=current_user.username))
+                except Exception as e:
+                    print(f"Error sending verification email: {e}")
+                    flash('Error submitting request to server. Please try again.', category='error')
+            else:
+                flash('Error uploading screenshot to cloud storage.', category='error')
+        else:
+            flash('Invalid file type. Please upload a valid image.', category='error')
+
+    # If it's a GET request, render the new checkout page
+    return render_template('process_payment.html', user=current_user, plan_id=plan, plan_details=selected_plan)
+
+# =================================================
 # ADMIN ROUTES
 # =================================================
 
@@ -884,8 +1006,7 @@ def delete_log_file(filename):
     if os.path.exists(file_path):
         os.remove(file_path) # Permanently deletes the file from the server
         
-        # Log the deletion
-        log_user_action(current_user.username, "ADMIN_DELETE_LOG", f"Deleted log file: {filename}")
+        # 🚀 FIXED: Removed the logging action that was respawning the file!
         flash(f"Log file '{filename}' has been completely deleted.", category='success')
     else:
         flash("Log file not found.", category='error')
@@ -1035,6 +1156,29 @@ def admin_toggle_user_status(user_id):
     # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_TOGGLE_USER_STATUS", f"Toggled status for user ID: {user_id} to {status}")
     
+    flash(f"User {user.username} is now {status}.", category='success')
+    return redirect(url_for('views.admin_dashboard'))
+
+# 🚀 NEW: Admin Route to Grant Blue Tick Manually
+@views.route('/admin/toggle-verification/<int:user_id>', methods=['POST'])
+@login_required
+def admin_toggle_verification(user_id):
+    if not current_user.is_admin:
+        abort(403)
+        
+    pwd = request.form.get('admin_password')
+    if pwd != os.getenv('ADMIN_PASSWORD'):
+        flash("Incorrect admin password", category='error')
+        return redirect(url_for('views.admin_dashboard'))
+
+    user = User.query.get_or_404(user_id)
+    
+    # 🚀 FIX: Toggle `blue_tick` instead of `is_verified`
+    user.blue_tick = not user.blue_tick
+    db.session.commit()
+    
+    status = "Verified" if user.blue_tick else "Unverified"
+    log_user_action(current_user.username, "ADMIN_TOGGLE_VERIFICATION", f"Toggled verification for user ID: {user_id} to {status}")
     flash(f"User {user.username} is now {status}.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
