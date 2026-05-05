@@ -1,3 +1,4 @@
+# FILE: events.py
 from flask import request
 from flask_login import current_user
 from . import socketio, db
@@ -9,6 +10,9 @@ from sqlalchemy import or_, and_
 
 # IMPORT THE PROCESSOR FROM VIEWS FOR LINK PREVIEWS & TAGS
 from .views import process_text_links
+
+# 🚀 NEW: Import the logger to track live Socket.IO events
+from .user_logger import log_user_action
 
 # ==================================================
 # SOCKET.IO EVENT HANDLERS
@@ -97,6 +101,9 @@ def handle_send_message_event(data):
     
     db.session.add(new_message)
     db.session.commit()
+    
+    # 🚀 NEW: Log the live message action to the Admin Activity Logs
+    log_user_action(current_user.username, "SEND_MESSAGE_LIVE", f"To User ID: {recipient_id}")
     
     # ==========================================
     # Smart Notification Handling

@@ -1,3 +1,4 @@
+# FILE: website/models.py
 from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
@@ -58,7 +59,8 @@ class User(db.Model, UserMixin):
     # Status Flags
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
-    is_verified = db.Column(db.Boolean, default=False)
+    is_verified = db.Column(db.Boolean, default=False) # Keeps track of Email OTP
+    blue_tick = db.Column(db.Boolean, default=False)   # 🚀 NEW: Premium Blue Tick Status
     deactivation_reason = db.Column(db.String(500), nullable=True)
     
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
