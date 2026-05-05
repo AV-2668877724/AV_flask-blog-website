@@ -468,7 +468,12 @@ block content %}
                           <div>
                             <div style="color: var(--text-main)">
                               {{ u.username }}
+                              <!-- 🚀 FIX: Display Blue Tick in Admin Panel based on new column -->
+                              {% if u.blue_tick %}
+                                <i class="fas fa-check-circle text-primary ms-1" style="font-size: 0.85rem;" title="Verified"></i>
+                              {% endif %}
                             </div>
+                            
                             {% if not u.is_active %}
                             <span
                               class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill mt-1"
@@ -509,6 +514,26 @@ block content %}
                       </td>
                       <td class="text-end pe-4 py-3">
                         {% if u.id != current_user.id %}
+                        
+                        <!-- 🚀 NEW: Add/Remove Blue Tick -->
+                        <form
+                          method="POST"
+                          action="{{ url_for('views.admin_toggle_verification', user_id=u.id) }}"
+                          class="d-inline-flex gap-2 align-items-center me-2"
+                          onsubmit="return injectAdminPassword(this);"
+                        >
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                          {% if u.blue_tick %}
+                          <button class="btn btn-secondary btn-sm fw-bold rounded-pill shadow-sm" title="Remove Blue Tick">
+                            Unverify
+                          </button>
+                          {% else %}
+                          <button class="btn btn-info btn-sm text-white fw-bold rounded-pill shadow-sm" title="Give Blue Tick">
+                            <i class="fas fa-check-circle me-1"></i> Verify
+                          </button>
+                          {% endif %}
+                        </form>
+                        
                         <form
                           method="POST"
                           action="{{ url_for('views.admin_toggle_user_status', user_id=u.id) }}"

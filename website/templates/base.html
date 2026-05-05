@@ -489,6 +489,17 @@
                 >
               </li>
               
+              <!-- 🚀 FIX: Get Verified Link explicitly uses blue_tick column -->
+              {% if not current_user.blue_tick %}
+              <li>
+                <a
+                  class="dropdown-item py-2 text-primary fw-bold"
+                  href="{{ url_for('views.get_verified') }}"
+                  ><i class="bi bi-patch-check-fill me-2"></i> Get Verified</a
+                >
+              </li>
+              {% endif %}
+              
               {% if is_admin %}
               <li>
                 <a
@@ -1511,7 +1522,6 @@
           }
 
           // 2. Socket.IO Messaging Logic
-          // 🚀 SPEED FIX: Force WebSockets immediately to bypass slow Ngrok HTTP polling
           const globalSocket = io({ transports: ['websocket'] });
           const myUserId = parseInt(authData.dataset.uid);
 
