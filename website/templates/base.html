@@ -210,21 +210,21 @@
         color: var(--primary) !important;
       }
       
-      /* 🚀 ULTIMATE MOBILE SEARCH BOX FIX */
+      /* ULTIMATE MOBILE SEARCH BOX FIX */
       .mobile-search-wrapper {
         height: 54px !important;
         width: 100% !important;
-        background-color: rgba(0, 0, 0, 0.03) !important; /* Extremely light grey in Light Mode */
-        border: 1px solid rgba(0, 0, 0, 0.06) !important; /* Soft edge */
+        background-color: rgba(0, 0, 0, 0.03) !important; 
+        border: 1px solid rgba(0, 0, 0, 0.06) !important; 
         box-shadow: none !important;
       }
       .mobile-search-wrapper input::placeholder {
-        color: rgba(0, 0, 0, 0.35) !important; /* Soft placeholder */
+        color: rgba(0, 0, 0, 0.35) !important; 
       }
       
       /* Dark Mode Mobile Overrides */
       body.dark-mode .mobile-search-wrapper {
-        background-color: rgba(255, 255, 255, 0.05) !important; /* Subtle frosted glass */
+        background-color: rgba(255, 255, 255, 0.05) !important; 
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
       }
       body.dark-mode .mobile-search-wrapper input::placeholder {
@@ -242,6 +242,59 @@
       .icon-transparent {
         color: transparent !important;
       }
+
+      /* 🚀 REFINED PREMIUM BLUE TICK STYLING */
+      .verified-badge {
+        color: #1DA1F2 !important; 
+        background: radial-gradient(circle, #ffffff 40%, transparent 50%); 
+        border-radius: 50%;
+        /* A much more subtle, sophisticated drop shadow */
+        text-shadow: 0px 2px 4px rgba(29, 161, 242, 0.2); 
+        display: inline-block;
+        vertical-align: middle;
+        line-height: 1;
+        position: relative;
+        top: -2px; 
+        transition: transform 0.2s ease, text-shadow 0.2s ease;
+      }
+      
+      .verified-badge:hover {
+        transform: scale(1.1); 
+        /* Slightly brighter only on hover */
+        text-shadow: 0px 4px 8px rgba(29, 161, 242, 0.4);
+      }
+      
+      body.dark-mode .verified-badge {
+        background: radial-gradient(circle, #ffffff 40%, transparent 50%);
+        /* Subtle glow for dark mode so it isn't blinding */
+        text-shadow: 0px 2px 6px rgba(29, 161, 242, 0.35); 
+      }
+
+      /* 🚀 GLOWING SUN DARK MODE TOGGLE ANIMATION (FIXED) */
+      .theme-toggle-btn {
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      /* When dark mode is active, index.js turns the moon into a sun. We apply the glow here! */
+      body.dark-mode .theme-toggle-btn i {
+        color: #fbbf24 !important; /* Warm yellow */
+        text-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.4);
+        animation: pulse-sun-glow 2.5s infinite alternate ease-in-out;
+      }
+
+      @keyframes pulse-sun-glow {
+        0% { 
+          text-shadow: 0 0 8px rgba(251, 191, 36, 0.6), 0 0 15px rgba(251, 191, 36, 0.2); 
+          transform: scale(0.95); 
+        }
+        100% { 
+          text-shadow: 0 0 15px rgba(251, 191, 36, 1), 0 0 30px rgba(251, 191, 36, 0.6); 
+          transform: scale(1.1); 
+        }
+      }
     </style>
     <noscript>
       <style>
@@ -254,7 +307,7 @@
   <body>
     <script>
       (function () {
-        // 🚀 FORCE LIGHT MODE: Check if current page is an auth page
+        // FORCE LIGHT MODE: Check if current page is an auth page
         const currentPath = window.location.pathname;
         const authPaths = [
           '/login', 
@@ -339,9 +392,10 @@
             ></div>
           </form>
 
+          <!-- 🚀 FIX: Single Icon so index.js works properly without doubling -->
           <button
             id="darkToggle"
-            class="btn btn-icon shadow-sm"
+            class="btn btn-icon shadow-sm theme-toggle-btn"
             title="Toggle theme"
             aria-label="Toggle Dark Mode"
           >
@@ -489,7 +543,6 @@
                 >
               </li>
               
-              <!-- 🚀 FIX: Get Verified Link explicitly uses blue_tick column -->
               {% if not current_user.blue_tick %}
               <li>
                 <a
