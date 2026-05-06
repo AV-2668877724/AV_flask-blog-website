@@ -1,4 +1,3 @@
-<!-- FILE: templates/process_payment.html -->
 {% extends "base.html" %}
 {% block title %}Checkout - AV Postory{% endblock %}
 
@@ -34,6 +33,11 @@
     transform: scale(1.1);
     color: var(--primary) !important;
   }
+
+  /* Hide scrollbar for the UPI ID text if it scrolls on tiny screens */
+  #upiIdText::-webkit-scrollbar {
+    display: none;
+  }
 </style>
 
 <div class="row justify-content-center fade-in-up">
@@ -62,19 +66,24 @@
             <img src="{{ url_for('static', filename='images/upi_qr.png') }}" alt="UPI QR Code" style="width: 200px; height: 200px; object-fit: contain;" id="qrImage">
           </div>
           
-          <!-- 🚀 NEW: Download QR Button -->
-          <div class="mb-4">
+          <!-- Action Buttons: Download & Share -->
+          <div class="mb-4 d-flex justify-content-center gap-3 flex-wrap">
             <a href="{{ url_for('static', filename='images/upi_qr.png') }}" download="AV_Postory_UPI_QR.png" class="btn btn-sm btn-outline-primary rounded-pill fw-bold shadow-sm px-4">
-              <i class="fas fa-download me-1"></i> Download QR
+              <i class="fas fa-download me-1"></i> Download
             </a>
+            <button type="button" onclick="shareQR()" class="btn btn-sm btn-outline-secondary rounded-pill fw-bold shadow-sm px-4">
+              <i class="fas fa-share-nodes me-1"></i> Share QR
+            </button>
           </div>
           
-          <!-- 🚀 NEW: One-Click Copy UPI ID -->
-          <div class="fw-bold fs-5 mt-2 d-flex flex-column align-items-center justify-content-center gap-2" style="color: var(--text-main);">
+          <!-- 🚀 FIX: Reduced Font Size and Fluid Width -->
+          <div class="fw-bold fs-5 mt-2 d-flex flex-column align-items-center justify-content-center gap-2 w-100" style="color: var(--text-main);">
             <span class="text-muted small fs-6">UPI ID:</span>
-            <div class="text-primary user-select-all px-3 py-2 rounded bg-light d-inline-flex align-items-center gap-3 shadow-sm" style="background-color: var(--bg-input) !important; border: 1px solid var(--border-color);">
-              <span id="upiIdText">anurag@ibl</span>
-              <button type="button" class="btn btn-link p-0 text-muted copy-btn m-0 d-flex align-items-center" onclick="copyUpiId()" title="Copy UPI ID" id="copyUpiBtn">
+            <div class="px-3 py-2 rounded d-flex align-items-center justify-content-between shadow-sm" style="background-color: var(--bg-input); border: 1px solid var(--border-color); max-width: 100%;">
+              
+              <span id="upiIdText" class="text-primary user-select-all" style="white-space: nowrap; overflow-x: auto; font-size: 0.8rem; scrollbar-width: none; -ms-overflow-style: none;">anuragvarshney0888012@icici</span>
+              
+              <button type="button" class="btn btn-link p-0 text-muted copy-btn m-0 ms-3 d-flex align-items-center flex-shrink-0" onclick="copyUpiId()" title="Copy UPI ID" id="copyUpiBtn">
                 <i class="far fa-copy fs-5"></i>
               </button>
             </div>
@@ -106,7 +115,7 @@
             
             <div class="text-center mt-3">
               <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-2">
-                <i class="fas fa-shield-check me-1"></i> Admin will verify within 24 hours
+                <i class="fas fa-shield-check me-1"></i> Admin will verify within hours.
               </span>
             </div>
           </form>
@@ -125,21 +134,18 @@
     btn.disabled = true;
   });
 
-  // 🚀 NEW: One-Click Copy Logic
+  // One-Click Copy Logic
   function copyUpiId() {
-    const upiId = "anurag@ibl";
+    const upiId = "anuragvarshney0888012@icici"; // Ensure this matches the displayed ID!
     navigator.clipboard.writeText(upiId).then(() => {
       const copyBtn = document.getElementById("copyUpiBtn");
       
-      // Temporarily change icon to a success checkmark
       copyBtn.innerHTML = '<i class="fas fa-check text-success fs-5"></i>';
       
-      // Revert back to copy icon after 2 seconds
       setTimeout(() => {
         copyBtn.innerHTML = '<i class="far fa-copy fs-5"></i>';
       }, 2000);
       
-      // Show Bootstrap toast if available
       if (typeof showToast === "function") {
         showToast("UPI ID copied to clipboard!");
       }
@@ -147,6 +153,52 @@
       console.error('Failed to copy text: ', err);
       alert("Failed to copy. Please copy manually.");
     });
+  }
+
+  // Image Sharing Logic (Web Share API)
+  async function shareQR() {
+    const qrImage = document.getElementById("qrImage");
+    const imgUrl = qrImage.src;
+    
+    try {
+      // Fetch the image and convert it into a file object so native apps can receive it
+      const response = await fetch(imgUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'AV_Postory_UPI_QR.png', { type: blob.type });
+
+      // Check if the browser supports sharing files natively (mostly mobile)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'AV Postory Verification',
+          text: 'Scan this QR code to verify your AV Postory account!',
+          files: [file]
+        });
+      } else if (navigator.share) {
+        // Fallback: Share the URL link if file sharing isn't supported
+        await navigator.share({
+          title: 'AV Postory Verification',
+          text: 'Scan this QR code to verify your AV Postory account!',
+          url: window.location.origin + imgUrl
+        });
+      } else {
+        // Desktop fallback where Web Share might not be supported
+        if (typeof showToast === "function") {
+            showToast("Sharing not supported on this device. Use the download button instead.");
+        } else {
+            alert('Sharing is not supported on this browser. Please use the Download button instead.');
+        }
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      // Failsafe in case fetch fails
+      if (navigator.share) {
+         navigator.share({
+          title: 'AV Postory Verification',
+          text: 'Scan this QR code to verify your AV Postory account!',
+          url: window.location.origin + imgUrl
+        }).catch(console.error);
+      }
+    }
   }
 </script>
 {% endblock %}
