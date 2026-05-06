@@ -249,13 +249,9 @@ block content %}
                     style="color: var(--text-main); font-size: 1.1rem"
                   >
                     {{ u.username }} 
-                    <!-- 🚀 FIX: Using blue_tick instead of is_verified -->
+                    <!-- 🚀 PREMIUM BLUE TICK RENDERED HERE -->
                     {% if u.blue_tick %}
-                    <i
-                      class="fas fa-check-circle text-primary ms-1"
-                      style="font-size: 0.9rem"
-                      title="Verified"
-                    ></i>
+                    <i class="bi bi-patch-check-fill verified-badge ms-1" style="font-size: 1.1rem;" title="Verified"></i>
                     {% endif %}
                   </h6>
                   <p class="text-muted small mb-0 text-truncate">
