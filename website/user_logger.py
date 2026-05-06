@@ -1,7 +1,7 @@
 # FILE: website/user_logger.py
 import os
 import glob
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # Create a 'user_logs' directory in the root of your project
 LOGS_DIR = os.path.join(os.getcwd(), 'user_logs')
@@ -26,11 +26,17 @@ def log_user_action(username, action, details=""):
     if not username:
         return
         
-    timestamp_now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    # 🚀 FIX: Explicitly calculate IST (UTC + 5 hours 30 minutes)
+    ist_offset = timedelta(hours=5, minutes=30)
+    ist_tz = timezone(ist_offset)
+        
+    # Use IST for the log entry timestamp (12-hour AM/PM format)
+    timestamp_now = datetime.now(ist_tz).strftime('%Y-%m-%d %I:%M:%S %p')
     file_path = get_log_filename(username)
     
     if not file_path:
-        file_timestamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
+        # Use IST for the file creation timestamp
+        file_timestamp = datetime.now(ist_tz).strftime('%Y%m%d%H%M%S')
         file_path = os.path.join(LOGS_DIR, f"{username}_{file_timestamp}_log.txt")
     
     log_entry = f"[{timestamp_now}] | ACTION: {action} | DETAILS: {details}\n"
