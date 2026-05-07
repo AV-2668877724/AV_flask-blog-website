@@ -182,7 +182,7 @@
         background-color: var(--bg-input);
         border-radius: 50px;
         height: 44px;
-        width: 260px;
+        width: 220px; 
         border: 2px solid transparent;
         transition: all 0.3s ease;
       }
@@ -243,12 +243,11 @@
         color: transparent !important;
       }
 
-      /* 🚀 REFINED PREMIUM BLUE TICK STYLING */
+      /* REFINED PREMIUM BLUE TICK STYLING */
       .verified-badge {
         color: #1DA1F2 !important; 
         background: radial-gradient(circle, #ffffff 40%, transparent 50%); 
         border-radius: 50%;
-        /* A much more subtle, sophisticated drop shadow */
         text-shadow: 0px 2px 4px rgba(29, 161, 242, 0.2); 
         display: inline-block;
         vertical-align: middle;
@@ -260,17 +259,15 @@
       
       .verified-badge:hover {
         transform: scale(1.1); 
-        /* Slightly brighter only on hover */
         text-shadow: 0px 4px 8px rgba(29, 161, 242, 0.4);
       }
       
       body.dark-mode .verified-badge {
         background: radial-gradient(circle, #ffffff 40%, transparent 50%);
-        /* Subtle glow for dark mode so it isn't blinding */
         text-shadow: 0px 2px 6px rgba(29, 161, 242, 0.35); 
       }
 
-      /* 🚀 GLOWING SUN DARK MODE TOGGLE ANIMATION (FIXED) */
+      /* GLOWING SUN DARK MODE TOGGLE ANIMATION (FIXED) */
       .theme-toggle-btn {
         transition: all 0.3s ease;
         display: flex;
@@ -278,9 +275,9 @@
         justify-content: center;
       }
       
-      /* When dark mode is active, index.js turns the moon into a sun. We apply the glow here! */
+      /* Apply the glowing yellow sun effect ONLY when dark mode is active */
       body.dark-mode .theme-toggle-btn i {
-        color: #fbbf24 !important; /* Warm yellow */
+        color: #fbbf24 !important; 
         text-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.4);
         animation: pulse-sun-glow 2.5s infinite alternate ease-in-out;
       }
@@ -294,6 +291,14 @@
           text-shadow: 0 0 15px rgba(251, 191, 36, 1), 0 0 30px rgba(251, 191, 36, 0.6); 
           transform: scale(1.1); 
         }
+      }
+
+      /* Hamburger icon visibility in Dark Mode */
+      body.dark-mode .navbar-toggler-icon {
+        filter: invert(1) grayscale(100%) brightness(200%);
+      }
+      body.dark-mode .navbar-toggler {
+        border-color: rgba(255, 255, 255, 0.2) !important;
       }
     </style>
     <noscript>
@@ -357,7 +362,7 @@
         </a>
 
         <div
-          class="d-flex align-items-center gap-2 gap-md-3 ms-auto order-lg-last"
+          class="d-flex align-items-center flex-nowrap flex-shrink-0 gap-1 gap-sm-2 gap-md-3 ms-auto order-lg-last"
         >
           {% if current_user.is_authenticated %}
 
@@ -392,7 +397,6 @@
             ></div>
           </form>
 
-          <!-- 🚀 FIX: Single Icon so index.js works properly without doubling -->
           <button
             id="darkToggle"
             class="btn btn-icon shadow-sm theme-toggle-btn"
@@ -1639,6 +1643,51 @@
             }
           });
         }
+      });
+    </script>
+    
+    <script>
+      function initReadMoreButtons() {
+        document.querySelectorAll('.post-text-container').forEach(container => {
+          const textEl = container.querySelector('.post-text');
+          if (!textEl) return;
+          
+          const postId = textEl.id.split('-')[2];
+          const btn = document.querySelector(`.see-more-btn[data-post-id="${postId}"]`);
+          const overlay = document.getElementById(`fade-overlay-${postId}`);
+          
+          const checkHeight = () => {
+            if (btn && textEl) {
+              if (textEl.scrollHeight > textEl.clientHeight + 5 && !textEl.classList.contains('expanded')) {
+                btn.style.display = 'block';
+                if (overlay) overlay.style.display = 'block';
+              }
+            }
+          };
+
+          // 1. Check immediately
+          checkHeight();
+          
+          // 2. Setup a ResizeObserver to catch any layout shifts automatically
+          const observer = new ResizeObserver(() => {
+              checkHeight();
+          });
+          observer.observe(textEl);
+        });
+      }
+      
+      document.addEventListener('DOMContentLoaded', () => {
+        initReadMoreButtons();
+        // Wait for all custom web fonts to be completely rendered
+        if (document.fonts) {
+            document.fonts.ready.then(initReadMoreButtons);
+        }
+      });
+
+      // Final fallback for slow-rendering mobile browsers
+      window.addEventListener('load', () => {
+        initReadMoreButtons();
+        setTimeout(initReadMoreButtons, 500); 
       });
     </script>
   </body>
