@@ -1349,3 +1349,28 @@ document.addEventListener('show.bs.modal', function (event) {
     document.body.appendChild(modal);
   }
 });
+
+
+/* =========================================
+   SMART EMAIL APP ROUTER
+   ========================================= */
+window.openSmartMail = function(service, email, subject, body) {
+    // 1. Detect if the user is on a Mobile Device
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    // 2. Prepare the Desktop Web URLs
+    const gmailWeb = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
+    const zohoWeb = `https://mail.zoho.in/zm/#compose?to=${email}&subject=${subject}&content=${body}`;
+
+    if (isMobile) {
+        // ON MOBILE: Use mailto to instantly slide open the user's native App (Gmail/Zoho/Apple Mail)
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    } else {
+        // ON DESKTOP: Force the web client to open in a new tab (prevents Windows popups)
+        if (service === 'gmail') {
+            window.open(gmailWeb, '_blank');
+        } else if (service === 'zoho') {
+            window.open(zohoWeb, '_blank');
+        }
+    }
+};
