@@ -27,8 +27,8 @@ AV_Postory/
     │
     ├── static/
     │   ├── styles.css       # Contains Premium Skeleton CSS Variables
-    │   ├── index.js         # Contains Global Skeleton UI Controller
-    │   ├── images/          
+    │   ├── index.js         # 🛠️ UPDATED: Contains Global Skeleton UI & window.openSmartMail() Router
+    │   ├── images/  
     │   │   ├── logo.png
     │   │   └── upi_qr.png   # ✅ NEW: QR code for the verification payment
     │   │
@@ -38,15 +38,17 @@ AV_Postory/
     │
     └── templates/
         ├── base.html        # Admin Deactivate Logic, Dark Mode, Global Nav & Notifications
+        ├── base_chat.html   # 📁 MISSING FROM OLD LIST: Dedicated full-screen chat layout wrapper
         ├── home.html        
         ├── login.html       
-        ├── sign_up.html     
+        ├── signup.html      # 📁 RENAMED: (Was sign_up.html in your old list)
         ├── signup_final.html
         ├── verify_otp.html  
         ├── profile.html     # Stats, Deactivation, Skeleton Loader, Get Verified button
-        ├── about.html       
+        ├── about.html       # 🛠️ UPDATED: Added JS Native Email App routing
         ├── terms.html       # ✅ NEW: Terms and conditions page
-        ├── account_deactivated.html 
+        ├── privacy.html     # 📁 MISSING FROM OLD LIST / 🛠️ UPDATED: Privacy policy & Native Email routing
+        ├── account_deactivated.html # 🛠️ UPDATED: Added JS Native Email App routing
         ├── chat.html        
         ├── inbox.html       
         ├── create_posts.html
