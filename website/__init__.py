@@ -1,4 +1,3 @@
-# FILE: __init__.py
 from flask import Flask, url_for 
 from flask_sqlalchemy import SQLAlchemy
 from os import path, makedirs
@@ -170,7 +169,10 @@ def create_app():
             unread_count=unread_notifs, 
             unread_messages=unread_messages, 
             latest_notifs=latest_notifs,
-            now=datetime.now(timezone.utc).replace(tzinfo=None) 
+            now=datetime.now(timezone.utc).replace(tzinfo=None),
+            # 🚀 NEW: Dynamically inject BOTH support and admin emails globally!
+            support_email=os.getenv('SUPPORT_EMAIL', 'varshneyanurag888@gmail.com'),
+            admin_email=os.getenv('ADMIN_EMAIL', 'anuragvarshney@zohomail.in')
         )
 
     @app.context_processor

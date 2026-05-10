@@ -74,10 +74,13 @@ def send_verification_email(user_email):
     link = get_public_link('auth.confirm_email', token=token)
     
     sender_email = os.getenv('MAIL_USERNAME')
+    # 🚀 FIX: Pull SUPPORT_EMAIL for the reply-to field
+    support_email = os.getenv('SUPPORT_EMAIL', 'varshneyanurag888@gmail.com')
+    
     msg = Message('Confirm Your Email - AV Postory', 
                   sender=sender_email, 
                   recipients=[user_email],
-                  reply_to='noreply@avpostory.com')
+                  reply_to=support_email)
     
     msg.body = f'Your link is: {link}\n\nThis link expires in 1 hour.'
     
@@ -90,10 +93,13 @@ def send_reset_email(user_email):
     link = get_public_link('auth.forgot_password_token', token=token) 
     
     sender_email = os.getenv('MAIL_USERNAME')
+    # 🚀 FIX: Pull SUPPORT_EMAIL for the reply-to field
+    support_email = os.getenv('SUPPORT_EMAIL', 'varshneyanurag888@gmail.com')
+    
     msg = Message('Password Reset Request - AV Postory', 
                   sender=sender_email, 
                   recipients=[user_email],
-                  reply_to='noreply@avpostory.com')
+                  reply_to=support_email)
                   
     logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png" 
     
@@ -146,10 +152,13 @@ def send_reset_email(user_email):
 
 def send_welcome_email(user_email, username):
     sender_email = os.getenv('MAIL_USERNAME')
+    # 🚀 FIX: Pull SUPPORT_EMAIL for the reply-to field
+    support_email = os.getenv('SUPPORT_EMAIL', 'varshneyanurag888@gmail.com')
+    
     msg = Message('Welcome to AV Postory! 🎉', 
                   sender=sender_email, 
                   recipients=[user_email],
-                  reply_to='noreply@avpostory.com')
+                  reply_to=support_email)
     
     logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png"
     
@@ -241,9 +250,13 @@ def sign_up():
         
         try:
             sender_email = os.getenv('MAIL_USERNAME')
+            # 🚀 FIX: Pull SUPPORT_EMAIL for the reply-to field
+            support_email = os.getenv('SUPPORT_EMAIL', 'varshneyanurag888@gmail.com')
+            
             msg = Message('Your Verification Code - AV Postory', 
                   sender=sender_email, 
-                  recipients=[email])
+                  recipients=[email],
+                  reply_to=support_email)
             msg.body = f'Your verification code is: {otp}\n\nDo not share this code.'
             
             # 🚀 NEW: Queue the email instead of using threading.Thread
