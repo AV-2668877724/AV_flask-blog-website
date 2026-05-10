@@ -1647,48 +1647,57 @@
     </script>
     
     <script>
-      function initReadMoreButtons() {
+      function calculateReadMore() {
         document.querySelectorAll('.post-text-container').forEach(container => {
           const textEl = container.querySelector('.post-text');
-          if (!textEl) return;
+          
+          // CRITICAL: If the post is hidden inside a skeleton loader (offsetParent is null), we CANNOT calculate height yet!
+          if (!textEl || textEl.offsetParent === null) return;
           
           const postId = textEl.id.split('-')[2];
           const btn = document.querySelector(`.see-more-btn[data-post-id="${postId}"]`);
           const overlay = document.getElementById(`fade-overlay-${postId}`);
           
-          const checkHeight = () => {
-            if (btn && textEl) {
-              if (textEl.scrollHeight > textEl.clientHeight + 5 && !textEl.classList.contains('expanded')) {
-                btn.style.display = 'block';
-                if (overlay) overlay.style.display = 'block';
-              }
+          if (btn) {
+            // Check if actual text height is larger than the visible CSS clamped height
+            if (textEl.scrollHeight > textEl.clientHeight + 10 && !textEl.classList.contains('expanded')) {
+              btn.style.display = 'block';
+              if (overlay) overlay.style.display = 'block';
+            } else if (!textEl.classList.contains('expanded')) {
+              btn.style.display = 'none';
+              if (overlay) overlay.style.display = 'none';
             }
-          };
-
-          // 1. Check immediately
-          checkHeight();
-          
-          // 2. Setup a ResizeObserver to catch any layout shifts automatically
-          const observer = new ResizeObserver(() => {
-              checkHeight();
-          });
-          observer.observe(textEl);
+          }
         });
       }
-      
-      document.addEventListener('DOMContentLoaded', () => {
-        initReadMoreButtons();
-        // Wait for all custom web fonts to be completely rendered
-        if (document.fonts) {
-            document.fonts.ready.then(initReadMoreButtons);
-        }
-      });
 
-      // Final fallback for slow-rendering mobile browsers
-      window.addEventListener('load', () => {
-        initReadMoreButtons();
-        setTimeout(initReadMoreButtons, 500); 
-      });
+      // 1. Run immediately on DOM and Window load
+      document.addEventListener('DOMContentLoaded', calculateReadMore);
+      window.addEventListener('load', calculateReadMore);
+
+      // 2. Wait for custom web fonts (Inter, Playfair) to finish painting
+      if (document.fonts) {
+          document.fonts.ready.then(calculateReadMore);
+      }
+
+      // 3. Image Load Listener: Any time an image finishes loading inside a post, recalculate!
+      document.addEventListener('load', function(event) {
+          if (event.target.tagName && event.target.tagName.toLowerCase() === 'img') {
+              calculateReadMore();
+          }
+      }, true); // Use capture phase to catch all bubbling images
+
+      // 4. Mutation Observer: Watches for the exact millisecond the Skeleton Loader is removed
+      const domObserver = new MutationObserver(() => calculateReadMore());
+      domObserver.observe(document.body, { childList: true, subtree: true });
+
+      // 5. The Ultimate Failsafe (Micro-Polling): Check every 300ms for the first 3 seconds just in case.
+      let pollCount = 0;
+      const pollInterval = setInterval(() => {
+          calculateReadMore();
+          pollCount++;
+          if (pollCount >= 10) clearInterval(pollInterval);
+      }, 300);
     </script>
   </body>
 </html>
