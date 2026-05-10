@@ -11,12 +11,22 @@ class Config:
     # ⚡ PERFORMANCE: Cache Static Files (Images/CSS) for 1 Year
     SEND_FILE_MAX_AGE_DEFAULT = 31536000
     
-    # EMAIL CONFIGURATION
-    MAIL_SERVER = 'smtp.googlemail.com'
-    MAIL_PORT = 587
-    MAIL_USE_TLS = True
+    # ==========================================
+    # 📧 DYNAMIC EMAIL CONFIGURATION
+    # ==========================================
+    # Pulls directly from .env (Prevents accidental fallback to Gmail)
+    MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.zoho.in')
+    MAIL_PORT = int(os.getenv('MAIL_PORT', 465))
+    MAIL_USE_TLS = str(os.getenv('MAIL_USE_TLS', 'False')).lower() == 'true'
+    MAIL_USE_SSL = str(os.getenv('MAIL_USE_SSL', 'True')).lower() == 'true'
+    
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.getenv('MAIL_USERNAME')
+
+    # 🚀 DEDICATED ROUTING EMAILS
+    SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', 'varshneyanurag888@gmail.com')
+    ADMIN_EMAIL = os.getenv('ADMIN_EMAIL', 'anuragvarshney@zohomail.in')
 
 class DevelopmentConfig(Config):
     DEBUG = True

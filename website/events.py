@@ -1,12 +1,11 @@
-# FILE: events.py
 from flask import request
 from flask_login import current_user
 from . import socketio, db
-from .models import Message, User, Notification, Block 
+from .models import Message, User, Notification, Block
 from flask_socketio import emit, join_room, leave_room
 from datetime import datetime, timezone
-import bleach 
-from sqlalchemy import or_, and_ 
+import bleach
+from sqlalchemy import or_, and_
 
 # IMPORT THE PROCESSOR FROM VIEWS FOR LINK PREVIEWS & TAGS
 from .views import process_text_links
