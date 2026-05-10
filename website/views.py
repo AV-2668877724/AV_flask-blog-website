@@ -799,10 +799,13 @@ def process_payment(plan):
             
             if image_url:
                 try:
+                    # 🚀 FIX: Sending Blue Tick alerts to the primary Zoho Admin email
+                    admin_email = os.getenv('MAIL_USERNAME', 'anuragvarshney@zohomail.in')
+                    
                     msg = MailMessage(
                         subject=f"New Blue Tick Verification Request: {current_user.username}",
                         sender=os.getenv('MAIL_USERNAME'),
-                        recipients=['anuragvarshney@zohomail.in'] 
+                        recipients=[admin_email] 
                     )
                     
                     msg.html = f"""
@@ -1907,5 +1910,13 @@ def about():
     if current_user.is_authenticated:
         log_user_action(current_user.username, "VIEW_PAGE", "Viewed About Us page.")
     resp = make_response(render_template("about.html", user=current_user))
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
+@views.route('/privacy')
+def privacy():
+    if current_user.is_authenticated:
+        log_user_action(current_user.username, "VIEW_PAGE", "Viewed Privacy & Security Policy.")
+    resp = make_response(render_template("privacy.html", user=current_user))
     resp.headers['Cache-Control'] = 'public, max-age=3600'
     return resp
