@@ -9,7 +9,6 @@
         </h4>
         
         <div class="d-flex gap-2 align-items-center">
-            <!-- Delete Button Form -->
             <form action="{{ url_for('views.delete_log_file', filename=filename) }}" method="POST" onsubmit="return confirm('WARNING: Are you absolutely sure you want to permanently delete this log file? This cannot be undone.') && injectAdminPassword(this);" class="m-0">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm fw-bold">
@@ -24,11 +23,9 @@
     </div>
     
     <div class="card border-0 shadow-sm" style="border-radius: 15px; background-color: var(--bg-card); overflow: hidden;">
-        <!-- Edit Form -->
         <form action="{{ url_for('views.edit_log_content', filename=filename) }}" method="POST" class="m-0" onsubmit="return injectAdminPassword(this);">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             
-            <!-- We changed <pre> to <textarea> so you can type in it! -->
             <textarea 
                 name="log_content" 
                 class="form-control border-0 p-3 bg-dark text-success w-100 shadow-none" 
@@ -45,7 +42,6 @@
     </div>
 </div>
 
-<!-- Admin Password Verification Modal -->
 <div class="modal fade" id="adminPasswordModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background-color: var(--bg-card)">
