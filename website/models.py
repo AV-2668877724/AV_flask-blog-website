@@ -1,4 +1,3 @@
-# FILE: website/models.py
 from . import db
 from flask_login import UserMixin
 from sqlalchemy.sql import func
@@ -60,7 +59,7 @@ class User(db.Model, UserMixin):
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
     is_verified = db.Column(db.Boolean, default=False) # Keeps track of Email OTP
-    blue_tick = db.Column(db.Boolean, default=False)   # 🚀 NEW: Premium Blue Tick Status
+    blue_tick = db.Column(db.Boolean, default=False)   # 🚀 Premium Blue Tick Status
     deactivation_reason = db.Column(db.String(500), nullable=True)
     
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
@@ -85,7 +84,6 @@ class Post(db.Model):
     __tablename__ = 'post'
     id = db.Column(db.Integer, primary_key=True)
     
-    # 🚀 NEW FIELDS
     title = db.Column(db.String(200), nullable=True)
     slug = db.Column(db.String(220), unique=True, nullable=True, index=True)
     excerpt = db.Column(db.String(300), nullable=True)
@@ -138,7 +136,7 @@ class Comment(db.Model):
     __tablename__ = 'comment'
     id = db.Column(db.Integer, primary_key=True)
     
-    # 🚀 FIX: Upgraded to db.Text to safely hold auto-generated HTML anchor tags for mentions
+    # Upgraded to db.Text to safely hold auto-generated HTML anchor tags for mentions
     text = db.Column(db.Text, nullable=False) 
     
     author = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
@@ -178,7 +176,7 @@ class CommentLike(db.Model):
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 # =====================================================
-# Safety & Moderation Models 🚀 NEW
+# Safety & Moderation Models 
 # =====================================================
 
 class Block(db.Model):
@@ -200,3 +198,30 @@ class Report(db.Model):
     reason = db.Column(db.String(200), nullable=False)
     is_resolved = db.Column(db.Boolean, default=False)
     date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), index=True)
+
+# =====================================================
+# Affiliate & Monetization Models 🚀 NEW
+# =====================================================
+
+class Affiliate(db.Model):
+    __tablename__ = 'affiliate'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Links directly to the user acting as the affiliate
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, unique=True)
+    
+    # Tracking and Payout details
+    referral_code = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    upi_id = db.Column(db.String(150), nullable=True)
+    
+    # Analytics
+    clicks = db.Column(db.Integer, default=0)
+    conversions = db.Column(db.Integer, default=0)
+    total_earned = db.Column(db.Float, default=0.0)
+    unpaid_balance = db.Column(db.Float, default=0.0)
+    
+    is_active = db.Column(db.Boolean, default=True)
+    date_created = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    
+    # Creates a one-to-one relationship back to the User object (e.g., current_user.affiliate_profile)
+    user = db.relationship('User', backref=db.backref('affiliate_profile', uselist=False))
