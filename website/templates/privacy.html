@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Privacy & Security - AV Postory{% endblock %}
+
+{% block content %}
+<style>
+  .policy-section {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--trans-smooth);
+  }
+  .policy-section:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+  .policy-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+  }
+  .policy-list li {
+    margin-bottom: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+  .policy-list li strong {
+    color: var(--text-main);
+  }
+</style>
+
+<div class="row justify-content-center py-5 fade-in-up">
+  <div class="col-lg-9 text-center">
+    <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-4" style="width: 80px; height: 80px;">
+      <i class="fas fa-user-shield fa-2x"></i>
+    </div>
+    <h1 class="display-5 font-heading fw-bold mb-3" style="color: var(--text-main)">
+      Privacy & Security Policy
+    </h1>
+    <p class="lead text-secondary mx-auto" style="max-width: 700px; line-height: 1.8;">
+      At <strong>AV Postory</strong>, your privacy isn't an afterthought—it's a core feature. We believe in total transparency regarding how we handle your data and the enterprise-grade measures we use to protect it.
+    </p>
+    <p class="text-muted small mt-3">Last Updated: May 2026</p>
+  </div>
+</div>
+
+<div class="row justify-content-center fade-in-up" style="animation-delay: 0.1s;">
+  <div class="col-lg-9">
+
+    <div class="policy-section">
+      <div class="policy-icon-wrapper bg-info bg-opacity-10 text-info">
+        <i class="fas fa-database"></i>
+      </div>
+      <h3 class="fw-bold font-heading mb-3" style="color: var(--text-main)">1. Information We Collect</h3>
+      <p class="text-muted mb-4">To provide you with a seamless publishing and social experience, we only collect the data absolutely necessary to run the platform.</p>
+      <ul class="policy-list">
+        <li><i class="fas fa-check text-success me-2"></i> <strong>Account Data:</strong> Your username, email address, and hashed password.</li>
+        <li><i class="fas fa-check text-success me-2"></i> <strong>Profile Data:</strong> Information you voluntarily provide, such as your bio, avatar, cover photo, and social links.</li>
+        <li><i class="fas fa-check text-success me-2"></i> <strong>Content Data:</strong> The posts you write, images you upload, comments you make, and messages you send in real-time chat.</li>
+        <li><i class="fas fa-check text-success me-2"></i> <strong>Activity Logs:</strong> Timestamps of your logins, post creations, and basic platform interactions to ensure security and prevent abuse.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <div class="policy-icon-wrapper bg-warning bg-opacity-10 text-warning">
+        <i class="fas fa-lock"></i>
+      </div>
+      <h3 class="fw-bold font-heading mb-3" style="color: var(--text-main)">2. How We Protect Your Data</h3>
+      <p class="text-muted mb-4">We employ modern, ironclad security protocols to ensure your data remains completely safe from unauthorized access.</p>
+      <ul class="policy-list">
+        <li><i class="fas fa-shield-alt text-primary me-2"></i> <strong>Password Encryption:</strong> Your passwords are never stored in plain text. They are heavily encrypted using secure Werkzeug hashing algorithms.</li>
+        <li><i class="fas fa-shield-alt text-primary me-2"></i> <strong>XSS & CSRF Protection:</strong> Every form on our platform uses CSRF tokens, and user inputs are rigorously sanitized using Bleach to prevent malicious code injections.</li>
+        <li><i class="fas fa-shield-alt text-primary me-2"></i> <strong>Secure Media Storage:</strong> All images you upload are safely stored and delivered via Cloudinary's secure, encrypted Content Delivery Network (CDN).</li>
+        <li><i class="fas fa-shield-alt text-primary me-2"></i> <strong>Rate Limiting:</strong> We use intelligent rate-limiting to prevent spam, bot attacks, and brute-force login attempts.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <div class="policy-icon-wrapper bg-danger bg-opacity-10 text-danger">
+        <i class="fas fa-hand-paper"></i>
+      </div>
+      <h3 class="fw-bold font-heading mb-3" style="color: var(--text-main)">3. What We Do NOT Do</h3>
+      <p class="text-muted mb-4">AV Postory was built to be a distraction-free space. Your trust is our highest priority.</p>
+      <ul class="policy-list">
+        <li><i class="fas fa-times text-danger me-2"></i> <strong>We do NOT sell your data:</strong> We will never sell your personal information, email, or content to advertisers or third-party data brokers.</li>
+        <li><i class="fas fa-times text-danger me-2"></i> <strong>No third-party trackers:</strong> We do not inject invasive advertising trackers or cookies into your browser.</li>
+        <li><i class="fas fa-times text-danger me-2"></i> <strong>We do NOT read your private chats:</strong> Your direct messages are private between you and the recipient. You also have the power to clear your chat history at any time.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <div class="policy-icon-wrapper bg-success bg-opacity-10 text-success">
+        <i class="fas fa-user-check"></i>
+      </div>
+      <h3 class="fw-bold font-heading mb-3" style="color: var(--text-main)">4. Your Control & Rights</h3>
+      <p class="text-muted mb-4">You have complete autonomy over your digital footprint on AV Postory.</p>
+      <ul class="policy-list">
+        <li><i class="fas fa-chevron-right text-muted me-2"></i> <strong>Account Deactivation:</strong> You can temporarily deactivate your account at any time, which hides your profile and content from the public.</li>
+        <li><i class="fas fa-chevron-right text-muted me-2"></i> <strong>Permanent Deletion:</strong> You have the right to be forgotten. You can request a permanent deletion of your account and all associated data.</li>
+        <li><i class="fas fa-chevron-right text-muted me-2"></i> <strong>Data Management:</strong> You can edit or delete your posts, comments, and profile information whenever you choose.</li>
+      </ul>
+    </div>
+
+    <div class="card border-0 shadow-sm text-center p-5 mb-5" style="border-radius: 24px; background-color: var(--bg-input);">
+      <h4 class="fw-bold font-heading mb-3" style="color: var(--text-main)">Have Questions About Your Privacy?</h4>
+      <p class="text-muted mb-4">We are always here to help clarify our practices or address any security concerns you might have.</p>
+      
+      <a 
+        href="#" onclick="openSmartMail('gmail', '{{ support_email }}', 'Privacy%20Team%20Inquiry', ''); return false;"
+        class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center mx-auto" 
+        style="width: fit-content;"
+      >
+        <i class="fas fa-envelope me-2"></i> Contact Privacy Team
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
