@@ -47,6 +47,8 @@ views = Blueprint('views', __name__)
 
 @views.route('/terms')
 def terms():
+    if current_user.is_authenticated:
+        log_user_action(current_user.username, "VIEW_PAGE", "Viewed Terms & Conditions page.")
     return render_template("terms.html", user=current_user)
 
 @views.route('/home')
@@ -75,6 +77,8 @@ def home():
             'has_next': pagination.has_next
         })
 
+    # Log initial page load (not every infinite scroll trigger)
+    log_user_action(current_user.username, "VIEW_PAGE", "Viewed Home Feed.")
     return render_template("home.html", user=current_user, posts=posts, pagination=pagination)
 
 
@@ -119,7 +123,6 @@ def create_post():
             db.session.add(post)
             db.session.commit()
             
-            # 🚀 NEW: Log Action
             log_user_action(current_user.username, "CREATE_POST", f"Created Post ID: {post.id} | Title: '{title}'")
             
             notify_mentions(raw_text, post.id, current_user.id)
@@ -127,6 +130,7 @@ def create_post():
             flash('Post created successfully!', category='success')
             return redirect(url_for('views.home'))
 
+    log_user_action(current_user.username, "VIEW_PAGE", "Opened 'Create Post' page.")
     return render_template('create_posts.html', user=current_user)
 
 
@@ -172,13 +176,13 @@ def edit_post(id):
                 
             db.session.commit()
             
-            # 🚀 NEW: Log Action
             log_user_action(current_user.username, "UPDATE_POST", f"Edited Post ID: {post.id} | Title: '{title}'")
             
             notify_mentions(raw_text, post.id, current_user.id)
             flash("Post updated!", category='success')
             return redirect(url_for('views.home'))
 
+    log_user_action(current_user.username, "VIEW_PAGE", f"Opened 'Edit Post' page for Post ID: {post.id}")
     content_to_edit = post.text
     if '\n' in content_to_edit and '<p>' not in content_to_edit and '<br>' not in content_to_edit:
         content_to_edit = content_to_edit.replace('\n', '<br>')
@@ -205,6 +209,7 @@ def post_view(slug):
     if current_user.is_authenticated:
         blockers, blocked_by_me = get_block_lists(current_user.id) 
         all_blocked_ids = list(set(blockers + blocked_by_me))
+        log_user_action(current_user.username, "VIEW_POST", f"Viewed Post ID: {post.id} | Title: '{post.title}'")
     else:
         all_blocked_ids = []
     
@@ -232,6 +237,8 @@ def posts(username):
     if user.id in all_blocked_ids:
         flash("You cannot view this user's posts.", category='error')
         return redirect(url_for('views.home'))
+
+    log_user_action(current_user.username, "VIEW_PAGE", f"Viewed post history feed for user: {username}")
 
     page = request.args.get('page', 1, type=int)
     
@@ -264,7 +271,6 @@ def delete_post(id):
         post.is_deleted = True
         db.session.commit()
         
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "DELETE_POST", f"Moved Post ID: {id} to trash.")
         
         flash('Post moved to trash.', category='success')
@@ -299,7 +305,6 @@ def create_comment(post_id):
             db.session.add(comment)
             db.session.commit()
             
-            # 🚀 NEW: Log Action
             log_user_action(current_user.username, "CREATE_COMMENT", f"Commented on Post ID: {post_id}")
             
             create_notification(current_user.id, post.author, 'comment', post.id)
@@ -322,7 +327,6 @@ def delete_comment(comment_id):
         comment.is_deleted = True
         db.session.commit()
         
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "DELETE_COMMENT", f"Deleted Comment ID: {comment_id}")
         
         flash('Comment deleted.', category='success')
@@ -340,11 +344,13 @@ def like(post_id):
     if like:
         db.session.delete(like)
         db.session.commit()
+        log_user_action(current_user.username, "UNLIKE_POST", f"Removed like from Post ID: {post_id}")
     else:
         like = Like(author=current_user.id, post_id=post_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None)) 
         db.session.add(like)
         db.session.commit()
         liked = True
+        log_user_action(current_user.username, "LIKE_POST", f"Liked Post ID: {post_id}")
         create_notification(current_user.id, post.author, 'like', post.id)
 
     return jsonify({"likes": len(post.likes), "liked": liked})
@@ -360,11 +366,13 @@ def save_post(post_id):
     if saved_post:
         db.session.delete(saved_post)
         db.session.commit()
+        log_user_action(current_user.username, "UNSAVE_POST", f"Removed Post ID: {post_id} from saved items.")
     else:
         new_save = SavedPost(user_id=current_user.id, post_id=post_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None)) 
         db.session.add(new_save)
         db.session.commit()
         saved = True
+        log_user_action(current_user.username, "SAVE_POST", f"Saved Post ID: {post_id} to collection.")
 
     saves_count = len(post.saved_by)
     return jsonify({"saved": saved, "saves_count": saves_count})
@@ -376,6 +384,8 @@ def save_post(post_id):
 @views.route('/notifications')
 @login_required
 def notifications():
+    log_user_action(current_user.username, "VIEW_PAGE", "Viewed Notifications Page.")
+    
     unread_notifs = Notification.query.options(joinedload(Notification.visitor))\
         .filter_by(recipient_id=current_user.id, is_read=False)\
         .order_by(Notification.date_created.desc()).limit(30).all()
@@ -438,6 +448,7 @@ def mark_notifications_read():
     for n in unread_notifs:
         n.is_read = True
     db.session.commit()
+    log_user_action(current_user.username, "READ_NOTIFICATIONS", "Marked all active notifications as read.")
     return jsonify({'success': True})
 
 # =================================================
@@ -464,6 +475,8 @@ def profile(username):
 
     page = request.args.get('page', 1, type=int)
     tab = request.args.get('tab', 'posts') 
+
+    log_user_action(current_user.username, "VIEW_PROFILE", f"Viewed Profile: {username} | Tab: {tab}")
 
     if tab == 'saved' and current_user.id == user.id:
         pagination = Post.query.join(SavedPost, SavedPost.post_id == Post.id)\
@@ -523,6 +536,7 @@ def upload_quill_image():
     if file and allowed_file(file.filename):
         image_url = upload_to_cloudinary(file, 'posts/inline', width=1200) # Give them good resolution for body
         if image_url:
+            log_user_action(current_user.username, "UPLOAD_IMAGE", "Uploaded an inline image to a post.")
             return jsonify({'success': True, 'url': image_url})
             
     return jsonify({'success': False, 'message': 'Invalid file type or upload failed'}), 400
@@ -548,7 +562,6 @@ def update_profile_pic():
             current_user.profile_pic = image_url
             db.session.commit()
             
-            # 🚀 NEW: Log Action
             log_user_action(current_user.username, "UPDATE_PROFILE", "Updated profile picture.")
             
             flash('Profile picture updated!', category='success')
@@ -570,7 +583,6 @@ def edit_bio():
         current_user.bio = new_bio
         db.session.commit()
         
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "UPDATE_PROFILE", "Updated bio.")
         
         flash('Bio updated!', category='success')
@@ -641,7 +653,6 @@ def change_username():
             current_user.username = new_username
             db.session.commit()
             
-            # 🚀 NEW: Log Rename
             rename_user_log(old_username, new_username)
             
             flash("Username updated! Please login again.", category='success')
@@ -669,7 +680,6 @@ def add_social_link():
         flag_modified(current_user, "social_links")
         db.session.commit()
         
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "UPDATE_PROFILE", f"Added social link: {link}")
         
         flash("Link added!", category='success')
@@ -698,7 +708,6 @@ def block_user(user_id):
         
         db.session.commit()
         
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "BLOCK_USER", f"Blocked user ID: {user_id}")
         
         return jsonify({'success': True, 'action': 'blocked'})
@@ -713,7 +722,6 @@ def unblock_user(user_id):
         db.session.delete(block_record)
         db.session.commit()
         
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "UNBLOCK_USER", f"Unblocked user ID: {user_id}")
         
         return jsonify({'success': True, 'action': 'unblocked'})
@@ -739,17 +747,15 @@ def report_item(item_type, item_id):
             
     db.session.commit()
     
-    # 🚀 NEW: Log Action
     log_user_action(current_user.username, "REPORT_CONTENT", f"Reported {item_type} ID: {item_id}")
     
     return jsonify({'success': True, 'message': 'Report submitted for review.'})
 
 
 # =================================================
-# GET VERIFIED (BLUE TICK) ROUTES 🚀 NEW
+# GET VERIFIED (BLUE TICK) ROUTES
 # =================================================
 
-# Central dictionary containing all pricing plan logic
 VERIFICATION_PLANS = {
     'monthly': {'name': 'Monthly', 'price': '49', 'duration': '1 month'},
     '6-months': {'name': '6 Months Early Adopter', 'price': '3', 'duration': '6 months'},
@@ -763,7 +769,7 @@ def get_verified():
         flash("You are already verified! Enjoy your Blue Tick.", category="info")
         return redirect(url_for('views.profile', username=current_user.username))
     
-    # Just render the pricing page
+    log_user_action(current_user.username, "VIEW_PAGE", "Viewed Get Verified pricing page.")
     return render_template('get_verified.html', user=current_user)
 
 @views.route('/process-payment/<string:plan>', methods=['GET', 'POST'])
@@ -774,7 +780,6 @@ def process_payment(plan):
         flash("You are already verified! Enjoy your Blue Tick.", category="info")
         return redirect(url_for('views.profile', username=current_user.username))
 
-    # Validate that the user didn't try to hack the URL
     if plan not in VERIFICATION_PLANS:
         flash("Invalid verification plan selected.", category="error")
         return redirect(url_for('views.get_verified'))
@@ -794,14 +799,12 @@ def process_payment(plan):
             
             if image_url:
                 try:
-                    # Construct email for Zoho Mail
                     msg = MailMessage(
                         subject=f"New Blue Tick Verification Request: {current_user.username}",
                         sender=os.getenv('MAIL_USERNAME'),
                         recipients=['anuragvarshney@zohomail.in'] 
                     )
                     
-                    # 🚀 FIX: 100% Mobile-Responsive Email Template
                     msg.html = f"""
                     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3f4f6; padding: 15px 10px;">
                         <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden;">
@@ -811,7 +814,6 @@ def process_payment(plan):
                                     A user has submitted a payment for Blue Tick verification.
                                 </p>
                                 
-                                <!-- Mobile-friendly stacked receipt box -->
                                 <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
                                     <p style="margin: 0 0 12px 0; font-size: 14px; color: #1e293b;">
                                         <strong style="color: #64748b; display: block; font-size: 12px; text-transform: uppercase;">Username</strong>
@@ -848,7 +850,6 @@ def process_payment(plan):
                     
                     mail.send(msg)
                     
-                    # Log Action with Plan Name
                     log_user_action(current_user.username, "VERIFICATION_REQUEST", f"Plan: {selected_plan['name']} | Txn ID: {transaction_id}")
                     
                     flash('Payment submitted successfully! Your account will be verified within 24 hours.', category='success')
@@ -861,19 +862,20 @@ def process_payment(plan):
         else:
             flash('Invalid file type. Please upload a valid image.', category='error')
 
-    # If it's a GET request, render the new checkout page
+    log_user_action(current_user.username, "VIEW_PAGE", f"Opened Checkout Page for plan: {plan}")
     return render_template('process_payment.html', user=current_user, plan_id=plan, plan_details=selected_plan)
 
 # =================================================
 # ADMIN ROUTES
 # =================================================
 
-
 @views.route('/admin-dashboard')
 @login_required
 def admin_dashboard():
     if not current_user.is_admin:
         abort(403)
+        
+    log_user_action(current_user.username, "VIEW_ADMIN", "Opened Admin Dashboard.")
         
     users = User.query.all()
     
@@ -914,17 +916,15 @@ def admin_dashboard():
 def admin_logs():
     if not current_user.is_admin:
         abort(403)
+        
+    log_user_action(current_user.username, "VIEW_ADMIN", "Viewed Admin Logs Panel.")
     
-    # Get all log files from the directory
     logs_path = os.path.join(os.getcwd(), 'user_logs', '*_log.txt')
     log_files = glob.glob(logs_path)
     
-    # Format the data for the template
     logs_data = []
     for f in log_files:
         filename = os.path.basename(f)
-        # Extract username from "username_timestamp_log.txt"
-        # We split by '_' and take everything before the timestamp part
         username = filename.rsplit('_', 2)[0] 
         logs_data.append({
             'filename': filename,
@@ -941,7 +941,6 @@ def view_log_content(filename):
     if not current_user.is_admin:
         abort(403)
     
-    # Security: Ensure they aren't trying to access files outside the logs folder
     if ".." in filename or "/" in filename or "\\" in filename:
         abort(400)
 
@@ -949,6 +948,8 @@ def view_log_content(filename):
     if not os.path.exists(file_path):
         flash("Log file not found.", category='error')
         return redirect(url_for('views.admin_logs'))
+        
+    log_user_action(current_user.username, "VIEW_ADMIN", f"Opened specific log file: {filename}")
     
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
@@ -966,7 +967,6 @@ def edit_log_content(filename):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.view_log_content', filename=filename))
         
-    # Security check to prevent directory traversal attacks
     if ".." in filename or "/" in filename or "\\" in filename:
         abort(400)
         
@@ -977,11 +977,9 @@ def edit_log_content(filename):
         
     new_content = request.form.get('log_content')
     if new_content is not None:
-        # Save the new content, ensuring line endings are correct for the OS
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(new_content.replace('\r\n', '\n'))
         
-        # Log the fact that the admin edited a file!
         log_user_action(current_user.username, "ADMIN_EDIT_LOG", f"Edited log file: {filename}")
         flash(f"Log file '{filename}' updated successfully.", category='success')
         
@@ -998,15 +996,13 @@ def delete_log_file(filename):
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_logs'))
         
-    # Security check to prevent directory traversal attacks
     if ".." in filename or "/" in filename or "\\" in filename:
         abort(400)
         
     file_path = os.path.join(os.getcwd(), 'user_logs', filename)
     if os.path.exists(file_path):
-        os.remove(file_path) # Permanently deletes the file from the server
-        
-        # 🚀 FIXED: Removed the logging action that was respawning the file!
+        os.remove(file_path) 
+        log_user_action(current_user.username, "ADMIN_DELETE_LOG", f"Deleted log file: {filename}")
         flash(f"Log file '{filename}' has been completely deleted.", category='success')
     else:
         flash("Log file not found.", category='error')
@@ -1024,10 +1020,8 @@ def admin_cleanup_logs():
         flash("Incorrect admin password", category='error')
         return redirect(url_for('views.admin_logs'))
         
-    # Keeps only the last 500 entries per user
     cleaned_files = cleanup_old_logs(max_lines=500)
     
-    # Log the fact that the admin did a cleanup!
     log_user_action(current_user.username, "ADMIN_MAINTENANCE", f"Triggered log cleanup. Trimmed {cleaned_files} overgrown files.")
     
     flash(f"Maintenance complete! Trimmed {cleaned_files} oversized log files down to their most recent 500 entries.", category='success')
@@ -1047,7 +1041,6 @@ def admin_remove_block(block_id):
     db.session.delete(block_record)
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_REMOVE_BLOCK", f"Removed block ID: {block_id}")
     
     flash("Block successfully removed by Admin.", category='success')
@@ -1079,7 +1072,6 @@ def admin_resolve_report(report_id):
             
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_RESOLVE_REPORT", f"Resolved report ID: {report_id}")
     
     flash('Report marked as resolved.', category='success')
@@ -1106,7 +1098,6 @@ def admin_delete_user(user_id):
         db.session.delete(user_to_delete)
         db.session.commit()
         
-        # 🚀 NEW: Log Admin Action
         log_user_action(current_user.username, "ADMIN_DELETE_USER", f"Permanently deleted user ID: {user_id}")
         
         flash(f"User {user_to_delete.username} deleted permanently.", category='success')
@@ -1124,7 +1115,6 @@ def restore_post(id):
         post.is_deleted = False
         db.session.commit()
         
-        # 🚀 NEW: Log Admin Action
         log_user_action(current_user.username, "ADMIN_RESTORE_POST", f"Restored Post ID: {id}")
         
         flash('Post restored successfully!', category='success')
@@ -1153,13 +1143,11 @@ def admin_toggle_user_status(user_id):
     
     status = "Active" if user.is_active else "Deactivated"
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_TOGGLE_USER_STATUS", f"Toggled status for user ID: {user_id} to {status}")
     
     flash(f"User {user.username} is now {status}.", category='success')
     return redirect(url_for('views.admin_dashboard'))
 
-# 🚀 NEW: Admin Route to Grant Blue Tick Manually
 @views.route('/admin/toggle-verification/<int:user_id>', methods=['POST'])
 @login_required
 def admin_toggle_verification(user_id):
@@ -1173,7 +1161,6 @@ def admin_toggle_verification(user_id):
 
     user = User.query.get_or_404(user_id)
     
-    # 🚀 FIX: Toggle `blue_tick` instead of `is_verified`
     user.blue_tick = not user.blue_tick
     db.session.commit()
     
@@ -1197,7 +1184,6 @@ def admin_delete_post(post_id):
     post.is_deleted = True
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_DELETE_POST", f"Deleted post ID: {post_id} to trash")
     
     flash("Post moved to trash.", category='success')
@@ -1219,7 +1205,6 @@ def admin_permanent_delete_post(post_id):
     db.session.delete(post)
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_PERMANENT_DELETE_POST", f"Permanently deleted post ID: {post_id}")
     
     flash("Post permanently deleted.", category='success')
@@ -1240,7 +1225,6 @@ def admin_delete_comment(comment_id):
     comment.is_deleted = True
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_DELETE_COMMENT", f"Hid comment ID: {comment_id}")
     
     flash("Comment hidden.", category='success')
@@ -1262,7 +1246,6 @@ def admin_permanent_delete_comment(comment_id):
     db.session.delete(comment)
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_PERMANENT_DELETE_COMMENT", f"Permanently deleted comment ID: {comment_id}")
     
     flash('Comment permanently deleted.', category='success')
@@ -1284,7 +1267,6 @@ def admin_restore_comment(comment_id):
     comment.is_deleted = False
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_RESTORE_COMMENT", f"Restored comment ID: {comment_id}")
     
     flash("Comment restored.", category='success')
@@ -1304,7 +1286,6 @@ def admin_restore_post(post_id):
     post.is_deleted = False
     db.session.commit()
     
-    # 🚀 NEW: Log Admin Action
     log_user_action(current_user.username, "ADMIN_RESTORE_POST", f"Restored post ID: {post_id}")
     
     flash("Post restored.", category='success')
@@ -1335,6 +1316,8 @@ def follow_user(user_id):
         db.session.commit()
         create_notification(current_user.id, user_id, 'follow')
         
+        log_user_action(current_user.username, "FOLLOW_USER", f"Started following User ID: {user_id}")
+        
         return jsonify({'success': True, 'action': 'followed'})
         
     return jsonify({'success': False, 'message': 'Already following'})
@@ -1347,6 +1330,7 @@ def unfollow_user(user_id):
     if follow_record:
         db.session.delete(follow_record)
         db.session.commit()
+        log_user_action(current_user.username, "UNFOLLOW_USER", f"Stopped following User ID: {user_id}")
         return jsonify({'success': True, 'action': 'unfollowed'})
     return jsonify({'success': False, 'message': 'Not following'})
 
@@ -1360,6 +1344,8 @@ def followers_list(username):
     if user.id in all_blocked_ids:
         flash("You cannot view this information.", category='error')
         return redirect(url_for('views.home'))
+        
+    log_user_action(current_user.username, "VIEW_PAGE", f"Viewed followers list of: {username}")
         
     followers = User.query.join(Follow, Follow.follower_id == User.id)\
         .filter(Follow.following_id == user.id, ~User.id.in_(all_blocked_ids)).all()
@@ -1376,6 +1362,8 @@ def following_list(username):
     if user.id in all_blocked_ids:
         flash("You cannot view this information.", category='error')
         return redirect(url_for('views.home'))
+        
+    log_user_action(current_user.username, "VIEW_PAGE", f"Viewed following list of: {username}")
         
     following = User.query.join(Follow, Follow.following_id == User.id)\
         .filter(Follow.follower_id == user.id, ~User.id.in_(all_blocked_ids)).all()
@@ -1402,7 +1390,6 @@ def deactivate_account():
     
     db.session.commit()
     
-    # 🚀 NEW: Log Action
     log_user_action(current_user.username, "DEACTIVATE_ACCOUNT", f"Reason: {full_reason}")
     
     logout_user() 
@@ -1448,7 +1435,6 @@ def search_page():
     posts = []
     
     if query:
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "SEARCH", f"Query: '{query}'")
         
         users = User.query.filter(
@@ -1525,6 +1511,7 @@ def search_page():
                 flash(f"Showing results for '{query}' along with some recommended content!", category='info')
 
     else:
+        log_user_action(current_user.username, "VIEW_PAGE", "Opened Search/Explore page.")
         users = User.query.filter(
             User.is_admin == False,
             User.id != current_user.id,
@@ -1567,7 +1554,6 @@ def remove_social():
         flag_modified(current_user, "social_links")
         db.session.commit()
         
-        # 🚀 NEW: Log Action
         log_user_action(current_user.username, "UPDATE_PROFILE", f"Removed social link: {url_to_remove}")
         
         return jsonify({'success': True})
@@ -1596,7 +1582,6 @@ def update_cover_pic():
             current_user.cover_pic = image_url
             db.session.commit()
             
-            # 🚀 NEW: Log Action
             log_user_action(current_user.username, "UPDATE_PROFILE", "Updated cover photo.")
             
             flash('Cover photo updated!', category='success')
@@ -1618,10 +1603,12 @@ def like_comment(comment_id):
     if like:
         db.session.delete(like)
         liked = False
+        log_user_action(current_user.username, "UNLIKE_COMMENT", f"Removed like from Comment ID: {comment_id}")
     else:
         like = CommentLike(author=current_user.id, comment_id=comment_id, date_created=datetime.now(timezone.utc).replace(tzinfo=None)) 
         db.session.add(like)
         liked = True
+        log_user_action(current_user.username, "LIKE_COMMENT", f"Liked Comment ID: {comment_id}")
 
     db.session.commit()
     return jsonify({"likes": len(comment.likes), "liked": liked})
@@ -1637,6 +1624,8 @@ def like_comment(comment_id):
 def inbox():
     blockers, blocked_by_me = get_block_lists(current_user.id)
     all_blocked_ids = list(set(blockers + blocked_by_me))
+    
+    log_user_action(current_user.username, "VIEW_PAGE", "Opened Messages Inbox.")
     
     messages = Message.query.options(
         joinedload(Message.sender), 
@@ -1675,6 +1664,8 @@ def chat(username):
     if recipient.id in all_blocked_ids:
         flash("You cannot message this user.", category='error')
         return redirect(url_for('views.inbox'))
+        
+    log_user_action(current_user.username, "OPEN_CHAT", f"Opened chat page with {username}")
 
     unread_msgs = Message.query.filter_by(
         sender_id=recipient.id, 
@@ -1752,7 +1743,6 @@ def delete_message(id):
 
     db.session.commit()
     
-    # 🚀 NEW: Log Message Action
     log_user_action(current_user.username, "DELETE_MESSAGE", f"Deleted message ID: {id} from their view.")
     
     return jsonify({'success': True})
@@ -1776,7 +1766,6 @@ def clear_chat(recipient_id):
             
     db.session.commit()
     
-    # 🚀 NEW: Log Message Action
     log_user_action(current_user.username, "CLEAR_CHAT", f"Cleared chat history with User ID: {recipient_id}")
     
     return jsonify({'success': True})
@@ -1839,7 +1828,6 @@ def send_message():
     db.session.add(new_message)
     db.session.commit()
     
-    # 🚀 NEW: Log Message Action
     log_user_action(current_user.username, "SEND_MESSAGE", f"To User ID: {recipient_id}")
     
     create_notification(current_user.id, recipient_id, 'message')
@@ -1916,6 +1904,8 @@ def internal_server_error(e):
 
 @views.route('/about')
 def about():
+    if current_user.is_authenticated:
+        log_user_action(current_user.username, "VIEW_PAGE", "Viewed About Us page.")
     resp = make_response(render_template("about.html", user=current_user))
     resp.headers['Cache-Control'] = 'public, max-age=3600'
     return resp
