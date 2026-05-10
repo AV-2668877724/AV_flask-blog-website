@@ -37,18 +37,15 @@ block content %}
 
     <div class="d-grid gap-3">
       <a
-        href="https://mail.google.com/mail/?view=cm&fs=1&to=varshneyanurag888@gmail.com&su=Account Restoration Request: {{ username }}&body=Hello Admin,%0D%0A%0D%0AI would like to request the restoration of my account.%0D%0A%0D%0AUsername: {{ username }}%0D%0AEmail: {{ email }}%0D%0A%0D%0AReason:"
-        target="_blank"
+        href="#" onclick="openSmartMail('gmail', '{{ support_email }}', 'Account%20Restoration%20Request:%20{{ username }}', 'Hello%20Admin,%0A%0AI%20would%20like%20to%20request%20the%20restoration%20of%20my%20account.%0A%0AUsername:%20{{ username }}%0AEmail:%20{{ email }}%0A%0AReason:'); return false;"
         class="btn btn-danger btn-lg rounded-pill px-4 shadow-sm text-start d-flex align-items-center justify-content-center gap-2"
       >
         <i class="fab fa-google fa-lg"></i>
         <span>Contact via <strong>Gmail</strong></span>
       </a>
 
-      <!-- 🚀 FIXED ZOHO MAIL DOMAIN HERE -->
       <a
-        href="https://mail.zoho.com/zm/#compose/to:anuragvarshney@zohomail.in/subject:Account Restoration Request: {{ username }}/content:Hello Admin,<br><br>I would like to request account restoration.<br><br>Username: {{ username }}<br>Email: {{ email }}"
-        target="_blank"
+        href="#" onclick="openSmartMail('zoho', '{{ admin_email }}', 'Account%20Restoration%20Request:%20{{ username }}', 'Hello%20Admin,%0A%0AI%20would%20like%20to%20request%20account%20restoration.%0A%0AUsername:%20{{ username }}%0AEmail:%20{{ email }}'); return false;"
         class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm text-start d-flex align-items-center justify-content-center gap-2"
       >
         <i class="fas fa-envelope fa-lg"></i>

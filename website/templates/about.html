@@ -378,7 +378,7 @@
         </p>
 
         <a
-          href="mailto:anuragvarshney@zohomail.in"
+          href="#" onclick="openSmartMail('gmail', '{{ support_email }}', 'Account%20Reactivation%20Support', ''); return false;"
           class="btn btn-light text-primary fw-bold px-4 py-2 rounded-pill shadow-sm position-relative transition-all"
         >
           <i class="fas fa-envelope me-2"></i> Email Support to Reactivate
@@ -435,21 +435,25 @@
     </a>
 
     <a
-      href="https://mail.zoho.com/zm/#compose?to=anuragvarshney@zohomail.in"
-      target="_blank"
+      href="#" onclick="openSmartMail('zoho', '{{ admin_email }}', 'Contact%20Creator', ''); return false;"
       class="btn btn-outline-danger px-4 py-2 rounded-pill d-flex align-items-center gap-2 shadow-sm"
       title="Email"
     >
       <i class="fas fa-envelope fa-lg"></i>
-      <span class="fw-bold">Zoho Mail</span>
+      <span class="fw-bold">Email Creator</span>
     </a>
   </div>
 
   <div class="d-flex flex-column align-items-center gap-3 mt-4 text-muted small">
-    <a href="{{ url_for('views.terms') }}" class="btn btn-sm shadow-sm rounded-pill px-4 fw-bold" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color);">
-      <i class="fas fa-file-contract text-primary me-2"></i> Terms & Conditions
-    </a>
-    <div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('views.terms') }}" class="btn btn-sm shadow-sm rounded-pill px-4 fw-bold" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color);">
+        <i class="fas fa-file-contract text-primary me-2"></i> Terms
+      </a>
+      <a href="{{ url_for('views.privacy') }}" class="btn btn-sm shadow-sm rounded-pill px-4 fw-bold" style="background-color: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color);">
+        <i class="fas fa-user-shield text-success me-2"></i> Privacy
+      </a>
+    </div>
+    <div class="mt-2">
       Designed & Developed by <strong>Anannay Varshney</strong> &copy; 2026.
     </div>
   </div>
