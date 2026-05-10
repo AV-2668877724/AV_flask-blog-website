@@ -43,9 +43,44 @@
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
   }
+
+  /* Roadmap Cards Styling */
+  .roadmap-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+  }
+  .roadmap-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary);
+    opacity: 0.5;
+    transition: all 0.3s ease;
+  }
+  .roadmap-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
+  }
+  .roadmap-card:hover::before {
+    opacity: 1;
+    width: 8px;
+  }
 </style>
 
-<div class="row justify-content-center py-5 text-center">
+<div class="row justify-content-center py-5 text-center fade-in-up">
   <div class="col-lg-8">
     <img
       src="{{ url_for('static', filename='images/logo.png') }}"
@@ -59,18 +94,18 @@
     >
       About Us
     </h1>
-    <h5 class="text-primary mb-4">Welcome to AV Postory</h5>
+    <h5 class="text-primary mb-4">Welcome to the future of AV Postory</h5>
 
     <p class="lead text-secondary mb-4" style="line-height: 1.8">
       <strong>AV Postory</strong> is a next-generation social publishing
-      platform designed for clarity and connection. We provide a
+      platform designed for clarity and connection. We provide an advanced,
       distraction-free environment where writers, developers, and thinkers can
       share their stories, code, and ideas with a community that cares.
     </p>
   </div>
 </div>
 
-<div class="row justify-content-center mb-5">
+<div class="row justify-content-center mb-5 fade-in-up">
   <div class="col-lg-10">
     <div
       class="card shadow-sm p-4 p-md-5"
@@ -79,18 +114,17 @@
       <div class="row align-items-center g-5">
         <div class="col-md-6">
           <h3 class="fw-bold font-heading mb-3" style="color: var(--text-main)">
-            Our Story
+            Our Mission
           </h3>
           <p class="text-muted" style="line-height: 1.8">
             In a world of fleeting tweets and algorithmic noise, we felt
-            something was missing: <strong>Depth</strong>. What started as a
-            personal coding challenge evolved into a mission to restore the art
-            of blogging.
+            something was missing: <strong>Depth and Usability</strong>. What started as a
+            personal coding challenge evolved into a mission to build the most user-friendly ecosystem on the web.
           </p>
           <p class="text-muted" style="line-height: 1.8">
-            We built AV Postory to be the bridge between technical documentation
-            and personal storytelling. It is not just a website; it is a canvas
-            for your intellectual journey.
+            We built AV Postory to be the bridge between highly advanced technical infrastructure 
+            and beautifully simple personal storytelling. It is not just a website; it is a canvas
+            for your intellectual and financial journey.
           </p>
         </div>
 
@@ -105,7 +139,7 @@
               style="color: var(--text-main); font-weight: 500"
             >
               "The goal isn't just to build a website, but to build a space
-              where knowledge flows freely."
+              where knowledge flows freely and creators are truly valued."
             </p>
             <small class="fw-bold text-uppercase text-primary"
               >- Anannay Varshney, Creator</small
@@ -117,12 +151,12 @@
   </div>
 </div>
 
-<div class="row justify-content-center mb-5">
+<div class="row justify-content-center mb-5 fade-in-up">
   <div class="col-12 text-center mb-4 mt-4">
     <h3 class="fw-bold font-heading" style="color: var(--text-main)">
-      Why Write Here?
+      Advanced Features, Simple Experience
     </h3>
-    <p class="text-muted">Explore the features that make AV Postory unique.</p>
+    <p class="text-muted">Everything you need to write, connect, and grow—without the clutter.</p>
   </div>
 
   <div class="col-md-4 mb-4">
@@ -137,8 +171,8 @@
         Rich Writing Experience
       </h5>
       <p class="text-muted small">
-        Our editor allows you to format thoughts with headings, lists, code
-        blocks, and bold text effortlessly.
+        Our highly responsive editor allows you to format thoughts with dynamic headings, embedded images, formatted code
+        blocks, and smart links effortlessly.
       </p>
     </div>
   </div>
@@ -153,8 +187,8 @@
       </div>
       <h5 class="fw-bold" style="color: var(--text-main)">Real-Time Chat</h5>
       <p class="text-muted small">
-        Connect instantly with other users through our built-in, live messaging
-        system powered by WebSockets.
+        Connect instantly. Our built-in, live messaging
+        system powered by advanced WebSockets ensures your conversations happen in true real-time.
       </p>
     </div>
   </div>
@@ -172,7 +206,7 @@
       </h5>
       <p class="text-muted small">
         Never miss a beat. Get instant alerts for new likes, comments, follows,
-        and messages across all your devices.
+        and messages across all your devices seamlessly.
       </p>
     </div>
   </div>
@@ -185,10 +219,9 @@
       <div class="mb-3 text-info">
         <i class="fas fa-moon fa-2x"></i>
       </div>
-      <h5 class="fw-bold" style="color: var(--text-main)">Dark Mode</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Dynamic Dark Mode</h5>
       <p class="text-muted small">
-        Read comfortably at night. Our seamless Dark Mode protects your eyes and
-        looks stunning.
+        A user-friendly toggle that instantly switches the entire platform's theme to protect your eyes and save battery life.
       </p>
     </div>
   </div>
@@ -199,28 +232,11 @@
       style="background-color: var(--bg-card); border-radius: 20px"
     >
       <div class="mb-3 text-danger">
-        <i class="fas fa-id-card fa-2x"></i>
+        <i class="fas fa-check-circle fa-2x"></i>
       </div>
-      <h5 class="fw-bold" style="color: var(--text-main)">Custom Profiles</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Verified Profiles</h5>
       <p class="text-muted small">
-        Make it yours. Add a bio, cover photo, avatar, and dynamically link your
-        social media profiles.
-      </p>
-    </div>
-  </div>
-
-  <div class="col-md-4 mb-4">
-    <div
-      class="card shadow-sm p-4 h-100 text-center"
-      style="background-color: var(--bg-card); border-radius: 20px"
-    >
-      <div class="mb-3 text-primary">
-        <i class="fas fa-search fa-2x"></i>
-      </div>
-      <h5 class="fw-bold" style="color: var(--text-main)">Smart Search</h5>
-      <p class="text-muted small">
-        Find users and content instantly with our live search feature. Never
-        lose track of a friend or story.
+        Build instant trust with your audience. Stand out with our official "Blue Tick" secure payment and verification system.
       </p>
     </div>
   </div>
@@ -233,48 +249,111 @@
       <div class="mb-3" style="color: #8b5cf6">
         <i class="fas fa-shield-alt fa-2x"></i>
       </div>
-      <h5 class="fw-bold" style="color: var(--text-main)">Ironclad Security</h5>
+      <h5 class="fw-bold" style="color: var(--text-main)">Enterprise Security</h5>
       <p class="text-muted small">
-        Fully protected against XSS and CSRF attacks, backed by secure OTP email
-        verification and strict data sanitization.
-      </p>
-    </div>
-  </div>
-
-  <div class="col-md-4 mb-4">
-    <div
-      class="card shadow-sm p-4 h-100 text-center"
-      style="background-color: var(--bg-card); border-radius: 20px"
-    >
-      <div class="mb-3 text-secondary">
-        <i class="fas fa-ban fa-2x"></i>
-      </div>
-      <h5 class="fw-bold" style="color: var(--text-main)">Distraction Free</h5>
-      <p class="text-muted small">
-        No ads, no pop-ups, no trackers. A clean interface designed purely for
-        reading and writing.
-      </p>
-    </div>
-  </div>
-
-  <div class="col-md-4 mb-4">
-    <div
-      class="card shadow-sm p-4 h-100 text-center"
-      style="background-color: var(--bg-card); border-radius: 20px"
-    >
-      <div class="mb-3" style="color: #f97316">
-        <i class="fas fa-cloud-upload-alt fa-2x"></i>
-      </div>
-      <h5 class="fw-bold" style="color: var(--text-main)">Cloud Optimized</h5>
-      <p class="text-muted small">
-        Images are securely uploaded, compressed, and delivered at blazing
-        speeds using Cloudinary CDN.
+        Your data is safe. Fully protected against XSS/CSRF attacks, and backed by a custom, granular user-activity logging system.
       </p>
     </div>
   </div>
 </div>
 
-<div class="row justify-content-center mb-5">
+<div class="row justify-content-center mb-5 pb-5 pt-5" style="background-color: var(--bg-input); border-radius: 24px; border: 1px solid var(--border-color);">
+  <div class="col-lg-10">
+    <div class="text-center mb-5">
+      <span class="badge bg-primary px-3 py-2 rounded-pill mb-3 shadow-sm">Coming Soon</span>
+      <h3 class="fw-bold font-heading" style="color: var(--text-main)">
+        Building a More Beneficial Platform 🚀
+      </h3>
+      <p class="text-muted lead" style="max-width: 800px; margin: 0 auto;">
+        We are aggressively developing new, highly advanced tools to make AV Postory not just user-friendly, but incredibly financially beneficial for our creators.
+      </p>
+    </div>
+    
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="roadmap-card">
+          <div class="mb-3 text-center">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style="width: 70px; height: 70px;">
+              <i class="fas fa-handshake fa-2x text-primary"></i>
+            </div>
+          </div>
+          <h5 class="fw-bold text-center" style="color: var(--text-main)">The Affiliate Program</h5>
+          <p class="text-muted small mt-2 text-center flex-grow-1">
+            We believe our users should grow with us. You will soon be able to generate unique referral links, invite your network, and <strong>earn direct, high-percentage commissions</strong> for every verified user you bring in. 
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="roadmap-card">
+          <div class="mb-3 text-center">
+            <div class="d-inline-flex align-items-center justify-content-center bg-warning bg-opacity-10 rounded-circle" style="width: 70px; height: 70px;">
+              <i class="fas fa-bullhorn fa-2x text-warning"></i>
+            </div>
+          </div>
+          <h5 class="fw-bold text-center" style="color: var(--text-main)">Product Advertising</h5>
+          <p class="text-muted small mt-2 text-center flex-grow-1">
+            An advanced, native advertising system designed specifically for our verified creators. You will be able to effortlessly promote your own courses, newsletters, and digital products directly to our highly engaged community.
+          </p>
+        </div>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="roadmap-card">
+          <div class="mb-3 text-center">
+            <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle" style="width: 70px; height: 70px;">
+              <i class="fas fa-book-reader fa-2x text-success"></i>
+            </div>
+          </div>
+          <h5 class="fw-bold text-center" style="color: var(--text-main)">Self-Publishing Suite</h5>
+          <p class="text-muted small mt-2 text-center flex-grow-1">
+            Take your stories to the next level. We are designing highly user-friendly tools that will allow writers to compile their best posts and professionally self-publish them directly through the AV Postory ecosystem.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row justify-content-center mb-5 fade-in-up">
+  <div class="col-lg-10 text-center">
+    <h3 class="fw-bold font-heading mb-4" style="color: var(--text-main)">
+      Powered by Modern Technology
+    </h3>
+    <p class="text-muted mb-4">
+      AV Postory utilizes an extremely advanced, scalable tech stack to guarantee rapid speeds, secure connections, and total reliability.
+    </p>
+
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+      <div class="tech-badge">
+        <i class="fab fa-python fa-lg" style="color: #3776ab"></i> Python 3 (Flask Architecture)
+      </div>
+      <div class="tech-badge">
+        <i class="fas fa-plug fa-lg text-warning"></i> WebSockets (Socket.IO)
+      </div>
+      <div class="tech-badge">
+        <i class="fas fa-database fa-lg text-secondary"></i> Relational DB (SQLAlchemy)
+      </div>
+      <div class="tech-badge">
+        <i class="fas fa-cloud fa-lg text-info"></i> Cloudinary Edge API
+      </div>
+      <div class="tech-badge">
+        <i class="fas fa-envelope fa-lg text-primary"></i> Zoho Mail Integration
+      </div>
+      <div class="tech-badge">
+        <i class="fab fa-bootstrap fa-lg" style="color: #7952b3"></i> Bootstrap 5 UI/UX
+      </div>
+      <div class="tech-badge">
+        <i class="fab fa-js fa-lg text-warning"></i> Vanilla JS (ES6+)
+      </div>
+      <div class="tech-badge">
+        <i class="fas fa-code fa-lg text-success"></i> Secure REST APIs
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row justify-content-center mb-5 fade-in-up">
   <div class="col-lg-10">
     <div
       class="card border-0 shadow-sm bg-primary text-white overflow-hidden"
@@ -298,7 +377,6 @@
           reactivate, simply send us an email.
         </p>
 
-        <!-- 🚀 FIXED ZOHO MAIL DOMAIN HERE -->
         <a
           href="mailto:anuragvarshney@zohomail.in"
           class="btn btn-light text-primary fw-bold px-4 py-2 rounded-pill shadow-sm position-relative transition-all"
@@ -314,46 +392,8 @@
   </div>
 </div>
 
-<div class="row justify-content-center mb-5">
-  <div class="col-lg-10 text-center">
-    <h3 class="fw-bold font-heading mb-4" style="color: var(--text-main)">
-      Built With Modern Tech
-    </h3>
-    <p class="text-muted mb-4">
-      AV Postory is powered by a robust, scalable stack ensuring speed and
-      reliability.
-    </p>
-
-    <div class="d-flex flex-wrap justify-content-center gap-3">
-      <div class="tech-badge">
-        <i class="fab fa-python fa-lg" style="color: #3776ab"></i> Python
-        (Flask)
-      </div>
-      <div class="tech-badge">
-        <i class="fas fa-plug fa-lg text-warning"></i> WebSockets (Socket.IO)
-      </div>
-      <div class="tech-badge">
-        <i class="fas fa-database fa-lg text-secondary"></i> SQLite / SQLAlchemy
-      </div>
-      <div class="tech-badge">
-        <i class="fas fa-cloud fa-lg text-info"></i> Cloudinary API
-      </div>
-      <div class="tech-badge">
-        <i class="fab fa-bootstrap fa-lg" style="color: #7952b3"></i> Bootstrap
-        5
-      </div>
-      <div class="tech-badge">
-        <i class="fab fa-js fa-lg text-warning"></i> Vanilla JS (ES6)
-      </div>
-      <div class="tech-badge">
-        <i class="fas fa-shield-alt fa-lg text-success"></i> WTForms / Bleach
-      </div>
-    </div>
-  </div>
-</div>
-
 <div
-  class="mt-5 pt-5 border-top text-center"
+  class="mt-5 pt-5 border-top text-center fade-in-up"
   style="border-color: var(--border-color) !important"
 >
   <h4 class="fw-bold mb-4 font-heading" style="color: var(--text-main)">
@@ -394,7 +434,6 @@
       <span class="fw-bold">X / Twitter</span>
     </a>
 
-    <!-- 🚀 FIXED ZOHO MAIL DOMAIN HERE -->
     <a
       href="https://mail.zoho.com/zm/#compose?to=anuragvarshney@zohomail.in"
       target="_blank"
