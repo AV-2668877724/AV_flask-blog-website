@@ -661,8 +661,10 @@
       class="py-4 mt-5 text-center text-muted border-top d-none d-md-block"
       style="border-color: var(--border-color) !important"
     >
-      <div class="mb-2">
+      <div class="mb-2 d-flex justify-content-center align-items-center gap-2">
         <a href="{{ url_for('views.terms') }}" class="text-decoration-none text-muted small fw-bold" style="transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Terms & Conditions</a>
+        <span class="text-muted small">&bull;</span>
+        <a href="{{ url_for('views.privacy') }}" class="text-decoration-none text-muted small fw-bold" style="transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Privacy & Security</a>
       </div>
       <small>&copy; 2026 AV Postory. All rights reserved.</small>
     </footer>
