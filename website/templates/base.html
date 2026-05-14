@@ -143,6 +143,17 @@
         color: var(--primary);
       }
 
+      /* Desktop Top Nav Hover Effects */
+      .desktop-nav-link {
+        color: var(--text-main);
+        transition: color 0.2s ease-in-out;
+      }
+      .desktop-nav-link:hover,
+      .desktop-nav-link:focus,
+      .desktop-nav-link:active {
+        color: var(--primary) !important;
+      }
+
       /* Mobile Navigation Structure */
       .mobile-nav {
         position: fixed;
@@ -360,13 +371,13 @@
         <div class="d-none d-md-flex align-items-center justify-content-center flex-grow-1">
           <ul class="navbar-nav flex-row gap-4 mb-0">
             <li class="nav-item">
-              <a class="nav-link p-0 fw-bold" style="color: var(--text-main);" href="{{ url_for('views.home') }}">Home</a>
+              <a class="nav-link p-0 fw-bold desktop-nav-link" href="{{ url_for('views.home') }}">Home</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link p-0 fw-bold" style="color: var(--text-main);" href="{{ url_for('views.about') }}">About Us</a>
+              <a class="nav-link p-0 fw-bold desktop-nav-link" href="{{ url_for('views.about') }}">About Us</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link p-0 fw-bold" style="color: var(--text-main);" href="{{ url_for('views.create_post') }}">Write</a>
+              <a class="nav-link p-0 fw-bold desktop-nav-link" href="{{ url_for('views.create_post') }}">Write</a>
             </li>
           </ul>
         </div>
