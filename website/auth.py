@@ -101,7 +101,8 @@ def send_reset_email(user_email):
                   recipients=[user_email],
                   reply_to=support_email)
                   
-    logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png" 
+    # 🚀 FIX: Automatically grab the updated logo from your static folder and convert to Public URL
+    logo_url = get_public_link('static', filename='images/logo.png')
     
     current_year = datetime.now(timezone.utc).replace(tzinfo=None).year
     
@@ -160,7 +161,8 @@ def send_welcome_email(user_email, username):
                   recipients=[user_email],
                   reply_to=support_email)
     
-    logo_url = "https://res.cloudinary.com/dkpfw99ul/image/upload/v1773030390/av_postory/assets/main_logo.png"
+    # 🚀 FIX: Automatically grab the updated logo from your static folder and convert to Public URL
+    logo_url = get_public_link('static', filename='images/logo.png')
     
     login_url = get_public_link('auth.login')
     current_year = datetime.now(timezone.utc).replace(tzinfo=None).year
