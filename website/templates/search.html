@@ -245,13 +245,12 @@ block content %}
 
                 <div class="flex-grow-1 min-w-0">
                   <h6
-                    class="fw-bold mb-1 text-truncate"
-                    style="color: var(--text-main); font-size: 1.1rem"
+                    class="fw-bold mb-1 d-flex align-items-center gap-1"
+                    style="color: var(--text-main); font-size: 1.1rem; min-width: 0;"
                   >
-                    {{ u.username }} 
-                    <!-- 🚀 PREMIUM BLUE TICK RENDERED HERE -->
+                    <span class="text-truncate" style="max-width: 150px;" title="{{ u.username }}">{{ u.username }}</span>
                     {% if u.blue_tick %}
-                    <i class="bi bi-patch-check-fill verified-badge ms-1" style="font-size: 1.1rem;" title="Verified"></i>
+                    <i class="bi bi-patch-check-fill verified-badge flex-shrink-0 text-primary" style="font-size: 1.1rem;" title="Verified"></i>
                     {% endif %}
                   </h6>
                   <p class="text-muted small mb-0 text-truncate">
