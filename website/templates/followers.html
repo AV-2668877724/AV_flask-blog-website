@@ -69,11 +69,13 @@
   <div class="col-lg-8 col-xl-7">
     
     <div class="page-header-card">
-      <a href="{{ url_for('views.profile', username=profile_user.username) }}" class="btn btn-icon border shadow-sm" style="width: 44px; height: 44px;">
+      <a href="{{ url_for('views.profile', username=profile_user.username) }}" class="btn btn-icon border shadow-sm flex-shrink-0" style="width: 44px; height: 44px;">
         <i class="fas fa-arrow-left"></i>
       </a>
-      <div>
-        <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main);">{{ profile_user.username }}</h3>
+      <div style="min-width: 0;">
+        <h3 class="font-heading fw-bold mb-0 text-truncate" style="color: var(--text-main); max-width: 250px;" title="{{ profile_user.username }}">
+          {{ profile_user.username }}
+        </h3>
         <p class="text-muted small mb-0 fw-bold">{{ title }}</p>
       </div>
     </div>
@@ -94,7 +96,7 @@
               
               <a href="{{ url_for('views.profile', username=u.username) }}" class="flex-shrink-0">
                 {% if u.profile_pic %}
-                  <img src="{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}" class="list-avatar shadow-sm" alt="{{ u.username }}">
+                  <img src="{% if 'http' in u.profile_pic %}{{ u.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + u.profile_pic) }}{% endif %}" class="list-avatar shadow-sm" alt="{{ u.username }}">
                 {% else %}
                   <div class="list-avatar-placeholder shadow-sm">{{ u.username[0]|upper }}</div>
                 {% endif %}
@@ -102,10 +104,10 @@
 
               <div class="flex-grow-1 min-w-0 ms-2">
                 <a href="{{ url_for('views.profile', username=u.username) }}" class="profile-link">
-                  <h6 class="fw-bold mb-1 text-truncate" style="font-size: 1.1rem;">
-                    {{ u.username }}
-                    {% if u.is_verified %}
-                      <i class="fas fa-check-circle text-primary ms-1" style="font-size: 0.9rem;" title="Verified"></i>
+                  <h6 class="fw-bold mb-1 d-flex align-items-center gap-1" style="font-size: 1.1rem; min-width: 0;">
+                    <span class="text-truncate" style="max-width: 150px;" title="{{ u.username }}">{{ u.username }}</span>
+                    {% if u.blue_tick %}
+                      <i class="bi bi-patch-check-fill verified-badge flex-shrink-0 text-primary" style="font-size: 1.1rem;" title="Verified"></i>
                     {% endif %}
                   </h6>
                 </a>
@@ -146,7 +148,8 @@
         </div>
 
       {% endif %}
-    </div> </div>
+    </div> 
+  </div>
 </div>
 
 <script>
