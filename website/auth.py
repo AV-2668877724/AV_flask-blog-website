@@ -304,6 +304,10 @@ def check_username_signup():
     if not username or len(username) < 3:
         return jsonify({'available': False, 'message': 'Too short (min 3 chars).'})
 
+    # 🚀 FIX: Username length limit (Real-time check)
+    if len(username) > 15:
+        return jsonify({'available': False, 'message': 'Too long (max 15 chars).'})
+
     if not re.match("^[a-z0-9_.]+$", username):
          return jsonify({'available': False, 'message': 'Use only letters, numbers, . and _'})
 
@@ -341,8 +345,11 @@ def finish_signup():
         
         if not terms_accepted: # 🚀 Reject if they bypassed the UI checkbox
             flash('You must agree to the Terms and Conditions to create an account.', category='error')
-        elif len(username) < 2:
-            flash('Username must be greater than 1 character.', category='error')
+        elif len(username) < 3:
+            flash('Username must be at least 3 characters.', category='error')
+        # 🚀 FIX: Final fallback length limit
+        elif len(username) > 15:
+            flash('Username is too long. Maximum 15 characters allowed.', category='error')
         elif not re.match("^[a-zA-Z0-9_.]+$", username):
             flash("Username can only contain letters, numbers, dots (.), and underscores (_). No spaces.", category='error')
         elif password != confirm_password:
