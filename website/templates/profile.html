@@ -99,6 +99,55 @@
     color: #ffffff !important;
     font-weight: bold;
   }
+
+  /* 🚀 PREMIUM FOLLOWER STATS BOX */
+  .follow-stats-box {
+    display: inline-flex;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 0.3rem;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+  }
+  body.dark-mode .follow-stats-box {
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .follow-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 1.5rem;
+    border-radius: 16px;
+    text-decoration: none !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .follow-stat-item:hover {
+    background-color: var(--bg-card);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  body.dark-mode .follow-stat-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .follow-stat-val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-main);
+    line-height: 1.2;
+  }
+  .follow-stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .follow-stat-divider {
+    width: 1px;
+    background-color: var(--border-color);
+    margin: 0.5rem 0.2rem;
+    opacity: 0.7;
+  }
 </style>
 
 <div class="row justify-content-center fade-in-up">
@@ -110,14 +159,9 @@
 
     <div
       class="profile-cover"
-      {%
-      if
-      cover_url
-      %}
+      {% if cover_url %}
       style="background-image: url('{{ cover_url }}');"
-      {%
-      endif
-      %}
+      {% endif %}
     >
       {% if user.is_authenticated and user.id == profile_user.id %}
       <button
@@ -392,36 +436,39 @@
           </div>
         </div>
 
-        <div class="text-center text-sm-start mb-4">
-          <!-- 🚀 PREMIUM BLUE TICK RENDERED HERE -->
-          <h2
-            class="fw-bold font-heading mb-1 d-flex align-items-center justify-content-center justify-content-sm-start gap-2"
-            style="color: var(--text-main)"
-          >
-            {{ profile_user.username }} 
+        <div class="text-center text-sm-start mb-4" style="min-width: 0;">
+          <div class="d-flex align-items-center justify-content-center justify-content-sm-start gap-2 mb-1" style="min-width: 0;">
+            <h2
+              class="fw-bold font-heading mb-0 text-truncate"
+              style="color: var(--text-main); max-width: 250px;"
+              title="{{ profile_user.username }}"
+            >
+              {{ profile_user.username }}
+            </h2>
             {% if profile_user.blue_tick %}
-            <i class="bi bi-patch-check-fill verified-badge" style="font-size: 1.6rem; margin-left: 2px;" title="Verified"></i>
+            <i class="bi bi-patch-check-fill verified-badge flex-shrink-0" style="font-size: 1.6rem; margin-left: 2px;" title="Verified"></i>
             {% endif %} 
             {% if profile_user.is_admin %}
             <span
-              class="badge bg-warning text-dark align-middle"
+              class="badge bg-warning text-dark align-middle flex-shrink-0"
               style="font-size: 0.6rem"
               >Admin</span
             >
             {% endif %}
-          </h2>
+          </div>
+
           <p class="text-muted mb-3 small">
             <i class="far fa-calendar-alt me-1"></i> Joined {{
             profile_user.date_created.strftime('%B %Y') }}
           </p>
 
           {% if profile_user.bio %}
-          <p class="lead text-secondary mb-4" style="font-size: 1.05rem">
+          <p class="lead text-secondary mb-0" style="font-size: 1.05rem">
             {{ profile_user.bio }}
           </p>
           {% elif user.is_authenticated and user.id == profile_user.id %}
           <p
-            class="text-muted fst-italic mb-4"
+            class="text-muted fst-italic mb-0"
             style="cursor: pointer"
             data-bs-toggle="modal"
             data-bs-target="#editProfileModal"
@@ -429,27 +476,23 @@
             Add a bio to tell people about yourself...
           </p>
           {% endif %}
-
-          <div
-            class="d-flex align-items-center justify-content-center justify-content-sm-start gap-4"
-          >
-            <a
-              href="{{ url_for('views.followers_list', username=profile_user.username) }}"
-              class="text-decoration-none text-muted"
-            >
-              <span class="fw-bold text-dark fs-5" id="followersCount"
-                >{{ followers_count }}</span
-              >
-              Followers
-            </a>
-            <a
-              href="{{ url_for('views.following_list', username=profile_user.username) }}"
-              class="text-decoration-none text-muted"
-            >
-              <span class="fw-bold text-dark fs-5">{{ following_count }}</span>
-              Following
-            </a>
+          
+          <div class="d-flex justify-content-center justify-content-sm-start">
+            <div class="follow-stats-box mt-4">
+              <a href="{{ url_for('views.followers_list', username=profile_user.username) }}" class="follow-stat-item">
+                <span class="follow-stat-val" id="followersCount">{{ followers_count }}</span>
+                <span class="follow-stat-label">Followers</span>
+              </a>
+              
+              <div class="follow-stat-divider"></div>
+              
+              <a href="{{ url_for('views.following_list', username=profile_user.username) }}" class="follow-stat-item">
+                <span class="follow-stat-val">{{ following_count }}</span>
+                <span class="follow-stat-label">Following</span>
+              </a>
+            </div>
           </div>
+
         </div>
 
         {% set total_likes = namespace(count=0) %} {% set total_words =
