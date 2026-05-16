@@ -6,27 +6,11 @@
 
 <style>
   /* 🚀 ULTIMATE FULL-SCREEN FIX: Hide everything from base.html */
-  nav,
-  .navbar,
-  footer,
-  .footer,
-  .mobile-nav,
-  body > p,
-  .text-center.mt-4,
-  .text-muted.small {
+  nav, .navbar, footer, .footer, .mobile-nav, body > p, .text-center.mt-4, .text-muted.small {
     display: none !important;
   }
 
-  /* 🚀 NUKE BOOTSTRAP CONTAINER CONSTRAINTS FROM BASE.HTML */
-  html,
-  body,
-  main,
-  .container,
-  .container-fluid,
-  .row,
-  .col,
-  .pb-5,
-  .pt-4 {
+  html, body, main, .container, .container-fluid, .row, .col, .pb-5, .pt-4 {
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100% !important;
@@ -34,35 +18,35 @@
     height: 100% !important;
   }
 
-  /* Lock the body so absolutely nothing else can scroll or show */
   body {
     overflow: hidden !important;
     background-color: var(--bg-main) !important;
   }
 
-  /* Forced to cover 100vw/100vh with box-sizing */
   .chat-wrapper {
     position: fixed !important;
     top: 0 !important;
+    bottom: 0 !important;
     left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    height: 100dvh !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    z-index: 999999 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1045 !important; 
     display: flex;
     flex-direction: column;
-    background-color: var(--bg-main);
+    background-color: #efeae2; 
+  }
+  body.dark-mode .chat-wrapper {
+    background-color: #0b141a;
   }
 
   .chat-card {
     background-color: var(--bg-card);
     width: 100% !important;
-    flex-grow: 1 !important;
+    flex: 1 1 auto !important;
+    min-height: 0; 
     display: flex;
     flex-direction: column;
-    overflow: hidden;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -70,18 +54,23 @@
 
   /* Chat Header */
   .chat-header {
-    background-color: var(--bg-card);
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 1.5rem;
+    background-color: #f0f2f5;
+    border-bottom: 1px solid #d1d7db;
+    padding: 0.8rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between; 
     gap: 1rem;
     z-index: 10;
     transition: background-color 0.2s ease;
+    flex: 0 0 auto;
+  }
+  body.dark-mode .chat-header {
+    background-color: #202c33;
+    border-bottom: 1px solid #111b21;
   }
 
-  .btn-back {
+  .btn-back, .chat-header-icon {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -92,8 +81,12 @@
     background: transparent;
     transition: all 0.2s;
     text-decoration: none;
+    border: none;
   }
-  .btn-back:hover {
+  body.dark-mode .btn-back, body.dark-mode .chat-header-icon {
+    color: #e9edef;
+  }
+  .btn-back:hover, .chat-header-icon:hover {
     background: var(--bg-input);
     color: var(--text-main);
   }
@@ -119,124 +112,157 @@
     font-weight: bold;
   }
 
-  /* Chat Messages Area */
   .chat-messages {
-    flex-grow: 1;
-    padding: 1.5rem;
+    flex: 1 1 auto !important;
+    min-height: 0; 
+    padding: 1.5rem 1rem;
     overflow-y: auto;
-    background-color: var(--bg-main);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.5rem;
     position: relative;
+    background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h20v20H0V0zm10 10h10v10H10V10zM0 10h10v10H0V10zM10 0h10v10H10V0z" fill="%23000000" fill-opacity="0.02" fill-rule="evenodd"/%3E%3C/svg%3E');
+  }
+  body.dark-mode .chat-messages {
+    background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M0 0h20v20H0V0zm10 10h10v10H10V10zM0 10h10v10H0V10zM10 0h10v10H10V0z" fill="%23ffffff" fill-opacity="0.015" fill-rule="evenodd"/%3E%3C/svg%3E');
   }
 
-  .chat-messages::-webkit-scrollbar {
-    width: 6px;
-  }
+  .chat-messages::-webkit-scrollbar { width: 6px; }
   .chat-messages::-webkit-scrollbar-thumb {
     background: var(--border-color);
     border-radius: 10px;
   }
 
-  /* Message Bubbles */
+  .msg-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    transition: background-color 0.2s ease;
+    padding: 2px 0;
+    border-radius: 8px;
+    cursor: default;
+  }
+  
   .msg-container {
     display: flex;
     flex-direction: column;
-    max-width: 80%;
+    max-width: 85%;
     min-width: 0;
-    transition: all 0.2s ease;
+    position: relative;
   }
 
   .msg-bubble {
-    padding: 0.8rem 1.2rem;
+    padding: 6px 10px 8px 12px;
     font-size: 1.05rem;
     line-height: 1.4;
-    box-shadow: var(--shadow-sm);
     overflow-wrap: break-word; 
     word-break: break-word;
-    transition: transform 0.1s ease;
+    box-shadow: 0 1px 0.5px rgba(11,20,26,.13) !important;
   }
-
   .msg-bubble a {
     word-break: break-all;
     white-space: pre-wrap;
   }
 
-  /* Their Messages (Left) */
-  .msg-theirs {
-    align-self: flex-start;
-  }
+  .msg-theirs { align-self: flex-start; margin-right: auto; }
   .msg-theirs .msg-bubble {
-    background-color: var(--bg-card);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-    border-radius: 20px 20px 20px 4px;
+    background-color: #ffffff;
+    color: #111b21;
+    border-radius: 0 8px 8px 8px;
+  }
+  body.dark-mode .msg-theirs .msg-bubble {
+    background-color: #202c33;
+    color: #e9edef;
   }
 
-  /* My Messages (Right) */
-  .msg-mine {
-    align-self: flex-end;
-  }
+  .msg-mine { align-self: flex-end; margin-left: auto; }
   .msg-mine .msg-bubble {
-    background: linear-gradient(135deg, var(--primary), #4338ca);
-    color: white;
-    border-radius: 20px 20px 4px 20px;
+    background-color: #d9fdd3;
+    color: #111b21;
+    border-radius: 8px 0 8px 8px;
+  }
+  body.dark-mode .msg-mine .msg-bubble {
+    background-color: #005c4b;
+    color: #e9edef;
   }
 
+  .msg-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: -2px;
+  }
   .msg-time {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    margin-top: 0.3rem;
+    font-size: 0.68rem;
+    color: #667781;
   }
-  .msg-theirs .msg-time {
-    margin-left: 0.5rem;
-  }
-  .msg-mine .msg-time {
-    text-align: right;
-    margin-right: 0.5rem;
-  }
+  body.dark-mode .msg-time { color: #8696a0; }
+  
+  .msg-tick { font-size: 0.7rem; }
+  .tick-read { color: #53bdeb !important; }
+  .tick-unread { color: #8696a0 !important; }
 
-  /* 🚀 WHATSAPP STYLE SELECTION UI */
+  /* WHATSAPP STYLE SELECTION UI */
+  .msg-checkbox-wrapper {
+    width: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: width 0.2s ease, opacity 0.2s ease;
+    opacity: 0;
+  }
+  body.selection-mode .msg-checkbox-wrapper {
+    width: 40px;
+    opacity: 1;
+  }
+  .wa-checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: all 0.2s;
+  }
+  .msg-row.selected .wa-checkbox {
+    background-color: #00a884;
+    border-color: #00a884;
+    color: white;
+  }
+  .msg-row.selected {
+    background-color: rgba(0, 168, 132, 0.15) !important;
+  }
+  body.selection-mode .msg-row { cursor: pointer; }
+  body.selection-mode .msg-bubble { pointer-events: none; }
   body.selection-mode .chat-input-area {
-    opacity: 0.4;
+    opacity: 0.5;
     pointer-events: none;
-  }
-  body.selection-mode .msg-bubble {
-    cursor: pointer;
-    user-select: none;
-  }
-  body.selection-mode .msg-container:active .msg-bubble {
-    transform: scale(0.98);
-  }
-  .msg-container.selected {
-    background-color: rgba(79, 70, 229, 0.15) !important;
-    border-radius: 12px;
-    padding: 6px 12px;
-    margin: -6px -12px;
-  }
-  body.dark-mode .msg-container.selected {
-    background-color: rgba(79, 70, 229, 0.3) !important;
   }
 
   /* Chat Input Area */
   .chat-input-area {
-    background-color: var(--bg-card);
+    flex: 0 0 auto !important; 
+    background-color: #f0f2f5;
     border-top: 1px solid var(--border-color);
     padding: 0.8rem 1.5rem;
     padding-bottom: calc(0.8rem + env(safe-area-inset-bottom)) !important;
     z-index: 10;
-    flex-shrink: 0 !important; 
     position: relative;
     transition: opacity 0.3s ease;
   }
+  body.dark-mode .chat-input-area {
+    background-color: #202c33;
+  }
 
-  /* 🚀 PREMIUM INPUT WRAPPER */
   .chat-input-wrapper {
     position: relative;
     display: flex;
     align-items: center;
-    background-color: var(--bg-input);
+    background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 50px;
     padding: 0.6rem 3.5rem 0.6rem 3.2rem;
@@ -247,10 +273,8 @@
   .chat-input-wrapper:focus-within {
     border-color: var(--primary);
     box-shadow: 0 0 0 4px var(--primary-glow);
-    background-color: var(--bg-card);
   }
 
-  /* 🚀 EMOJI TRIGGER BUTTON */
   .btn-emoji {
     position: absolute;
     left: 8px;
@@ -259,8 +283,10 @@
     background: transparent;
     border: none;
     font-size: 1.35rem;
+    color: var(--text-main) !important; 
+    opacity: 0.6;
     cursor: pointer;
-    transition: color 0.2s, transform 0.2s;
+    transition: opacity 0.2s, transform 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -268,11 +294,11 @@
     z-index: 11;
   }
   .btn-emoji:hover {
+    opacity: 1;
     color: var(--primary) !important;
     transform: translateY(-50%) scale(1.1);
   }
 
-  /* 🚀 SEAMLESS EMOJI PICKER STYLING */
   emoji-picker {
     width: 100%;
     max-width: 350px;
@@ -288,10 +314,7 @@
     --input-placeholder-color: var(--text-muted);
   }
   @media (max-width: 576px) {
-    emoji-picker {
-      max-width: 300px;
-      height: 300px;
-    }
+    emoji-picker { max-width: 300px; height: 300px; }
   }
 
   .chat-input {
@@ -302,26 +325,26 @@
     font-size: 1rem;
     outline: none;
   }
+  .chat-input::placeholder { color: #8696a0; }
 
   .btn-send {
     position: absolute;
     right: 5px;
     top: 50%;
     transform: translateY(-50%);
-    background: var(--primary);
+    background: #00a884;
     color: white;
     border: none;
     border-radius: 50%;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
   }
   .btn-send:hover {
-    background: #4338ca;
-    transform: translateY(-50%) scale(1.05);
+    background: #019a79;
   }
 
   @media (max-width: 768px) {
@@ -329,33 +352,22 @@
       padding: 0.6rem 1rem;
       padding-bottom: calc(0.6rem + env(safe-area-inset-bottom)) !important;
     }
-    .chat-header {
-      padding: 0.8rem 1rem;
-    }
+    .chat-header { padding: 0.8rem 1rem; }
   }
 
-  /* Typing Indicator Animation */
   .typing-dot {
     display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--text-muted);
+    width: 6px; height: 6px; border-radius: 50%;
+    background-color: #8696a0;
     margin: 0 2px;
     animation: typingBounce 1.4s infinite ease-in-out both;
   }
   .typing-dot:nth-child(1) { animation-delay: -0.32s; }
   .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-
   @keyframes typingBounce {
     0%, 80%, 100% { transform: scale(0); }
     40% { transform: scale(1); }
   }
-
-  /* SKELETON CHAT BUBBLES */
-  .skeleton-bubble { height: 40px; border-radius: 20px; margin-bottom: 0.5rem; }
-  .skeleton-theirs { align-self: flex-start; border-bottom-left-radius: 4px; }
-  .skeleton-mine { align-self: flex-end; border-bottom-right-radius: 4px; }
 </style>
 
 <div class="chat-wrapper fade-in-up">
@@ -373,25 +385,25 @@
           {% else %}
           <div class="chat-avatar-placeholder shadow-sm">{{ recipient.username[0]|upper }}</div>
           {% endif %}
-          <div>
-            <h5 class="fw-bold mb-0" style="color: var(--text-main)">{{ recipient.username }}</h5>
+          <div class="d-flex flex-column justify-content-center">
+            <h6 class="fw-bold mb-0" style="color: var(--text-main); font-size: 1.1rem; line-height: 1;">{{ recipient.username }}</h6>
             {% if recipient.is_online %}
-            <small id="userStatusText" style="color: var(--primary); font-weight: 600">Online</small>
+            <small id="userStatusText" style="color: var(--primary); font-size: 0.8rem; font-weight: 500;">online</small>
             {% else %}
-            <small id="userStatusText" style="color: var(--text-muted); font-weight: 600">Offline</small>
+            <small id="userStatusText" style="color: var(--text-muted); font-size: 0.8rem;">offline</small>
             {% endif %}
           </div>
         </a>
       </div>
       
       <div class="dropdown">
-        <button class="btn btn-light rounded-circle shadow-sm border d-flex align-items-center justify-content-center text-muted hover-opacity-100" style="width: 40px; height: 40px; background-color: var(--bg-input);" data-bs-toggle="dropdown">
-          <i class="fas fa-ellipsis-v"></i>
+        <button class="chat-header-icon" data-bs-toggle="dropdown" title="Menu">
+          <i class="fas fa-ellipsis-v fs-5"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; background-color: var(--bg-card); z-index: 1050;">
           <li>
             <a class="dropdown-item fw-bold py-2" href="#" onclick="enterSelectionMode(); return false;" style="border-radius: 8px; color: var(--text-main);">
-              <i class="fas fa-check-square me-2 text-primary"></i> Select Messages
+              <i class="fas fa-check-square me-2" style="color: #00a884;"></i> Select Messages
             </a>
           </li>
           <li><hr class="dropdown-divider"></li>
@@ -409,94 +421,78 @@
       </div>
     </div>
 
-    <div id="selectionHeader" class="chat-header d-none" style="background-color: var(--primary); border-bottom: none;">
+    <div id="selectionHeader" class="chat-header d-none" style="background-color: #00a884; border-bottom: none;">
       <div class="d-flex align-items-center gap-3">
-        <button class="btn btn-link text-white p-0" onclick="exitSelectionMode()" title="Cancel Selection">
-          <i class="fas fa-times fs-4"></i>
+        <button class="chat-header-icon text-white p-0" onclick="exitSelectionMode()" title="Cancel Selection">
+          <i class="fas fa-arrow-left fs-5"></i>
         </button>
-        <h5 class="mb-0 fw-bold text-white"><span id="selectionCount">0</span> Selected</h5>
+        <h5 class="mb-0 fw-bold text-white"><span id="selectionCount">0</span></h5>
       </div>
-      <button class="btn btn-link text-white p-0" onclick="deleteSelectedMessages()" title="Delete Selected">
-        <i class="fas fa-trash-alt fs-5"></i>
-      </button>
+      <div class="d-flex align-items-center gap-2">
+        <button class="chat-header-icon text-white p-0" onclick="openForwardModal()" title="Forward Selected">
+          <i class="fas fa-share fs-5"></i>
+        </button>
+        <button class="chat-header-icon text-white p-0" onclick="deleteSelectedMessages()" title="Delete Selected">
+          <i class="fas fa-trash-alt fs-5"></i>
+        </button>
+      </div>
     </div>
 
     <div class="chat-messages" id="chatContainer">
-      <div id="chatSkeleton" class="skeleton-ui-wrapper w-100 d-flex flex-column justify-content-end gap-3 mt-auto pb-2" aria-hidden="true">
-        <div class="d-flex align-items-center justify-content-start gap-2">
-          <div class="skeleton skeleton-avatar" style="width:35px; height:35px; flex-shrink: 0;"></div>
-          <div class="skeleton" style="width: 200px; height: 45px; border-radius: 20px 20px 20px 4px;"></div>
-        </div>
-        <div class="d-flex align-items-center justify-content-end gap-2">
-          <div class="skeleton" style="width: 150px; height: 45px; border-radius: 20px 20px 4px 20px;"></div>
-        </div>
-        <div class="d-flex align-items-center justify-content-start gap-2">
-          <div class="skeleton skeleton-avatar" style="width:35px; height:35px; flex-shrink: 0;"></div>
-          <div class="skeleton" style="width: 250px; height: 60px; border-radius: 20px 20px 20px 4px;"></div>
-        </div>
+      <div id="historyLoadingSpinner" class="w-100 py-3 d-none flex-column gap-1">
+        <div class="spinner-border text-muted mx-auto" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
       </div>
 
-      <div id="chatContent" class="skeleton-ui-content d-none d-flex flex-column gap-3 w-100 mt-auto">
+      <div id="chatContent" class="d-flex flex-column gap-2 w-100 mt-auto pb-2">
         
-        <div id="historyLoadingSpinner" class="w-100 py-3 d-none flex-column gap-1">
-          <div class="skeleton skeleton-bubble skeleton-theirs w-50"></div>
-          <div class="skeleton skeleton-bubble skeleton-theirs w-25"></div>
-        </div>
-
         {% if messages %} 
           {% for msg in messages %} 
-            {% if msg.sender_id == current_user.id %}
-            <div class="msg-container msg-mine" id="msg-{{ msg.id }}">
-              <div class="d-flex align-items-center justify-content-end gap-2">
-                <div class="msg-bubble shadow-sm">{{ msg.text|safe }}</div>
+            <div class="msg-row" id="row-{{ msg.id }}" 
+                 onclick="handleMessageClick('{{ msg.id }}')" 
+                 onmousedown="handlePressStart('{{ msg.id }}')" 
+                 onmouseup="handlePressEnd()" 
+                 onmouseleave="handlePressEnd()" 
+                 ontouchstart="handlePressStart('{{ msg.id }}')" 
+                 ontouchend="handlePressEnd()" 
+                 oncontextmenu="handleContextMenu(event, '{{ msg.id }}')">
+              
+              <div class="msg-checkbox-wrapper">
+                <div class="wa-checkbox" id="chk-{{ msg.id }}"><i class="fas fa-check" style="font-size: 10px;"></i></div>
               </div>
-              <div class="d-flex justify-content-end align-items-center mt-1">
-                <div
-                  class="msg-time local-time-formatter"
-                  data-iso="{{ msg.date_created.isoformat() }}Z"
-                  style="margin-top: 0"
-                ></div>
-                <i
-                  id="tick-{{ msg.id }}"
-                  class="fas {% if msg.is_read %}fa-check-double text-info{% else %}fa-check text-muted{% endif %} ms-1 msg-tick"
-                  style="font-size: 0.7rem"
-                ></i>
+
+              {% if msg.sender_id == current_user.id %}
+              <div class="msg-container msg-mine" id="msg-{{ msg.id }}">
+                <div class="msg-bubble shadow-sm">{{ msg.text|safe }}
+                  <div class="msg-time-row">
+                    <span class="msg-time local-time-formatter" data-iso="{{ msg.date_created.isoformat() }}Z"></span>
+                    <i id="tick-{{ msg.id }}" class="fas {% if msg.is_read %}fa-check-double tick-read{% else %}fa-check tick-unread{% endif %} ms-1 msg-tick"></i>
+                  </div>
+                </div>
               </div>
+              {% else %}
+              <div class="msg-container msg-theirs" id="msg-{{ msg.id }}">
+                <div class="msg-bubble shadow-sm">{{ msg.text|safe }}
+                  <div class="msg-time-row">
+                    <span class="msg-time local-time-formatter" data-iso="{{ msg.date_created.isoformat() }}Z"></span>
+                  </div>
+                </div>
+              </div>
+              {% endif %} 
             </div>
-            {% else %}
-            <div class="msg-container msg-theirs" id="msg-{{ msg.id }}">
-              <div class="d-flex align-items-center justify-content-start gap-2">
-                <div class="msg-bubble shadow-sm">{{ msg.text|safe }}</div>
-              </div>
-              <div
-                class="msg-time local-time-formatter"
-                data-iso="{{ msg.date_created.isoformat() }}Z"
-              ></div>
-            </div>
-            {% endif %} 
           {% endfor %} 
         {% else %}
         <div class="text-center my-auto opacity-75" id="emptyChatState">
-          <div
-            class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
-            style="width: 80px; height: 80px"
-          >
-            <i class="far fa-paper-plane fa-2x"></i>
+          <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle mb-3" style="width: 80px; height: 80px; background-color: #00a884;">
+            <i class="fas fa-lock fa-2x"></i>
           </div>
-          <h5 class="fw-bold" style="color: var(--text-main)">
-            Say hi to {{ recipient.username }}!
-          </h5>
-          <p class="text-muted small">Start the conversation below.</p>
+          <h6 class="fw-bold" style="color: var(--text-main)">Messages are securely routed.</h6>
+          <p class="text-muted small px-3">Send a message to start a conversation with {{ recipient.username }}.</p>
         </div>
         {% endif %}
 
-        <div
-          class="msg-container msg-theirs d-none"
-          id="typingIndicator"
-          style="margin-bottom: 5px"
-        >
-          <div class="d-flex align-items-center justify-content-start gap-2">
-            <div class="msg-bubble shadow-sm" style="padding: 0.6rem 1rem">
+        <div class="msg-row d-none" id="typingIndicator">
+          <div class="msg-container msg-theirs">
+            <div class="msg-bubble shadow-sm" style="padding: 0.8rem 1rem">
               <span class="typing-dot"></span>
               <span class="typing-dot"></span>
               <span class="typing-dot"></span>
@@ -515,7 +511,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="chat-input-wrapper shadow-sm">
           
-          <button type="button" id="emojiTrigger" class="btn-emoji text-muted" title="Add Emoji">
+          <button type="button" id="emojiTrigger" class="btn-emoji" title="Add Emoji">
             <i class="far fa-smile"></i>
           </button>
           
@@ -523,7 +519,7 @@
             type="text"
             name="text"
             class="chat-input"
-            placeholder="Type a message..."
+            placeholder="Type a message"
             required
             autocomplete="off"
             id="chatInputField"
@@ -534,6 +530,27 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="forwardModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background-color: var(--bg-card); max-height: 80vh;">
+      <div class="modal-header border-0 pb-0 mt-2 px-4">
+        <h5 class="modal-title fw-bold font-heading" style="color: var(--text-main)">
+          <i class="fas fa-share text-primary me-2"></i>Forward To...
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 pb-4">
+        <div class="d-flex align-items-center px-3 mb-3 shadow-sm" style="border-radius: 50px; overflow: hidden; background-color: var(--bg-input); width: 100%; height: 44px;">
+          <i class="bi bi-search text-muted"></i>
+          <input type="text" id="forwardSearchInput" class="form-control border-0 bg-transparent shadow-none ps-2 w-100" placeholder="Search users..." autocomplete="off">
+        </div>
+        <div id="forwardUserList" class="d-flex flex-column gap-2">
+          </div>
+      </div>
     </div>
   </div>
 </div>
@@ -551,13 +568,12 @@
     el.innerText = formatLocalTime(iso);
   });
 
-  // 🚀 ULTIMATE WHATSAPP SELECTION LOGIC
+  // 🚀 ULTIMATE WHATSAPP NATIVE SELECTION LOGIC
   let selectedMessageIds = new Set();
   let pressTimer;
   let isLongPress = false;
-  let startX, startY;
 
-  function enterSelectionMode() {
+  window.enterSelectionMode = function() {
     document.body.classList.add('selection-mode');
     document.getElementById('defaultHeader').classList.add('d-none');
     document.getElementById('selectionHeader').classList.remove('d-none');
@@ -565,24 +581,54 @@
     updateSelectionUI();
   }
 
-  function exitSelectionMode() {
+  window.exitSelectionMode = function() {
     document.body.classList.remove('selection-mode');
     document.getElementById('defaultHeader').classList.remove('d-none');
     document.getElementById('selectionHeader').classList.add('d-none');
-    document.querySelectorAll('.msg-container.selected').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.msg-row.selected').forEach(el => el.classList.remove('selected'));
     selectedMessageIds.clear();
   }
 
+  window.handleMessageClick = function(msgId) {
+      if (isLongPress) return; 
+      if (document.body.classList.contains('selection-mode')) {
+          toggleMessageSelection(msgId);
+      }
+  }
+
+  window.handlePressStart = function(msgId) {
+      isLongPress = false;
+      pressTimer = setTimeout(() => {
+          isLongPress = true;
+          if (!document.body.classList.contains('selection-mode')) {
+              enterSelectionMode();
+              toggleMessageSelection(msgId);
+          }
+      }, 500); 
+  }
+
+  window.handlePressEnd = function() {
+      clearTimeout(pressTimer);
+  }
+
+  window.handleContextMenu = function(e, msgId) {
+      e.preventDefault();
+      if (!document.body.classList.contains('selection-mode')) {
+          enterSelectionMode();
+          toggleMessageSelection(msgId);
+      }
+  }
+
   function toggleMessageSelection(msgId) {
-    const el = document.getElementById('msg-' + msgId);
-    if (!el) return;
+    const row = document.getElementById('row-' + msgId);
+    if (!row) return;
     
     if (selectedMessageIds.has(msgId)) {
         selectedMessageIds.delete(msgId);
-        el.classList.remove('selected');
+        row.classList.remove('selected');
     } else {
         selectedMessageIds.add(msgId);
-        el.classList.add('selected');
+        row.classList.add('selected');
     }
     
     updateSelectionUI();
@@ -593,20 +639,16 @@
     document.getElementById('selectionCount').innerText = selectedMessageIds.size;
   }
 
-  async function deleteSelectedMessages() {
+  window.deleteSelectedMessages = async function() {
     if (selectedMessageIds.size === 0) return;
     if (!confirm(`Delete ${selectedMessageIds.size} selected message(s)?`)) return;
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
     const idsToDelete = Array.from(selectedMessageIds);
     
-    // Optimistic UI updates
     idsToDelete.forEach(id => {
-        const el = document.getElementById('msg-' + id);
-        if (el) {
-            el.style.opacity = '0.5';
-            el.style.pointerEvents = 'none';
-        }
+        const el = document.getElementById('row-' + id);
+        if (el) { el.style.opacity = '0.5'; el.style.pointerEvents = 'none'; }
     });
 
     exitSelectionMode();
@@ -621,10 +663,9 @@
         );
 
         const results = await Promise.all(deletionPromises);
-        
         results.forEach((res, index) => {
             if(res.success) {
-                const el = document.getElementById('msg-' + idsToDelete[index]);
+                const el = document.getElementById('row-' + idsToDelete[index]);
                 if(el) el.remove();
             }
         });
@@ -633,6 +674,122 @@
         alert("Some messages could not be deleted.");
     }
   }
+
+  // 🚀 RECENT CHATS & FORWARD LOGIC
+  window.openForwardModal = function() {
+    if (selectedMessageIds.size === 0) return;
+    const modalEl = document.getElementById('forwardModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+    setTimeout(() => document.getElementById("forwardSearchInput").focus(), 400);
+    
+    loadRecentChats(); // Automatically load recent chats when opened
+  }
+
+  async function loadRecentChats() {
+      const fwdList = document.getElementById("forwardUserList");
+      fwdList.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>`;
+      try {
+          const response = await fetch(`/api/recent-chats`);
+          if (response.ok) {
+              const users = await response.json();
+              renderForwardList(users, "No recent chats found. Use the search bar above.");
+          } else {
+              fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">Search for a user to forward your messages.</div>`;
+          }
+      } catch (err) {
+          fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">Search for a user to forward your messages.</div>`;
+      }
+  }
+
+  function renderForwardList(users, emptyMessage = "No users found.") {
+      const fwdList = document.getElementById("forwardUserList");
+      fwdList.innerHTML = "";
+
+      if (users.length > 0) {
+          users.forEach(user => {
+              const picSrc = user.profile_pic ? (user.profile_pic.startsWith("http") ? user.profile_pic : "/static/uploads/avatars/" + user.profile_pic) : "";
+              const avatarHtml = user.profile_pic ? 
+                  `<img src="${picSrc}" class="rounded-circle object-fit-cover shadow-sm border border-secondary" style="width: 40px; height: 40px;">` : 
+                  `<div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-sm" style="width: 40px; height: 40px; font-weight: bold;">${user.username.charAt(0).toUpperCase()}</div>`;
+              
+              const verifiedIcon = user.blue_tick ? `<i class="bi bi-patch-check-fill text-primary ms-1" style="font-size: 0.9rem;" title="Verified"></i>` : '';
+
+              const userItem = document.createElement("div");
+              userItem.className = "d-flex align-items-center justify-content-between p-2 border-bottom";
+              userItem.style.borderColor = "var(--border-color) !important";
+              userItem.innerHTML = `
+                  <div class="d-flex align-items-center gap-3">
+                      ${avatarHtml}
+                      <span class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">${user.username}${verifiedIcon}</span>
+                  </div>
+                  <button class="btn btn-sm btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="forwardToUser(${user.id || `'${user.username}'`}, '${user.username}', this)">Send</button>
+              `;
+              fwdList.appendChild(userItem);
+          });
+      } else {
+          fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">${emptyMessage}</div>`;
+      }
+  }
+
+  const fwdInput = document.getElementById("forwardSearchInput");
+  let fwdTimer;
+
+  if (fwdInput) {
+      fwdInput.addEventListener("input", function() {
+          clearTimeout(fwdTimer);
+          const query = this.value.trim();
+
+          if (query.length < 1) {
+              loadRecentChats(); // Reload recent chats if search is cleared
+              return;
+          }
+
+          fwdTimer = setTimeout(async () => {
+              try {
+                  const response = await fetch(`/api/search-users?q=${query}`);
+                  if (!response.ok) return;
+                  const users = await response.json();
+                  renderForwardList(users);
+              } catch(err) {
+                  console.error("Search error:", err);
+              }
+          }, 300);
+      });
+  }
+
+  const socket = io(); 
+
+  window.forwardToUser = function(targetId, targetUsername, btn) {
+      if (!targetId || targetId === 'undefined') {
+          alert("Error: User ID not provided by search API.");
+          return;
+      }
+      const idsToForward = Array.from(selectedMessageIds);
+      idsToForward.forEach(msgId => {
+          const msgBubble = document.querySelector(`#row-${msgId} .msg-bubble`);
+          if (msgBubble) {
+              const clone = msgBubble.cloneNode(true);
+              const timeRow = clone.querySelector('.msg-time-row');
+              if(timeRow) timeRow.remove();
+              
+              const text = clone.innerHTML.trim();
+              socket.emit("send_message", { recipient_id: parseInt(targetId), text: text });
+          }
+      });
+      
+      btn.innerHTML = '<i class="fas fa-check"></i> Sent';
+      btn.classList.replace('btn-primary', 'btn-success');
+      btn.disabled = true;
+      
+      setTimeout(() => {
+          const modalEl = document.getElementById('forwardModal');
+          const modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+          exitSelectionMode();
+          if (typeof window.showToast === "function") window.showToast(`Messages forwarded to ${targetUsername}`);
+      }, 800);
+  };
 
   window.clearChat = async function (recipientId) {
     if (!confirm("Are you sure you want to clear your chat history? This will only remove the messages for you.")) return;
@@ -644,26 +801,25 @@
       });
       const data = await res.json();
       if (data.success) {
-        document.querySelectorAll(".msg-container:not(#typingIndicator)").forEach(el => el.remove());
+        document.querySelectorAll(".msg-row:not(#typingIndicator)").forEach(el => el.remove());
         if (!document.getElementById("emptyChatState")) {
           const emptyHTML = `
             <div class="text-center my-auto opacity-75" id="emptyChatState">
-              <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3" style="width: 80px; height: 80px">
-                <i class="fas fa-broom fa-2x"></i>
+              <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle mb-3" style="width: 80px; height: 80px; background-color: #00a884;">
+                <i class="fas fa-lock fa-2x"></i>
               </div>
-              <h5 class="fw-bold" style="color: var(--text-main)">Chat Cleared</h5>
-              <p class="text-muted small">Your conversation history has been removed.</p>
+              <h6 class="fw-bold" style="color: var(--text-main)">Messages are securely routed.</h6>
+              <p class="text-muted small px-3">Send a message to start a conversation.</p>
             </div>
           `;
           document.getElementById("chatContent").insertAdjacentHTML('beforeend', emptyHTML);
         }
-        if (typeof window.showToast === "function") window.showToast("Chat cleared successfully.");
       } else {
-        alert("Failed to clear chat: " + (data.error || "Unknown error."));
+        alert("Failed to clear chat.");
       }
     } catch (err) {
       console.error(err);
-      alert("Network error while trying to clear chat.");
+      alert("Network error.");
     }
   };
 
@@ -675,12 +831,17 @@
     const spinner = document.getElementById("historyLoadingSpinner");
     const typingIndicator = document.getElementById("typingIndicator");
 
-    // 🚀 INITIALIZE ROCK-SOLID EMOJI PICKER
+    // 🚀 INITIALIZE ROCK-SOLID EMOJI PICKER WITH THEME SYNC
     const emojiTrigger = document.getElementById("emojiTrigger");
     const emojiContainer = document.getElementById("emojiPickerContainer");
     const picker = document.querySelector("emoji-picker");
 
     if (emojiTrigger && emojiContainer && picker) {
+      const updateEmojiTheme = () => {
+          picker.classList.toggle('dark', document.body.classList.contains("dark-mode"));
+      };
+      updateEmojiTheme();
+
       emojiTrigger.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -699,11 +860,9 @@
 
     const currentUserId = parseInt("{{ current_user.id }}");
     const recipientId = parseInt("{{ recipient.id }}");
-
     let messageOffset = 50;
     let allMessagesLoaded = false;
     let isLoadingHistory = false;
-
     let typingTimeout = null;
     let isCurrentlyTyping = false;
 
@@ -715,58 +874,6 @@
         if (chatContainer.scrollTop <= 10 && !allMessagesLoaded && !isLoadingHistory) {
           loadChatHistory();
         }
-      });
-
-      // 🚀 TOUCH/CLICK LOGIC FOR WHATSAPP SELECTION
-      chatContainer.addEventListener('touchstart', (e) => {
-          const bubble = e.target.closest('.msg-bubble');
-          if (!bubble) return;
-          
-          isLongPress = false;
-          startX = e.touches[0].clientX;
-          startY = e.touches[0].clientY;
-          
-          pressTimer = setTimeout(() => {
-              isLongPress = true;
-              const msgId = bubble.closest('.msg-container').id.replace('msg-', '');
-              if (!document.body.classList.contains('selection-mode')) enterSelectionMode();
-              if (!selectedMessageIds.has(msgId)) toggleMessageSelection(msgId);
-          }, 600);
-      }, {passive: true});
-
-      chatContainer.addEventListener('touchmove', (e) => {
-          if (!pressTimer) return;
-          const currentX = e.touches[0].clientX;
-          const currentY = e.touches[0].clientY;
-          if (Math.abs(currentX - startX) > 10 || Math.abs(currentY - startY) > 10) clearTimeout(pressTimer);
-      }, {passive: true});
-
-      chatContainer.addEventListener('touchend', () => { clearTimeout(pressTimer); });
-
-      chatContainer.addEventListener('click', (e) => {
-          if (isLongPress) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-          }
-          if (document.body.classList.contains('selection-mode')) {
-              const bubble = e.target.closest('.msg-bubble');
-              if (bubble) {
-                  e.preventDefault();
-                  const msgId = bubble.closest('.msg-container').id.replace('msg-', '');
-                  toggleMessageSelection(msgId);
-              }
-          }
-      });
-
-      chatContainer.addEventListener('contextmenu', (e) => {
-          const bubble = e.target.closest('.msg-bubble');
-          if (bubble) {
-              e.preventDefault();
-              const msgId = bubble.closest('.msg-container').id.replace('msg-', '');
-              if (!document.body.classList.contains('selection-mode')) enterSelectionMode();
-              if (!selectedMessageIds.has(msgId)) toggleMessageSelection(msgId);
-          }
       });
     }
 
@@ -789,13 +896,13 @@
 
         data.forEach((msg) => {
           const isMine = msg.sender_id === currentUserId;
-          prependMessageToUI(msg.text, formatLocalTime(msg.time), isMine, msg.id);
+          prependMessageToUI(msg.text, formatLocalTime(msg.time), isMine, msg.id, msg.is_read);
         });
 
         messageOffset += data.length;
         chatContainer.scrollTop = chatContainer.scrollHeight - oldScrollHeight;
       } catch (err) {
-        console.error("Failed to load history:", err);
+        console.error(err);
       } finally {
         isLoadingHistory = false;
         spinner.classList.add("d-none");
@@ -803,41 +910,96 @@
       }
     }
 
-    function prependMessageToUI(text, time, isMine, msgId) {
-      if (document.getElementById("msg-" + msgId)) return;
-      const newMsg = document.createElement("div");
-      newMsg.className = `msg-container ${isMine ? "msg-mine" : "msg-theirs"} fade-in-up`;
-      newMsg.style.animationDuration = "0.3s";
-      newMsg.id = "msg-" + msgId;
+    function prependMessageToUI(text, time, isMine, msgId, isRead) {
+      if (document.getElementById("row-" + msgId)) return;
+      const newRow = document.createElement("div");
+      newRow.className = "msg-row fade-in-up";
+      newRow.style.animationDuration = "0.3s";
+      newRow.id = "row-" + msgId;
+      newRow.setAttribute("onclick", `handleMessageClick('${msgId}')`);
+      newRow.setAttribute("onmousedown", `handlePressStart('${msgId}')`);
+      newRow.setAttribute("onmouseup", `handlePressEnd()`);
+      newRow.setAttribute("onmouseleave", `handlePressEnd()`);
+      newRow.setAttribute("ontouchstart", `handlePressStart('${msgId}')`);
+      newRow.setAttribute("ontouchend", `handlePressEnd()`);
+      newRow.setAttribute("oncontextmenu", `handleContextMenu(event, '${msgId}')`);
 
-      if (isMine) {
-        newMsg.innerHTML = `
-              <div class="d-flex align-items-center justify-content-end gap-2">
-                <div class="msg-bubble shadow-sm">${text}</div>
-              </div>
-              <div class="d-flex justify-content-end align-items-center mt-1">
-                <div class="msg-time" style="margin-top: 0;">${time}</div>
-                <i id="tick-${msgId}" class="fas fa-check text-muted ms-1 msg-tick" style="font-size: 0.7rem;"></i>
-              </div>`;
-      } else {
-        newMsg.innerHTML = `
-              <div class="d-flex align-items-center justify-content-start gap-2">
-                <div class="msg-bubble shadow-sm">${text}</div>
-              </div>
-              <div class="msg-time">${time}</div>`;
+      let tickHtml = '';
+      if(isMine) {
+          const tickClass = isRead ? "fa-check-double tick-read" : "fa-check tick-unread";
+          tickHtml = `<i id="tick-${msgId}" class="fas ${tickClass} ms-1 msg-tick"></i>`;
       }
-      
-      spinner.insertAdjacentElement("afterend", newMsg);
+
+      newRow.innerHTML = `
+        <div class="msg-checkbox-wrapper">
+          <div class="wa-checkbox" id="chk-${msgId}"><i class="fas fa-check" style="font-size: 10px;"></i></div>
+        </div>
+        <div class="msg-container ${isMine ? 'msg-mine' : 'msg-theirs'}">
+          <div class="msg-bubble shadow-sm">${text}
+            <div class="msg-time-row">
+              <span class="msg-time">${time}</span>
+              ${tickHtml}
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (typingIndicator) {
+        chatContentWrapper.insertBefore(newRow, typingIndicator);
+      } else {
+        chatContentWrapper.appendChild(newRow);
+      }
     }
 
-    const socket = io();
+    // Dynamic appending for newly sent messages
+    function appendMessageToUI(text, time, isMine, msgId) {
+      if (document.getElementById("row-" + msgId)) return;
+      const newRow = document.createElement("div");
+      newRow.className = "msg-row fade-in-up";
+      newRow.style.animationDuration = "0.3s";
+      newRow.id = "row-" + msgId;
+      newRow.setAttribute("onclick", `handleMessageClick('${msgId}')`);
+      newRow.setAttribute("onmousedown", `handlePressStart('${msgId}')`);
+      newRow.setAttribute("onmouseup", `handlePressEnd()`);
+      newRow.setAttribute("onmouseleave", `handlePressEnd()`);
+      newRow.setAttribute("ontouchstart", `handlePressStart('${msgId}')`);
+      newRow.setAttribute("ontouchend", `handlePressEnd()`);
+      newRow.setAttribute("oncontextmenu", `handleContextMenu(event, '${msgId}')`);
+
+      let tickHtml = isMine ? `<i id="tick-${msgId}" class="fas fa-check tick-unread ms-1 msg-tick"></i>` : '';
+
+      newRow.innerHTML = `
+        <div class="msg-checkbox-wrapper">
+          <div class="wa-checkbox" id="chk-${msgId}"><i class="fas fa-check" style="font-size: 10px;"></i></div>
+        </div>
+        <div class="msg-container ${isMine ? 'msg-mine' : 'msg-theirs'}">
+          <div class="msg-bubble shadow-sm">${text}
+            <div class="msg-time-row">
+              <span class="msg-time">${time}</span>
+              ${tickHtml}
+            </div>
+          </div>
+        </div>
+      `;
+
+      const emptyState = document.getElementById("emptyChatState");
+      if (emptyState) emptyState.remove();
+
+      if (typingIndicator) {
+        chatContentWrapper.insertBefore(newRow, typingIndicator);
+      } else {
+        chatContentWrapper.appendChild(newRow);
+      }
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
 
     socket.emit("chat_opened", { sender_id: recipientId });
 
     socket.on("all_messages_read", function (data) {
       if (data.reader_id === recipientId) {
         document.querySelectorAll(".msg-tick").forEach((tick) => {
-          tick.className = "fas fa-check-double text-info ms-1 msg-tick";
+          tick.className = "fas fa-check-double tick-read ms-1 msg-tick";
         });
       }
     });
@@ -845,7 +1007,7 @@
     socket.on("single_message_read", function (data) {
       if (data.reader_id === recipientId) {
         const tick = document.getElementById("tick-" + data.msg_id);
-        if (tick) tick.className = "fas fa-check-double text-info ms-1 msg-tick";
+        if (tick) tick.className = "fas fa-check-double tick-read ms-1 msg-tick";
       }
     });
 
@@ -896,50 +1058,15 @@
         const statusText = document.getElementById("userStatusText");
         if (statusText) {
           if (data.status === "online") {
-            statusText.innerText = "Online";
+            statusText.innerText = "online";
             statusText.style.color = "var(--primary)";
           } else {
-            statusText.innerText = "Offline";
-            statusText.style.color = "var(--text-muted)";
+            statusText.innerText = "offline";
+            statusText.style.color = "#8696a0";
           }
         }
       }
     });
-
-    function appendMessageToUI(text, time, isMine, msgId) {
-      if (document.getElementById("msg-" + msgId)) return;
-      const newMsg = document.createElement("div");
-      newMsg.className = `msg-container ${isMine ? "msg-mine" : "msg-theirs"} fade-in-up`;
-      newMsg.style.animationDuration = "0.3s";
-      newMsg.id = "msg-" + msgId;
-
-      if (isMine) {
-        newMsg.innerHTML = `
-              <div class="d-flex align-items-center justify-content-end gap-2">
-                <div class="msg-bubble shadow-sm">${text}</div>
-              </div>
-              <div class="d-flex justify-content-end align-items-center mt-1">
-                <div class="msg-time" style="margin-top: 0;">${time}</div>
-                <i id="tick-${msgId}" class="fas fa-check text-muted ms-1 msg-tick" style="font-size: 0.7rem;"></i>
-              </div>`;
-      } else {
-        newMsg.innerHTML = `
-              <div class="d-flex align-items-center justify-content-start gap-2">
-                <div class="msg-bubble shadow-sm">${text}</div>
-              </div>
-              <div class="msg-time">${time}</div>`;
-      }
-
-      const emptyState = document.getElementById("emptyChatState");
-      if (emptyState) emptyState.remove();
-
-      if (typingIndicator) {
-        chatContentWrapper.insertBefore(newMsg, typingIndicator);
-      } else {
-        chatContentWrapper.appendChild(newMsg);
-      }
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
 
     if (chatForm) {
       chatForm.addEventListener("submit", function (e) {

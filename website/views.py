@@ -1,4 +1,3 @@
-# FILE: views.py
 from functools import wraps
 from flask import ( 
     Blueprint, render_template, request,
@@ -1655,6 +1654,41 @@ def inbox():
             }
     
     return render_template("inbox.html", user=current_user, chats=list(conversations.values()))
+
+
+
+@views.route('/api/recent-chats', methods=['GET'])
+@login_required
+def api_recent_chats():
+    # Find all messages involving the current user, ordered by most recent
+    messages = Message.query.filter(
+        or_(Message.sender_id == current_user.id, Message.recipient_id == current_user.id)
+    ).order_by(Message.date_created.desc()).all()
+    
+    seen_users = set()
+    recent_users = []
+    
+    for msg in messages:
+        # Determine the ID of the person we were chatting with
+        other_user_id = msg.recipient_id if msg.sender_id == current_user.id else msg.sender_id
+        
+        if other_user_id not in seen_users:
+            seen_users.add(other_user_id)
+            other_user = User.query.get(other_user_id)
+            
+            if other_user and other_user.is_active and not getattr(other_user, 'is_deleted', False):
+                recent_users.append({
+                    'id': other_user.id,
+                    'username': other_user.username,
+                    'profile_pic': getattr(other_user, 'profile_pic', None),
+                    'blue_tick': getattr(other_user, 'blue_tick', False)
+                })
+                
+        # Limit to the 15 most recent people to keep the menu fast
+        if len(recent_users) >= 15:
+            break
+            
+    return jsonify(recent_users)
 
 @views.route('/chat/<string:username>')
 @login_required
