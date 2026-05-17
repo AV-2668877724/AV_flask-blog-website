@@ -70,7 +70,8 @@ content %}
                 <div class="ms-3 flex-grow-1 overflow-hidden">
                   <div class="d-flex justify-content-between align-items-center mb-1">
                     <h6
-                      class="mb-0 fw-bold text-truncate {{ 'text-primary' if chat.unread else '' }}"
+                      class="mb-0 fw-bold text-truncate global-nickname {{ 'text-primary' if chat.unread else '' }}"
+                      data-original-name="{{ chat.user.username }}"
                       style="color: var(--text-main); font-size: 1.05rem"
                     >
                       {{ chat.user.username }}
@@ -127,12 +128,19 @@ content %}
                     <i class="fas fa-ellipsis-v" style="font-size: 1.15rem;"></i>
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; background-color: var(--bg-card); z-index: 1050;">
+                    
+                    <li>
+                      <a class="dropdown-item fw-bold py-2" href="#" onclick="openInboxNicknameModal('{{ chat.user.username }}'); return false;" style="border-radius: 8px; color: var(--text-main);">
+                        <i class="fas fa-user-edit me-2 text-info"></i> Set Nickname
+                      </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    
                     <li>
                       <a class="dropdown-item text-danger fw-bold py-2" href="#" onclick="clearChat('{{ chat.user.id }}')" style="border-radius: 8px;">
                         <i class="fas fa-trash-alt me-2"></i> Clear Chat
                       </a>
                     </li>
-                    <li><hr class="dropdown-divider"></li>
                     <li>
                       <a class="dropdown-item text-danger fw-bold py-2" href="#" onclick="blockUser('{{ chat.user.id }}')" style="border-radius: 8px;">
                         <i class="fas fa-ban me-2"></i> Block User
@@ -170,12 +178,88 @@ content %}
   </div>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const socket = io();
-    const currentUserId = "{{ current_user.id }}"; // Get the logged-in user's ID
+<div class="modal fade" id="inboxNicknameModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background-color: var(--bg-card);">
+      <div class="modal-header border-0 pb-0 mt-2 px-4">
+        <h5 class="modal-title fw-bold font-heading" style="color: var(--text-main)">
+          Set Nickname
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 pb-4 pt-3">
+        <p class="small text-muted mb-3">This alias is only visible to you on this device.</p>
+        <input type="text" id="inboxNicknameInput" class="form-control bg-light border-0 shadow-sm px-3 py-2 mb-3" placeholder="Enter nickname (e.g. Bro, Boss)" style="border-radius: 12px; color: var(--text-main);">
+        <div class="d-flex justify-content-end gap-2">
+          <button class="btn btn-light rounded-pill px-4 fw-bold shadow-sm" onclick="clearInboxNickname()">Reset</button>
+          <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="saveInboxNickname()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    // Listen for typing indicators
+<script>
+  // 🚀 INBOX LOCAL NICKNAME LOGIC
+  let currentEditUser = "";
+
+  window.openInboxNicknameModal = function(username) {
+      currentEditUser = username;
+      const alias = localStorage.getItem('av_alias_' + username) || "";
+      document.getElementById('inboxNicknameInput').value = alias;
+      const modal = new bootstrap.Modal(document.getElementById('inboxNicknameModal'));
+      modal.show();
+      setTimeout(() => document.getElementById("inboxNicknameInput").focus(), 400);
+  };
+
+  window.saveInboxNickname = function() {
+      const val = document.getElementById('inboxNicknameInput').value.trim();
+      if (val) {
+          localStorage.setItem('av_alias_' + currentEditUser, val);
+      } else {
+          localStorage.removeItem('av_alias_' + currentEditUser);
+      }
+      
+      applyLocalNicknames();
+      bootstrap.Modal.getInstance(document.getElementById('inboxNicknameModal')).hide();
+      if (typeof window.showToast === "function") window.showToast("Nickname updated.");
+  };
+
+  window.clearInboxNickname = function() {
+      document.getElementById('inboxNicknameInput').value = "";
+      localStorage.removeItem('av_alias_' + currentEditUser);
+      applyLocalNicknames();
+      bootstrap.Modal.getInstance(document.getElementById('inboxNicknameModal')).hide();
+      if (typeof window.showToast === "function") window.showToast("Nickname reset.");
+  };
+
+  // Instantly scan and apply nicknames
+  function applyLocalNicknames() {
+      if (typeof applyGlobalNicknames === 'function') {
+          applyGlobalNicknames(); // Use global engine if available from base.html
+      } else {
+          // Fallback: manually update elements on this page
+          document.querySelectorAll('.global-nickname').forEach(el => {
+              const originalName = el.getAttribute('data-original-name');
+              const alias = localStorage.getItem('av_alias_' + originalName);
+              if (alias) {
+                  el.innerText = alias;
+                  el.title = `Original: ${originalName}`;
+              } else {
+                  el.innerText = originalName;
+                  el.title = "";
+              }
+          });
+      }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Apply nicknames initially
+    applyLocalNicknames();
+
+    const socket = io();
+    const currentUserId = "{{ current_user.id }}"; 
+
     socket.on("user_typing", function (data) {
       const msgText = document.getElementById("msg-text-" + data.user_id);
       const typingText = document.getElementById("typing-text-" + data.user_id);
@@ -191,9 +275,7 @@ content %}
       }
     });
 
-    // 🚀 NEW: Receive Message & Auto-Move to Top
     socket.on("receive_message", function (msg) {
-      // Determine if I sent this message (from another tab) or if I received it
       const isMine = String(msg.sender_id) === currentUserId;
       const targetId = isMine ? msg.recipient_id : msg.sender_id;
 
@@ -201,29 +283,22 @@ content %}
       const typingText = document.getElementById("typing-text-" + targetId);
 
       if (msgText && typingText) {
-        // 1. Hide typing indicator & show message text
         typingText.classList.add("d-none");
         msgText.classList.remove("d-none");
         
-        // 2. Make text bold if we received it
         if (!isMine) {
           msgText.classList.add("fw-bold", "text-dark"); 
           msgText.classList.remove("text-muted");
         }
 
-        // 3. Clean and set the preview text
         let tmp = document.createElement("DIV");
         tmp.innerHTML = msg.text;
         const cleanText = tmp.textContent || tmp.innerText || "";
         msgText.innerHTML = (isMine ? "You: " : "") + cleanText;
 
-        // 4. 🚀 MOVE THE CHAT TO THE TOP OF THE INBOX!
         const chatRow = msgText.closest('.list-group-item');
         if (chatRow) {
-          // Move the element to the top of the parent container
           chatRow.parentNode.prepend(chatRow);
-          
-          // Add a subtle highlight effect so the user sees it jump to the top
           chatRow.style.transition = "background-color 0.5s ease";
           chatRow.style.backgroundColor = "var(--primary-glow, rgba(79, 70, 229, 0.15))";
           setTimeout(() => {
@@ -231,14 +306,12 @@ content %}
           }, 1500);
         }
       } else {
-        // If the chat row doesn't exist at all (it's a brand new conversation from someone else)
         if (!isMine) {
-          window.location.reload(); // Instantly refresh to build the new UI row
+          window.location.reload(); 
         }
       }
     });
 
-    // Clear Chat Logic
     window.clearChat = function (recipientId) {
       if (!confirm("Clear this conversation?")) return;
       const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
