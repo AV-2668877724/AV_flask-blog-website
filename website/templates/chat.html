@@ -5,7 +5,7 @@
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 
 <style>
-  /* 🚀 ULTIMATE FULL-SCREEN FIX: Hide everything from base.html */
+  /* 🚀 ULTIMATE FULL-SCREEN FIX */
   nav, .navbar, footer, .footer, .mobile-nav, body > p, .text-center.mt-4, .text-muted.small {
     display: none !important;
   }
@@ -77,14 +77,15 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    color: var(--text-muted);
+    color: #54656f; /* WhatsApp Grey */
     background: transparent;
     transition: all 0.2s;
     text-decoration: none;
     border: none;
   }
+  /* 🚀 FIXED HIGH CONTRAST DARK MODE ICONS */
   body.dark-mode .btn-back, body.dark-mode .chat-header-icon {
-    color: #e9edef;
+    color: #aebac1 !important; 
   }
   .btn-back:hover, .chat-header-icon:hover {
     background: var(--bg-input);
@@ -221,7 +222,7 @@
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    border: 2px solid var(--text-muted);
+    border: 2px solid #8696a0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -262,40 +263,39 @@
     position: relative;
     display: flex;
     align-items: center;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 50px;
-    padding: 0.6rem 3.5rem 0.6rem 3.2rem;
-    transition: all var(--trans-smooth);
+    background-color: #ffffff;
+    border-radius: 24px;
+    padding: 0.5rem 3.5rem 0.5rem 3.2rem;
     width: 100%;
     margin: 0 auto;
+    box-shadow: none;
   }
-  .chat-input-wrapper:focus-within {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px var(--primary-glow);
+  body.dark-mode .chat-input-wrapper {
+    background-color: #2a3942;
   }
 
+  /* 🚀 FIXED EMOJI TRIGGER BUTTON CONTRAST */
   .btn-emoji {
     position: absolute;
-    left: 8px;
+    left: 6px;
     top: 50%;
     transform: translateY(-50%);
     background: transparent;
     border: none;
-    font-size: 1.35rem;
-    color: var(--text-main) !important; 
-    opacity: 0.6;
+    font-size: 1.5rem;
+    color: #54656f !important; 
     cursor: pointer;
-    transition: opacity 0.2s, transform 0.2s;
+    transition: transform 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 8px;
     z-index: 11;
   }
+  body.dark-mode .btn-emoji {
+    color: #aebac1 !important; 
+  }
   .btn-emoji:hover {
-    opacity: 1;
-    color: var(--primary) !important;
     transform: translateY(-50%) scale(1.1);
   }
 
@@ -368,52 +368,60 @@
     0%, 80%, 100% { transform: scale(0); }
     40% { transform: scale(1); }
   }
+
+  .forward-user-row { transition: background-color 0.2s ease; cursor: pointer; }
+  .forward-user-row:hover { background-color: var(--bg-input); }
 </style>
 
 <div class="chat-wrapper fade-in-up">
   <div class="chat-card">
     
     <div id="defaultHeader" class="chat-header">
-      <div class="d-flex align-items-center">
-        <a href="{{ url_for('views.inbox') }}" class="btn-back me-2" title="Go to Inbox">
+      <div class="d-flex align-items-center" style="min-width: 0;">
+        <a href="{{ url_for('views.inbox') }}" class="btn-back me-2 flex-shrink-0" title="Go to Inbox">
           <i class="fas fa-arrow-left" style="font-size: 1.2rem"></i>
         </a>
 
-        <a href="{{ url_for('views.profile', username=recipient.username) }}" class="text-decoration-none d-flex align-items-center gap-3">
+        <a href="{{ url_for('views.profile', username=recipient.username) }}" class="text-decoration-none d-flex align-items-center gap-3" style="min-width: 0;">
           {% if recipient.profile_pic %}
-          <img src="{% if 'http' in recipient.profile_pic %}{{ recipient.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + recipient.profile_pic) }}{% endif %}" class="chat-avatar shadow-sm" alt="{{ recipient.username }}" />
+          <img src="{% if 'http' in recipient.profile_pic %}{{ recipient.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + recipient.profile_pic) }}{% endif %}" class="chat-avatar shadow-sm flex-shrink-0" alt="{{ recipient.username }}" />
           {% else %}
-          <div class="chat-avatar-placeholder shadow-sm">{{ recipient.username[0]|upper }}</div>
+          <div class="chat-avatar-placeholder shadow-sm flex-shrink-0">{{ recipient.username[0]|upper }}</div>
           {% endif %}
-          <div class="d-flex flex-column justify-content-center">
-            <h6 class="fw-bold mb-0" style="color: var(--text-main); font-size: 1.1rem; line-height: 1;">{{ recipient.username }}</h6>
+          <div class="d-flex flex-column justify-content-center" style="min-width: 0;">
+            <h6 id="headerUsername" class="fw-bold mb-0 text-truncate global-nickname" data-original-name="{{ recipient.username }}" style="color: var(--text-main); font-size: 1.1rem; line-height: 1; max-width: 180px;">{{ recipient.username }}</h6>
             {% if recipient.is_online %}
-            <small id="userStatusText" style="color: var(--primary); font-size: 0.8rem; font-weight: 500;">online</small>
+            <small id="userStatusText" style="color: #00a884; font-size: 0.8rem; font-weight: 500;">online</small>
             {% else %}
-            <small id="userStatusText" style="color: var(--text-muted); font-size: 0.8rem;">offline</small>
+            <small id="userStatusText" style="color: #8696a0; font-size: 0.8rem;">offline</small>
             {% endif %}
           </div>
         </a>
       </div>
       
-      <div class="dropdown">
+      <div class="dropdown flex-shrink-0">
         <button class="chat-header-icon" data-bs-toggle="dropdown" title="Menu">
           <i class="fas fa-ellipsis-v fs-5"></i>
         </button>
         <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 12px; background-color: var(--bg-card); z-index: 1050;">
           <li>
-            <a class="dropdown-item fw-bold py-2" href="#" onclick="enterSelectionMode(); return false;" style="border-radius: 8px; color: var(--text-main);">
+            <a class="dropdown-item fw-bold py-2" href="#" id="menuSelectMessages" style="border-radius: 8px; color: var(--text-main);">
               <i class="fas fa-check-square me-2" style="color: #00a884;"></i> Select Messages
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item fw-bold py-2" href="#" id="menuSetNickname" style="border-radius: 8px; color: var(--text-main);">
+              <i class="fas fa-user-edit me-2 text-info"></i> Set Nickname
             </a>
           </li>
           <li><hr class="dropdown-divider"></li>
           <li>
-            <a class="dropdown-item fw-bold py-2" href="#" onclick="clearChat('{{ recipient.id }}')" style="border-radius: 8px; color: var(--text-main);">
+            <a class="dropdown-item fw-bold py-2" href="#" id="menuClearChat" style="border-radius: 8px; color: var(--text-main);">
               <i class="fas fa-eraser me-2"></i> Clear Chat
             </a>
           </li>
           <li>
-            <a class="dropdown-item text-danger fw-bold py-2" href="#" onclick="blockUser('{{ recipient.id }}')" style="border-radius: 8px;">
+            <a class="dropdown-item text-danger fw-bold py-2" href="#" id="menuBlockUser" style="border-radius: 8px;">
               <i class="fas fa-ban me-2"></i> Block User
             </a>
           </li>
@@ -423,16 +431,16 @@
 
     <div id="selectionHeader" class="chat-header d-none" style="background-color: #00a884; border-bottom: none;">
       <div class="d-flex align-items-center gap-3">
-        <button class="chat-header-icon text-white p-0" onclick="exitSelectionMode()" title="Cancel Selection">
+        <button class="chat-header-icon text-white p-0" id="btnCancelSelection" title="Cancel Selection">
           <i class="fas fa-arrow-left fs-5"></i>
         </button>
         <h5 class="mb-0 fw-bold text-white"><span id="selectionCount">0</span></h5>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <button class="chat-header-icon text-white p-0" onclick="openForwardModal()" title="Forward Selected">
+        <button class="chat-header-icon text-white p-0" id="btnOpenForward" title="Forward Selected">
           <i class="fas fa-share fs-5"></i>
         </button>
-        <button class="chat-header-icon text-white p-0" onclick="deleteSelectedMessages()" title="Delete Selected">
+        <button class="chat-header-icon text-white p-0" id="btnDeleteSelected" title="Delete Selected">
           <i class="fas fa-trash-alt fs-5"></i>
         </button>
       </div>
@@ -447,14 +455,7 @@
         
         {% if messages %} 
           {% for msg in messages %} 
-            <div class="msg-row" id="row-{{ msg.id }}" 
-                 onclick="handleMessageClick('{{ msg.id }}')" 
-                 onmousedown="handlePressStart('{{ msg.id }}')" 
-                 onmouseup="handlePressEnd()" 
-                 onmouseleave="handlePressEnd()" 
-                 ontouchstart="handlePressStart('{{ msg.id }}')" 
-                 ontouchend="handlePressEnd()" 
-                 oncontextmenu="handleContextMenu(event, '{{ msg.id }}')">
+            <div class="msg-row fade-in-up" id="row-{{ msg.id }}">
               
               <div class="msg-checkbox-wrapper">
                 <div class="wa-checkbox" id="chk-{{ msg.id }}"><i class="fas fa-check" style="font-size: 10px;"></i></div>
@@ -507,9 +508,9 @@
         <emoji-picker></emoji-picker>
       </div>
       
-      <form id="chatForm" onsubmit="event.preventDefault()">
+      <form id="chatForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <div class="chat-input-wrapper shadow-sm">
+        <div class="chat-input-wrapper">
           
           <button type="button" id="emojiTrigger" class="btn-emoji" title="Add Emoji">
             <i class="far fa-smile"></i>
@@ -519,7 +520,7 @@
             type="text"
             name="text"
             class="chat-input"
-            placeholder="Type a message"
+            placeholder="Message"
             required
             autocomplete="off"
             id="chatInputField"
@@ -534,296 +535,72 @@
   </div>
 </div>
 
+<div class="modal fade" id="nicknameModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background-color: var(--bg-card);">
+      <div class="modal-header border-0 pb-0 mt-2 px-4">
+        <h5 class="modal-title fw-bold font-heading" style="color: var(--text-main)">
+          Set Nickname
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4 pb-4 pt-3">
+        <p class="small text-muted mb-3">This alias is only visible to you on this device.</p>
+        <input type="text" id="nicknameInput" class="form-control bg-light border-0 shadow-sm px-3 py-2 mb-3" placeholder="Enter nickname (e.g. Bro, Boss)" style="border-radius: 12px; color: var(--text-main);">
+        <div class="d-flex justify-content-end gap-2">
+          <button class="btn btn-light rounded-pill px-4 fw-bold shadow-sm" id="btnClearNickname">Reset</button>
+          <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="btnSaveNickname">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade" id="forwardModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background-color: var(--bg-card); max-height: 80vh;">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; background-color: var(--bg-card); max-height: 85vh;">
       <div class="modal-header border-0 pb-0 mt-2 px-4">
         <h5 class="modal-title fw-bold font-heading" style="color: var(--text-main)">
           <i class="fas fa-share text-primary me-2"></i>Forward To...
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body px-4 pb-4">
+      <div class="modal-body px-4 pb-0">
         <div class="d-flex align-items-center px-3 mb-3 shadow-sm" style="border-radius: 50px; overflow: hidden; background-color: var(--bg-input); width: 100%; height: 44px;">
-          <i class="bi bi-search text-muted"></i>
+          <i class="bi bi-search text-muted flex-shrink-0"></i>
           <input type="text" id="forwardSearchInput" class="form-control border-0 bg-transparent shadow-none ps-2 w-100" placeholder="Search users..." autocomplete="off">
         </div>
-        <div id="forwardUserList" class="d-flex flex-column gap-2">
+        <div id="forwardUserList" class="d-flex flex-column gap-1 mb-3">
+          <div class="text-center text-muted small py-4 fw-bold">
+            <i class="fas fa-user-friends fa-2x mb-2 opacity-50"></i><br>
+            Search for a user to forward your messages.
           </div>
+        </div>
       </div>
+      
+      <div id="forwardModalFooter" class="modal-footer border-0 d-none justify-content-between px-4 pb-4 pt-2" style="background-color: var(--bg-card);">
+        <span class="text-muted fw-bold small"><span id="fwdSelectedCount">0</span>/5 Selected</span>
+        <button id="forwardSubmitBtn" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+          <i class="fas fa-paper-plane me-2"></i>Send
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
-  function formatLocalTime(isoString) {
-    if (!isoString) return "";
-    if (!isoString.endsWith("Z")) isoString += "Z";
-    const d = new Date(isoString);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-
-  document.querySelectorAll(".local-time-formatter").forEach((el) => {
-    const iso = el.getAttribute("data-iso");
-    el.innerText = formatLocalTime(iso);
-  });
-
-  // 🚀 ULTIMATE WHATSAPP NATIVE SELECTION LOGIC
-  let selectedMessageIds = new Set();
-  let pressTimer;
-  let isLongPress = false;
-
-  window.enterSelectionMode = function() {
-    document.body.classList.add('selection-mode');
-    document.getElementById('defaultHeader').classList.add('d-none');
-    document.getElementById('selectionHeader').classList.remove('d-none');
-    selectedMessageIds.clear();
-    updateSelectionUI();
-  }
-
-  window.exitSelectionMode = function() {
-    document.body.classList.remove('selection-mode');
-    document.getElementById('defaultHeader').classList.remove('d-none');
-    document.getElementById('selectionHeader').classList.add('d-none');
-    document.querySelectorAll('.msg-row.selected').forEach(el => el.classList.remove('selected'));
-    selectedMessageIds.clear();
-  }
-
-  window.handleMessageClick = function(msgId) {
-      if (isLongPress) return; 
-      if (document.body.classList.contains('selection-mode')) {
-          toggleMessageSelection(msgId);
-      }
-  }
-
-  window.handlePressStart = function(msgId) {
-      isLongPress = false;
-      pressTimer = setTimeout(() => {
-          isLongPress = true;
-          if (!document.body.classList.contains('selection-mode')) {
-              enterSelectionMode();
-              toggleMessageSelection(msgId);
-          }
-      }, 500); 
-  }
-
-  window.handlePressEnd = function() {
-      clearTimeout(pressTimer);
-  }
-
-  window.handleContextMenu = function(e, msgId) {
-      e.preventDefault();
-      if (!document.body.classList.contains('selection-mode')) {
-          enterSelectionMode();
-          toggleMessageSelection(msgId);
-      }
-  }
-
-  function toggleMessageSelection(msgId) {
-    const row = document.getElementById('row-' + msgId);
-    if (!row) return;
-    
-    if (selectedMessageIds.has(msgId)) {
-        selectedMessageIds.delete(msgId);
-        row.classList.remove('selected');
-    } else {
-        selectedMessageIds.add(msgId);
-        row.classList.add('selected');
-    }
-    
-    updateSelectionUI();
-    if (selectedMessageIds.size === 0) exitSelectionMode();
-  }
-
-  function updateSelectionUI() {
-    document.getElementById('selectionCount').innerText = selectedMessageIds.size;
-  }
-
-  window.deleteSelectedMessages = async function() {
-    if (selectedMessageIds.size === 0) return;
-    if (!confirm(`Delete ${selectedMessageIds.size} selected message(s)?`)) return;
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
-    const idsToDelete = Array.from(selectedMessageIds);
-    
-    idsToDelete.forEach(id => {
-        const el = document.getElementById('row-' + id);
-        if (el) { el.style.opacity = '0.5'; el.style.pointerEvents = 'none'; }
-    });
-
-    exitSelectionMode();
-
-    try {
-        const deletionPromises = idsToDelete.map(id => 
-            fetch(`/api/delete-message/${id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
-                body: JSON.stringify({}),
-            }).then(res => res.json())
-        );
-
-        const results = await Promise.all(deletionPromises);
-        results.forEach((res, index) => {
-            if(res.success) {
-                const el = document.getElementById('row-' + idsToDelete[index]);
-                if(el) el.remove();
-            }
-        });
-    } catch(err) {
-        console.error(err);
-        alert("Some messages could not be deleted.");
-    }
-  }
-
-  // 🚀 RECENT CHATS & FORWARD LOGIC
-  window.openForwardModal = function() {
-    if (selectedMessageIds.size === 0) return;
-    const modalEl = document.getElementById('forwardModal');
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modal.show();
-    setTimeout(() => document.getElementById("forwardSearchInput").focus(), 400);
-    
-    loadRecentChats(); // Automatically load recent chats when opened
-  }
-
-  async function loadRecentChats() {
-      const fwdList = document.getElementById("forwardUserList");
-      fwdList.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>`;
-      try {
-          const response = await fetch(`/api/recent-chats`);
-          if (response.ok) {
-              const users = await response.json();
-              renderForwardList(users, "No recent chats found. Use the search bar above.");
-          } else {
-              fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">Search for a user to forward your messages.</div>`;
-          }
-      } catch (err) {
-          fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">Search for a user to forward your messages.</div>`;
-      }
-  }
-
-  function renderForwardList(users, emptyMessage = "No users found.") {
-      const fwdList = document.getElementById("forwardUserList");
-      fwdList.innerHTML = "";
-
-      if (users.length > 0) {
-          users.forEach(user => {
-              const picSrc = user.profile_pic ? (user.profile_pic.startsWith("http") ? user.profile_pic : "/static/uploads/avatars/" + user.profile_pic) : "";
-              const avatarHtml = user.profile_pic ? 
-                  `<img src="${picSrc}" class="rounded-circle object-fit-cover shadow-sm border border-secondary" style="width: 40px; height: 40px;">` : 
-                  `<div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-sm" style="width: 40px; height: 40px; font-weight: bold;">${user.username.charAt(0).toUpperCase()}</div>`;
-              
-              const verifiedIcon = user.blue_tick ? `<i class="bi bi-patch-check-fill text-primary ms-1" style="font-size: 0.9rem;" title="Verified"></i>` : '';
-
-              const userItem = document.createElement("div");
-              userItem.className = "d-flex align-items-center justify-content-between p-2 border-bottom";
-              userItem.style.borderColor = "var(--border-color) !important";
-              userItem.innerHTML = `
-                  <div class="d-flex align-items-center gap-3">
-                      ${avatarHtml}
-                      <span class="fw-bold" style="color: var(--text-main); font-size: 1.05rem;">${user.username}${verifiedIcon}</span>
-                  </div>
-                  <button class="btn btn-sm btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="forwardToUser(${user.id || `'${user.username}'`}, '${user.username}', this)">Send</button>
-              `;
-              fwdList.appendChild(userItem);
-          });
-      } else {
-          fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">${emptyMessage}</div>`;
-      }
-  }
-
-  const fwdInput = document.getElementById("forwardSearchInput");
-  let fwdTimer;
-
-  if (fwdInput) {
-      fwdInput.addEventListener("input", function() {
-          clearTimeout(fwdTimer);
-          const query = this.value.trim();
-
-          if (query.length < 1) {
-              loadRecentChats(); // Reload recent chats if search is cleared
-              return;
-          }
-
-          fwdTimer = setTimeout(async () => {
-              try {
-                  const response = await fetch(`/api/search-users?q=${query}`);
-                  if (!response.ok) return;
-                  const users = await response.json();
-                  renderForwardList(users);
-              } catch(err) {
-                  console.error("Search error:", err);
-              }
-          }, 300);
-      });
-  }
-
-  const socket = io(); 
-
-  window.forwardToUser = function(targetId, targetUsername, btn) {
-      if (!targetId || targetId === 'undefined') {
-          alert("Error: User ID not provided by search API.");
-          return;
-      }
-      const idsToForward = Array.from(selectedMessageIds);
-      idsToForward.forEach(msgId => {
-          const msgBubble = document.querySelector(`#row-${msgId} .msg-bubble`);
-          if (msgBubble) {
-              const clone = msgBubble.cloneNode(true);
-              const timeRow = clone.querySelector('.msg-time-row');
-              if(timeRow) timeRow.remove();
-              
-              const text = clone.innerHTML.trim();
-              socket.emit("send_message", { recipient_id: parseInt(targetId), text: text });
-          }
-      });
-      
-      btn.innerHTML = '<i class="fas fa-check"></i> Sent';
-      btn.classList.replace('btn-primary', 'btn-success');
-      btn.disabled = true;
-      
-      setTimeout(() => {
-          const modalEl = document.getElementById('forwardModal');
-          const modal = bootstrap.Modal.getInstance(modalEl);
-          if (modal) modal.hide();
-          exitSelectionMode();
-          if (typeof window.showToast === "function") window.showToast(`Messages forwarded to ${targetUsername}`);
-      }, 800);
-  };
-
-  window.clearChat = async function (recipientId) {
-    if (!confirm("Are you sure you want to clear your chat history? This will only remove the messages for you.")) return;
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
-    try {
-      const res = await fetch(`/api/clear-chat/${recipientId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }
-      });
-      const data = await res.json();
-      if (data.success) {
-        document.querySelectorAll(".msg-row:not(#typingIndicator)").forEach(el => el.remove());
-        if (!document.getElementById("emptyChatState")) {
-          const emptyHTML = `
-            <div class="text-center my-auto opacity-75" id="emptyChatState">
-              <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle mb-3" style="width: 80px; height: 80px; background-color: #00a884;">
-                <i class="fas fa-lock fa-2x"></i>
-              </div>
-              <h6 class="fw-bold" style="color: var(--text-main)">Messages are securely routed.</h6>
-              <p class="text-muted small px-3">Send a message to start a conversation.</p>
-            </div>
-          `;
-          document.getElementById("chatContent").insertAdjacentHTML('beforeend', emptyHTML);
-        }
-      } else {
-        alert("Failed to clear chat.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Network error.");
-    }
-  };
-
+  // 🚀 ALL JAVASCRIPT LOGIC MOVED INSIDE EVENT LISTENER FOR FLAWLESS EXECUTION
   document.addEventListener("DOMContentLoaded", function () {
+    
+    // --- 1. CORE VARIABLES & DOM ELEMENTS ---
+    const currentUserId = parseInt("{{ current_user.id }}");
+    const recipientId = parseInt("{{ recipient.id }}");
+    const recipientUsername = "{{ recipient.username }}";
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+    
+    const socket = io({ transports: ['websocket'] });
+
     const chatContainer = document.getElementById("chatContainer");
     const chatContentWrapper = document.getElementById("chatContent"); 
     const chatForm = document.getElementById("chatForm");
@@ -831,17 +608,110 @@
     const spinner = document.getElementById("historyLoadingSpinner");
     const typingIndicator = document.getElementById("typingIndicator");
 
-    // 🚀 INITIALIZE ROCK-SOLID EMOJI PICKER WITH THEME SYNC
+    const defaultHeader = document.getElementById('defaultHeader');
+    const selectionHeader = document.getElementById('selectionHeader');
+
+    let messageOffset = 50;
+    let allMessagesLoaded = false;
+    let isLoadingHistory = false;
+    let typingTimeout = null;
+    let isCurrentlyTyping = false;
+
+    // --- 2. TIME FORMATTING ---
+    function formatLocalTime(isoString) {
+        if (!isoString) return "";
+        if (!isoString.endsWith("Z")) isoString += "Z";
+        const d = new Date(isoString);
+        return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+    document.querySelectorAll(".local-time-formatter").forEach((el) => {
+        el.innerText = formatLocalTime(el.getAttribute("data-iso"));
+    });
+
+
+    // --- 3. NICKNAME LOGIC ---
+    function applyNickname() {
+        const alias = localStorage.getItem('av_alias_' + recipientUsername);
+        const headerEl = document.getElementById('headerUsername');
+        if (alias && headerEl) {
+            headerEl.innerText = alias;
+            headerEl.title = `Original: ${recipientUsername}`;
+        } else if (headerEl) {
+            headerEl.innerText = recipientUsername;
+            headerEl.title = "";
+        }
+        if(typeof applyGlobalNicknames === 'function') applyGlobalNicknames();
+    }
+    
+    applyNickname(); // Initial Load
+
+    document.getElementById('btnSaveNickname').addEventListener('click', () => {
+        const val = document.getElementById('nicknameInput').value.trim();
+        if (val) {
+            localStorage.setItem('av_alias_' + recipientUsername, val);
+        } else {
+            localStorage.removeItem('av_alias_' + recipientUsername);
+        }
+        applyNickname();
+        bootstrap.Modal.getInstance(document.getElementById('nicknameModal')).hide();
+    });
+
+    document.getElementById('btnClearNickname').addEventListener('click', () => {
+        document.getElementById('nicknameInput').value = "";
+        localStorage.removeItem('av_alias_' + recipientUsername);
+        applyNickname();
+        bootstrap.Modal.getInstance(document.getElementById('nicknameModal')).hide();
+    });
+
+    document.getElementById('menuSetNickname').addEventListener('click', (e) => {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('nicknameModal'));
+        modal.show();
+    });
+
+
+    // --- 4. TOP MENU ACTIONS (CLEAR CHAT / BLOCK) ---
+    document.getElementById('menuClearChat').addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!confirm("Are you sure you want to clear your chat history? This will only remove the messages for you.")) return;
+        try {
+            const res = await fetch(`/api/clear-chat/${recipientId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken }
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.querySelectorAll(".msg-row:not(#typingIndicator)").forEach(el => el.remove());
+                if (!document.getElementById("emptyChatState")) {
+                    chatContentWrapper.insertAdjacentHTML('beforeend', `
+                        <div class="text-center my-auto opacity-75" id="emptyChatState">
+                            <div class="d-inline-flex align-items-center justify-content-center text-white rounded-circle mb-3" style="width: 80px; height: 80px; background-color: #00a884;">
+                                <i class="fas fa-lock fa-2x"></i>
+                            </div>
+                            <h6 class="fw-bold" style="color: var(--text-main)">Messages are securely routed.</h6>
+                            <p class="text-muted small px-3">Send a message to start a conversation.</p>
+                        </div>
+                    `);
+                }
+                if (typeof window.showToast === "function") window.showToast("Chat cleared successfully.");
+            } else { alert("Failed to clear chat."); }
+        } catch (err) { console.error(err); }
+    });
+
+    document.getElementById('menuBlockUser').addEventListener('click', (e) => {
+        e.preventDefault();
+        if(typeof blockUser === 'function') blockUser(recipientId);
+    });
+
+
+    // --- 5. EMOJI PICKER ---
     const emojiTrigger = document.getElementById("emojiTrigger");
     const emojiContainer = document.getElementById("emojiPickerContainer");
     const picker = document.querySelector("emoji-picker");
 
     if (emojiTrigger && emojiContainer && picker) {
-      const updateEmojiTheme = () => {
-          picker.classList.toggle('dark', document.body.classList.contains("dark-mode"));
-      };
+      const updateEmojiTheme = () => { picker.classList.toggle('dark', document.body.classList.contains("dark-mode")); };
       updateEmojiTheme();
-
       emojiTrigger.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -858,14 +728,312 @@
       });
     }
 
-    const currentUserId = parseInt("{{ current_user.id }}");
-    const recipientId = parseInt("{{ recipient.id }}");
-    let messageOffset = 50;
-    let allMessagesLoaded = false;
-    let isLoadingHistory = false;
-    let typingTimeout = null;
-    let isCurrentlyTyping = false;
 
+    // --- 6. 🚀 FLAWLESS SELECTION ENGINE (DELEGATED EVENTS) ---
+    let selectedMessageIds = new Set();
+    let selectionModeActive = false;
+
+    function enterSelectionMode() {
+        selectionModeActive = true;
+        document.body.classList.add('selection-mode');
+        defaultHeader.classList.add('d-none');
+        selectionHeader.classList.remove('d-none');
+        selectedMessageIds.clear();
+        document.getElementById('selectionCount').innerText = "0";
+    }
+
+    function exitSelectionMode() {
+        selectionModeActive = false;
+        document.body.classList.remove('selection-mode');
+        defaultHeader.classList.remove('d-none');
+        selectionHeader.classList.add('d-none');
+        document.querySelectorAll('.msg-row.selected').forEach(el => el.classList.remove('selected'));
+        selectedMessageIds.clear();
+    }
+
+    function toggleSelection(msgId, row) {
+        if (selectedMessageIds.has(msgId)) {
+            selectedMessageIds.delete(msgId);
+            row.classList.remove('selected');
+        } else {
+            selectedMessageIds.add(msgId);
+            row.classList.add('selected');
+        }
+        document.getElementById('selectionCount').innerText = selectedMessageIds.size;
+        if (selectedMessageIds.size === 0) exitSelectionMode();
+    }
+
+    document.getElementById('menuSelectMessages').addEventListener('click', (e) => {
+        e.preventDefault();
+        enterSelectionMode();
+    });
+
+    document.getElementById('btnCancelSelection').addEventListener('click', exitSelectionMode);
+
+    // Event Delegation for Messages
+    let touchTimer = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isLongPressTriggered = false;
+
+    if (chatContainer) {
+        chatContainer.addEventListener('touchstart', (e) => {
+            const row = e.target.closest('.msg-row');
+            if (!row || row.id === "typingIndicator") return;
+            
+            isLongPressTriggered = false;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+
+            touchTimer = setTimeout(() => {
+                isLongPressTriggered = true;
+                const msgId = row.id.replace('row-', '');
+                if (!selectionModeActive) enterSelectionMode();
+                if (!selectedMessageIds.has(msgId)) toggleSelection(msgId, row);
+                if (navigator.vibrate) navigator.vibrate(50); // Haptic feedback on mobile
+            }, 450); 
+        }, { passive: true });
+
+        chatContainer.addEventListener('touchmove', (e) => {
+            if (!touchTimer) return;
+            const moveX = e.touches[0].clientX;
+            const moveY = e.touches[0].clientY;
+            if (Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
+                clearTimeout(touchTimer);
+            }
+        }, { passive: true });
+
+        chatContainer.addEventListener('touchend', () => {
+            clearTimeout(touchTimer);
+        });
+
+        // Desktop Right Click
+        chatContainer.addEventListener('contextmenu', (e) => {
+            const row = e.target.closest('.msg-row');
+            if (!row || row.id === "typingIndicator") return;
+            e.preventDefault();
+            const msgId = row.id.replace('row-', '');
+            if (!selectionModeActive) enterSelectionMode();
+            if (!selectedMessageIds.has(msgId)) toggleSelection(msgId, row);
+        });
+
+        // Normal Click
+        chatContainer.addEventListener('click', (e) => {
+            if (isLongPressTriggered) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+            if (selectionModeActive) {
+                const row = e.target.closest('.msg-row');
+                if (row && row.id !== "typingIndicator") {
+                    e.preventDefault();
+                    const msgId = row.id.replace('row-', '');
+                    toggleSelection(msgId, row);
+                }
+            }
+        });
+    }
+
+    document.getElementById('btnDeleteSelected').addEventListener('click', async () => {
+        if (selectedMessageIds.size === 0) return;
+        if (!confirm(`Delete ${selectedMessageIds.size} selected message(s)?`)) return;
+
+        const idsToDelete = Array.from(selectedMessageIds);
+        
+        // Optimistic UI hiding
+        idsToDelete.forEach(id => {
+            const el = document.getElementById('row-' + id);
+            if (el) { el.style.opacity = '0.5'; el.style.pointerEvents = 'none'; }
+        });
+        exitSelectionMode();
+
+        try {
+            const deletionPromises = idsToDelete.map(id => 
+                fetch(`/api/delete-message/${id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "X-CSRFToken": csrfToken },
+                    body: JSON.stringify({}),
+                }).then(res => res.json())
+            );
+
+            const results = await Promise.all(deletionPromises);
+            results.forEach((res, index) => {
+                if(res.success) {
+                    const el = document.getElementById('row-' + idsToDelete[index]);
+                    if(el) el.remove();
+                }
+            });
+        } catch(err) {
+            console.error(err);
+            alert("Some messages could not be deleted.");
+        }
+    });
+
+
+    // --- 7. FORWARD LOGIC ---
+    let selectedForwardUsers = new Map(); 
+
+    document.getElementById('btnOpenForward').addEventListener('click', () => {
+        if (selectedMessageIds.size === 0) return;
+        selectedForwardUsers.clear(); 
+        updateForwardFooter();
+        
+        const modal = new bootstrap.Modal(document.getElementById('forwardModal'));
+        modal.show();
+        setTimeout(() => document.getElementById("forwardSearchInput").focus(), 400);
+        
+        loadRecentChats(); 
+    });
+
+    async function loadRecentChats() {
+        const fwdList = document.getElementById("forwardUserList");
+        fwdList.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>`;
+        try {
+            const response = await fetch(`/api/recent-chats`);
+            if (response.ok) {
+                const users = await response.json();
+                renderForwardList(users, "No recent chats found. Use the search bar above.");
+            } else {
+                fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">Search for a user to forward your messages.</div>`;
+            }
+        } catch (err) {
+            fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">Search for a user to forward your messages.</div>`;
+        }
+    }
+
+    function renderForwardList(users, emptyMessage = "No users found.") {
+        const fwdList = document.getElementById("forwardUserList");
+        fwdList.innerHTML = "";
+
+        if (users.length > 0) {
+            users.forEach(user => {
+                const picSrc = user.profile_pic ? (user.profile_pic.startsWith("http") ? user.profile_pic : "/static/uploads/avatars/" + user.profile_pic) : "";
+                const avatarHtml = user.profile_pic ? 
+                    `<img src="${picSrc}" class="rounded-circle object-fit-cover shadow-sm border border-secondary flex-shrink-0" style="width: 40px; height: 40px;">` : 
+                    `<div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-sm flex-shrink-0" style="width: 40px; height: 40px; font-weight: bold;">${user.username.charAt(0).toUpperCase()}</div>`;
+                
+                const verifiedIcon = user.blue_tick ? `<i class="bi bi-patch-check-fill text-primary ms-1 flex-shrink-0" style="font-size: 0.9rem;" title="Verified"></i>` : '';
+                const isSelected = selectedForwardUsers.has(user.id);
+                const checkIconHtml = isSelected ? '<i class="fas fa-check-circle text-success fs-4"></i>' : '<i class="far fa-circle text-muted fs-4"></i>';
+
+                const userItem = document.createElement("div");
+                userItem.className = "d-flex align-items-center justify-content-between p-2 border-bottom forward-user-row rounded-3";
+                userItem.style.borderColor = "var(--border-color) !important";
+                
+                // Use delegation or direct function scope
+                userItem.onclick = () => {
+                    if(selectedForwardUsers.has(user.id)) {
+                        selectedForwardUsers.delete(user.id);
+                        document.getElementById(`fwd-chk-${user.id}`).innerHTML = '<i class="far fa-circle text-muted fs-4"></i>';
+                    } else {
+                        if(selectedForwardUsers.size >= 5) {
+                            alert("You can only forward to up to 5 chats at a time.");
+                            return;
+                        }
+                        selectedForwardUsers.set(user.id, user.username);
+                        document.getElementById(`fwd-chk-${user.id}`).innerHTML = '<i class="fas fa-check-circle text-success fs-4"></i>';
+                    }
+                    updateForwardFooter();
+                };
+                
+                userItem.innerHTML = `
+                    <div class="d-flex align-items-center gap-3" style="min-width: 0; max-width: 80%;">
+                        ${avatarHtml}
+                        <span class="fw-bold text-truncate d-flex align-items-center global-nickname" data-original-name="${user.username}" style="color: var(--text-main); font-size: 1.05rem; min-width: 0;">
+                           <span class="text-truncate" style="max-width: 140px;">${user.username}</span> ${verifiedIcon}
+                        </span>
+                    </div>
+                    <div id="fwd-chk-${user.id}" class="ms-2 flex-shrink-0">
+                        ${checkIconHtml}
+                    </div>
+                `;
+                fwdList.appendChild(userItem);
+            });
+            if(typeof applyGlobalNicknames === 'function') applyGlobalNicknames();
+        } else {
+            fwdList.innerHTML = `<div class="text-center text-muted small py-4 fw-bold">${emptyMessage}</div>`;
+        }
+    }
+
+    function updateForwardFooter() {
+        const footer = document.getElementById("forwardModalFooter");
+        document.getElementById("fwdSelectedCount").innerText = selectedForwardUsers.size;
+        if(selectedForwardUsers.size > 0) {
+            footer.classList.remove("d-none");
+            footer.classList.add("d-flex");
+        } else {
+            footer.classList.add("d-none");
+            footer.classList.remove("d-flex");
+        }
+    }
+
+    const fwdInput = document.getElementById("forwardSearchInput");
+    let fwdTimer;
+    if (fwdInput) {
+        fwdInput.addEventListener("input", function() {
+            clearTimeout(fwdTimer);
+            const query = this.value.trim();
+            if (query.length < 1) {
+                loadRecentChats(); 
+                return;
+            }
+            fwdTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`/api/search-users?q=${query}`);
+                    if (!response.ok) return;
+                    const users = await response.json();
+                    renderForwardList(users);
+                } catch(err) { console.error("Search error:", err); }
+            }, 300);
+        });
+    }
+
+    document.getElementById("forwardSubmitBtn").addEventListener("click", () => {
+        if (selectedForwardUsers.size === 0) return;
+
+        const btn = document.getElementById("forwardSubmitBtn");
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+        btn.disabled = true;
+
+        const idsToForward = Array.from(selectedMessageIds);
+        let targetNames = [];
+        
+        selectedForwardUsers.forEach((username, targetId) => {
+            targetNames.push(username);
+            idsToForward.forEach(msgId => {
+                const row = document.getElementById(`row-${msgId}`);
+                if (row) {
+                    const msgBubble = row.querySelector('.msg-bubble');
+                    if (msgBubble) {
+                        const clone = msgBubble.cloneNode(true);
+                        const timeRow = clone.querySelector('.msg-time-row');
+                        if(timeRow) timeRow.remove();
+                        const text = clone.innerHTML.trim();
+                        socket.emit("send_message", { recipient_id: parseInt(targetId), text: text });
+                    }
+                }
+            });
+        });
+        
+        setTimeout(() => {
+            btn.innerHTML = '<i class="fas fa-check me-2"></i>Sent';
+            btn.classList.replace('btn-primary', 'btn-success');
+            
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('forwardModal')).hide();
+                exitSelectionMode();
+                if (typeof window.showToast === "function") {
+                    window.showToast(`Forwarded to ${targetNames.join(', ')}`);
+                }
+                btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send';
+                btn.classList.replace('btn-success', 'btn-primary');
+                btn.disabled = false;
+            }, 600);
+        }, 500);
+    });
+
+    // --- 8. SOCKET EVENTS & CHAT LOGIC ---
     if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
     setTimeout(() => { if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight; }, 450);
 
@@ -916,13 +1084,6 @@
       newRow.className = "msg-row fade-in-up";
       newRow.style.animationDuration = "0.3s";
       newRow.id = "row-" + msgId;
-      newRow.setAttribute("onclick", `handleMessageClick('${msgId}')`);
-      newRow.setAttribute("onmousedown", `handlePressStart('${msgId}')`);
-      newRow.setAttribute("onmouseup", `handlePressEnd()`);
-      newRow.setAttribute("onmouseleave", `handlePressEnd()`);
-      newRow.setAttribute("ontouchstart", `handlePressStart('${msgId}')`);
-      newRow.setAttribute("ontouchend", `handlePressEnd()`);
-      newRow.setAttribute("oncontextmenu", `handleContextMenu(event, '${msgId}')`);
 
       let tickHtml = '';
       if(isMine) {
@@ -951,20 +1112,12 @@
       }
     }
 
-    // Dynamic appending for newly sent messages
     function appendMessageToUI(text, time, isMine, msgId) {
       if (document.getElementById("row-" + msgId)) return;
       const newRow = document.createElement("div");
       newRow.className = "msg-row fade-in-up";
       newRow.style.animationDuration = "0.3s";
       newRow.id = "row-" + msgId;
-      newRow.setAttribute("onclick", `handleMessageClick('${msgId}')`);
-      newRow.setAttribute("onmousedown", `handlePressStart('${msgId}')`);
-      newRow.setAttribute("onmouseup", `handlePressEnd()`);
-      newRow.setAttribute("onmouseleave", `handlePressEnd()`);
-      newRow.setAttribute("ontouchstart", `handlePressStart('${msgId}')`);
-      newRow.setAttribute("ontouchend", `handlePressEnd()`);
-      newRow.setAttribute("oncontextmenu", `handleContextMenu(event, '${msgId}')`);
 
       let tickHtml = isMine ? `<i id="tick-${msgId}" class="fas fa-check tick-unread ms-1 msg-tick"></i>` : '';
 
