@@ -407,7 +407,7 @@
                 name="q"
                 id="searchInput"
                 class="search-input-field bg-transparent border-0"
-                placeholder="Search users or posts..."
+                placeholder="Search..."
                 aria-label="Search"
                 required
               />
@@ -490,7 +490,7 @@
                   >
                     <div class="lh-sm">
                       <p class="mb-0 small" style="color: var(--text-main)">
-                        <strong>{{ n.visitor.username }}</strong>
+                        <strong class="global-nickname" data-original-name="{{ n.visitor.username }}">{{ n.visitor.username }}</strong>
                         {% if n.action == 'like' %} liked your post. {% elif
                         n.action == 'comment' %} commented. {% elif n.action ==
                         'follow' %} followed you. {% elif n.action == 'message'
@@ -1031,7 +1031,6 @@
 
             debounceTimer = setTimeout(async () => {
               try {
-                // Correctly fetch the JSON data, not the HTML page
                 const response = await fetch(`/api/search-users?q=${query}`);
                 if (!response.ok) return;
 
@@ -1054,14 +1053,15 @@
                         avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-sm" style="width: 35px; height: 35px; font-size: 1rem; font-weight: bold;">${user.username.charAt(0).toUpperCase()}</div>`;
                     }
 
-                    item.innerHTML = `${avatarHtml} <span class="fw-bold" style="font-size: 1.05rem;">${user.username}</span>`;
+                    item.innerHTML = `${avatarHtml} <span class="fw-bold global-nickname" data-original-name="${user.username}" style="font-size: 1.05rem;">${user.username}</span>`;
                     mobileResults.appendChild(item);
                   });
+                  
+                  if(typeof applyGlobalNicknames === 'function') applyGlobalNicknames();
                   
                   mobileResults.classList.add("show");
                   mobileResults.style.display = "block";
                 } else {
-                  // Beautiful empty state instead of a 404 page!
                   mobileResults.innerHTML = `<div class="p-3 text-center text-muted small">No users found.</div>`;
                   mobileResults.classList.add("show");
                   mobileResults.style.display = "block";
@@ -1605,7 +1605,7 @@
                       <div id="${toastId}" class="toast border-0 shadow-lg fade-in-up" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s;">
                           <div class="toast-header" style="background-color: var(--primary); color: white; border-bottom: none;">
                               <i class="fas fa-envelope me-2"></i>
-                              <strong class="me-auto">Message from ${senderName}</strong>
+                              <strong class="global-nickname me-auto" data-original-name="${senderName}">Message from ${senderName}</strong>
                               <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
                           </div>
                           <div class="toast-body" style="background-color: var(--bg-card); color: var(--text-main); font-size: 0.95rem;">
@@ -1614,6 +1614,9 @@
                       </div>`;
 
                   container.insertAdjacentHTML("beforeend", toastHtml);
+                  
+                  if(typeof applyGlobalNicknames === 'function') applyGlobalNicknames();
+
                   const toastElement = document.getElementById(toastId);
 
                   toastElement.addEventListener(
@@ -1648,49 +1651,161 @@
     </script>
     
     <script>
-      function calculateReadMore() {
-        document.querySelectorAll('.post-text-container').forEach(container => {
-          const textEl = container.querySelector('.post-text');
-          if (!textEl || textEl.offsetParent === null) return;
-          
-          const postId = textEl.id.split('-')[2];
-          const btn = document.querySelector(`.see-more-btn[data-post-id="${postId}"]`);
-          const overlay = document.getElementById(`fade-overlay-${postId}`);
-          
-          if (btn) {
-            if (textEl.scrollHeight > textEl.clientHeight + 10 && !textEl.classList.contains('expanded')) {
-              btn.style.display = 'block';
-              if (overlay) overlay.style.display = 'block';
-            } else if (!textEl.classList.contains('expanded')) {
-              btn.style.display = 'none';
-              if (overlay) overlay.style.display = 'none';
-            }
+      document.addEventListener("DOMContentLoaded", function () {
+          // --- 🚀 MODERN READ MORE / READ LESS LOGIC ---
+          function calculateReadMore() {
+              document.querySelectorAll('.post-text-container').forEach(container => {
+                  const textEl = container.querySelector('.post-text');
+                  if (!textEl || textEl.offsetParent === null) return;
+
+                  const postId = textEl.id.split('-')[2];
+                  const btn = document.querySelector(`.see-more-btn[data-post-id="${postId}"]`);
+                  const overlay = document.getElementById(`fade-overlay-${postId}`);
+
+                  if (btn) {
+                      if (textEl.scrollHeight > textEl.clientHeight + 5) {
+                          btn.style.display = 'block';
+                          if (overlay && !textEl.classList.contains('expanded')) {
+                              overlay.style.display = 'block';
+                          }
+                      } else if (!textEl.classList.contains('expanded')) {
+                          btn.style.display = 'none';
+                          if (overlay) overlay.style.display = 'none';
+                      }
+                  }
+              });
           }
-        });
-      }
 
-      document.addEventListener('DOMContentLoaded', calculateReadMore);
-      window.addEventListener('load', calculateReadMore);
-
-      if (document.fonts) {
-          document.fonts.ready.then(calculateReadMore);
-      }
-
-      document.addEventListener('load', function(event) {
-          if (event.target.tagName && event.target.tagName.toLowerCase() === 'img') {
-              calculateReadMore();
-          }
-      }, true);
-
-      const domObserver = new MutationObserver(() => calculateReadMore());
-      domObserver.observe(document.body, { childList: true, subtree: true });
-
-      let pollCount = 0;
-      const pollInterval = setInterval(() => {
+          // Initial calls
           calculateReadMore();
-          pollCount++;
-          if (pollCount >= 10) clearInterval(pollInterval);
-      }, 300);
+          window.addEventListener('resize', calculateReadMore);
+          setTimeout(calculateReadMore, 500); 
+          setTimeout(calculateReadMore, 1500); // Catch slow images on first login
+
+          // Robust dynamic observation
+          if (window.ResizeObserver) {
+              const ro = new ResizeObserver(() => calculateReadMore());
+              document.querySelectorAll('.post-text-container').forEach(c => ro.observe(c));
+          }
+
+          // Delegated click handler
+          document.body.addEventListener('click', function (e) {
+              if (e.target && e.target.classList.contains('see-more-btn')) {
+                  const btn = e.target;
+                  const postId = btn.getAttribute('data-post-id');
+                  const textEl = document.getElementById(`post-text-${postId}`);
+                  const overlay = document.getElementById(`fade-overlay-${postId}`);
+
+                  if (textEl) {
+                      textEl.classList.toggle('expanded');
+                      
+                      if (textEl.classList.contains('expanded')) {
+                          btn.innerHTML = 'Read less <i class="fas fa-chevron-up ms-1"></i>';
+                          if (overlay) overlay.style.display = 'none';
+                      } else {
+                          btn.innerHTML = 'Read more <i class="fas fa-chevron-down ms-1"></i>';
+                          if (overlay) overlay.style.display = 'block';
+                          
+                          // Auto scroll back up if reading a long post
+                          const container = textEl.closest('.card');
+                          if (container) {
+                              const rect = container.getBoundingClientRect();
+                              if (rect.top < 0) {
+                                  window.scrollBy({ top: rect.top - 70, behavior: 'smooth' });
+                              }
+                          }
+                      }
+                  }
+              }
+          });
+      });
+    </script>
+
+    <div id="globalUploadOverlay" class="d-none" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999999; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+        <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem; border-width: 0.35em;"></div>
+        <h3 class="text-white fw-bold font-heading mb-2">Processing...</h3>
+        <p class="text-white-50 small" style="max-width: 300px; text-align: center;">Securely uploading your content. Please do not close or refresh this page.</p>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          const allForms = document.querySelectorAll('form');
+
+          allForms.forEach(form => {
+              form.addEventListener("submit", function(e) {
+                  if (!form.checkValidity()) {
+                      return; 
+                  }
+
+                  const hasFiles = form.querySelector('input[type="file"]') && form.querySelector('input[type="file"]').files.length > 0;
+                  const isHeavyForm = form.action.includes('create-post') || 
+                                      form.action.includes('edit-post') || 
+                                      form.action.includes('process-payment') ||
+                                      form.action.includes('update-profile-pic') ||
+                                      form.action.includes('update-cover-pic');
+
+                  if (hasFiles || isHeavyForm) {
+                      if (form.dataset.submitting === "true") {
+                          e.preventDefault();
+                          return;
+                      }
+                      form.dataset.submitting = "true";
+
+                      const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+                      if (submitBtn) {
+                          submitBtn.disabled = true;
+                          if (submitBtn.tagName.toLowerCase() === 'button') {
+                              submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+                          }
+                      }
+
+                      const overlay = document.getElementById("globalUploadOverlay");
+                      if (overlay) {
+                          overlay.classList.remove("d-none");
+                          overlay.style.display = "flex";
+                      }
+                  }
+              });
+          });
+      });
+    </script>
+
+    <script>
+      window.applyGlobalNicknames = function() {
+          const aliases = {};
+          for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && key.startsWith('av_alias_')) {
+                  aliases[key.replace('av_alias_', '')] = localStorage.getItem(key);
+              }
+          }
+
+          document.querySelectorAll('.global-nickname').forEach(el => {
+              const original = el.getAttribute('data-original-name');
+              
+              let prefix = "";
+              let processingText = original;
+              
+              if (el.innerText.startsWith("Message from ")) {
+                  prefix = "Message from ";
+              }
+
+              if (original && aliases[original]) {
+                  const children = Array.from(el.childNodes).filter(n => n.nodeType !== Node.TEXT_NODE);
+                  el.innerText = prefix + aliases[original];
+                  children.forEach(c => el.appendChild(c));
+                  el.title = `Original: ${original}`;
+              } else if (original) {
+                  const children = Array.from(el.childNodes).filter(n => n.nodeType !== Node.TEXT_NODE);
+                  el.innerText = prefix + original;
+                  children.forEach(c => el.appendChild(c));
+                  el.title = "";
+              }
+          });
+      };
+
+      document.addEventListener("DOMContentLoaded", window.applyGlobalNicknames);
+      setInterval(window.applyGlobalNicknames, 2000);
     </script>
   </body>
 </html>
