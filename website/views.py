@@ -450,6 +450,17 @@ def mark_notifications_read():
     log_user_action(current_user.username, "READ_NOTIFICATIONS", "Marked all active notifications as read.")
     return jsonify({'success': True})
 
+# 🚀 NEW: Added the missing delete endpoint so the "X" button actually drops it from the DB!
+@views.route('/api/delete-notification/<int:notif_id>', methods=['POST'])
+@login_required
+def delete_notification(notif_id):
+    notif = Notification.query.get_or_404(notif_id)
+    if notif.recipient_id == current_user.id:
+        db.session.delete(notif)
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
 # =================================================
 # PROFILE & SETTINGS
 # =================================================
@@ -798,7 +809,6 @@ def process_payment(plan):
             
             if image_url:
                 try:
-                    # 🚀 FIX: Sending Blue Tick alerts to the primary Zoho Admin email
                     admin_email = os.getenv('MAIL_USERNAME', 'anuragvarshney@zohomail.in')
                     
                     msg = MailMessage(
@@ -839,12 +849,6 @@ def process_payment(plan):
                                 <a href="{image_url}" target="_blank" style="display: block;">
                                     <img src="{image_url}" style="width: 100%; max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #cbd5e1; display: block;">
                                 </a>
-                                
-                                <div style="margin-top: 25px; text-align: center; border-top: 1px solid #f1f5f9; padding-top: 15px;">
-                                    <p style="font-size: 12px; color: #94a3b8; margin: 0;">
-                                        Log in to the Admin Dashboard to verify this user.
-                                    </p>
-                                </div>
                             </div>
                         </div>
                     </div>
