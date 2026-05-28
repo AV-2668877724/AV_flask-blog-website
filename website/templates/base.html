@@ -113,6 +113,7 @@
         word-wrap: break-word;
         overflow-wrap: break-word;
         word-break: break-word;
+        transition: max-height 0.4s ease; /* Smooth expansion */
       }
 
       pre,
@@ -278,7 +279,7 @@
         text-shadow: 0px 2px 6px rgba(29, 161, 242, 0.35); 
       }
 
-      /* GLOWING SUN DARK MODE TOGGLE ANIMATION (FIXED) */
+      /* GLOWING SUN DARK MODE TOGGLE ANIMATION */
       .theme-toggle-btn {
         transition: all 0.3s ease;
         display: flex;
@@ -286,7 +287,6 @@
         justify-content: center;
       }
       
-      /* Apply the glowing yellow sun effect ONLY when dark mode is active */
       body.dark-mode .theme-toggle-btn i {
         color: #fbbf24 !important; 
         text-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.4);
@@ -303,7 +303,6 @@
           transform: scale(1.1); 
         }
       }
-
     </style>
     <noscript>
       <style>
@@ -326,11 +325,9 @@
           '/forgot-password'
         ];
         
-        // If we are on an exact auth path, OR if it's the dynamic reset-password link
         const forceLight = authPaths.includes(currentPath) || currentPath.startsWith('/reset-password/');
 
         if (!forceLight) {
-            // Apply standard dark mode logic for normal pages
             const saved = localStorage.getItem("darkMode");
             if (
               saved === "true" ||
@@ -340,7 +337,6 @@
               document.body.classList.add("dark-mode");
             }
         } else {
-            // Explicitly ensure the dark-mode class is off for auth pages
             document.body.classList.remove("dark-mode");
         }
       })();
@@ -407,7 +403,7 @@
                 name="q"
                 id="searchInput"
                 class="search-input-field bg-transparent border-0"
-                placeholder="Search..."
+                placeholder="Search users or posts..."
                 aria-label="Search"
                 required
               />
@@ -467,7 +463,7 @@
             </button>
             <ul
               class="dropdown-menu dropdown-menu-end shadow-lg border-0 p-0 notif-dropdown-menu"
-              style="border-radius: 16px; overflow: hidden"
+              style="border-radius: 16px; overflow: hidden; min-width: 320px;"
             >
               <li
                 class="p-3 border-bottom d-flex justify-content-between align-items-center"
@@ -481,33 +477,38 @@
                   >View All</a
                 >
               </li>
-              <div id="notifList" style="max-height: 300px; overflow-y: auto">
-                {% if latest_notifs %} {% for n in latest_notifs %}
-                <li>
-                  <a
-                    href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}{{ url_for('views.home', _anchor='post-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
-                    class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
-                  >
-                    <div class="lh-sm">
-                      <p class="mb-0 small" style="color: var(--text-main)">
-                        <strong class="global-nickname" data-original-name="{{ n.visitor.username }}">{{ n.visitor.username }}</strong>
-                        {% if n.action == 'like' %} liked your post. {% elif
-                        n.action == 'comment' %} commented. {% elif n.action ==
-                        'follow' %} followed you. {% elif n.action == 'message'
-                        %} sent you a message. {% endif %}
-                      </p>
-                      <small class="text-muted small-text"
-                        >{{ n.date_created | timeago }}</small
-                      >
+              <div id="notifList" style="max-height: 350px; overflow-y: auto">
+                {% if latest_notifs %} 
+                  {% for n in latest_notifs %}
+                  <li>
+                    <a
+                      href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}{{ url_for('views.home', _anchor='post-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}"
+                      class="dropdown-item d-flex align-items-center gap-3 p-3 border-bottom position-relative {% if not n.is_read %}bg-blue-subtle{% endif %} wrap-text"
+                    >
+                      <div class="lh-sm">
+                        <p class="mb-0 small" style="color: var(--text-main)">
+                          <strong class="global-nickname" data-original-name="{{ n.visitor.username }}">{{ n.visitor.username }}</strong>
+                          {% if n.action == 'like' %} liked your post. {% elif
+                          n.action == 'comment' %} commented. {% elif n.action ==
+                          'follow' %} followed you. {% elif n.action == 'message'
+                          %} sent you a message. {% endif %}
+                        </p>
+                        <small class="text-muted small-text"
+                          >{{ n.date_created | timeago }}</small
+                        >
+                      </div>
+                      {% if not n.is_read %}<span class="unread-dot ms-auto"></span>{% endif %}
+                    </a>
+                  </li>
+                  {% endfor %} 
+                {% else %}
+                  <li class="text-center py-5 px-3">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3" style="width: 60px; height: 60px">
+                      <i class="far fa-bell-slash fs-3 opacity-50"></i>
                     </div>
-                    {% if not n.is_read %}<span class="unread-dot"></span>{%
-                    endif %}
-                  </a>
-                </li>
-                {% endfor %} {% else %}
-                <li class="text-center p-4">
-                  <p class="text-muted small mb-0">No new notifications.</p>
-                </li>
+                    <h6 class="fw-bold font-heading mb-1" style="color: var(--text-main)">You're all caught up!</h6>
+                    <p class="text-muted small mb-0">No new notifications right now.</p>
+                  </li>
                 {% endif %}
               </div>
             </ul>
@@ -1662,13 +1663,20 @@
                   const btn = document.querySelector(`.see-more-btn[data-post-id="${postId}"]`);
                   const overlay = document.getElementById(`fade-overlay-${postId}`);
 
+                  // Enforce base styling if not already applied
+                  if (!textEl.classList.contains('expanded')) {
+                      textEl.style.maxHeight = '320px';
+                      textEl.style.overflow = 'hidden';
+                  }
+
                   if (btn) {
-                      if (textEl.scrollHeight > textEl.clientHeight + 5) {
+                      // We check if the natural height (scrollHeight) is significantly bigger than our 320px cap
+                      if (textEl.scrollHeight > 325) {
                           btn.style.display = 'block';
                           if (overlay && !textEl.classList.contains('expanded')) {
                               overlay.style.display = 'block';
                           }
-                      } else if (!textEl.classList.contains('expanded')) {
+                      } else {
                           btn.style.display = 'none';
                           if (overlay) overlay.style.display = 'none';
                       }
@@ -1700,9 +1708,11 @@
                       textEl.classList.toggle('expanded');
                       
                       if (textEl.classList.contains('expanded')) {
+                          textEl.style.maxHeight = textEl.scrollHeight + 'px'; // Expand fully
                           btn.innerHTML = 'Read less <i class="fas fa-chevron-up ms-1"></i>';
                           if (overlay) overlay.style.display = 'none';
                       } else {
+                          textEl.style.maxHeight = '320px'; // Collapse
                           btn.innerHTML = 'Read more <i class="fas fa-chevron-down ms-1"></i>';
                           if (overlay) overlay.style.display = 'block';
                           
