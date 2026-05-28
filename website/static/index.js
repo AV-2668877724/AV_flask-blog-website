@@ -1,74 +1,11 @@
 /* =========================================
    GLOBAL CONFIG & HELPER FUNCTIONS
    ========================================= */
-const TRUNCATE_HEIGHT = 320;
 
-// 🚀 FIX: Attach to window so inline scripts (like chat) can access it securely
+// 🚀 Attach to window so inline scripts (like chat) can access it securely
 window.getCsrfToken = function() {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta ? meta.getAttribute("content") : "";
-};
-
-function truncatePosts() {
-  document.querySelectorAll(".post-text").forEach((el) => {
-    if (el.dataset.processed) return;
-
-    setTimeout(() => {
-      el.offsetHeight;
-      if (el.scrollHeight > TRUNCATE_HEIGHT) {
-        const postId = el.id.replace("post-text-", "");
-        const fade = document.getElementById(`fade-overlay-${postId}`);
-        const btn = document.querySelector(
-          `.see-more-btn[data-post-id="${postId}"]`,
-        );
-
-        if (fade && btn) {
-          el.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
-          el.style.overflow = "hidden";
-          el.style.transition = "max-height 0.4s ease-out";
-          fade.style.display = "block";
-
-          btn.style.display = "inline-block";
-          btn.style.color = "#3b82f6";
-          btn.setAttribute("data-expanded", "false");
-        }
-      }
-      el.dataset.processed = "true";
-    }, 400);
-  });
-}
-
-window.toggleReadMore = function (postId, btn) {
-  const postText = document.getElementById(`post-text-${postId}`);
-  const fade = document.getElementById(`fade-overlay-${postId}`);
-
-  if (!postText) return;
-
-  const isExpanded = btn.getAttribute("data-expanded") === "true";
-
-  if (!isExpanded) {
-    postText.style.maxHeight = postText.scrollHeight + 100 + "px";
-    if (fade) fade.style.display = "none";
-    btn.innerHTML =
-      'See Less <i class="fas fa-chevron-up ms-1" style="font-size: 0.8rem;"></i>';
-    btn.setAttribute("data-expanded", "true");
-
-    setTimeout(() => {
-      postText.style.maxHeight = "none";
-    }, 400);
-  } else {
-    postText.style.maxHeight = `${TRUNCATE_HEIGHT}px`;
-    if (fade) fade.style.display = "block";
-    btn.innerHTML =
-      'Read More <i class="fas fa-chevron-down ms-1" style="font-size: 0.8rem;"></i>';
-    btn.setAttribute("data-expanded", "false");
-
-    const card = postText.closest(".card");
-    if (card) {
-      const yOffset = card.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: yOffset, behavior: "smooth" });
-    }
-  }
 };
 
 function debounce(func, wait) {
@@ -127,7 +64,8 @@ function setupMentions() {
                 ? `<img src="/static/uploads/avatars/${user.profile_pic}" class="rounded-circle object-fit-cover shadow-sm border border-secondary" width="24" height="24">`
                 : `<div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" style="width:24px; height:24px; font-size:12px;">${user.username.charAt(0).toUpperCase()}</div>`;
 
-              item.innerHTML = `${avatarHtml} <span class="fw-bold" style="color: var(--text-main);">@${user.username}</span>`;
+              // 🚀 global-nickname support for mentions
+              item.innerHTML = `${avatarHtml} <span class="fw-bold global-nickname" data-original-name="${user.username}" style="color: var(--text-main);">@${user.username}</span>`;
               
               item.onclick = function(ev) {
                 ev.preventDefault();
@@ -139,6 +77,8 @@ function setupMentions() {
               };
               dropdown.appendChild(item);
             });
+            
+            if (typeof window.applyGlobalNicknames === 'function') window.applyGlobalNicknames();
             dropdown.style.display = 'block';
           } else {
             dropdown.style.display = 'none';
@@ -190,11 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .querySelectorAll("#toastContainer .toast")
     .forEach((t) => new bootstrap.Toast(t, { delay: 3000 }).show());
 
-  truncatePosts();
   setupMentions();
   initReadingProgress(); 
-  
-  window.addEventListener("load", truncatePosts);
 
   const notifBtn = document.getElementById("notifDropdown");
   if (notifBtn) {
@@ -218,8 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
      🚀 UNIVERSAL LIVE SEARCH SYSTEM
      ========================================= */
   function initUniversalLiveSearch() {
-    // Selects ALL search inputs (Desktop, Home Mobile, and Search Page)
-    // Excludes the bottom nav modal input because we safely hardcoded that one in base.html!
     const searchInputs = document.querySelectorAll('#searchInput, .search-input-field:not(#navMobileSearchInput), .search-input-large');
 
     searchInputs.forEach(input => {
@@ -228,11 +163,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let resultsEl = null;
       
-      // If it's the main desktop one, use its existing container
       if (input.id === "searchInput") {
         resultsEl = document.getElementById("searchResults");
       } else {
-        // Dynamically create a dropdown for Home Page and Search Page inputs
         resultsEl = document.createElement('div');
         resultsEl.className = 'dropdown-menu shadow-lg border-0 position-absolute w-100 mt-2 fade-in-up';
         resultsEl.style.borderRadius = '16px';
@@ -244,7 +177,6 @@ document.addEventListener("DOMContentLoaded", () => {
         resultsEl.style.display = 'none';
         resultsEl.style.backgroundColor = 'var(--bg-card)';
         
-        // Find the wrapper to append to
         const wrapper = input.closest('.search-bar-wrapper') || input.closest('.search-input-wrapper') || input.parentElement;
         if (wrapper) {
             wrapper.style.position = 'relative';
@@ -271,7 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         debounceTimer = setTimeout(async () => {
           try {
-            // ALWAYS hit the fast JSON API to avoid the 404 HTML bug
             const response = await fetch(`/api/search-users?q=${query}`);
             if (!response.ok) return;
             
@@ -294,9 +225,12 @@ document.addEventListener("DOMContentLoaded", () => {
                   avatarHtml = `<div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle shadow-sm" style="width: 35px; height: 35px; font-size: 1rem; font-weight: bold;">${user.username.charAt(0).toUpperCase()}</div>`;
                 }
 
-                item.innerHTML = `${avatarHtml} <span class="fw-bold" style="font-size: 1.05rem;">${user.username}</span>`;
+                // 🚀 global-nickname support for live search results
+                item.innerHTML = `${avatarHtml} <span class="fw-bold global-nickname" data-original-name="${user.username}" style="font-size: 1.05rem;">${user.username}</span>`;
                 resultsEl.appendChild(item);
               });
+              
+              if (typeof window.applyGlobalNicknames === 'function') window.applyGlobalNicknames();
               
               resultsEl.classList.add("show");
               resultsEl.style.display = "block";
@@ -311,7 +245,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 300);
       });
 
-      // Pressing Enter redirects to full search page
       input.addEventListener("keypress", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -319,7 +252,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // Clicking outside closes the dropdown
       document.addEventListener("click", function (e) {
         if (!input.contains(e.target) && !resultsEl.contains(e.target)) {
           resultsEl.classList.remove("show");
@@ -329,7 +261,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Initialize!
   initUniversalLiveSearch();
 
   const usernameInputs = document.querySelectorAll('input[name="username"]');
@@ -347,23 +278,20 @@ document.addEventListener("DOMContentLoaded", () => {
      ========================================= */
   window.initSkeletons = function() {
     setTimeout(() => {
-      // 1. Fade out the skeleton
       document.querySelectorAll('.skeleton-ui-wrapper').forEach(skeleton => {
         skeleton.style.opacity = '0';
         setTimeout(() => {
           skeleton.style.display = 'none';
-        }, 300); // Wait for fade-out to finish
+        }, 300); 
       });
       
-      // 2. Reveal the real content
       document.querySelectorAll('.skeleton-ui-content').forEach(content => {
         content.classList.remove('d-none');
-        content.classList.add('fade-in-up'); // Adds the smooth entry animation
+        content.classList.add('fade-in-up'); 
       });
-    }, 400); // 400ms is the sweet spot for perceived performance
+    }, 400); 
   };
 
-  // Run immediately on page load
   initSkeletons();
 });
 
@@ -898,6 +826,11 @@ document.addEventListener("submit", async function (e) {
           if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
 
           input.value = "";
+          
+          if (typeof window.applyGlobalNicknames === 'function') {
+              window.applyGlobalNicknames();
+          }
+
           window.showToast("Comment posted!");
         } else {
           window.location.reload();
@@ -960,6 +893,10 @@ document.addEventListener("click", async function (e) {
           );
           if (newCount && oldCount) oldCount.innerHTML = newCount.innerHTML;
 
+          if (typeof window.applyGlobalNicknames === 'function') {
+              window.applyGlobalNicknames();
+          }
+
           window.showToast("Comment deleted!");
         } else {
           window.location.reload();
@@ -1016,7 +953,7 @@ document.addEventListener("DOMContentLoaded", function () {
           const endMessage = document.getElementById("end-message");
           if (spinner) spinner.style.display = "none";
           if (endMessage) endMessage.classList.remove("d-none");
-          observer.disconnect(); // Stop observing if no more posts
+          observer.disconnect(); 
         }
       }
     }, { rootMargin: "0px 0px 200px 0px" });
@@ -1034,23 +971,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
       fetch(fetchUrl, {
         headers: {
-          "X-Requested-With": "XMLHttpRequest", // Tells Flask this is an AJAX request
+          "X-Requested-With": "XMLHttpRequest", 
         },
       })
         .then((res) => res.json())
         .then((data) => {
           if (data.html) {
-            // Insert the new posts right above the sentinel loading spinner
             sentinel.insertAdjacentHTML("beforebegin", data.html);
 
-            // Update the sentinel data for the NEXT time they scroll
             sentinel.setAttribute("data-page", nextPage);
             sentinel.setAttribute("data-has-next", data.has_next ? "true" : "false");
 
-            // Re-initialize "Read More" truncation and Timeago for newly injected posts
-            if (typeof truncatePosts === "function") {
-              truncatePosts();
-            }
             if (typeof window.refreshTimestamps === "function") {
               window.refreshTimestamps();
             }
@@ -1058,7 +989,10 @@ document.addEventListener("DOMContentLoaded", function () {
               setupMentions();
             }
             if (typeof initReadingProgress === "function") {
-              initReadingProgress(); // Re-bind progress trackers for new posts
+              initReadingProgress(); 
+            }
+            if (typeof window.applyGlobalNicknames === "function") {
+              window.applyGlobalNicknames();
             }
           }
         })
@@ -1349,23 +1283,18 @@ document.addEventListener('show.bs.modal', function (event) {
   }
 });
 
-
 /* =========================================
    SMART EMAIL APP ROUTER
    ========================================= */
 window.openSmartMail = function(service, email, subject, body) {
-    // 1. Detect if the user is on a Mobile Device
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // 2. Prepare the Desktop Web URLs
     const gmailWeb = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}&body=${body}`;
     const zohoWeb = `https://mail.zoho.in/zm/#compose?to=${email}&subject=${subject}&content=${body}`;
 
     if (isMobile) {
-        // ON MOBILE: Use mailto to instantly slide open the user's native App (Gmail/Zoho/Apple Mail)
         window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
     } else {
-        // ON DESKTOP: Force the web client to open in a new tab (prevents Windows popups)
         if (service === 'gmail') {
             window.open(gmailWeb, '_blank');
         } else if (service === 'zoho') {
