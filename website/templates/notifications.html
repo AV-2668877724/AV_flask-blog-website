@@ -1,30 +1,140 @@
-{% extends "base.html" %} {% block title %}Notifications{% endblock %} {% block content %}
+{% extends "base.html" %} 
+{% block title %}Notifications{% endblock %} 
+{% block content %}
 
 <style>
-  .notif-unread { background-color: var(--primary-glow) !important; }
-  .notif-read { background-color: transparent !important; }
+  /* 🚀 PREMIUM INSTAGRAM-STYLE NOTIFICATIONS GRID */
+  .notif-unread { 
+    background-color: rgba(79, 70, 229, 0.05) !important; 
+  }
+  .notif-read { 
+    background-color: transparent !important; 
+  }
   
   .notif-card {
-    transition: background-color 0.2s;
+    transition: background-color 0.2s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+    border: none !important;
     border-bottom: 1px solid var(--border-color) !important;
+    padding: 14px 16px !important;
+    display: flex;
+    align-items: center;
+    text-decoration: none !important;
   }
   .notif-card:hover {
     background-color: var(--bg-input) !important;
+  }
+
+  .notif-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    margin-right: 14px;
+  }
+  .notif-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+  }
+  .notif-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    background: linear-gradient(135deg, var(--text-muted), var(--bg-input));
+    border: 1px solid var(--border-color);
+  }
+  
+  /* Action badge overlaid on user avatars */
+  .notif-icon-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-card);
+    border: 2px solid var(--bg-card);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  }
+
+  .notif-text-content {
+    flex-grow: 1;
+    min-width: 0;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .notif-time {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* Right Side Contextual Post Thumbnail Preview */
+  .notif-post-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-left: 12px;
+    flex-shrink: 0;
+    border: 1px solid var(--border-color);
+  }
+
+  /* Sleek 'X' Dismiss Toggle Button */
+  .notif-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    opacity: 0.3;
+    transition: opacity 0.2s, color 0.2s, transform 0.2s;
+    padding: 8px;
+    margin-left: 8px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .notif-close-btn:hover {
+    opacity: 1;
+    color: var(--danger, #dc3545) !important;
+    transform: scale(1.15);
+  }
+
+  /* Real-time Unread Blue Dot */
+  .unread-dot {
+    width: 9px;
+    height: 9px;
+    background-color: var(--primary);
+    border-radius: 50%;
+    margin-left: 12px;
+    flex-shrink: 0;
   }
 </style>
 
 <div class="row justify-content-center fade-in-up">
   <div class="col-lg-8 col-xl-6">
+    
     <div class="d-flex justify-content-between align-items-center mb-4 px-2">
       <h3 class="font-heading fw-bold mb-0" style="color: var(--text-main)">
         Notifications
       </h3>
       <button class="btn btn-sm btn-light rounded-pill px-3 border shadow-sm fw-bold" onclick="location.reload()" style="background-color: var(--bg-card); color: var(--text-main)">
-        <i class="fas fa-sync-alt me-1"></i> Refresh
+        <i class="fas fa-check-double me-1 text-primary"></i> Mark All Read
       </button>
     </div>
 
     <div id="notifSkeleton" class="skeleton-ui-wrapper">
+      {% for i in range(4) %}
       <div class="card border-0 shadow-sm mb-3" style="border-radius: var(--border-radius-lg); background-color: var(--bg-card);">
         <div class="card-body d-flex gap-3 align-items-center">
           <div class="skeleton skeleton-avatar" style="width: 48px; height: 48px;"></div>
@@ -34,83 +144,87 @@
           </div>
         </div>
       </div>
-      <div class="card border-0 shadow-sm mb-3" style="border-radius: var(--border-radius-lg); background-color: var(--bg-card);">
-        <div class="card-body d-flex gap-3 align-items-center">
-          <div class="skeleton skeleton-avatar" style="width: 48px; height: 48px;"></div>
-          <div class="w-100">
-            <div class="skeleton skeleton-text w-50 mb-2"></div>
-            <div class="skeleton skeleton-text w-25"></div>
-          </div>
-        </div>
-      </div>
+      {% endfor %}
     </div>
 
     <div id="notifContent" class="skeleton-ui-content d-none">
       <div class="card border-0 shadow-sm mb-5" style="border-radius: var(--border-radius-lg); background-color: var(--bg-card); overflow: hidden;">
-        <div class="list-group list-group-flush">
+        <div class="list-group list-group-flush" id="notificationList">
+          
           {% for n in notifications %}
-          <a href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}{{ url_for('views.home', _anchor='post-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}" class="list-group-item list-group-item-action d-flex align-items-start gap-3 p-3 p-md-4 notif-card {% if not n.is_read %}notif-unread{% else %}notif-read{% endif %}">
+          <div class="list-group-item notif-card {% if not n.is_read %}notif-unread{% else %}notif-read{% endif %}" id="notif-{{ n.id }}">
             
-            <div class="position-relative flex-shrink-0">
-              {% if n.visitor.profile_pic %}
-              <img src="{% if 'http' in n.visitor.profile_pic %}{{ n.visitor.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}{% endif %}" class="rounded-circle shadow-sm" width="48" height="48" style="object-fit: cover; border: 2px solid var(--bg-card);"/>
-              {% else %}
-              <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" style="width: 48px; height: 48px; font-size: 1.2rem; background: linear-gradient(135deg, var(--text-muted), var(--bg-input)); border: 2px solid var(--bg-card); color: var(--text-main) !important;">
-                {{ n.visitor.username[0]|upper }}
-              </div>
-              {% endif %}
+            <a href="{% if n.action == 'message' %}{{ url_for('views.chat', username=n.visitor.username) }}{% elif n.post_id %}{{ url_for('views.home', _anchor='post-' + n.post_id|string) }}{% else %}{{ url_for('views.profile', username=n.visitor.username) }}{% endif %}" 
+               class="d-flex align-items-center w-100 text-decoration-none" style="color: inherit;" onclick="markSingleRead(this)">
               
-              <span class="position-absolute bottom-0 end-0 rounded-circle border border-2 d-flex align-items-center justify-content-center shadow-sm" style="width: 22px; height: 22px; transform: translate(20%, 20%); background-color: var(--bg-card); border-color: var(--bg-card) !important;">
-                {% if n.action == 'like' %}
-                <i class="fas fa-heart text-danger" style="font-size: 0.65rem"></i>
-                {% elif n.action == 'comment' %}
-                <i class="fas fa-comment text-primary" style="font-size: 0.65rem"></i>
-                {% elif n.action == 'follow' %}
-                <i class="fas fa-user-plus text-success" style="font-size: 0.65rem"></i>
-                {% elif n.action == 'message' %}
-                <i class="fas fa-envelope text-info" style="font-size: 0.65rem"></i>
-                {% elif n.action == 'mention' %}
-                <i class="fas fa-at text-warning" style="font-size: 0.65rem"></i>
+              <div class="notif-avatar-wrapper">
+                {% if n.visitor.profile_pic %}
+                <img src="{% if 'http' in n.visitor.profile_pic %}{{ n.visitor.profile_pic }}{% else %}{{ url_for('static', filename='uploads/avatars/' + n.visitor.profile_pic) }}{% endif %}" class="notif-avatar shadow-sm" alt="User Avatar"/>
+                {% else %}
+                <div class="notif-avatar-placeholder shadow-sm">
+                  {{ n.visitor.username[0]|upper }}
+                </div>
                 {% endif %}
-              </span>
-            </div>
-
-            <div class="flex-grow-1 min-w-0 ms-2">
-              <p class="mb-1" style="color: var(--text-main); font-size: 0.95rem; line-height: 1.4;">
-                <strong class="fw-bold">{{ n.visitor.username }}</strong>
                 
-                {% if n.is_grouped and n.others_count > 0 %}
-                and <strong>{{ n.others_text }} others</strong>
-                {% endif %} 
-                
-                {% if n.action == 'like' %} liked your story. 
-                {% elif n.action == 'comment' %} commented on your story. 
-                {% elif n.action == 'follow' %} started following you. 
-                {% elif n.action == 'message' %} sent you a new message. 
-                {% elif n.action == 'mention' %} mentioned you in a story. 
-                {% endif %}
-              </p>
-              
-              {% if n.post_id and n.post %}
-              <div class="text-muted small mt-2 ps-3 border-start border-2 border-primary" style="font-style: italic; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
-                "{{ n.post.title or n.post.excerpt or (n.post.text | striptags) }}"
+                <span class="notif-icon-badge">
+                  {% if n.action == 'like' %}
+                  <i class="fas fa-heart text-danger" style="font-size: 0.65rem"></i>
+                  {% elif n.action == 'comment' %}
+                  <i class="fas fa-comment text-primary" style="font-size: 0.65rem"></i>
+                  {% elif n.action == 'follow' %}
+                  <i class="fas fa-user text-primary" style="font-size: 0.65rem"></i>
+                  {% elif n.action == 'message' %}
+                  <i class="fas fa-envelope text-info" style="font-size: 0.65rem"></i>
+                  {% elif n.action == 'mention' %}
+                  <i class="fas fa-at text-warning" style="font-size: 0.65rem"></i>
+                  {% endif %}
+                </span>
               </div>
+
+              <div class="notif-text-content">
+                <span class="mb-0">
+                  <strong class="fw-bold global-nickname" data-original-name="{{ n.visitor.username }}">{{ n.visitor.username }}</strong>
+                  
+                  {% if n.is_grouped and n.others_count > 0 %}
+                  and <strong>{{ n.others_text }} others</strong>
+                  {% endif %} 
+                  
+                  {% if n.action == 'like' %} liked your post. 
+                  {% elif n.action == 'comment' %} commented on your post. 
+                  {% elif n.action == 'follow' %} started following you. 
+                  {% elif n.action == 'message' %} sent you a message. 
+                  {% elif n.action == 'mention' %} mentioned you. 
+                  {% endif %}
+                </span>
+                
+                {% if n.post_id and n.post and not n.post.cover_image %}
+                <div class="text-muted small mt-1" style="display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; opacity: 0.8;">
+                  {{ n.post.title or n.post.excerpt or (n.post.text | striptags) }}
+                </div>
+                {% endif %}
+
+                <div class="notif-time">
+                  {{ n.date_created | timeago }}
+                </div>
+              </div>
+
+              {% if n.post_id and n.post and n.post.cover_image %}
+              <img src="{% if 'http' in n.post.cover_image %}{{ n.post.cover_image }}{% else %}{{ url_for('static', filename='uploads/posts/' + n.post.cover_image) }}{% endif %}" class="notif-post-thumb shadow-sm" alt="Post preview" />
               {% endif %}
 
-              <div class="text-muted fw-bold mt-2" style="font-size: 0.75rem">
-                {{ n.date_created | timeago }}
-              </div>
-            </div>
+              {% if not n.is_read %}
+              <div class="unread-dot shadow-sm"></div>
+              {% endif %}
+            </a>
 
-            {% if not n.is_read %}
-            <div class="flex-shrink-0 ms-2 align-self-center">
-              <span class="badge bg-primary rounded-circle p-1 shadow-sm" style="width: 10px; height: 10px; display: inline-block"></span>
-            </div>
-            {% endif %}
-          </a>
+            <button class="notif-close-btn" onclick="removeNotification(event, '{{ n.id }}')" title="Dismiss Notification">
+              <i class="fas fa-times fs-5"></i>
+            </button>
 
+          </div>
           {% else %}
-          <div class="text-center py-5 my-4">
+          
+          <div class="text-center py-5 my-4" id="emptyNotifState">
             <div class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3" style="width: 80px; height: 80px">
               <i class="far fa-bell-slash fa-2x opacity-50"></i>
             </div>
@@ -118,13 +232,81 @@
               No notifications
             </h5>
             <p class="text-muted small">
-              When people interact with you, you'll see it here.
+              When people interact with you, you'll see them here.
             </p>
           </div>
           {% endfor %}
+          
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      // Clear notification badges instantly on page target view load
+      const desktopBadge = document.getElementById("notifBadge");
+      const mobileBadge = document.querySelector("#mobileTopNotifBtn .bg-danger");
+      
+      if (desktopBadge) desktopBadge.style.display = "none";
+      if (mobileBadge) mobileBadge.style.display = "none";
+
+      if (typeof window.applyGlobalNicknames === 'function') {
+          window.applyGlobalNicknames();
+      }
+  });
+
+  // Cross Sign slide out deletion mapping handler 
+  window.removeNotification = function(event, notifId) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const card = document.getElementById('notif-' + notifId);
+      if (card) {
+          card.style.opacity = '0';
+          card.style.pointerEvents = 'none';
+          card.style.transform = 'translateX(30px)';
+      }
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]');
+      if (csrfToken) {
+          fetch(`/api/delete-notification/${notifId}`, {
+              method: 'POST',
+              headers: { 'X-CSRFToken': csrfToken.getAttribute('content') }
+          }).catch(err => console.log("Hiding notification card view row container."));
+      }
+
+      setTimeout(() => {
+          if (card) card.remove();
+          checkEmptyState();
+      }, 250);
+  };
+
+  window.markSingleRead = function(element) {
+      const dot = element.querySelector('.unread-dot');
+      if (dot) dot.remove();
+      
+      const card = element.closest('.notif-card');
+      if (card) {
+          card.classList.remove('notif-unread');
+          card.classList.add('notif-read');
+      }
+  };
+
+  function checkEmptyState() {
+      const list = document.getElementById('notificationList');
+      if (list && list.querySelectorAll('.notif-card').length === 0) {
+          list.innerHTML = `
+            <div class="text-center py-5 my-4 fade-in-up" id="emptyNotifState">
+              <div class="d-inline-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted rounded-circle mb-3" style="width: 80px; height: 80px">
+                <i class="far fa-bell-slash fa-2x opacity-50"></i>
+              </div>
+              <h5 class="fw-bold font-heading mb-1" style="color: var(--text-main)">You're all caught up!</h5>
+              <p class="text-muted small">No new notifications to show.</p>
+            </div>
+          `;
+      }
+  }
+</script>
 {% endblock %}
